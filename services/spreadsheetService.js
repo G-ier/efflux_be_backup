@@ -3,7 +3,7 @@ const fs = require('fs');
 const {todayYMDHM} = require('../common/day');
 
 let serviceEnabled = false;
-const KEY_FILE = './cert/google.json';
+const KEY_FILE = './cert/keys.json';
 const IgnoredColumns = [];
 const DefaultValues = {
   campaign_name: 'N/A',
