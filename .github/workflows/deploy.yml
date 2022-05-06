@@ -1,0 +1,29 @@
+name: Build and Deploy
+
+on:
+  push:
+    branches:
+      - digitalocean
+
+jobs:
+  build-and-deploy:
+    name: 'Build and deploy'
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: remote commands
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_KEY }}
+          port: ${{ secrets.SSH_PORT }}
+          script: |
+            cd efflux-platform/
+            git checkout ${GITHUB_REF#refs/heads/}
+            git pull origin ${GITHUB_REF#refs/heads/}
+            docker build -t efflux-platform .
+            docker stop efflux-platform
+            docker rm efflux-platform
+            docker run -p 5000:5000 -d --name efflux-platform --restart unless-stopped efflux-platform
+            docker system prune -f --volumes
