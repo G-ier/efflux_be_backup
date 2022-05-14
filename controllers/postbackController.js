@@ -10,14 +10,14 @@ async function trackSystem1(req) {
 
   console.log('S1 POSTBACK')
 
-  if(req.isBot) {
-    await models.add('bot_conversions', {
-      referrer_url,
-      ip,
-      user_agent,
-    });
-    return;
-  }
+  // if(req.isBot) {
+  //   await models.add('bot_conversions', {
+  //     referrer_url,
+  //     ip,
+  //     user_agent,
+  //   });
+  //   return;
+  // }
 
   console.log('req.query', req.query)
 
