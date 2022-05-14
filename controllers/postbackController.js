@@ -74,20 +74,29 @@ async function trackSedo(req) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const user_agent = req.headers['user-agent'];
   const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
-
-  if(req.isBot) {
-    await models.add('bot_conversions', {
-      referrer_url,
-      ip,
-      user_agent,
-    });
-    return;
-  }
+  const ua = uaParser(user_agent);
   console.log('req.query', req.query)
 
   const {
     amount, sub1, sub2, sub3, kw, position, url
   } = req.query;
+
+  
+  await models.add('postback_events', { 
+    referrer_url,
+    pb_value: amount,
+    event_type: "sedo_conversion",
+    date: todayYMD(),
+    hour: todayHH(),
+    ip,
+    device: ua.device.name,
+    os: `${ua.os.name} - ${ua.os.version}`,
+    browser: ua.browser.name,
+    campaign_id: sub1,
+    adset_id: sub3,    
+    network: 'sedo',
+  })
+
 
   const conversionData = {
     date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),

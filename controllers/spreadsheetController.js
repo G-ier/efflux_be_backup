@@ -19,32 +19,44 @@ function preferredOrder(obj, order) {
 }
 
 function calculateValuesForSpreadsheet(data, columns) {
-  return {
-    columns,
-    rows: data.map(item => {
-      const calcResult = new MetricsCalculator(item)
-      const result = {
-        ...calcResult,
-        rpi: calcResult.rpi,
-        cpa: calcResult.cpa,
-        facebook_ctr: calcResult.facebook_ctr,
-        live_ctr: calcResult.live_ctr,
-        est_revenue: calcResult.est_revenue,
-        roi: calcResult.roi,
-        est_roi: calcResult.est_roi,
-        profit: calcResult.profit,
-        cpm: calcResult.cpm,
-        rpm: calcResult.rpm,
-        est_profit: calcResult.est_profit,
-        rpc: calcResult.rpc,
-        live_cpa: calcResult.live_cpa,
-        cpc: calcResult.cpc,
-        unique_cpa: calcResult.unique_cpa,
-        unique_rpc: calcResult.unique_rpc,
+  const totals = columns.reduce((acc, column) => {
+    data.forEach(item => {
+      if(Number.isFinite(item[column])) {
+        if(acc[column]) acc[column] += item[column] || 0
+        else acc[column] = item[column] || 0
       }
-      return preferredOrder(result, columns)
     })
-  }
+    return acc
+  }, {
+    campaign_name: 'TOTAL'
+  })
+
+  data = [totals, ...data]
+  const rows = data.map(item => {
+    const calcResult = new MetricsCalculator(item)
+    const result = {
+      ...calcResult,
+      rpi: calcResult.rpi,
+      cpa: calcResult.cpa,
+      facebook_ctr: calcResult.facebook_ctr,
+      live_ctr: calcResult.live_ctr,
+      est_revenue: calcResult.est_revenue,
+      roi: calcResult.roi,
+      est_roi: calcResult.est_roi,
+      profit: calcResult.profit,
+      cpm: calcResult.cpm,
+      rpm: calcResult.rpm,
+      est_profit: calcResult.est_profit,
+      rpc: calcResult.rpc,
+      live_cpa: calcResult.live_cpa,
+      cpc: calcResult.cpc,
+      unique_cpa: calcResult.unique_cpa,
+      unique_rpc: calcResult.unique_rpc,
+    }
+    return preferredOrder(result, columns)
+  })
+
+  return { columns, rows }
 }
 
 async function updateCR_Spreadsheet() {
@@ -121,7 +133,7 @@ async  function updateSedo_Spreadsheet() {
   const spreadsheetId = process.env.SEDO_SPREADSHEET_ID;
   const sheetName = process.env.SEDO_SHEET_BY_CAMPAIGN;
   const sheetNameByAdset = process.env.SEDO_SHEET_BY_ADSET;  
-  
+  console.log('sedo cron start')
   const todayData = await aggregateSedoConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
   await spreadsheets.mergeSpreadsheet(todayData, {spreadsheetId, sheetName});
 

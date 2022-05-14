@@ -19,4 +19,5 @@ module.exports = {
   SHEET_HOURLY: process.env.SHEET_HOURLY || '2 * * * *',
   SYSTEM1_HOURLY: process.env.SYSTEM1_HOURLY || '5 * * * *',
   SYSTEM1_DAILY: process.env.SYSTEM1_DAILY|| '15 8 * * *',
+  SEDO_REGULAR: process.env.SEDO_REGULAR || '*/5 * * * *'
 }

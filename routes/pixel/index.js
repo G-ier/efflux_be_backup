@@ -72,6 +72,31 @@ route.get('/', async (req, res) => {
 
   const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
   const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
+  
+  await models.add('postback_events', {
+    pixel_id,
+    fbclid,
+    city,
+    state,
+    country,
+    zipcode,
+    event_timestamp,
+    running_direct: running_direct === 'true',
+    step,
+    referrer_url,
+    pb_value: value,
+    event_type: eventType,
+    date: todayYMD(),
+    hour: todayHH(),
+    ip: client_ip_address,
+    device: ua.device.name,
+    os: `${ua.os.name} - ${ua.os.version}`,
+    browser: ua.browser.name,
+    campaign_id: tg2,
+    adset_id: tg6,
+    ad_id: tg7,
+    network: 'crossroads',
+  })
 
   await models.add('cr_postback_events', {
     pixel_id,

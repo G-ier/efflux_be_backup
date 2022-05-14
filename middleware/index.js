@@ -18,11 +18,13 @@ const pixel = require("../routes/pixel");
 const campaigns = require('../routes/campaigns');
 const proper = require('../routes/proper');
 const system1 = require('../routes/system1');
+const knexLogger = require('./knexLogger');
 
 const configureMiddleware = (server) => {
   server.use(helmet());
   server.use(cors());
   server.use(json);
+  // server.use(knexLogger);
   server.use("/trk", isBot, pixel);
   server.use(morgan("dev"));
   server.use("/api/auth0", auth0);

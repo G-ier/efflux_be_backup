@@ -18,7 +18,7 @@ const updateSystem1DataDailyJob = new CronJob(
 );
 
 const updatePostbackSheetJob = new CronJob(
-  Rules.SYSTEM1_HOURLY,
+  Rules.SEDO_REGULAR,
   updateSedo_Spreadsheet,
 );
 
