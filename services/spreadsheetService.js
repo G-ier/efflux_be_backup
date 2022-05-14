@@ -173,13 +173,13 @@ async function mergeSpreadsheet(data, options) {
   console.log('updatedRows',updatedRows)
   // fill sheet with data
   const body = {
-    range: `${range}!U:AA`,
+    range: `${range}!W:AC`,
     values: updatedRows,
     majorDimension: 'ROWS',
   };
 
   const response = await updateSheetValues(spreadsheetId, body, {
-    range: `${range}!U:AA`,
+    range: `${range}!W:AC`,
   });
 
   console.info('****** Spreadsheet updated ******');
