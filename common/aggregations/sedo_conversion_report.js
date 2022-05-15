@@ -40,8 +40,7 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
   agg_pb_1 AS (
     SELECT pb_1.${groupBy},
       SUM(pb_1.pb_value::decimal) as payout
-    FROM postback_events as pb_1
-        INNER JOIN campaigns c ON pb_1.campaign_id = c.id AND c.traffic_source = 'facebook'
+    FROM postback_events as pb_1        
     WHERE pb_1.date > '${startDate}' AND pb_1.date <= '${endDate}'
     GROUP BY pb_1.${groupBy}
   )
