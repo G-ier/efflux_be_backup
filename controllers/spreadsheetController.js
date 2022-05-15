@@ -60,9 +60,9 @@ function calculateValuesForSpreadsheet(data, columns) {
 }
 
 async function updateCR_Spreadsheet() {
-  const spreadsheetId = process.env.CR_SPREADSHEET_ID;
-  const sheetName = process.env.CR_SHEET_NAME;
-  const sheetNameByAdset = process.env.CR_SHEET_BY_ADSET;
+  const spreadsheetId = process.env.SEDO_SPREADSHEET_ID;
+  const sheetName = process.env.PB_CR_SHEET_NAME;
+  const sheetNameByAdset = process.env.PB_CR_SHEET_BY_ADSET;
 
   let oneDayFacebookPostbackConversions = await aggregateCRConversions(yesterdayYMD(), todayYMD(), 'campaign_id');
   oneDayFacebookPostbackConversions = calculateValuesForSpreadsheet(oneDayFacebookPostbackConversions.rows, ['campaign_id', 'campaign_name', ...CROSSROADS_SHEET_VALUES]);
@@ -104,9 +104,9 @@ async function updateOB_Spreadsheet() {
 }
 
 async function updateS1_Spreadsheet() {
-  const spreadsheetId = process.env.SYSTEM1_SPREADSHEET_ID;
-  const sheetName = process.env.SYSTEM1_SHEET_NAME;
-  const sheetNameByAdset = process.env.SYSTEM1_SHEET_BY_ADSET;
+  const spreadsheetId = process.env.SEDO_SPREADSHEET_ID;
+  const sheetName = process.env.PB_SYSTEM1_SHEET_NAME;
+  const sheetNameByAdset = process.env.PB_SYSTEM1_SHEET_BY_ADSET;
 
   let todayData = await aggregateSystem1ConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
   todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])

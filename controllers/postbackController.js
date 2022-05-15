@@ -12,8 +12,8 @@ async function trackSystem1(req) {
 
   // if(req.isBot) {
   //   await models.add('bot_conversions', {
+    //     ip,
   //     referrer_url,
-  //     ip,
   //     user_agent,
   //   });
   //   return;
