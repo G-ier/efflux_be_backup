@@ -171,12 +171,12 @@ async function mergeSpreadsheet(data, options) {
   columns.push('last_update');
   updatedRows[0] = columns.slice(1);
   updatedRows[1] = [];  
-  const newRows = rows.filter(el=> !(sheetValues.map(row => row[3]).includes(el[0])));
-  const newFormattedRows = newRows.map(row => [...row, row[0]].slice(1))  
+  // const newRows = rows.filter(el=> !(sheetValues.map(row => row[3]).includes(el[0])));
+  // const newFormattedRows = newRows.map(row => [...row, row[0]].slice(1))  
   // fill sheet with data
   const body = {
     range: `${range}!W:AH`,
-    values: (updatedRows).concat(newFormattedRows),
+    values: updatedRows,
     majorDimension: 'ROWS',
   };
 
