@@ -1,11 +1,9 @@
 const db = require('../../data/dbConfig');
-const selects = require("./selects");
-
 const mapField = {
   campaign_id: 'sub1',
   adset_id: 'sub3'
 }
-const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
+const aggregatePBUnknownConversionReport = (startDate, endDate, groupBy) => db.raw(`
   WITH agg_pb AS (  
     SELECT fb.${groupBy}      
     FROM facebook as fb
@@ -39,14 +37,6 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
     WHERE sedo.date > '${startDate}' AND sedo.date <= '${endDate}'
     GROUP BY sedo.${mapField[groupBy]}  
   ),
-  agg_s1 AS (
-    SELECT s1.${groupBy},
-      ${selects.SYSTEM1}
-    FROM system1 as s1
-        INNER JOIN campaigns c ON s1.campaign_id = c.id AND c.traffic_source = 'facebook'
-    WHERE s1.date > '${startDate}' AND s1.date <= '${endDate}'
-    GROUP BY s1.${groupBy}
-  ),
   agg_pb_1 AS (
     SELECT pb_1.${groupBy},
       SUM(pb_1.pb_value::decimal) as payout
@@ -55,14 +45,12 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
     GROUP BY pb_1.${groupBy}
   )
   SELECT agg_pb.${groupBy},
-    SUM(agg_sedo.conversions) as sedo_conversion,
+    SUM(agg_sedo.conversions) as sedo_conversions,
     ROUND(SUM(agg_sedo.revenue)::decimal, 2) as sedo_revenue,
     SUM(agg_pc.step1) as pb_step1,  
     SUM(agg_pc.step2) as pb_step2,  
-    SUM(agg_fbc.conversions) as pb_conversion,
-    ROUND(SUM(agg_pb_1.payout)::decimal, 2) as pb_payout,
-    (CASE WHEN SUM(agg_s1.conversions) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversions) AS FLOAT) END) as s1_conversions,
-    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as s1_revenue
+    SUM(agg_fbc.conversions) as pb_conversions,
+    ROUND(SUM(agg_pb_1.payout)::decimal, 2) as pb_payout
   FROM agg_pb
     FULL OUTER JOIN agg_fbc USING (${groupBy})    
     FULL OUTER JOIN agg_pc USING (${groupBy})    
@@ -71,4 +59,4 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
   GROUP BY agg_pb.${groupBy}
 `);
 
-module.exports = aggregateSedoConversionReport;
+module.exports = aggregatePBUnknownConversionReport;

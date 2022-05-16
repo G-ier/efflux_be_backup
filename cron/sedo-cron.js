@@ -22,7 +22,8 @@ const updatePostbackSheetJob = new CronJob(
   updateSedo_Spreadsheet,
 );
 
-function initializeSedoCron() {    
+function initializeSedoCron() {   
+  // updateSedo_Spreadsheet(); 
   if (!disableCron) {    
     updatePostbackSheetJob.start();
   }
