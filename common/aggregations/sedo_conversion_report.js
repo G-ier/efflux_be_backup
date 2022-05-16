@@ -62,11 +62,16 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
     SUM(agg_fbc.conversions) as pb_conversion,
     ROUND(SUM(agg_pb_1.payout)::decimal, 2) as pb_payout,
     (CASE WHEN SUM(agg_s1.conversions) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversions) AS FLOAT) END) as s1_conversions,
+    ROUND(
+      SUM(agg_s1.revenue)::decimal /
+      CASE SUM(agg_s1.conversions)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversions)::decimal END,
+    2) as s1_rpc,
     (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as s1_revenue
   FROM agg_pb
     FULL OUTER JOIN agg_fbc USING (${groupBy})    
     FULL OUTER JOIN agg_pc USING (${groupBy})    
     FULL OUTER JOIN agg_pb_1 USING (${groupBy})    
+    FULL OUTER JOIN agg_s1 USING (${groupBy})    
     FULL OUTER JOIN agg_sedo ON agg_sedo.${mapField[groupBy]} = agg_pb.${groupBy}
   GROUP BY agg_pb.${groupBy}
 `);
