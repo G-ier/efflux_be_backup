@@ -53,13 +53,21 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
     FROM postback_events as pb_1        
     WHERE pb_1.date > '${startDate}' AND pb_1.date <= '${endDate}'
     GROUP BY pb_1.${groupBy}
-  )
+  ),
+  agg_pb_s1 AS (
+    SELECT pb_s1.${groupBy},
+      CAST(COUNT(CASE WHEN event_name = 'lead' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
+    FROM s1_conversions as pb_s1
+           INNER JOIN campaigns c ON pb_s1.campaign_id = c.id AND c.traffic_source = 'facebook'
+    WHERE pb_s1.date > '${startDate}' AND pb_s1.date <= '${endDate}'
+    GROUP BY pb_s1.${groupBy}
+   )
   SELECT agg_pb.${groupBy},
     SUM(agg_sedo.conversions) as sedo_conversion,
     ROUND(SUM(agg_sedo.revenue)::decimal, 2) as sedo_revenue,
     SUM(agg_pc.step1) as pb_step1,  
     SUM(agg_pc.step2) as pb_step2,  
-    SUM(agg_fbc.conversions) as pb_conversion,
+    SUM(agg_pb_s1.pb_conversions) as pb_conversion,
     ROUND(SUM(agg_pb_1.payout)::decimal, 2) as pb_payout,
     (CASE WHEN SUM(agg_s1.conversions) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversions) AS FLOAT) END) as s1_conversions,
     ROUND(
@@ -72,6 +80,7 @@ const aggregateSedoConversionReport = (startDate, endDate, groupBy) => db.raw(`
     FULL OUTER JOIN agg_pc USING (${groupBy})    
     FULL OUTER JOIN agg_pb_1 USING (${groupBy})    
     FULL OUTER JOIN agg_s1 USING (${groupBy})    
+    FULL OUTER JOIN agg_pb_s1 USING (${groupBy})    
     FULL OUTER JOIN agg_sedo ON agg_sedo.${mapField[groupBy]} = agg_pb.${groupBy}
   GROUP BY agg_pb.${groupBy}
 `);
