@@ -2,7 +2,7 @@ const {
   aggregateCRConversions, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport
 } = require("../common/aggregations");
-const {yesterdayYMD, todayYMD, fourDaysAgoYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
 const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
@@ -132,19 +132,25 @@ async function updatePR_Spreadsheet() {
 async  function updateSedo_Spreadsheet() {
   const spreadsheetId = process.env.SEDO_SPREADSHEET_ID;
   const sheetName = process.env.SEDO_SHEET_BY_CAMPAIGN;
+  const sheetNameForYesterday = process.env.SEDO_SHEET_BY_CAMPAIGN_FOR_YESTERDAY;
   const sheetNameByAdset = process.env.SEDO_SHEET_BY_ADSET;  
+  const sheetNameByAdsetForYesterday = process.env.SEDO_SHEET_BY_ADSET_FOR_YESTERDAY;  
   const sheetNameByUnknown = process.env.PB_SHEET_BY_UNKNOWN;  
   // console.log('sedo cron start')
   const todayData = await aggregateSedoConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
   await spreadsheets.mergeSpreadsheet(todayData, {spreadsheetId, sheetName});
+  const yesterdayData = await aggregateSedoConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'campaign_id');
+  await spreadsheets.mergeSpreadsheet(yesterdayData, {spreadsheetId, sheetNameForYesterday});
 
   const todayDataByAdset = await aggregateSedoConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'adset_id');
   await spreadsheets.mergeSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+  const yesterdayDataByAdset = await aggregateSedoConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'adset_id');
+  await spreadsheets.mergeSpreadsheet(yesterdayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdsetForYesterday});
 
   // export unknown postback tables
   // const pbUnknownData = await aggregatePBUnknownConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id')
   // console.log('pbUnknownData',pbUnknownData);
-  // await spreadsheets.updateSpreadsheet(pbUnknownData, {spreadsheetId, sheetNameByUnknown});
+  // await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetNameByUnknown});
 }
 
 module.exports = {
