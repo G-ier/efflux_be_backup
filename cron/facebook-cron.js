@@ -39,12 +39,12 @@ const facebookAfternoon = new CronJob(
 );
 
 const facebookInsisghtsJob = new CronJob(
-  Rules.FB_REGULAR,
+  Rules.SEDO_REGULAR,
   updateFacebookInsightsJob.bind(null, "today"),
 );
 
 const facebookDataJob = new CronJob(
-  Rules.SEDO_REGULAR,
+  Rules.FB_HOURLY,
   updateFacebookDataJob
 )
 
