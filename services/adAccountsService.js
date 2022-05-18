@@ -82,6 +82,7 @@ async function updateAdAccounts(account, adAccounts) {
     'status',
     'user_id',
     'account_id',
+    'fb_account_id',
     'network',
     'amount_spent',
     'balance',
@@ -105,6 +106,7 @@ async function updateAdAccounts(account, adAccounts) {
         existedAdAccount.spend_cap !== adAccount.spend_cap ||
         existedAdAccount.currency !== adAccount.currency ||
         existedAdAccount.tz_name !== adAccount.tz_name ||
+        existedAdAccount.fb_account_id !== adAccount.fb_account_id ||
         existedAdAccount.tz_offset !== adAccount.tz_offset
       ) return "updateArr";
     }
@@ -119,6 +121,7 @@ async function updateAdAccounts(account, adAccounts) {
         .where("provider_id", item.provider_id).first()
         .update({
           name: item.name,
+          fb_account_id: item.fb_account_id,
           status: item.status,
           amount_spent: item.amount_spent,
           balance: item.balance,

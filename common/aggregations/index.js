@@ -31,6 +31,7 @@ const dailyCampaignFacebookAMG = require('./daily_campaign_facebook_amg');
 const dailyCampaignGoogleAMG = require('./daily_campaign_google_amg');
 const aggregatePRConversionReport = require('./pr_conversion_report');
 const aggregateSystem1ConversionReport = require('./system1_conversion_report');
+const aggregatePostbackConversionReport = require('./postback_conversion_report');
 const aggregateSedoConversionReport = require('./sedo_conversion_report');
 const dailyCampaignFacebookSystem1 = require('./daily_campaign_facebook_system1');
 const hourlyMediaBuyerFacebookSystem1 = require('./hourly_media_buyer_facebook_system1');
@@ -75,6 +76,7 @@ module.exports = {
   dailyCampaignGoogleAMG,
   aggregatePRConversionReport,
   aggregateSystem1ConversionReport,
+  aggregatePostbackConversionReport,
   aggregateSedoConversionReport,
   aggregatePBUnknownConversionReport,
   dailyCampaignFacebookSystem1,

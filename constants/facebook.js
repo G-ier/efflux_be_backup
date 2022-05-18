@@ -4,6 +4,7 @@ const adAccountFields = [
   'name',
   'amount_spent',
   'balance',
+  'account_id',
   'spend_cap',
   'currency',
   'timezone_name',

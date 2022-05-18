@@ -97,7 +97,7 @@ function processFacebookInsights(data, date) {
       ad_id: item.ad_id,
       adset_id: item.adset_id,
       campaign_id: item.campaign_id,
-      campaign_name: item.campaign_name,
+      campaign_name: item.campaign_name,      
       date: date,
       hour: +(hour.startsWith('0') ? hour.replace('0', '') : hour),
       impressions: item?.impressions ?? 0,
@@ -126,13 +126,14 @@ function processFacebookPixels(pixels, adAccountsMap, accountId) {
 }
 
 function processFacebookAdAccounts(account, adAccounts) {
-  return adAccounts.map(({ name, id, amount_spent, balance, spend_cap, currency, timezone_name, timezone_offset_hours_utc }) => ({
+  return adAccounts.map(({ name, id, amount_spent, balance, spend_cap, currency, timezone_name, timezone_offset_hours_utc, account_id }) => ({
     name,
     provider: PROVIDERS.FACEBOOK,
     provider_id: id.replace(/^act_/, ""),
     status: "active", // not supported yet
     user_id: account.user_id,
     account_id: account.id,
+    fb_account_id: account_id,
     amount_spent,
     balance,
     spend_cap,

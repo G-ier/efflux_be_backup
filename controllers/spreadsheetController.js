@@ -1,6 +1,6 @@
 const {
   aggregateCRConversions, aggregateOBConversionReport, aggregateSystem1ConversionReport,
-  aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport
+  aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -117,6 +117,23 @@ async function updateS1_Spreadsheet() {
   await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
 }
 
+
+async function updatePB_Spreadsheet() {
+  const spreadsheetId = process.env.PB_SPPEADSHEET_ID;
+  const sheetName = process.env.PB_SHEET_NAME;
+  const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET;
+
+  let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
+  todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
+  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+
+  let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'adset_id');
+  todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
+  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+}
+
+
+
 async function updatePR_Spreadsheet() {
   const spreadsheetId = process.env.PR_SPREADSHEET_ID
   const sheetName = process.env.PR_SHEET_NAME
@@ -159,5 +176,6 @@ module.exports = {
   updateOB_Spreadsheet,
   updateS1_Spreadsheet,
   updatePR_Spreadsheet,
+  updatePB_Spreadsheet,
   updateSedo_Spreadsheet
 }
