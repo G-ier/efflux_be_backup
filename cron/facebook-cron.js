@@ -49,6 +49,7 @@ const facebookDataJob = new CronJob(
 )
 
 const initializeFBCron = () => {
+  // await updateFacebookInsights(yesterdayYMD('UTC')) // for one time
   if (!disableCron) {
     newFacebookYesterdayCron.start();
     facebookInsisghtsJob.start();

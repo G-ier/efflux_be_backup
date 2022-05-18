@@ -6,7 +6,7 @@ const {updatePB_Spreadsheet, updateYesterdayPB_Spreadsheet} = require('../contro
 const disableCron = process.env.DISABLE_CRON === 'true';
 
 const updatePostbackSheetJob = new CronJob(
-  Rules.EVERY_TEN_MINUTES,
+  Rules.SEDO_REGULAR,
   updatePB_Spreadsheet,
 );
 
@@ -16,7 +16,7 @@ const updateYesterdayPostbackSheetJob = new CronJob(
 );
 
 function initializePostbackCron() {
-  
+  // updatePB_Spreadsheet()
   if (!disableCron) {    
     updatePostbackSheetJob.start();
     updateYesterdayPostbackSheetJob.start();
