@@ -44,7 +44,7 @@ const facebookInsisghtsJob = new CronJob(
 );
 
 const facebookDataJob = new CronJob(
-  Rules.FB_HOURLY,
+  Rules.SEDO_REGULAR,
   updateFacebookDataJob
 )
 

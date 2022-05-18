@@ -1,30 +1,25 @@
 const {CronJob} = require('cron');
 const Rules = require('../constants/cron');
 const {
-  updateSystem1Hourly,
-  updateSystem1Daily
 } = require('../services/system1Service');
-const {updatePB_Spreadsheet} = require('../controllers/spreadsheetController');
+const {updatePB_Spreadsheet, updateYesterdayPB_Spreadsheet} = require('../controllers/spreadsheetController');
 const disableCron = process.env.DISABLE_CRON === 'true';
 
-const updateSystem1DataHourlyJob = new CronJob(
-  Rules.SYSTEM1_HOURLY,
-  updateSystem1Hourly,
-);
-
-const updateSystem1DataDailyJob = new CronJob(
-  Rules.SYSTEM1_DAILY,
-  updateSystem1Daily,
-);
-
 const updatePostbackSheetJob = new CronJob(
-  Rules.SHEET_REGULAR,
+  Rules.EVERY_TEN_MINUTES,
   updatePB_Spreadsheet,
 );
 
+const updateYesterdayPostbackSheetJob = new CronJob(
+  Rules.SHEET_REGULAR,
+  updateYesterdayPB_Spreadsheet,
+);
+
 function initializePostbackCron() {
+  
   if (!disableCron) {    
     updatePostbackSheetJob.start();
+    updateYesterdayPostbackSheetJob.start();
   }
 
   // Debug Code

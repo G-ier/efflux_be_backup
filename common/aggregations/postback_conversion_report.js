@@ -4,44 +4,55 @@ const selects = require("./selects");
 const aggregatePostbackConversionReport = (startDate, endDate, groupBy) => db.raw(`
   WITH agg_fb AS (
     SELECT fb.${groupBy},
+      MAX(fb.date) as date,
+      MAX(fb.updated_at) as last_updated,
       MAX(c.name) as campaign_name,
       MAX(c.status) as status,
-      ${selects.FACEBOOK}
+      MAX(ada.name) as ad_account_name,
+      MAX(ada.tz_offset) as time_zone,
+      CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
     FROM facebook as fb
       INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.network = 'system1'
-      LEFT JOIN (SELECT name, tz_offset, FROM ad_accounts        
-      ) ada ON fb.ad_account_id = ada.fb_account_id
+      INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id
     WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
     GROUP BY fb.${groupBy}
   ),
   agg_s1 AS (
     SELECT s1.${groupBy},
-      ${selects.SYSTEM1}
+      MAX(s1.last_updated) as last_updated,
+      CAST(SUM(s1.revenue)::decimal AS FLOAT) as revenue,
+      CAST(SUM(s1.clicks) AS INTEGER) as conversion
     FROM system1 as s1
-        INNER JOIN campaigns c ON s1.campaign_id = c.id AND c.traffic_source = 'facebook'
+      INNER JOIN campaigns c ON s1.campaign_id = c.id AND c.traffic_source = 'facebook'
     WHERE s1.date > '${startDate}' AND s1.date <= '${endDate}'
     GROUP BY s1.${groupBy}
   ),
   agg_pb_s1 AS (
-   SELECT pb_s1.${groupBy},
-     ${selects.PB_SYSTEM1}
-   FROM s1_conversions as pb_s1
-          INNER JOIN campaigns c ON pb_s1.campaign_id = c.id AND c.traffic_source = 'facebook'
-   WHERE pb_s1.date > '${startDate}' AND pb_s1.date <= '${endDate}'
-   GROUP BY pb_s1.${groupBy}
+    SELECT pb_s1.${groupBy},
+      MAX(pb_s1.updated_at) as last_updated,
+      CAST(COUNT(CASE WHEN event_name = 'lead' THEN 1 ELSE null END) AS INTEGER) as pb_conversion
+    FROM s1_conversions as pb_s1
+      INNER JOIN campaigns c ON pb_s1.campaign_id = c.id AND c.traffic_source = 'facebook'
+    WHERE pb_s1.date > '${startDate}' AND pb_s1.date <= '${endDate}'
+    GROUP BY pb_s1.${groupBy}
   )
   SELECT agg_fb.${groupBy},
+    MAX(agg_fb.date) as date,
     MAX(agg_fb.campaign_name) as campaign_name,
-    (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as total_spent,
-    (CASE WHEN SUM(agg_fb.link_clicks) IS null THEN 0 ELSE CAST(SUM(agg_fb.link_clicks) AS FLOAT) END) as link_clicks,
-    (CASE WHEN SUM(agg_fb.ts_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.ts_conversions) AS FLOAT) END) as ts_conversions,
-    (CASE WHEN SUM(agg_fb.impressions) IS null THEN 0 ELSE CAST(SUM(agg_fb.impressions) AS FLOAT) END) as fb_impressions,
+    MAX(agg_fb.status) as status,
+    MAX(agg_fb.ad_account_name) as ad_account_name,
+    MAX(agg_fb.time_zone) as time_zone,
+    (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as amount_spent,
+    MAX(agg_fb.last_updated) as last_updated,
+    (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as pb_conversion,
+    MAX(agg_pb_s1.last_updated) as pb_last_updated,
+    (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as s1_conversion,
+    ROUND(
+      SUM(agg_s1.revenue)::decimal /
+      CASE SUM(agg_s1.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversion)::decimal END,
+    2) as rpc,
     (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as revenue,
-    (CASE WHEN SUM(agg_s1.conversions) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversions) AS FLOAT) END) as s1_conversions,
-    (CASE WHEN SUM(agg_pb_s1.pb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversions) AS FLOAT) END) as pb_conversions,
-    (CASE WHEN SUM(agg_pb_s1.pb_searches) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_searches) AS FLOAT) END) as pb_search,
-    (CASE WHEN SUM(agg_pb_s1.pb_impressions) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_impressions) AS FLOAT) END) as pb_impressions,
-    (CASE WHEN SUM(agg_pb_s1.pb_uniq_conversions) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_uniq_conversions) AS FLOAT) END)  as pb_unique_conversions
+    MAX(agg_s1.last_updated) as s1_last_updated
   FROM agg_fb
     FULL OUTER JOIN agg_s1 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})

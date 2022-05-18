@@ -9,6 +9,7 @@ const MetricsCalculator = require('../utils/metricsCalculator')
 
 const {CROSSROADS_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
+const {POSTBACK_SHEET_VALUES} = require('../constants/postback')
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -57,6 +58,26 @@ function calculateValuesForSpreadsheet(data, columns) {
   })
 
   return { columns, rows }
+}
+
+function mapValuesForSpreadsheet(data, columns) {
+  const totals = columns.reduce((acc, column) => {
+    data.forEach(item => {
+      if(Number.isFinite(item[column])) {
+        if(acc[column]) acc[column] += item[column] || 0
+        else acc[column] = item[column] || 0
+      }
+    })
+    return acc
+  }, {
+    campaign_name: 'TOTAL', 
+  })
+  totals.time_zone = 0
+  totals.date = 0
+  totals.rpc = Math.round(totals.revenue / totals.s1_conversion * 100) /100
+  console.log('totals', totals)
+  data = [totals, ...data]  
+  return { columns, rows: data }
 }
 
 async function updateCR_Spreadsheet() {
@@ -124,11 +145,25 @@ async function updatePB_Spreadsheet() {
   const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET;
 
   let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
-  todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
+  todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])
   await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
 
   let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'adset_id');
-  todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
+  todayDataByAdset = mapValuesForSpreadsheet(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')])
+  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+}
+
+async function updateYesterdayPB_Spreadsheet() {
+  const spreadsheetId = process.env.PB_SPPEADSHEET_ID;
+  const sheetName = process.env.PB_SHEET_BY_YESTERDAY;
+  const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET_YESTERDAY;
+
+  let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'campaign_id');
+  todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])
+  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+  
+  let todayDataByAdset = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'adset_id');
+  todayDataByAdset = mapValuesForSpreadsheet(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')])
   await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
 }
 
@@ -177,5 +212,6 @@ module.exports = {
   updateS1_Spreadsheet,
   updatePR_Spreadsheet,
   updatePB_Spreadsheet,
+  updateYesterdayPB_Spreadsheet,
   updateSedo_Spreadsheet
 }

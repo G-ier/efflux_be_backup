@@ -6,11 +6,13 @@ const { initializeAMGCron } = require("./amg-cron");
 const { initializeSystem1Cron } = require("./system1-cron");
 const { initializeSedoCron } = require("./sedo-cron");
 const { initializeOBCron } = require("./outbrain-cron");
+const { initializePostbackCron } = require("./postback-cron");
 
 const initializeCronJobs = () => {
   initializeFBCron();
   initializeCRCron();
   initializeGoogleCron();
+  initializePostbackCron();
   // initializeGDNCron();
   // initializeAMGCron();
   initializeSystem1Cron();
