@@ -13,7 +13,9 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
   's1_conversion',
   'rpc',
   'revenue',
-  's1_last_updated'
+  's1_last_updated',
+  'roi',
+  'est_roi'
 ]
 };
 

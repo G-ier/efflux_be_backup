@@ -75,9 +75,19 @@ function mapValuesForSpreadsheet(data, columns) {
   totals.time_zone = 0
   totals.date = 0
   totals.rpc = Math.round(totals.revenue / totals.s1_conversion * 100) /100
+  totals.roi = Math.round((totals.revenue - totals.amount_spent) / totals.amount_spent * 100 * 100 ) / 100
   console.log('totals', totals)
   data = [totals, ...data]  
-  return { columns, rows: data }
+  const rows = data.map(item => {    
+    const result = {
+      ...item,          
+      est_revenue: item.pb_conversion * item.rpc,      
+      est_roi: Math.round((item.pb_conversion * item.rpc - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100
+    }
+    return preferredOrder(result, columns)
+  })
+
+  return { columns, rows, render: !!totals.rpc }
 }
 
 async function updateCR_Spreadsheet() {
@@ -145,12 +155,12 @@ async function updatePB_Spreadsheet() {
   const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET;
 
   let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
-  todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])
-  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+  todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])  
+  todayData.render && await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
 
   let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'adset_id');
   todayDataByAdset = mapValuesForSpreadsheet(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')])
-  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+  todayDataByAdset.render && await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
 }
 
 async function updateYesterdayPB_Spreadsheet() {

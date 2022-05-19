@@ -50,9 +50,15 @@ const aggregatePostbackConversionReport = (startDate, endDate, groupBy) => db.ra
     ROUND(
       SUM(agg_s1.revenue)::decimal /
       CASE SUM(agg_s1.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversion)::decimal END,
-    2) as rpc,
-    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as revenue,
-    MAX(agg_s1.last_updated) as s1_last_updated
+    2) as rpc,    
+    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as revenue,    
+    MAX(agg_s1.last_updated) as s1_last_updated,
+    ROUND(
+      CASE SUM(agg_fb.spend)::decimal
+      WHEN 0 THEN null ELSE
+        (SUM(agg_s1.revenue)::decimal - SUM(agg_fb.spend)::decimal) / SUM(agg_fb.spend)::decimal * 100
+      END
+    , 2) as roi
   FROM agg_fb
     FULL OUTER JOIN agg_s1 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})
