@@ -87,6 +87,7 @@ function mapValuesForSpreadsheet(data, columns) {
     totals.rpc = yt_rpc;
   }
   totals.roi = Math.round((totals.revenue - totals.amount_spent) / totals.amount_spent * 100 * 100 ) / 100  
+  totals.est_revenue = Math.round((totals.pb_conversion * totals.rpc) * 100 ) / 100  
   data = [totals, ...data]  
   const rows = data.map(item => {    
     const result = {
