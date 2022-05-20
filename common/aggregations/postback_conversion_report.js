@@ -1,7 +1,7 @@
 const db = require('../../data/dbConfig');
 const selects = require("./selects");
 
-const aggregatePostbackConversionReport = (startDate, endDate, groupBy) => db.raw(`
+const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy) => db.raw(`
   WITH agg_fb AS (
     SELECT fb.${groupBy},
       MAX(fb.date) as date,
@@ -27,6 +27,15 @@ const aggregatePostbackConversionReport = (startDate, endDate, groupBy) => db.ra
     WHERE s1.date > '${startDate}' AND s1.date <= '${endDate}'
     GROUP BY s1.${groupBy}
   ),
+  agg_s2 AS (
+    SELECT s2.${groupBy},      
+      CAST(SUM(s2.revenue)::decimal AS FLOAT) as revenue,
+      CAST(SUM(s2.clicks) AS INTEGER) as conversion
+    FROM system1 as s2
+      INNER JOIN campaigns c ON s2.campaign_id = c.id AND c.traffic_source = 'facebook'
+    WHERE s2.date > '${yestStartDate}' AND s2.date <= '${startDate}'
+    GROUP BY s2.${groupBy}
+  ),
   agg_pb_s1 AS (
     SELECT pb_s1.${groupBy},
       MAX(pb_s1.updated_at) as last_updated,
@@ -47,11 +56,17 @@ const aggregatePostbackConversionReport = (startDate, endDate, groupBy) => db.ra
     (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as pb_conversion,
     MAX(agg_pb_s1.last_updated) as pb_last_updated,
     (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as s1_conversion,
+    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_yt_conversion,
     ROUND(
       SUM(agg_s1.revenue)::decimal /
       CASE SUM(agg_s1.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversion)::decimal END,
     2) as rpc,    
+    ROUND(
+      SUM(agg_s2.revenue)::decimal /
+      CASE SUM(agg_s2.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s2.conversion)::decimal END,
+    2) as yt_rpc,    
     (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as revenue,    
+    (CASE WHEN SUM(agg_s2.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s2.revenue) AS FLOAT) END) as yt_revenue,    
     MAX(agg_s1.last_updated) as s1_last_updated,
     ROUND(
       CASE SUM(agg_fb.spend)::decimal
@@ -61,6 +76,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, groupBy) => db.ra
     , 2) as roi
   FROM agg_fb
     FULL OUTER JOIN agg_s1 USING (${groupBy})
+    FULL OUTER JOIN agg_s2 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})
   GROUP BY agg_fb.${groupBy}
 `);

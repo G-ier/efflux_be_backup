@@ -9,7 +9,7 @@ const MetricsCalculator = require('../utils/metricsCalculator')
 
 const {CROSSROADS_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
-const {POSTBACK_SHEET_VALUES} = require('../constants/postback')
+const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS} = require('../constants/postback')
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -61,9 +61,10 @@ function calculateValuesForSpreadsheet(data, columns) {
 }
 
 function mapValuesForSpreadsheet(data, columns) {
+  let rpc_count = data.filter(el => el['rpc']);
   const totals = columns.reduce((acc, column) => {
     data.forEach(item => {
-      if(Number.isFinite(item[column])) {
+      if(Number.isFinite(item[column])) {    
         if(acc[column]) acc[column] += item[column] || 0
         else acc[column] = item[column] || 0
       }
@@ -71,23 +72,34 @@ function mapValuesForSpreadsheet(data, columns) {
     return acc
   }, {
     campaign_name: 'TOTAL', 
-  })
+  })  
   totals.time_zone = 0
   totals.date = 0
-  totals.rpc = Math.round(totals.revenue / totals.s1_conversion * 100) /100
-  totals.roi = Math.round((totals.revenue - totals.amount_spent) / totals.amount_spent * 100 * 100 ) / 100
-  console.log('totals', totals)
+  totals.rpc = Math.round(totals.revenue / totals.s1_conversion * 100) / 100  
+  const yt_rpc = Math.round(totals.yt_revenue / totals.s1_yt_conversion * 100) / 100      
+  if(rpc_count.length <= 5) {
+    data = data.map(item => {
+      return {
+        ...item,
+        rpc: item.yt_rpc
+      }
+    })
+    totals.rpc = yt_rpc;
+  }
+  totals.roi = Math.round((totals.revenue - totals.amount_spent) / totals.amount_spent * 100 * 100 ) / 100  
   data = [totals, ...data]  
   const rows = data.map(item => {    
     const result = {
       ...item,          
       est_revenue: item.pb_conversion * item.rpc,      
-      est_roi: Math.round((item.pb_conversion * item.rpc - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100
+      est_roi: Math.round((item.pb_conversion * item.rpc - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
+      profit: item.revenue - item.amount_spent, 
+      est_profit: item.pb_conversion * item.rpc - item.amount_spent,
     }
     return preferredOrder(result, columns)
   })
 
-  return { columns, rows, render: !!totals.rpc }
+  return { columns, rows }
 }
 
 async function updateCR_Spreadsheet() {
@@ -154,13 +166,13 @@ async function updatePB_Spreadsheet() {
   const sheetName = process.env.PB_SHEET_NAME;
   const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET;
 
-  let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
+  let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), dayBeforeYesterdayYMD(null, 'UTC') , 'campaign_id');
   todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])  
-  todayData.render && await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName,  excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
 
-  let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'adset_id');
+  let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'),dayBeforeYesterdayYMD(null, 'UTC'), 'adset_id');
   todayDataByAdset = mapValuesForSpreadsheet(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')])
-  todayDataByAdset.render && await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset, excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
 }
 
 async function updateYesterdayPB_Spreadsheet() {

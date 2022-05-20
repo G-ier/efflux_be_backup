@@ -13,13 +13,24 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
   's1_conversion',
   'rpc',
   'revenue',
+  'profit',
+  'est_profit',
   's1_last_updated',
   'roi',
-  'est_roi'
+  'est_roi',
+  'yt_rpc',
+  'yt_revenue',
+  's1_yt_conversion'
 ]
 };
 
+const POSTBACK_EXCLUDEDFIELDS = [
+  'yt_rpc',
+  'yt_revenue',
+  's1_yt_conversion'
+]
 
 module.exports = {  
-  POSTBACK_SHEET_VALUES
+  POSTBACK_SHEET_VALUES,
+  POSTBACK_EXCLUDEDFIELDS
 }
