@@ -15,7 +15,7 @@ const updateYesterdayPostbackSheetJob = new CronJob(
   updateYesterdayPB_Spreadsheet,
 );
 
-function initializePostbackCron() {  
+function initializePostbackCron() {
   if (!disableCron) {    
     // updatePostbackSheetJob.start();
     updateYesterdayPostbackSheetJob.start();

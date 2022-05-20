@@ -2,7 +2,7 @@ const {
   aggregateCRConversions, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport
 } = require("../common/aggregations");
-const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
 const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
@@ -168,10 +168,11 @@ async function updatePB_Spreadsheet() {
   const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET;
 
   let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), dayBeforeYesterdayYMD(null, 'UTC') , 'campaign_id');
+  console.log('todayData',todayData)
   todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])  
   await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName,  excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
 
-  let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'),dayBeforeYesterdayYMD(null, 'UTC'), 'adset_id');
+  let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), dayBeforeYesterdayYMD(null, 'UTC'), 'adset_id');
   todayDataByAdset = mapValuesForSpreadsheet(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')])
   await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset, excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
 }
@@ -181,13 +182,13 @@ async function updateYesterdayPB_Spreadsheet() {
   const sheetName = process.env.PB_SHEET_BY_YESTERDAY;
   const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET_YESTERDAY;
 
-  let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'campaign_id');
+  let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'),threeDaysAgoYMD(null, 'UTC'), 'campaign_id');
   todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')])
-  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName , excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
   
-  let todayDataByAdset = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'adset_id');
+  let todayDataByAdset = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), threeDaysAgoYMD(null, 'UTC'), 'adset_id');
   todayDataByAdset = mapValuesForSpreadsheet(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')])
-  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset , excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
 }
 
 
