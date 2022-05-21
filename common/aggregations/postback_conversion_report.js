@@ -36,6 +36,15 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     WHERE s2.date > '${yestStartDate}' AND s2.date <= '${startDate}'
     GROUP BY s2.${groupBy}
   ),
+  agg_s3 AS (
+    SELECT s3.${groupBy}, s3.campaign,      
+      CAST(SUM(s3.revenue)::decimal AS FLOAT) as revenue,
+      CAST(SUM(s3.clicks) AS INTEGER) as conversion
+    FROM system1 as s3
+      INNER JOIN campaigns c ON s3.campaign_id = c.id AND c.traffic_source = 'facebook'
+    WHERE s3.date > '${startDate}' AND s3.date <= '${endDate}'
+    GROUP BY s3.${groupBy}, s3.campaign
+  ),
   agg_pb_s1 AS (
     SELECT pb_s1.${groupBy},
       MAX(pb_s1.updated_at) as last_updated,

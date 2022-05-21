@@ -2,7 +2,7 @@ const _ = require("lodash");
 const { getUserAccounts } = require("../services/userAccountsService");
 const PROVIDERS = require("../constants/providers");
 const NETWORKS = require("../constants/networks");
-const { updateAdAccounts, getAccountAdAccounts } = require("../services/adAccountsService");
+const { updateAdAccounts, getAccountAdAccounts, updateUserAdAccountsTodaySpent } = require("../services/adAccountsService");
 const { updateCampaigns } = require("../services/campaignsService");
 const { updateAdsets } = require("../services/adsetsService");
 const {
@@ -11,7 +11,8 @@ const {
   getAdCampaigns,
   addFacebookData,
   getAdsets,
-  getFacebookPixels
+  getFacebookPixels,
+  getAdAccountsTodaySpent
 } = require("../services/facebookService");
 const { updatePixels } = require("../services/pixelsService.js");
 
@@ -63,7 +64,7 @@ async function updateFacebookInsights(date) {
 
     const facebookInsights = [];
     const adAccountsIdsMap = {};
-    for (const account of accounts) {
+    for (const account of accounts) {      
       const adAccounts = await getAccountAdAccounts(account.id);
       adAccounts.forEach((item) => {
         adAccountsIdsMap[item.provider_id] = item.id;
@@ -80,6 +81,32 @@ async function updateFacebookInsights(date) {
     console.log('FINISH UPDATING FACEBOOK INSIGHTS')
   } catch (e) {
     console.log('UPDATING FACEBOOK INSIGHTS ERROR')
+    console.log(e)
+  }
+}
+
+async function updateFacebookAdAccountsTodaySpent(date) {
+  try {
+    console.log('START UPDATING FACEBOOK AD ACCOUNTS TODAY SPENT')
+    const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
+ 
+    const adAccountsIdsMap = {};
+    for (const account of accounts) {      
+      const adAccounts = await getAccountAdAccounts(account.id);
+      adAccounts.forEach((item) => {
+        adAccountsIdsMap[item.provider_id] = item.id;
+      });
+      const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
+      const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
+
+      const AdAccountsData = await getAdAccountsTodaySpent(account.token, adAccountsIds, date);      
+      
+      await updateUserAdAccountsTodaySpent(AdAccountsData);      
+    }
+
+    console.log('FINISH UPDATING FACEBOOK AD ACCOUNTS TODAY SPENT')
+  } catch (e) {
+    console.log('UPDATING FACEBOOK AD ACCOUNTS TODAY SPENT ERROR')
     console.log(e)
   }
 }
@@ -182,5 +209,6 @@ function processFacebookAdsets(accountId, adsets, adAccountsMap) {
 
 module.exports = {
   updateFacebookData,
-  updateFacebookInsights
+  updateFacebookInsights,
+  updateFacebookAdAccountsTodaySpent
 };

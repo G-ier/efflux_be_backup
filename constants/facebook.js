@@ -11,9 +11,15 @@ const adAccountFields = [
   'timezone_offset_hours_utc',
 ];
 
+const adAccountFieldsForTodaySpent = [
+  'spent'
+];
+
 const fieldsFilter = adAccountFields.join(',');
+const fieldsForTodaySpent = adAccountFieldsForTodaySpent.join(',');
 
 module.exports = {
   FB_API_URL,
   fieldsFilter,
+  fieldsForTodaySpent,
 };

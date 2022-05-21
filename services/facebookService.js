@@ -27,6 +27,45 @@ async function getAdAccounts(userId, token) {
   return accountsResponse.data.data;
 }
 
+async function getAdAccountsTodaySpent(access_token, Ids, date) {
+  const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
+  const dateParam = isPreset
+    ? {date_preset: date}
+    : {time_range: {since: date, until: date}};
+
+  const fields = "spend,account_id";
+
+  const allSpent = await async.mapLimit(Ids, 100, async (adSetId) => {
+    console.log('ad_account_ID', adSetId)
+    let paging = {}
+    const spent = []
+    let url = `${FB_API_URL}${adSetId}/insights`
+    let params = {
+      fields,
+      ...dateParam,
+      access_token,
+      limit: 5000,
+    }
+    do {
+      if (paging?.next) {
+        url = paging.next
+        params = {}
+      }
+      const {data = []} = await axios.get(url, {
+        params
+      }).catch((err) => {
+        console.warn(`facebook get today spent failure for ad_account ${adSetId}`, err.response?.data ?? err);
+        return {}
+      })
+      paging = {...data?.paging}
+      if (data?.data?.length) spent.push(...data?.data)
+    } while(paging?.next)    
+    return spent
+  });
+
+  return _.flatten(allSpent);
+}
+
 async function getAdInsights(access_token, adArray, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
   const dateParam = isPreset
@@ -194,4 +233,5 @@ module.exports = {
   getAdCampaigns,
   getAdCampaignIds,
   getFacebookPixels,
+  getAdAccountsTodaySpent,
 };

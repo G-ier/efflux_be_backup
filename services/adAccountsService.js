@@ -136,10 +136,24 @@ async function updateAdAccounts(account, adAccounts) {
   return db.select(...fields).table('ad_accounts').where('account_id', account.id)
 }
 
+async function updateUserAdAccountsTodaySpent(AdAccountsData){
+  if (AdAccountsData.length) {
+    await Promise.all(
+      AdAccountsData.map(item => db("ad_accounts")
+        .where("provider_id", item.account_id).first()
+        .update({
+          date_start: item.date_start,
+          today_spent: item.spend
+        }).returning('name'))
+    );
+  }
+  return;
+}
 module.exports = {
   getUserAdAccounts,
   getAdAccount,
   getAccountAdAccounts,
+  updateUserAdAccountsTodaySpent,
   update,
   updateAdAccounts
 };
