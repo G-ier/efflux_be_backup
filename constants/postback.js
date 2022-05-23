@@ -10,7 +10,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
   'last_updated',
   'pb_conversion',
   'pb_last_updated',
-  's1_conversion',
+  'nt_conversion',
   'rpc',
   'revenue',
   'est_revenue',

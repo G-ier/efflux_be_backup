@@ -57,7 +57,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as pb_conversion,
     MAX(agg_pb_s1.last_updated) as pb_last_updated,
     MAX(agg_s1.campaign) as campaign,
-    (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as s1_conversion,
+    (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as nt_conversion,
     (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_yt_conversion,    
     ROUND(
       SUM(agg_s1.revenue)::decimal /

@@ -65,10 +65,10 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   // get ave_rpc 
   let rpc_ave = data.reduce((group, row) => {
     if(!group[row.campaign]) {
-      group[row.campaign] = {campaign: row.campaign, revenue: row.revenue, s1_conversion: row.s1_conversion}
+      group[row.campaign] = {campaign: row.campaign, revenue: row.revenue, nt_conversion: row.nt_conversion}
     }
     group[row.campaign].revenue += row.revenue;
-    group[row.campaign].s1_conversion += row.s1_conversion;
+    group[row.campaign].nt_conversion += row.nt_conversion;
     return group;
   },{})
   const campaigns = Object.keys(rpc_ave).map(function(x){ return rpc_ave[x]})
@@ -86,7 +86,7 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   })  
   totals.time_zone = 0
   totals.date = 0
-  totals.rpc = Math.round(totals.revenue / totals.s1_conversion * 100) / 100  
+  totals.rpc = Math.round(totals.revenue / totals.nt_conversion * 100) / 100  
   const yt_rpc = Math.round(totals.yt_revenue / totals.s1_yt_conversion * 100) / 100      
   if(rpc_count.length <= 5) {
     data = data.map(item => {      
@@ -109,7 +109,7 @@ function mapValuesForSpreadsheet(data, columns, alias) {
       est_roi: Math.round((item.pb_conversion * item.rpc - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
       profit: item.revenue - item.amount_spent, 
       est_profit: item.pb_conversion * item.rpc - item.amount_spent,
-      ave_rpc: Math.round(ave_rpc[0]?.revenue / ave_rpc[0]?.s1_conversion * 100) / 100 || null
+      ave_rpc: Math.round(ave_rpc[0]?.revenue / ave_rpc[0]?.nt_conversion * 100) / 100 || null
     }
     return preferredOrder(result, columns)
   })
