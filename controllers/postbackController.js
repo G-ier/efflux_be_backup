@@ -2,6 +2,7 @@ const models = require("../common/helpers");
 const uaParser = require('ua-parser-js');
 const moment = require("moment-timezone");
 const md5 = require("md5");
+const { todayYMD, todayHH } = require('../common/day');
 
 async function trackSystem1(req) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
