@@ -62,9 +62,19 @@ function calculateValuesForSpreadsheet(data, columns) {
 }
 
 function mapValuesForSpreadsheet(data, columns, alias) {
+  // get ave_rpc 
+  let rpc_ave = data.reduce((group, row) => {
+    if(!group[row.campaign]) {
+      group[row.campaign] = {campaign: row.campaign, revenue: row.revenue, s1_conversion: row.s1_conversion}
+    }
+    group[row.campaign].revenue += row.revenue;
+    group[row.campaign].s1_conversion += row.s1_conversion;
+    return group;
+  },{})
+  const campaigns = Object.keys(rpc_ave).map(function(x){ return rpc_ave[x]})
   let rpc_count = data.filter(el => el['rpc']);
   const totals = columns.reduce((acc, column) => {
-    data.forEach(item => {
+    data.forEach(item => {      
       if(Number.isFinite(item[column])) {    
         if(acc[column]) acc[column] += item[column] || 0
         else acc[column] = item[column] || 0
@@ -79,24 +89,27 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   totals.rpc = Math.round(totals.revenue / totals.s1_conversion * 100) / 100  
   const yt_rpc = Math.round(totals.yt_revenue / totals.s1_yt_conversion * 100) / 100      
   if(rpc_count.length <= 5) {
-    data = data.map(item => {
+    data = data.map(item => {      
       return {
         ...item,
-        rpc: item.yt_rpc
+        rpc: item.yt_rpc,
       }
     })
     totals.rpc = yt_rpc;
   }
+  console.log('campaigns', campaigns)
   totals.roi = Math.round((totals.revenue - totals.amount_spent) / totals.amount_spent * 100 * 100 ) / 100  
   totals.est_revenue = Math.round((totals.pb_conversion * totals.rpc) * 100 ) / 100  
   data = [totals, ...data]  
-  const rows = data.map(item => {    
+  const rows = data.map(item => { 
+    const ave_rpc = campaigns?.filter(el => el.campaign === item.campaign)
     const result = {
       ...item,          
       est_revenue: item.pb_conversion * item.rpc,      
       est_roi: Math.round((item.pb_conversion * item.rpc - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
       profit: item.revenue - item.amount_spent, 
       est_profit: item.pb_conversion * item.rpc - item.amount_spent,
+      ave_rpc: Math.round(ave_rpc[0]?.revenue / ave_rpc[0]?.s1_conversion * 100) / 100 || null
     }
     return preferredOrder(result, columns)
   })
@@ -184,7 +197,7 @@ async function updatePB_Spreadsheet() {
 
   let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), dayBeforeYesterdayYMD(null, 'UTC') , 'campaign_id');  
   todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
-
+  // console.log('todayData',todayData)
   let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD('UTC'));
   todayTotalSpent = mapValuesForSpreadsheet(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL FACEBOOK")  
 

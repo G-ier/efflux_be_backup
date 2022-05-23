@@ -18,7 +18,8 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     GROUP BY fb.${groupBy}
   ),
   agg_s1 AS (
-    SELECT s1.${groupBy},
+    SELECT s1.${groupBy}, 
+      MAX(s1.campaign) as campaign,
       MAX(s1.last_updated) as last_updated,
       CAST(SUM(s1.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s1.clicks) AS INTEGER) as conversion
@@ -35,15 +36,6 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       INNER JOIN campaigns c ON s2.campaign_id = c.id AND c.traffic_source = 'facebook'
     WHERE s2.date > '${yestStartDate}' AND s2.date <= '${startDate}'
     GROUP BY s2.${groupBy}
-  ),
-  agg_s3 AS (
-    SELECT s3.${groupBy}, s3.campaign,      
-      CAST(SUM(s3.revenue)::decimal AS FLOAT) as revenue,
-      CAST(SUM(s3.clicks) AS INTEGER) as conversion
-    FROM system1 as s3
-      INNER JOIN campaigns c ON s3.campaign_id = c.id AND c.traffic_source = 'facebook'
-    WHERE s3.date > '${startDate}' AND s3.date <= '${endDate}'
-    GROUP BY s3.${groupBy}, s3.campaign
   ),
   agg_pb_s1 AS (
     SELECT pb_s1.${groupBy},
@@ -64,12 +56,13 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     MAX(agg_fb.last_updated) as last_updated,
     (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as pb_conversion,
     MAX(agg_pb_s1.last_updated) as pb_last_updated,
+    MAX(agg_s1.campaign) as campaign,
     (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as s1_conversion,
-    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_yt_conversion,
+    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_yt_conversion,    
     ROUND(
       SUM(agg_s1.revenue)::decimal /
       CASE SUM(agg_s1.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversion)::decimal END,
-    2) as rpc,    
+    2) as rpc,
     ROUND(
       SUM(agg_s2.revenue)::decimal /
       CASE SUM(agg_s2.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s2.conversion)::decimal END,

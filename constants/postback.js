@@ -21,7 +21,8 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
   'est_roi',
   'yt_rpc',
   'yt_revenue',
-  's1_yt_conversion'
+  's1_yt_conversion',
+  'ave_rpc'
 ]
 };
 
