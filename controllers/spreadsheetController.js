@@ -65,14 +65,49 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   // get ave_rpc 
   let rpc_ave = data.reduce((group, row) => {
     if(!group[row.campaign]) {
-      group[row.campaign] = {campaign: row.campaign, revenue: row.revenue, nt_conversion: row.nt_conversion}
+      group[row.campaign] = {...row}
     }
     group[row.campaign].revenue += row.revenue;
+    group[row.campaign].yt_revenue += row.yt_revenue;
     group[row.campaign].nt_conversion += row.nt_conversion;
+    group[row.campaign].s1_nt_conversion += row.s1_nt_conversion;
+    return group;
+  },{})
+  let yt_rpc_ave = data.reduce((group, row) => {
+    if(!group[row.yt_campaign]) {
+      group[row.yt_campaign] = {...row}
+    }
+    group[row.yt_campaign].revenue += row.revenue;
+    group[row.yt_campaign].yt_revenue += row.yt_revenue;
+    group[row.yt_campaign].nt_conversion += row.nt_conversion;
+    group[row.yt_campaign].s1_nt_conversion += row.s1_nt_conversion;
     return group;
   },{})
   const campaigns = Object.keys(rpc_ave).map(function(x){ return rpc_ave[x]})
+  const yt_campaigns = Object.keys(yt_rpc_ave).map(function(x){ return yt_rpc_ave[x]})
   let rpc_count = data.filter(el => el['rpc']);
+  
+  
+  
+  if(rpc_count.length <= 5) {
+    data = data.map(item => { 
+      const ave_rpc = yt_campaigns?.filter(el => el.campaign === item.campaign)
+      return {
+        ...item,
+        rpc: item.yt_rpc,
+        ave_rpc:  Math.round(ave_rpc[0]?.yt_revenue / ave_rpc[0]?.s1_yt_conversion * 100) / 100 || null 
+      }
+    })    
+  }
+  else{
+    data = data.map(item => {    
+      const ave_rpc = campaigns?.filter(el => el.campaign === item.campaign)       
+      return {
+        ...item,
+        ave_rpc: Math.round(ave_rpc[0]?.revenue / ave_rpc[0]?.nt_conversion * 100) / 100 || null  
+      }    
+    })
+  }  
   const totals = columns.reduce((acc, column) => {
     data.forEach(item => {      
       if(Number.isFinite(item[column])) {    
@@ -84,32 +119,25 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   }, {
     campaign_name: alias, 
   })  
+  const yt_rpc = Math.round(totals.yt_revenue / totals.s1_yt_conversion * 100) / 100      
   totals.time_zone = 0
   totals.date = 0
   totals.rpc = Math.round(totals.revenue / totals.nt_conversion * 100) / 100  
-  const yt_rpc = Math.round(totals.yt_revenue / totals.s1_yt_conversion * 100) / 100      
-  if(rpc_count.length <= 5) {
-    data = data.map(item => {      
-      return {
-        ...item,
-        rpc: item.yt_rpc,
-      }
-    })
-    totals.rpc = yt_rpc;
-  }
-  console.log('campaigns', campaigns)
   totals.roi = Math.round((totals.revenue - totals.amount_spent) / totals.amount_spent * 100 * 100 ) / 100  
-  totals.est_revenue = Math.round((totals.pb_conversion * totals.rpc) * 100 ) / 100  
-  data = [totals, ...data]  
+  totals.ave_rpc = totals.ave_rpc / data.filter(el => el.ave_rpc > 0).length  
+  totals.est_revenue = Math.round(((totals.pb_conversion - totals.nt_conversion) * totals.ave_rpc + totals.revenue) * 100 ) / 100  
+  
+  if(rpc_count.length <= 5) totals.rpc = yt_rpc; // get yesterday rpc
+  data = [totals, ...data]
   const rows = data.map(item => { 
-    const ave_rpc = campaigns?.filter(el => el.campaign === item.campaign)
+    
     const result = {
       ...item,          
-      est_revenue: item.pb_conversion * item.rpc,      
-      est_roi: Math.round((item.pb_conversion * item.rpc - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
+      est_revenue: (item.pb_conversion - item.nt_conversion) * item.ave_rpc + item.revenue,      
+      est_roi: Math.round(((item.pb_conversion - item.nt_conversion) * item.ave_rpc + item.revenue - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
       profit: item.revenue - item.amount_spent, 
-      est_profit: item.pb_conversion * item.rpc - item.amount_spent,
-      ave_rpc: Math.round(ave_rpc[0]?.revenue / ave_rpc[0]?.nt_conversion * 100) / 100 || null
+      est_profit: item.pb_conversion * item.rpc - item.amount_spent,    
+     
     }
     return preferredOrder(result, columns)
   })

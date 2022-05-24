@@ -29,7 +29,8 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     GROUP BY s1.${groupBy}
   ),
   agg_s2 AS (
-    SELECT s2.${groupBy},      
+    SELECT s2.${groupBy},
+      MAX(s2.campaign) as campaign,
       CAST(SUM(s2.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s2.clicks) AS INTEGER) as conversion
     FROM system1 as s2
@@ -57,6 +58,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as pb_conversion,
     MAX(agg_pb_s1.last_updated) as pb_last_updated,
     MAX(agg_s1.campaign) as campaign,
+    MAX(agg_s2.campaign) as yt_campaign,
     (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as nt_conversion,
     (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_yt_conversion,    
     ROUND(
