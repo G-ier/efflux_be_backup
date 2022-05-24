@@ -88,7 +88,7 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   let rpc_count = data.filter(el => el['rpc']);
   
   
-  
+  data = data.filter(item => item.campaign_name != null)
   if(rpc_count.length <= 5) {
     data = data.map(item => { 
       const ave_rpc = yt_campaigns?.filter(el => el.campaign === item.campaign)
@@ -129,15 +129,14 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   
   if(rpc_count.length <= 5) totals.rpc = yt_rpc; // get yesterday rpc
   data = [totals, ...data]
-  const rows = data.map(item => { 
-    
+  const rows = data.map(item => {     
     const result = {
-      ...item,          
+      ...item, 
+      time_zone: item.time_zone >= 0 ? 'UTC +' + item.time_zone:'UTC -' + item.time_zone,
       est_revenue: (item.pb_conversion - item.nt_conversion) * item.ave_rpc + item.revenue,      
       est_roi: Math.round(((item.pb_conversion - item.nt_conversion) * item.ave_rpc + item.revenue - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
       profit: item.revenue - item.amount_spent, 
-      est_profit: item.pb_conversion * item.rpc - item.amount_spent,    
-     
+      est_profit: item.pb_conversion * item.rpc - item.amount_spent,
     }
     return preferredOrder(result, columns)
   })
@@ -227,7 +226,7 @@ async function updatePB_Spreadsheet() {
   todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
   // console.log('todayData',todayData)
   let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD('UTC'));
-  todayTotalSpent = mapValuesForSpreadsheet(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL FACEBOOK")  
+  todayTotalSpent = mapValuesForSpreadsheet(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")  
 
   let todayDataDiff = mapValuesForSpreadsheetDiff(todayData.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
   todayData = {...todayData, rows: [todayTotalSpent.rows[0], todayData.rows[0], todayDataDiff].concat(todayData.rows.slice(1))}
