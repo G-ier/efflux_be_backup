@@ -87,11 +87,13 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   const yt_campaigns = Object.keys(yt_rpc_ave).map(function(x){ return yt_rpc_ave[x]})
   let rpc_count = data.filter(el => el['rpc']);
   
-  
+  // console.log('yt_campaigns',yt_campaigns)
+  // console.log('campaigns',campaigns)
+  // console.log('rpc_count',rpc_count.length)
   data = data.filter(item => item.campaign_name != null)
   if(rpc_count.length <= 5) {
     data = data.map(item => { 
-      const ave_rpc = yt_campaigns?.filter(el => el.campaign === item.campaign)
+      const ave_rpc = yt_campaigns?.filter(el => el.yt_campaign === item.yt_campaign)
       return {
         ...item,
         rpc: item.yt_rpc,
