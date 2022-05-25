@@ -22,6 +22,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
   'yt_rpc',
   'yt_revenue',
   's1_yt_conversion',
+  'live_cpa',
   'ave_rpc'
 ]
 };

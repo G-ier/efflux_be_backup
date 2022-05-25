@@ -139,6 +139,7 @@ function mapValuesForSpreadsheet(data, columns, alias) {
       est_roi: Math.round(((item.pb_conversion - item.nt_conversion) * item.ave_rpc + item.revenue - item.amount_spent) / item.amount_spent * 100 * 100 ) / 100,
       profit: item.revenue - item.amount_spent, 
       est_profit: item.pb_conversion * item.rpc - item.amount_spent,
+      live_cpa: Math.round(item.amount_spent / item.pb_conversion * 100 ) / 100
     }
     return preferredOrder(result, columns)
   })
