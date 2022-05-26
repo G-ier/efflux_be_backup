@@ -24,8 +24,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     GROUP BY fb.${groupBy}
   ),
   agg_s1 AS (
-    SELECT s1.${groupBy}, 
-      MAX(s1.campaign) as campaign,
+    SELECT s1.${groupBy},
       MAX(s1.last_updated) as last_updated,
       CAST(SUM(s1.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s1.clicks) AS INTEGER) as conversion
@@ -36,7 +35,6 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
   ),
   agg_s2 AS (
     SELECT s2.${groupBy},
-      MAX(s2.campaign) as campaign,
       CAST(SUM(s2.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s2.clicks) AS INTEGER) as conversion
     FROM system1 as s2
@@ -46,7 +44,8 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
   ),
   agg_sedo AS (
     SELECT sedo.${mapField[groupBy]},
-      COUNT(sedo.id) as conversions,
+      COUNT(sedo.id) as conversion,
+      MAX(sedo.last_updated) as last_updated,
       SUM(sedo.amount::decimal) as revenue
     FROM sedo_conversions as sedo
         INNER JOIN campaigns c ON sedo.sub1 = c.id AND c.traffic_source = 'facebook'
@@ -70,29 +69,13 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     MAX(agg_fb.time_zone) as time_zone,
     (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as amount_spent,
     MAX(agg_fb.last_updated) as last_updated,
-    (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as pb_conversion,
-    MAX(agg_pb_s1.last_updated) as pb_last_updated,
-    MAX(agg_s1.campaign) as campaign,
-    MAX(agg_s2.campaign) as yt_campaign,
-    (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as nt_conversion,
-    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as yt_nt_conversion,    
-    ROUND(
-      SUM(agg_s1.revenue)::decimal /
-      CASE SUM(agg_s1.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversion)::decimal END,
-    2) as rpc,
-    ROUND(
-      SUM(agg_s2.revenue)::decimal /
-      CASE SUM(agg_s2.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s2.conversion)::decimal END,
-    2) as yt_rpc,    
-    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as revenue,    
-    (CASE WHEN SUM(agg_s2.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s2.revenue) AS FLOAT) END) as yt_revenue,    
-    MAX(agg_s1.last_updated) as s1_last_updated,
-    ROUND(
-      CASE SUM(agg_fb.spend)::decimal
-      WHEN 0 THEN null ELSE
-        (SUM(agg_s1.revenue)::decimal - SUM(agg_fb.spend)::decimal) / SUM(agg_fb.spend)::decimal * 100
-      END
-    , 2) as roi,
+    (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as s1_pb_conversion,
+    MAX(agg_pb_s1.last_updated) as s1_pb_last_updated,
+    (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as s1_conversion,
+    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_conversion_y,     
+    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as s1_revenue,    
+    (CASE WHEN SUM(agg_s2.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s2.revenue) AS FLOAT) END) as s1_revenue_y,    
+    MAX(agg_s1.last_updated) as s1_last_updated,    
     SUM(agg_sedo.conversions) as sd_pb_conversion,
     ROUND(SUM(agg_sedo.revenue)::decimal, 2) as sd_pb_revenue
   FROM agg_fb

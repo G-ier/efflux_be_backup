@@ -1,59 +1,65 @@
 module.exports = class MetricsCalculator1 {
   constructor({
-                amount_spent,
-                ad_account_name,
-                status, 
-                date,
-                last_updated,
-                pb_last_updated,
-                s1_last_updated,
-                yt_revenue,
-                yt_s1_conversion,  
-                network,              
-                revenue,
-                pb_conversion,
-                cr_conversions,
-                s1_conversion,
-                pb_search,
-                pb_impressions,
-                ts_conversions,
-                fb_impressions,
-                link_clicks,
-                pb_unique_conversions,
-                cr_unique_conversions,
-                visitors,
-                campaign_id,
-                campaign_name,
-                adset_id,
-                adset_name,
-              }) {
-    this.amount_spent = amount_spent
-    this.revenue = revenue
-    this.last_updated = last_updated
-    this.pb_last_updated = pb_last_updated
-    this.yt_nt_conversion = yt_nt_conversion
-    this.yt_revenue = yt_revenue
-    this.nt_last_updated = nt_last_updated
+    campaign_id,
+    adset_id,
+    date,
+    campaign_name,
+    network,
+    status,
+    ad_account_name,
+    time_zone,
+    amount_spent,
+    last_updated,
+    s1_pb_conversion,
+    s1_pb_last_updated,
+    s1_conversion,
+    s1_conversion_y,
+    s1_revenue,
+    s1_revenue_y,
+    s1_last_updated,
+    sd_pb_conversion,
+    sd_pb_revenue    
+  }) {
+    this.campaign_id = campaign_id
+    this.adset_id = adset_id
     this.date = date
+    this.campaign_name = campaign_name
     this.network = network
     this.status = status
     this.ad_account_name = ad_account_name
-    this.pb_conversion = pb_conversion
-    this.cr_conversions = cr_conversions
-    this.pb_search = pb_search
-    this.pb_impressions = pb_impressions
-    this.ts_conversions = ts_conversions
-    this.fb_impressions = fb_impressions
-    this.link_clicks = link_clicks
-    this.pb_unique_conversions = pb_unique_conversions
-    this.cr_unique_conversions = cr_unique_conversions
-    this.visitors = visitors
-    this.campaign_id = campaign_id
-    this.campaign_name = campaign_name
-    this.adset_id = adset_id
-    this.adset_name = adset_name
-    this.nt_conversion = this.nt_conversion || this.cr_conversions || 0
-    this.network_unique_conversions = this.cr_unique_conversions || 0
+    this.time_zone = time_zone
+    this.amount_spent = amount_spent
+    this.last_updated = last_updated
+    this.s1_pb_conversion = s1_pb_conversion
+    this.s1_pb_last_updated = s1_pb_last_updated
+    this.s1_conversion = s1_conversion
+    this.s1_conversion_y = s1_conversion_y
+    this.s1_revenue = s1_revenue
+    this.s1_revenue_y = s1_revenue_y
+    this.s1_last_updated = s1_last_updated
+    this.sd_pb_conversion = sd_pb_conversion
+    this.sd_pb_revenue = sd_pb_revenue
+    switch(this.network) {
+      case 'system1':
+        this.nt_conversion = this.s1_conversion || 0
+        this.revenue = this.s1_revenue || 0
+        this.nt_last_updated = this.s1_last_updated || 0
+        break;
+      case 'crossroads':
+        this.nt_conversion = this.cr_conversion || 0
+        this.revenue = this.cr_revenue || 0
+        this.nt_last_updated = this.cr_last_updated || 0
+        break;
+      case 'sedo': 
+        this.nt_conversion = this.sd_conversion || 0
+        this.revenue = this.sd_revenue || 0
+        this.nt_last_updated = this.sd_last_updated || 0
+        break;
+      default: 
+        this.nt_conversion = 0
+        this.revenue =  0
+        this.nt_last_updated = 0        
+    }
   }
 
   get rpc() {
