@@ -44,27 +44,36 @@ module.exports = class MetricsCalculator1 {
         this.nt_conversion = this.s1_conversion || 0
         this.revenue = this.s1_revenue || 0
         this.nt_last_updated = this.s1_last_updated || 0
+        this.pb_conversion = this.s1_pb_conversion || 0 
         break;
       case 'crossroads':
         this.nt_conversion = this.cr_conversion || 0
         this.revenue = this.cr_revenue || 0
         this.nt_last_updated = this.cr_last_updated || 0
+        this.pb_conversion = this.cr_pb_conversion || 0 
         break;
       case 'sedo': 
         this.nt_conversion = this.sd_conversion || 0
         this.revenue = this.sd_revenue || 0
         this.nt_last_updated = this.sd_last_updated || 0
+        this.pb_conversion = this.sd_pb_conversion || 0 
         break;
       default: 
         this.nt_conversion = 0
         this.revenue =  0
         this.nt_last_updated = 0        
+        this.pb_conversion = 0
     }
   }
 
   get rpc() {
-    if (!this.network_conversions) return 0
-    return this.revenue / this.network_conversions
+    if (!this.nt_conversion) return 0
+    return this.revenue / this.nt_conversion
+  }
+
+  get ave_rpc() {
+    if (!this.nt_conversion) return 0
+    return this.revenue / this.nt_conversion
   }
 
   get live_cpa() {
@@ -73,7 +82,7 @@ module.exports = class MetricsCalculator1 {
   }
 
   get est_revenue() {
-    return this.pb_conversion * this.rpc
+    return (this.pb_conversion - this.nt_conversion) * this.ave_rpc + this.revenue
   }
 
   get roi() {
@@ -91,54 +100,54 @@ module.exports = class MetricsCalculator1 {
   }
 
   get est_profit() {
-    return this.est_revenue - this.amount_spent
+    return this.pb_conversion * this.rpc - this.amount_spent
   }
 
-  get facebook_ctr() {
-    if (!this.fb_impressions) return 0
-    return this.link_clicks / this.fb_impressions * 100
-  }
+  // get facebook_ctr() {
+  //   if (!this.fb_impressions) return 0
+  //   return this.link_clicks / this.fb_impressions * 100
+  // }
 
-  get cpa() {
-    if (!this.network_conversions) return 0
-    return this.amount_spent / this.network_conversions
-  }
+  // get cpa() {
+  //   if (!this.network_conversions) return 0
+  //   return this.amount_spent / this.network_conversions
+  // }
 
-  get rpi() {
-    if (!this.fb_impressions) return 0
-    return this.revenue / this.fb_impressions
-  }
+  // get rpi() {
+  //   if (!this.fb_impressions) return 0
+  //   return this.revenue / this.fb_impressions
+  // }
 
-  get cpc() {
-    if (!this.link_clicks) return 0
-    return this.amount_spent / this.link_clicks
-  }
+  // get cpc() {
+  //   if (!this.link_clicks) return 0
+  //   return this.amount_spent / this.link_clicks
+  // }
 
-  get live_ctr() {
-    if (!this.link_clicks) return 0
-    return this.pb_conversion / this.link_clicks * 100
-  }
+  // get live_ctr() {
+  //   if (!this.link_clicks) return 0
+  //   return this.pb_conversion / this.link_clicks * 100
+  // }
 
-  get cpm() {
-    if (!this.fb_impressions) return 0
-    return this.amount_spent / this.fb_impressions * 1000
-  }
+  // get cpm() {
+  //   if (!this.fb_impressions) return 0
+  //   return this.amount_spent / this.fb_impressions * 1000
+  // }
 
-  get rpm() {
-    if (!this.fb_impressions) return 0
-    return this.revenue / this.fb_impressions * 1000
-  }
+  // get rpm() {
+  //   if (!this.fb_impressions) return 0
+  //   return this.revenue / this.fb_impressions * 1000
+  // }
 
-  get unique_cpa() {
-    if (!this.network_unique_conversions) return 0
-    return this.amount_spent / this.network_unique_conversions
-  }
+  // get unique_cpa() {
+  //   if (!this.network_unique_conversions) return 0
+  //   return this.amount_spent / this.network_unique_conversions
+  // }
 
 
-  get unique_rpc() {
-    if (!this.network_unique_conversions) return 0
-    return this.revenue / this.network_unique_conversions
-  }
+  // get unique_rpc() {
+  //   if (!this.network_unique_conversions) return 0
+  //   return this.revenue / this.network_unique_conversions
+  // }
 
   round(num) {
     return typeof num === 'number' ? num.toFixed(2) : num
