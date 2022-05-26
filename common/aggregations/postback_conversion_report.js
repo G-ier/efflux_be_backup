@@ -64,6 +64,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
   SELECT agg_fb.${groupBy},
     MAX(agg_fb.date) as date,
     MAX(agg_fb.campaign_name) as campaign_name,
+    MAX(agg_fb.network) as network,
     MAX(agg_fb.status) as status,
     MAX(agg_fb.ad_account_name) as ad_account_name,
     MAX(agg_fb.time_zone) as time_zone,
