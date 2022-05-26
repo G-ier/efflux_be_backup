@@ -7,6 +7,7 @@ const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysA
 const spreadsheets = require("../services/spreadsheetService");
 const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
+const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
 const {CROSSROADS_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
@@ -61,6 +62,47 @@ function calculateValuesForSpreadsheet(data, columns) {
   return { columns, rows }
 }
 
+function calculateValuesForSpreadsheet1(data, columns) {
+  const totals = columns.reduce((acc, column) => {
+    data.forEach(item => {
+      if(Number.isFinite(item[column])) {
+        if(acc[column]) acc[column] += item[column] || 0
+        else acc[column] = item[column] || 0
+      }
+    })
+    return acc
+  }, {
+    campaign_name: 'TOTAL'
+  })
+
+  data = [totals, ...data]
+  const rows = data.map(item => {
+    const calcResult = new MetricsCalculator1(item)
+    const result = {
+      ...calcResult,
+      // rpi: calcResult.rpi,
+      // cpa: calcResult.cpa,
+      // facebook_ctr: calcResult.facebook_ctr,
+      // live_ctr: calcResult.live_ctr,
+      est_revenue: calcResult.est_revenue,
+      roi: calcResult.roi,
+      est_roi: calcResult.est_roi,
+      profit: calcResult.profit,
+      // cpm: calcResult.cpm,
+      // rpm: calcResult.rpm,
+      est_profit: calcResult.est_profit,
+      rpc: calcResult.rpc,
+      live_cpa: calcResult.live_cpa,
+      // cpc: calcResult.cpc,
+      // unique_cpa: calcResult.unique_cpa,
+      // unique_rpc: calcResult.unique_rpc,
+    }
+    return preferredOrder(result, columns)
+  })
+
+  return { columns, rows }
+}
+
 function mapValuesForSpreadsheet(data, columns, alias) {
   // get ave_rpc 
   let rpc_ave = data.reduce((group, row) => {
@@ -86,11 +128,7 @@ function mapValuesForSpreadsheet(data, columns, alias) {
   const campaigns = Object.keys(rpc_ave).map(function(x){ return rpc_ave[x]})
   const yt_campaigns = Object.keys(yt_rpc_ave).map(function(x){ return yt_rpc_ave[x]})
   let rpc_count = data.filter(el => el['rpc']);
-  
-  // console.log('yt_campaigns',yt_campaigns)
-  // console.log('campaigns',campaigns)
-  // console.log('rpc_count',rpc_count.length)
-  data = data.filter(item => item.campaign_name != null)
+
   if(rpc_count.length <= 5) {
     data = data.map(item => { 
       const ave_rpc = yt_campaigns?.filter(el => el.yt_campaign === item.yt_campaign)
@@ -218,19 +256,23 @@ async function updateS1_Spreadsheet() {
   todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
   await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
 }
-
+ 
 
 async function updatePB_Spreadsheet() {
   const spreadsheetId = process.env.PB_SPPEADSHEET_ID;
-  const sheetName = process.env.PB_SHEET_NAME;
+  const sheetName ='Campaign local' || process.env.PB_SHEET_NAME;
   const sheetNameByAdset = process.env.PB_SHEET_BY_ADSET;
 
   let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), dayBeforeYesterdayYMD(null, 'UTC') , 'campaign_id');  
-  todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
-  // console.log('todayData',todayData)
-  let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD('UTC'));
-  todayTotalSpent = mapValuesForSpreadsheet(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")  
+  // todayData = mapValuesForSpreadsheet(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
+  todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
+  console.log('todayData', todayData)
+  return;
 
+  let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD('UTC'));
+  // remove empty campaign
+  todayData.rows = todayData.rows.filter(item => item.campaign_name != null)
+  todayTotalSpent = mapValuesForSpreadsheet(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")    
   let todayDataDiff = mapValuesForSpreadsheetDiff(todayData.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
   todayData = {...todayData, rows: [todayTotalSpent.rows[0], todayData.rows[0], todayDataDiff].concat(todayData.rows.slice(1))}
 

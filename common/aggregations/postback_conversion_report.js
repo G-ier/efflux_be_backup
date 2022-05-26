@@ -1,6 +1,11 @@
 const db = require('../../data/dbConfig');
 const selects = require("./selects");
 
+const mapField = {
+  campaign_id: 'sub1',
+  adset_id: 'sub3'
+}
+
 const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy) => db.raw(`
   WITH agg_fb AS (
     SELECT fb.${groupBy},
@@ -10,9 +15,10 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       MAX(c.status) as status,
       MAX(ada.name) as ad_account_name,
       MAX(ada.tz_offset) as time_zone,
+      MAX(c.network) as network,
       CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
     FROM facebook as fb
-      INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.network = 'system1'
+      INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
       INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id
     WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
     GROUP BY fb.${groupBy}
@@ -38,6 +44,15 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     WHERE s2.date > '${yestStartDate}' AND s2.date <= '${startDate}'
     GROUP BY s2.${groupBy}
   ),
+  agg_sedo AS (
+    SELECT sedo.${mapField[groupBy]},
+      COUNT(sedo.id) as conversions,
+      SUM(sedo.amount::decimal) as revenue
+    FROM sedo_conversions as sedo
+        INNER JOIN campaigns c ON sedo.sub1 = c.id AND c.traffic_source = 'facebook'
+    WHERE sedo.date > '${startDate}' AND sedo.date <= '${endDate}'
+    GROUP BY sedo.${mapField[groupBy]}  
+  ),
   agg_pb_s1 AS (
     SELECT pb_s1.${groupBy},
       MAX(pb_s1.updated_at) as last_updated,
@@ -60,7 +75,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     MAX(agg_s1.campaign) as campaign,
     MAX(agg_s2.campaign) as yt_campaign,
     (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as nt_conversion,
-    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_yt_conversion,    
+    (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as yt_nt_conversion,    
     ROUND(
       SUM(agg_s1.revenue)::decimal /
       CASE SUM(agg_s1.conversion)::decimal WHEN 0 THEN null ELSE SUM(agg_s1.conversion)::decimal END,
@@ -77,11 +92,14 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       WHEN 0 THEN null ELSE
         (SUM(agg_s1.revenue)::decimal - SUM(agg_fb.spend)::decimal) / SUM(agg_fb.spend)::decimal * 100
       END
-    , 2) as roi
+    , 2) as roi,
+    SUM(agg_sedo.conversions) as sd_pb_conversion,
+    ROUND(SUM(agg_sedo.revenue)::decimal, 2) as sd_pb_revenue
   FROM agg_fb
     FULL OUTER JOIN agg_s1 USING (${groupBy})
     FULL OUTER JOIN agg_s2 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})
+    FULL OUTER JOIN agg_sedo ON agg_sedo.${mapField[groupBy]} = agg_fb.${groupBy}
   GROUP BY agg_fb.${groupBy}
 `);
 
