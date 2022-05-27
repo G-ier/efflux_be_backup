@@ -53,7 +53,7 @@ const facebookDataJob = new CronJob(
 
 const initializeFBCron = () => {
   // updateFacebookInsightsJob('today') // for one time
-  updatePB_Spreadsheet()
+  // updatePB_Spreadsheet()
   if (!disableCron) {
     newFacebookYesterdayCron.start();
     facebookInsisghtsJob.start();

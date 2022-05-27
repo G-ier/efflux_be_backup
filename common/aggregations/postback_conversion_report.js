@@ -26,6 +26,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
   agg_s1 AS (
     SELECT s1.${groupBy},
       MAX(s1.last_updated) as last_updated,
+      MAX(s1.campaign) as campaign,
       CAST(SUM(s1.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s1.clicks) AS INTEGER) as conversion
     FROM system1 as s1
@@ -35,6 +36,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
   ),
   agg_s2 AS (
     SELECT s2.${groupBy},
+      MAX(s2.campaign) as campaign,
       CAST(SUM(s2.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s2.clicks) AS INTEGER) as conversion
     FROM system1 as s2
@@ -45,7 +47,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
   agg_sedo AS (
     SELECT sedo.${mapField[groupBy]},
       COUNT(sedo.id) as conversion,
-      MAX(sedo.last_updated) as last_updated,
+      MAX(sedo.updated_at) as last_updated,
       SUM(sedo.amount::decimal) as revenue
     FROM sedo_conversions as sedo
         INNER JOIN campaigns c ON sedo.sub1 = c.id AND c.traffic_source = 'facebook'
@@ -74,16 +76,19 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     MAX(agg_pb_s1.last_updated) as s1_pb_last_updated,
     (CASE WHEN SUM(agg_s1.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s1.conversion) AS FLOAT) END) as s1_conversion,
     (CASE WHEN SUM(agg_s2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_s2.conversion) AS FLOAT) END) as s1_conversion_y,     
-    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as s1_revenue,    
+    (CASE WHEN SUM(agg_s1.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s1.revenue) AS FLOAT) END) as s1_revenue, 
     (CASE WHEN SUM(agg_s2.revenue) IS null THEN 0 ELSE CAST(SUM(agg_s2.revenue) AS FLOAT) END) as s1_revenue_y,    
     MAX(agg_s1.last_updated) as s1_last_updated,    
-    SUM(agg_sedo.conversions) as sd_pb_conversion,
+    MAX(agg_s1.campaign) as s1_campaign,    
+    MAX(agg_s2.campaign) as s1_campaign_y,    
+    MAX(agg_sedo.last_updated) as sd_last_updated,    
+    SUM(agg_sedo.conversion) as sd_pb_conversion,
     ROUND(SUM(agg_sedo.revenue)::decimal, 2) as sd_pb_revenue
   FROM agg_fb
     FULL OUTER JOIN agg_s1 USING (${groupBy})
     FULL OUTER JOIN agg_s2 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})
-    FULL OUTER JOIN agg_sedo ON agg_sedo.${mapField[groupBy]} = agg_fb.${groupBy}
+    FULL OUTER JOIN agg_sedo ON agg_sedo.${mapField[groupBy]} = agg_fb.${groupBy}  
   GROUP BY agg_fb.${groupBy}
 `);
 

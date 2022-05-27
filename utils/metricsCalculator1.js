@@ -17,8 +17,13 @@ module.exports = class MetricsCalculator1 {
     s1_revenue,
     s1_revenue_y,
     s1_last_updated,
+    s1_campaign,
     sd_pb_conversion,
-    sd_pb_revenue    
+    sd_pb_revenue,
+    ave_revenue,
+    ave_conversion,
+    ave_revenue_y,
+    ave_conversion_y,
   }) {
     this.campaign_id = campaign_id
     this.adset_id = adset_id
@@ -27,7 +32,7 @@ module.exports = class MetricsCalculator1 {
     this.network = network
     this.status = status
     this.ad_account_name = ad_account_name
-    this.time_zone = time_zone
+    this.time_zone = time_zone >= 0 ? 'UTC +' + time_zone : 'UTC ' + time_zone
     this.amount_spent = amount_spent
     this.last_updated = last_updated
     this.s1_pb_conversion = s1_pb_conversion
@@ -37,43 +42,32 @@ module.exports = class MetricsCalculator1 {
     this.s1_revenue = s1_revenue
     this.s1_revenue_y = s1_revenue_y
     this.s1_last_updated = s1_last_updated
+    this.s1_campaign = s1_campaign
     this.sd_pb_conversion = sd_pb_conversion
     this.sd_pb_revenue = sd_pb_revenue
-    switch(this.network) {
-      case 'system1':
-        this.nt_conversion = this.s1_conversion || 0
-        this.revenue = this.s1_revenue || 0
-        this.nt_last_updated = this.s1_last_updated || 0
-        this.pb_conversion = this.s1_pb_conversion || 0 
-        break;
-      case 'crossroads':
-        this.nt_conversion = this.cr_conversion || 0
-        this.revenue = this.cr_revenue || 0
-        this.nt_last_updated = this.cr_last_updated || 0
-        this.pb_conversion = this.cr_pb_conversion || 0 
-        break;
-      case 'sedo': 
-        this.nt_conversion = this.sd_conversion || 0
-        this.revenue = this.sd_revenue || 0
-        this.nt_last_updated = this.sd_last_updated || 0
-        this.pb_conversion = this.sd_pb_conversion || 0 
-        break;
-      default: 
-        this.nt_conversion = 0
-        this.revenue =  0
-        this.nt_last_updated = 0        
-        this.pb_conversion = 0
-    }
+    this.ave_revenue = ave_revenue // ave_rpc
+    this.ave_conversion = ave_conversion // ave_rpc
+    this.ave_revenue_y = ave_revenue_y // ave_rpc
+    this.ave_conversion_y = ave_conversion_y // ave_rpc
+    this.nt_conversion = this.s1_conversion || 0
+    this.nt_conversion_y = this.s1_conversion_y || 0
+    this.revenue = this.s1_revenue || this.cr_revenue || this.sd_revenue || 0
+    this.revenue_y = this.s1_revenue_y || 0
+    this.nt_last_updated = this.s1_last_updated || this.cr_last_updated || this.sd_last_updated || 0
+    this.pb_last_updated = this.s1_pb_last_updated || this.cr_pb_last_updated || this.sd_pb_last_updated || 0
+    this.pb_conversion = this.s1_pb_conversion || this.cr_pb_conversion || this.sd_pb_conversion || 0     
   }
 
   get rpc() {
-    if (!this.nt_conversion) return 0
-    return this.revenue / this.nt_conversion
+    if (this.nt_conversion) return this.revenue / this.nt_conversion  // today
+    else if (this.nt_conversion_y) return this.revenue_y / this.nt_conversion_y  // yesterday
+    return 0
   }
 
   get ave_rpc() {
-    if (!this.nt_conversion) return 0
-    return this.revenue / this.nt_conversion
+    if (this.ave_conversion) return this.ave_revenue / this.ave_conversion  // today
+    else if (this.ave_conversion_y) return this.ave_revenue_y / this.ave_conversion_y  // yesterday
+    return 0
   }
 
   get live_cpa() {
