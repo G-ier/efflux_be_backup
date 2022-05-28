@@ -1,6 +1,7 @@
 const models = require("../common/helpers");
 const uaParser = require('ua-parser-js');
 const moment = require("moment-timezone");
+const db = require('../data/dbConfig');
 const md5 = require("md5");
 const { todayYMD, todayHH } = require('../common/day');
 
@@ -23,15 +24,15 @@ async function trackSystem1(req) {
   console.log('req.query', req.query)
 
   const {
-    fbclid, gclid, ad_id, adset_id, campaign_id, ad_name, adset_name, campaign_name, fbclick, fbserp, fbland, rskey = '', sub_id, sub_id2 = ''
+    fbclid, gclid, ad_id, adset_id, campaign_id, ad_name, adset_name, campaign_name, fbclick, fbserp, fbland, rskey = '', sub_id, sub_id2 = '', userIp, userAgent
   } = req.query;
 
   const event_name = fbclick || fbserp || fbland
   console.log('EVENT', event_name)
 
   const [campaign_id2, ad_id2, campaign_name2] = sub_id2.split('|');
-  const ua = uaParser(user_agent);
-
+  const ua = uaParser(userAgent);
+console.log('useragent', userAgent)
   const fbc = `fb.1.${moment()
     .tz('America/Los_Angeles')
     .unix()}.${fbclid}`;
@@ -54,7 +55,7 @@ async function trackSystem1(req) {
     device: ua.device.name,
     os: `${ua.os.name} - ${ua.os.version}`,
     browser: ua.browser.name,
-    ip,
+    ip:userIp,
     event_time: moment().unix(),
     posted_to_ts: false,
     campaign_id: campaign_id || campaign_id2,
@@ -62,10 +63,23 @@ async function trackSystem1(req) {
     adset_id,
     referrer_url,
   }
-
-  const [conversionId] = await models.add('s1_conversions', conversionData);
-
-  console.log('SYSTEM1 EVENT', conversionId, conversionData);
+  const existData = await db.select('*').from('s1_conversions')
+   .whereRaw('event_time >= ?', [moment().unix() - 2])
+   .whereRaw('event_name >= ?', [event_name.toLowerCase()])
+   .whereRaw('date >= ?', [moment().format('YYYY-MM-DD')])
+   .whereRaw('fbclid >= ?', [fbclid])
+   .whereRaw('campaign_id >= ?', [campaign_id || campaign_id2])
+   .whereRaw('ad_id >= ?', [ad_id || ad_id2])
+   .whereRaw('adset_id >= ?', [adset_id])
+   .whereRaw('ip >= ?', [userIp])
+   console.log('existData', existData);
+   if(existData.length == 0){
+     const [conversionId] = await models.add('s1_conversions', conversionData);
+     console.log('SYSTEM1 EVENT', conversionId, conversionData);
+   }
+   else {
+     console.log(' SYSTEM1 EVENT DUPLICATES')
+   }
   return { message: 'No click id or pixel id provided, please send a click id down and try again' }
 }
 
