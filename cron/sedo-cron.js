@@ -1,20 +1,14 @@
 const {CronJob} = require('cron');
 const Rules = require('../constants/cron');
 const {
-  updateSystem1Hourly,
-  updateSystem1Daily
-} = require('../services/system1Service');
+  updateSedoDaily
+} = require('../services/sedoService');
 const {updateSedo_Spreadsheet} = require('../controllers/spreadsheetController');
 const disableCron = process.env.DISABLE_CRON === 'true';
 
-const updateSystem1DataHourlyJob = new CronJob(
-  Rules.SYSTEM1_HOURLY,
-  updateSystem1Hourly,
-);
-
-const updateSystem1DataDailyJob = new CronJob(
-  Rules.SYSTEM1_DAILY,
-  updateSystem1Daily,
+const updateSedoDataDailyJob = new CronJob(
+  Rules.SEDO_DAILY,
+  updateSedoDaily,
 );
 
 const updatePostbackSheetJob = new CronJob(
@@ -22,10 +16,11 @@ const updatePostbackSheetJob = new CronJob(
   updateSedo_Spreadsheet,
 );
 
-function initializeSedoCron() {   
-  // updateSedo_Spreadsheet(); 
+function initializeSedoCron() {     
+  // updateSedoDaily()
   if (!disableCron) {    
     updatePostbackSheetJob.start();
+    updateSedoDataDailyJob.start();
   }
 
   // Debug Code
