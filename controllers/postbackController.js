@@ -42,38 +42,38 @@ console.log('useragent', userAgent)
   //   .unix()}.${ip.replace(/\.|\:/g, '')}`;
 
   const event_id = md5(rskey + fbclid);
-
-  const conversionData = {
-    date: moment().format('YYYY-MM-DD'),
-    hour: moment().format('HH'),
-    fbclid,
-    gclid,
-    event_id,
-    fbc,
-    rskey,
-    event_name: event_name.toLowerCase(),
-    device: ua.device.name,
-    os: `${ua.os.name} - ${ua.os.version}`,
-    browser: ua.browser.name,
-    ip:userIp,
-    event_time: moment().unix(),
-    posted_to_ts: false,
-    campaign_id: campaign_id || campaign_id2,
-    ad_id: ad_id || ad_id2,
-    adset_id,
-    referrer_url,
-  }
+  
   const existData = await db.select('*').from('s1_conversions')
    .whereRaw('event_time >= ?', [moment().unix() - 2])
-   .whereRaw('event_name >= ?', [event_name.toLowerCase()])
-   .whereRaw('date >= ?', [moment().format('YYYY-MM-DD')])
-   .whereRaw('fbclid >= ?', [fbclid])
-   .whereRaw('campaign_id >= ?', [campaign_id || campaign_id2])
-   .whereRaw('ad_id >= ?', [ad_id || ad_id2])
-   .whereRaw('adset_id >= ?', [adset_id])
-   .whereRaw('ip >= ?', [userIp])
+   .whereRaw('event_name = ?', [event_name.toLowerCase()])
+   .whereRaw('date = ?', [moment().format('YYYY-MM-DD')])
+   .whereRaw('fbclid = ?', [fbclid])
+   .whereRaw('campaign_id = ?', [campaign_id || campaign_id2])
+   .whereRaw('ad_id = ?', [ad_id || ad_id2])
+   .whereRaw('adset_id = ?', [adset_id])
+   .whereRaw('ip = ?', [userIp])
    console.log('existData', existData);
    if(existData.length == 0){
+    const conversionData = {
+      date: moment().format('YYYY-MM-DD'),
+      hour: moment().format('HH'),
+      fbclid,
+      gclid,
+      event_id,
+      fbc,
+      rskey,
+      event_name: event_name.toLowerCase(),
+      device: ua.device.name,
+      os: `${ua.os.name} - ${ua.os.version}`,
+      browser: ua.browser.name,
+      ip:userIp,
+      event_time: moment().unix(),
+      posted_to_ts: false,
+      campaign_id: campaign_id || campaign_id2,
+      ad_id: ad_id || ad_id2,
+      adset_id,
+      referrer_url,
+    }
      const [conversionId] = await models.add('s1_conversions', conversionData);
      console.log('SYSTEM1 EVENT', conversionId, conversionData);
    }
