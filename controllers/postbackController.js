@@ -100,7 +100,7 @@ async function trackSedo(req) {
 
 
   const conversionData = {
-    date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+    date: moment().tz(process.env.SEDO_TIMEZONE).format('YYYY-MM-DD'),
     amount,
     sub1,
     sub2,
