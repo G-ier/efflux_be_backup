@@ -21,10 +21,11 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
       INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id
     WHERE 
-      ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour >=ada.tz_offset OR
-      ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD('UTC')}' AND hour < ada.tz_offset OR
-      ada.tz_offset < 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour <= 23-ada.tz_offset OR
-      ada.tz_offset < 0 AND fb.date > '${yestStartDate}' AND fb.date <= '${startDate}' AND hour > 23-ada.tz_offset
+      ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour >=ada.tz_offset  AND c.network = 'system1' OR
+      ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD('UTC')}' AND hour < ada.tz_offset AND c.network = 'system1'  OR
+      ada.tz_offset < 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour <= 23-ada.tz_offset AND c.network = 'system1'  OR
+      ada.tz_offset < 0 AND fb.date > '${yestStartDate}' AND fb.date <= '${startDate}' AND hour > 23-ada.tz_offset AND c.network = 'system1' OR
+      c.network != 'system1' AND fb.date > '${startDate}' AND fb.date <= '${endDate}'
     GROUP BY fb.${groupBy}
   ),
   agg_s1 AS (
@@ -87,7 +88,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       INNER JOIN campaigns c ON pb_s1.campaign_id = c.id AND c.traffic_source = 'facebook'
     WHERE pb_s1.date > '${startDate}' AND pb_s1.date <= '${endDate}'
     GROUP BY pb_s1.${groupBy}
-  )
+  ) 
   SELECT agg_fb.${groupBy},
     MAX(agg_fb.date) as date,
     MAX(agg_fb.campaign_name) as campaign_name,
