@@ -18,7 +18,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       MAX(c.network) as network,
       CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
     FROM facebook as fb
-      INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
+      INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook' AND c.network = 'system1'
       INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id
     WHERE 
       ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour >=ada.tz_offset  AND c.network = 'system1' OR
