@@ -1,6 +1,6 @@
 const db = require('../../data/dbConfig');
 const selects = require("./selects");
-
+const {tomorrowYMD} = require('./../day')
 const mapField = {
   campaign_id: 'sub1',
   adset_id: 'sub3'
@@ -20,7 +20,11 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     FROM facebook as fb
       INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
       INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id
-    WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
+    WHERE 
+      ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour >=ada.tz_offset OR
+      ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD('UTC')}' AND hour < ada.tz_offset OR
+      ada.tz_offset < 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour <= 23-ada.tz_offset OR
+      ada.tz_offset < 0 AND fb.date > '${yestStartDate}' AND fb.date <= '${startDate}' AND hour > 23-ada.tz_offset
     GROUP BY fb.${groupBy}
   ),
   agg_s1 AS (
