@@ -45,8 +45,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       CAST(SUM(s2.revenue)::decimal AS FLOAT) as revenue,
       CAST(SUM(s2.clicks) AS INTEGER) as conversion
     FROM system1 as s2
-      INNER JOIN campaigns c ON s2.campaign_id = c.id AND c.traffic_source = 'facebook'
-    WHERE s2.date > '${yestStartDate}' AND s2.date <= '${startDate}'
+      INNER JOIN campaigns c ON s2.campaign_id = c.id AND c.traffic_source = 'facebook'    
     GROUP BY s2.${groupBy}
   ),
   agg_sedo AS (
@@ -76,9 +75,8 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       MAX(sd2.domain) as campaign,
       CAST(SUM(sd2.clicks) AS INTEGER) as conversion
     FROM sedo as sd2
-        INNER JOIN campaigns c ON sd2.sub1 = c.id AND c.traffic_source = 'facebook'
-    WHERE sd2.date > '${yestStartDate}' AND sd2.date <= '${startDate}'
-    GROUP BY sd2.${mapField[groupBy]}  
+      INNER JOIN campaigns c ON sd2.sub1 = c.id AND c.traffic_source = 'facebook'    
+    GROUP BY sd2.${mapField[groupBy]}
   ),
   agg_pb_s1 AS (
     SELECT pb_s1.${groupBy},
