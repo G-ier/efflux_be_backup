@@ -116,12 +116,13 @@ const sheetsArr = [
     accounts:[
       '1034095180851493',
       '1203724037104268',
-      '674170930541058'
+      '674170930541058',
+      '502814237897602'
     ]
   },
   {
     spreadsheetId:"1dJFEgKe_eGwV9_xa9hNtY9-dk7qA-oJpAhasHrxqlmE",
-    sheetName:"Campaign", // Patrick 
+    sheetName:"Campaign", // sedo 
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
@@ -133,7 +134,7 @@ const sheetsArr = [
   },
   {
     spreadsheetId:"1qg1RO6iNatq2hGIIX9zJHIlF9ZR0kUYWucV_ryQEiJg",
-    sheetName:"Campaign", // Patrick 
+    sheetName:"Campaign", // utc14 
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
