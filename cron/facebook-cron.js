@@ -17,7 +17,7 @@ async function updateFacebookInsightsJob(day) {
     date = yesterdayYMD(null, 'UTC');
     // date = yesterdayYMD();
   }
-  await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
+  // await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
   await updateFacebookInsights(date);
   updatePB_Spreadsheet()
 }
