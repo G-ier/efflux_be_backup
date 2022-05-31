@@ -140,7 +140,7 @@ async function addFacebookData(data, date) {
       const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({date}).del();
     console.info(`DELETED ${removed} rows on date ${date}`);
   }
-
+  data = [... new Map(data.map(item => [item['campaign_id'] + item['hour'], item])).values()]
   await add("facebook", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
 
