@@ -6,7 +6,9 @@ const mapField = {
   adset_id: 'sub3'
 }
 
-const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy, accounts) => db.raw(`
+const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy, accounts) =>{
+
+return db.raw(`
   WITH agg_fb AS (
     SELECT fb.${groupBy},
       MAX(fb.date) as date,
@@ -19,12 +21,12 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
     FROM facebook as fb
       INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
-      INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id AND ada.fb_account_id = ANY('{${accounts}}')
+      INNER JOIN ad_accounts ada ON ada.account_id = '20' AND fb.ad_account_id = ada.fb_account_id AND ada.fb_account_id = ANY('{${accounts}}')
     WHERE 
-      ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour >=ada.tz_offset  AND c.network = 'system1' OR
-      ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD('UTC')}' AND hour < ada.tz_offset AND c.network = 'system1'  OR
-      ada.tz_offset < 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour <= 23-ada.tz_offset AND c.network = 'system1'  OR
-      ada.tz_offset < 0 AND fb.date > '${yestStartDate}' AND fb.date <= '${startDate}' AND hour > 23-ada.tz_offset AND c.network = 'system1' OR
+      ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND fb.hour >=ada.tz_offset  AND c.network = 'system1' OR
+      ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD(null, 'UTC')}' AND fb.hour < ada.tz_offset AND c.network = 'system1'  OR
+      ada.tz_offset < 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND fb.hour <= 23-ada.tz_offset AND c.network = 'system1'  OR
+      ada.tz_offset < 0 AND fb.date > '${yestStartDate}' AND fb.date <= '${startDate}' AND fb.hour > 23-ada.tz_offset AND c.network = 'system1' OR
       c.network != 'system1' AND fb.date > '${startDate}' AND fb.date <= '${endDate}'
     GROUP BY fb.${groupBy}
   ),
@@ -124,5 +126,5 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
     FULL OUTER JOIN agg_sd2 ON agg_sd2.${mapField[groupBy]} = agg_fb.${groupBy}  
   GROUP BY agg_fb.${groupBy}
 `);
-
+  }
 module.exports = aggregatePostbackConversionReport;

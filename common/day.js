@@ -14,8 +14,8 @@ function dayBeforeYesterdayYMD(date, timeZone = 'America/Los_Angeles') {
   return m.subtract(2, 'days').format('YYYY-MM-DD');
 }
 
-function tomorrowYMD(date) {
-  const m = date ? moment(date) : moment().tz('America/Los_Angeles');
+function tomorrowYMD(date, timeZone = 'America/Los_Angeles') {
+  const m = date ? moment(date) : moment().tz(timeZone);
   return m.add(1, 'days').format('YYYY-MM-DD');
 }
 

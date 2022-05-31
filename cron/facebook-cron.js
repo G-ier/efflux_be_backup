@@ -14,7 +14,7 @@ async function updateFacebookInsightsJob(day) {
     date = todayYMD('UTC');
   }
   else if (day === "yesterday") {
-    date = yesterdayYMD('UTC');
+    date = yesterdayYMD(null, 'UTC');
     // date = yesterdayYMD();
   }
   await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
@@ -52,7 +52,7 @@ const facebookDataJob = new CronJob(
 )
 
 const initializeFBCron = () => {
-  // updateFacebookInsightsJob('today') // for one time
+  // updateFacebookInsightsJob('yesterday') // for one time
   // updatePB_Spreadsheet()
   if (!disableCron) {
     newFacebookYesterdayCron.start();
@@ -64,6 +64,7 @@ const initializeFBCron = () => {
 
   // DEBUG: uncomment to test immediately
   // updateFacebookData('today').then(() => {console.log('debug done')});
+  // updateFacebookInsights(yesterdayYMD(null, 'UTC')).then(() => {console.log('debug done')});
 };
 
 module.exports = {
