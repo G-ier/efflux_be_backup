@@ -6,7 +6,7 @@ const mapField = {
   adset_id: 'sub3'
 }
 
-const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy) => db.raw(`
+const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy, accounts) => db.raw(`
   WITH agg_fb AS (
     SELECT fb.${groupBy},
       MAX(fb.date) as date,
@@ -19,7 +19,7 @@ const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, gr
       CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
     FROM facebook as fb
       INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook' AND c.network = 'system1'
-      INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id
+      INNER JOIN ad_accounts ada ON fb.ad_account_id = ada.fb_account_id AND ada.fb_account_id = ANY('{${accounts}}')
     WHERE 
       ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND hour >=ada.tz_offset  AND c.network = 'system1' OR
       ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD('UTC')}' AND hour < ada.tz_offset AND c.network = 'system1'  OR
