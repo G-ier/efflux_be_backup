@@ -92,8 +92,59 @@ const pbNetMapFields = {
     conversion_y: 'sd_conversion_y',
   }
 }
+
+const sheetsArr = [
+  {
+    spreadsheetId:"17UZgfakONENIwmR5qQL_betjWxnPHzi5cYGOFzghhoo",
+    sheetName:"Campaign", //Sean 
+    sheetNameByAdset:"Adset",
+    sheetName_Y:"Campaign For Yesterday",
+    sheetNameByAdset_Y: "Adset For Yesterday",
+    accounts: [
+      '457104922468676',
+      '331918771765149',
+      '1161945751010436',
+      '633235807758573'
+    ]
+  },
+  {
+    spreadsheetId:"13bqIaR5dMC3OjlKAAeJpRQWbrTViUZOZk9_3P1gNL2k",
+    sheetName:"Campaign", // Patrick 
+    sheetNameByAdset:"Adset",
+    sheetName_Y:"Campaign For Yesterday",
+    sheetNameByAdset_Y: "Adset For Yesterday",
+    accounts:[
+      '1034095180851493',
+      '1203724037104268',
+      '674170930541058'
+    ]
+  },
+  {
+    spreadsheetId:"1dJFEgKe_eGwV9_xa9hNtY9-dk7qA-oJpAhasHrxqlmE",
+    sheetName:"Campaign", // Patrick 
+    sheetNameByAdset:"Adset",
+    sheetName_Y:"Campaign For Yesterday",
+    sheetNameByAdset_Y: "Adset For Yesterday",
+    accounts:[
+      '699028961232077',
+      '347091310767011',
+      '3229297027345837'
+    ]
+  },
+  {
+    spreadsheetId:"1qg1RO6iNatq2hGIIX9zJHIlF9ZR0kUYWucV_ryQEiJg",
+    sheetName:"Campaign", // Patrick 
+    sheetNameByAdset:"Adset",
+    sheetName_Y:"Campaign For Yesterday",
+    sheetNameByAdset_Y: "Adset For Yesterday",
+    accounts:[
+      '995674611312775'
+    ]
+  },
+]
 module.exports = {
   POSTBACK_SHEET_VALUES,
   POSTBACK_EXCLUDEDFIELDS,
   pbNetMapFields,
+  sheetsArr
 }
