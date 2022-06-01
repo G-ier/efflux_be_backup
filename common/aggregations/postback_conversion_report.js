@@ -114,10 +114,11 @@ return db.raw(`
     MAX(agg_sd2.campaign) as sd_campaign_y,
     (CASE WHEN SUM(agg_sd2.conversion) IS null THEN 0 ELSE CAST(SUM(agg_sd2.conversion) AS FLOAT) END) as sd_conversion_y,
     (CASE WHEN SUM(agg_sd2.revenue) IS null THEN 0 ELSE CAST(SUM(agg_sd2.revenue) AS FLOAT) END) as sd_revenue_y, 
-    MAX(agg_sedo.last_updated) as sd_pb_last_updated,    
-    SUM(agg_sedo.conversion) as sd_pb_conversion,
-    ROUND(SUM(agg_sedo.revenue)::decimal, 2) as sd_pb_revenue
-  FROM agg_fb
+    MAX(agg_sedo.last_updated) as sd_pb_last_updated,
+    (CASE WHEN SUM(agg_sedo.conversion) IS null THEN 0 ELSE CAST(SUM(agg_sedo.conversion) AS FLOAT) END) as sd_pb_conversion,   
+    (CASE WHEN SUM(agg_sedo.revenue) IS null THEN 0 ELSE CAST(SUM(agg_sedo.revenue) AS FLOAT) END) as sd_pb_revenue
+    
+  FROM agg_fb 
     FULL OUTER JOIN agg_s1 USING (${groupBy})
     FULL OUTER JOIN agg_s2 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})

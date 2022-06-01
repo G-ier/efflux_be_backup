@@ -34,6 +34,10 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'sd_last_updated', // sedo
     'sd_conversion', // sedo
     'sd_revenue', // sedo
+    'sd_campaign',
+    'sd_conversion_y',
+    'sd_revenue_y',
+    'sd_campaign_y',
     'sd_pb_revenue', // sedo postback
     'sd_pb_conversion',
     'sd_pb_last_updated',
@@ -57,6 +61,10 @@ const POSTBACK_EXCLUDEDFIELDS = [
   'sd_last_updated', // sedo
   'sd_conversion', // sedo
   'sd_revenue', // sedo
+  'sd_campaign',
+  'sd_conversion_y',
+  'sd_revenue_y',
+  'sd_campaign',
   'sd_pb_revenue', // sedo postback
   'sd_pb_conversion',
   'sd_pb_last_updated',
