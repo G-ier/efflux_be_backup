@@ -166,7 +166,7 @@ async function updateData(data, date) {
     result.updated = updated.length;
   }
 
-  result.skipped = skipArr.length;
+   result.skipped = skipArr.length;
 
   console.log(`ADDED ${result.created} ROWS FROM SEDO`);
   console.log(`UPDATED ${result.updated} ROWS FROM SEDO`);
@@ -178,7 +178,7 @@ async function updateData(data, date) {
 async function updateSedoDaily() {
   try{   
     const date = yesterdayYMD(null, process.env.SEDO_TIMEZONE);
-    console.log('date', date, process.env.SEDO_TIMEZONE)
+    
     const dailyDomainStats = await getDomainParkingSubIdReport(date);
     console.log('dailyDomainStats', dailyDomainStats)
     await updateData(dailyDomainStats, yesterdayYMD(null, 'UTC'));

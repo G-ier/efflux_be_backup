@@ -1,3 +1,5 @@
+const {tomorrowYMD} = require('./../day')
+
 module.exports = {
   PB_SYSTEM1:
             `CAST(COUNT(CASE WHEN event_name = 'lead' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
@@ -71,5 +73,19 @@ module.exports = {
   CROSSROADS_PIXEL: `CAST(ROUND(MAX(cr_pixel.revenue)::decimal, 2) AS FLOAT) as pixel_revenue,
                      CAST(MAX(cr_pixel.conversions) AS INTEGER) as pixel_conversions,
                      CAST(ROUND(MAX(cr_pixel_last_3d.revenue)::decimal, 2) AS FLOAT) as pixel_revenue_last_3d,
-                     CAST(MAX(cr_pixel_last_3d.conversions) AS INTEGER) as pixel_conversions_last_3d`
+                     CAST(MAX(cr_pixel_last_3d.conversions) AS INTEGER) as pixel_conversions_last_3d`,
+  WHERE_BY_NETWORK: (option) => {
+		switch (option.network){
+			case 'system1':
+				return `
+					ada.tz_offset >= 0 AND fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND fb.hour >=ada.tz_offset  AND c.network = 'system1' OR
+					ada.tz_offset >= 0 AND fb.date > '${option.endDate}' AND fb.date <= '${tomorrowYMD(null, option.timezone)}' AND fb.hour < ada.tz_offset AND c.network = 'system1'  OR
+					ada.tz_offset < 0 AND fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND fb.hour <= 23-ada.tz_offset AND c.network = 'system1'  OR
+					ada.tz_offset < 0 AND fb.date > '${option.yestStartDate}' AND fb.date <= '${option.startDate}' AND fb.hour > 23-ada.tz_offset AND c.network = 'system1' `
+				
+			case 'unknown':
+				return `					
+					fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND c.network = 'unknown' `
+		}
+	}
 }
