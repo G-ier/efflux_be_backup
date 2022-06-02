@@ -135,9 +135,9 @@ function cleanInsightsData(result) {
 
 async function addFacebookData(data, date) {
   const removeIds = _.map(data, "campaign_id");
-
+  const date_start = _.map(data, "date");
   if (removeIds.length) {
-      const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({date}).del();
+      const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({date:date_start[0]}).del();
     console.info(`DELETED ${removed} rows on date ${date}`);
   }
   data = [... new Map(data.map(item => [item['campaign_id'] + item['hour'], item])).values()]

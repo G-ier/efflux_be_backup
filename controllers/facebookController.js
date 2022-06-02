@@ -62,7 +62,7 @@ async function updateFacebookInsights(date) {
     console.log('START UPDATING FACEBOOK INSIGHTS')
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
 
-    const facebookInsights = [];
+    // const facebookInsights = [];
     const adAccountsIdsMap = {};
     for (const account of accounts) {      
       const adAccounts = await getAccountAdAccounts(account.id);
@@ -73,11 +73,11 @@ async function updateFacebookInsights(date) {
       const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
 
       const accountInsights = await getAdInsights(account.token, adAccountsIds, date);
-      facebookInsights.push(...accountInsights);
+      // facebookInsights.push(...accountInsights);
+      const processedInsights = processFacebookInsights(accountInsights, date)
+      await addFacebookData(processedInsights, date);
     }
 
-    const processedInsights = processFacebookInsights(facebookInsights, date)
-    await addFacebookData(processedInsights, date);
     console.log('FINISH UPDATING FACEBOOK INSIGHTS')
   } catch (e) {
     console.log('UPDATING FACEBOOK INSIGHTS ERROR')
@@ -125,7 +125,7 @@ function processFacebookInsights(data, date) {
       adset_id: item.adset_id,
       campaign_id: item.campaign_id,
       campaign_name: item.campaign_name,      
-      date: date,
+      date: item.date_start,
       hour: +(hour.startsWith('0') ? hour.replace('0', '') : hour),
       impressions: item?.impressions ?? 0,
       link_clicks: item?.inline_link_clicks ?? 0,
