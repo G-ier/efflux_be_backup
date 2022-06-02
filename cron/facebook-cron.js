@@ -7,18 +7,7 @@ const {updatePB_Spreadsheet} = require('../controllers/spreadsheetController');
 
 const disableCron = process.env.DISABLE_CRON === "true";
 
-async function updateFacebookInsightsJob(day) {
-
-  let date;
-  if (day === "today") {
-    // date = todayYMD();
-    date = todayYMD('UTC');
-  }
-  else if (day === "yesterday") {
-    date = yesterdayYMD(null, 'UTC');
-    // date = yesterdayYMD();
-  }
-  // await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
+async function updateFacebookInsightsJob(date) { 
   await updateFacebookInsights(date);
   updatePB_Spreadsheet()
 }
@@ -53,8 +42,8 @@ const facebookDataJob = new CronJob(
 )
  
 const initializeFBCron = () => {
-  // updateFacebookInsightsJob('yesterday') // for one time
-  updatePB_Spreadsheet()
+  // updateFacebookInsightsJob('today') // for one time
+  // updatePB_Spreadsheet()
   // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))
   if (!disableCron) {
     newFacebookYesterdayCron.start();
