@@ -1,12 +1,11 @@
 const db = require('../../data/dbConfig');
-const selects = require("./selects");
-const {tomorrowYMD} = require('./../day')
+const {WHERE_BY_NETWORK} = require("./selects");
 const mapField = {
   campaign_id: 'sub1',
   adset_id: 'sub3'
 }
 
-const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy, accounts) =>{
+const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy, accounts, network, timezone) =>{
 
 return db.raw(`
   WITH agg_fb AS (
@@ -23,11 +22,7 @@ return db.raw(`
       INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
       INNER JOIN ad_accounts ada ON ada.account_id = '20' AND fb.ad_account_id = ada.fb_account_id AND ada.fb_account_id = ANY('{${accounts}}')
     WHERE 
-      ada.tz_offset >= 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND fb.hour >=ada.tz_offset  AND c.network = 'system1' OR
-      ada.tz_offset >= 0 AND fb.date > '${endDate}' AND fb.date <= '${tomorrowYMD(null, 'UTC')}' AND fb.hour < ada.tz_offset AND c.network = 'system1'  OR
-      ada.tz_offset < 0 AND fb.date > '${startDate}' AND fb.date <= '${endDate}' AND fb.hour <= 23-ada.tz_offset AND c.network = 'system1'  OR
-      ada.tz_offset < 0 AND fb.date > '${yestStartDate}' AND fb.date <= '${startDate}' AND fb.hour > 23-ada.tz_offset AND c.network = 'system1' OR
-      c.network != 'system1' AND fb.date > '${startDate}' AND fb.date <= '${endDate}'
+      ${WHERE_BY_NETWORK({network, startDate, endDate, yestStartDate, timezone})}           
     GROUP BY fb.${groupBy}
   ),
   agg_s1 AS (
@@ -70,7 +65,7 @@ return db.raw(`
         INNER JOIN campaigns c ON sd.sub1 = c.id AND c.traffic_source = 'facebook'
     WHERE sd.date > '${startDate}' AND sd.date <= '${endDate}'
     GROUP BY sd.${mapField[groupBy]}  
-  ),
+  ), 
   agg_sd2 AS (
     SELECT sd2.${mapField[groupBy]},
       CAST(SUM(sd2.earnings)::decimal AS FLOAT) as revenue,      

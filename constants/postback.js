@@ -47,7 +47,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'ave_conversion_y',
   ]
 };
-
+ 
 const POSTBACK_EXCLUDEDFIELDS = [
   's1_campaign', // s1 
   's1_revenue',
@@ -103,6 +103,8 @@ const pbNetMapFields = {
 
 const sheetsArr = [
   {
+    network: 'system1',
+    timezone: 'UTC',
     spreadsheetId:"17UZgfakONENIwmR5qQL_betjWxnPHzi5cYGOFzghhoo",
     sheetName:"Campaign", //Sean 
     sheetNameByAdset:"Adset",
@@ -116,6 +118,8 @@ const sheetsArr = [
     ]
   },
   {
+    network: 'system1',
+    timezone: 'UTC',
     spreadsheetId:"13bqIaR5dMC3OjlKAAeJpRQWbrTViUZOZk9_3P1gNL2k",
     sheetName:"Campaign", // Patrick 
     sheetNameByAdset:"Adset",
@@ -129,6 +133,8 @@ const sheetsArr = [
     ]
   },
   {
+    network: 'unknown',
+    timezone: process.env.SEDO_TIMEZONE,
     spreadsheetId:"1dJFEgKe_eGwV9_xa9hNtY9-dk7qA-oJpAhasHrxqlmE",
     sheetName:"Campaign", // sedo 
     sheetNameByAdset:"Adset",
@@ -141,6 +147,8 @@ const sheetsArr = [
     ]
   },
   {
+    network: 'system1',
+    timezone: 'UTC',
     spreadsheetId:"1qg1RO6iNatq2hGIIX9zJHIlF9ZR0kUYWucV_ryQEiJg",
     sheetName:"Campaign", // utc14 
     sheetNameByAdset:"Adset",
@@ -150,6 +158,20 @@ const sheetsArr = [
       '995674611312775'
     ]
   },
+  // {
+  //   network: 'unknown', // local development 
+  //   timezone: 'CET',
+  //   spreadsheetId:"112mVXGcbs1ckvua44OcEyUl9_MexD6cUjPefOEYod3o",
+  //   sheetName:"Campaign", //Sean 
+  //   sheetNameByAdset:"Adset",
+  //   sheetName_Y:"Campaign For Yesterday",
+  //   sheetNameByAdset_Y: "Adset For Yesterday",
+  //   accounts: [
+  //     '699028961232077',
+  //     '347091310767011',
+  //     '3229297027345837'
+  //   ]
+  // },
 ]
 module.exports = {
   POSTBACK_SHEET_VALUES,
