@@ -64,6 +64,7 @@ const POSTBACK_EXCLUDEDFIELDS = [
   'sd_campaign',
   'sd_conversion_y',
   'sd_revenue_y',
+  'sd_campaign_y',
   'sd_campaign',
   'sd_pb_revenue', // sedo postback
   'sd_pb_conversion',
