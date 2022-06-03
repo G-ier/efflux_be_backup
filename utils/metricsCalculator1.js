@@ -29,10 +29,12 @@ module.exports = class MetricsCalculator1 {
     ave_conversion,
     ave_revenue_y,
     ave_conversion_y,
+    ave_rpc
   }) {
     this.campaign_id = campaign_id
     this.adset_id = adset_id
     this.date = date
+    this.ave_rpc = ave_rpc
     this.campaign_name = campaign_name
     this.network = network
     this.status = status
@@ -75,11 +77,11 @@ module.exports = class MetricsCalculator1 {
     return 0
   }
 
-  get ave_rpc() {
-    if (this.ave_conversion) return this.ave_revenue / this.ave_conversion  // today
-    else if (this.ave_conversion_y) return this.ave_revenue_y / this.ave_conversion_y  // yesterday
-    return 0
-  }
+  // get ave_rpc() {
+  //   if (this.ave_conversion) return this.ave_revenue / this.ave_conversion  // today
+  //   else if (this.ave_conversion_y) return this.ave_revenue_y / this.ave_conversion_y  // yesterday
+  //   return 0
+  // }
 
   get live_cpa() {
     if (!this.pb_conversion) return 0

@@ -1,7 +1,7 @@
 const {
   aggregateCRConversions, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -112,8 +112,8 @@ function mapAveRpc(data) {
 }
 
 function calculateValuesForSpreadsheet1(data, columns, alias) {
-  data = data.filter(item => item.campaign_name !== null)
-  data = mapAveRpc(data);
+  data = data.filter(item => item.campaign_name !== null)  
+  // data = mapAveRpc(data);
   // return;
   const totals = columns.reduce((acc, column) => {
     data.forEach(item => {
@@ -137,8 +137,7 @@ function calculateValuesForSpreadsheet1(data, columns, alias) {
       est_roi: calcResult.round(calcResult.est_roi),
       profit: calcResult.round(calcResult.profit),
       est_profit: calcResult.round(calcResult.est_profit),
-      rpc: calcResult.round(calcResult.rpc),
-      ave_rpc: calcResult.round(calcResult.ave_rpc),
+      rpc: calcResult.round(calcResult.rpc),      
       live_cpa: calcResult.round(calcResult.live_cpa),
     }
     return preferredOrder(result, columns)
@@ -245,6 +244,18 @@ function mapValuesForSpreadsheetDiff(f1, f2, columns, alias) {
   return preferredOrder(totals, columns)
 }
 
+function mergeAvgRPC(left, right){
+  const mergedData = left.map(item => {
+    const ave_rpc = right.filter(el => el.campaign == (item.s1_campaign || item.sd_campaign || item.sd_campaign_y || item.s1_campaign_y))[0]?.ave_rpc || 0    
+    return {
+      ...item,
+      ave_rpc
+    }
+  })
+  // console.log('mergedData', mergedData)
+  return mergedData;
+}
+
 async function updateCR_Spreadsheet() {
   const spreadsheetId = process.env.SEDO_SPREADSHEET_ID;
   const sheetName = process.env.PB_CR_SHEET_NAME;
@@ -309,6 +320,9 @@ async function updatePB_Spreadsheet() {
     const {spreadsheetId, sheetName, sheetNameByAdset, accounts, network, timezone} = sheetsArr[i];
     // campaign sheet
     let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone) , 'campaign_id', accounts, network, timezone);    
+    const aveByCampaignData = await aggregateCampaignConversionReport(network);
+    console.log('unknown', aveByCampaignData.rows)
+    todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
 
     let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD(timezone), accounts);    
@@ -320,6 +334,7 @@ async function updatePB_Spreadsheet() {
 
     // adset sheet
     let todayDataByAdset = await aggregatePostbackConversionReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone), 'adset_id', accounts, network, timezone);
+    todayDataByAdset.rows = mergeAvgRPC(todayDataByAdset.rows, aveByCampaignData.rows);    
     todayDataByAdset = calculateValuesForSpreadsheet1(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')], 'TOTAL SHEET')
 
     todayDataDiff = mapValuesForSpreadsheetDiff(todayDataByAdset.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
@@ -335,16 +350,21 @@ async function updateYesterdayPB_Spreadsheet() {
   for(let i=0;i<sheetsArr.length;i++){
     const {spreadsheetId, sheetName_Y: sheetName, sheetNameByAdset_Y: sheetNameByAdset, accounts, network, timezone} = sheetsArr[i];
     let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'),threeDaysAgoYMD(null, 'UTC'), 'campaign_id', accounts, network, timezone);
+    const aveByCampaignData = await aggregateCampaignConversionReport(network);
+    todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL')
 
     let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(yesterdayYMD(null, 'UTC'), accounts);    
     todayTotalSpent = calculateValuesForSpreadsheet1(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")
+    
     let todayDataDiff = mapValuesForSpreadsheetDiff(todayData.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
     todayData = {...todayData, rows: [todayTotalSpent.rows[0], todayData.rows[0], todayDataDiff].concat(todayData.rows.slice(1))}
 
     await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName , excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
     
     let todayDataByAdset = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), threeDaysAgoYMD(null, 'UTC'), 'adset_id', accounts, network, timezone);
+    
+    todayDataByAdset.rows = mergeAvgRPC(todayDataByAdset.rows, aveByCampaignData.rows);    
     todayDataByAdset = calculateValuesForSpreadsheet1(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')], 'TOTAL')
     
     todayDataDiff = mapValuesForSpreadsheetDiff(todayDataByAdset.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
