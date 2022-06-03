@@ -42,6 +42,7 @@ const facebookSystem1ByCampaignId = require('./facebook_system1_by_campaign');
 const aggregateOBConversionReport = require('./ob_conversion_report');
 const aggregatePBUnknownConversionReport = require('./pb_unknown_conversion_report');
 const aggregateFacebookAdsTodaySpentReport = require('./facebook_total_spent_by_date');
+const aggregateCampaignConversionReport = require('./campaign_conversion_report');
 
 module.exports = {
   aggregateConversionReport,
@@ -87,5 +88,6 @@ module.exports = {
   facebookSystem1ByDate,
   facebookSystem1ByCampaignId,
   aggregateOBConversionReport,
-  aggregateFacebookAdsTodaySpentReport
+  aggregateFacebookAdsTodaySpentReport,
+  aggregateCampaignConversionReport
 };

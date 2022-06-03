@@ -10,7 +10,7 @@ const disableCron = process.env.DISABLE_CRON === "true";
 async function updateFacebookInsightsJob(date) { 
   await updateFacebookInsights(date);
   updatePB_Spreadsheet()
-}
+ }
 
 async function updateFacebookDataJob() {
   await updateFacebookData(todayYMD());
@@ -42,7 +42,7 @@ const facebookDataJob = new CronJob(
 )
  
 const initializeFBCron = () => {
-  // updateFacebookInsightsJob('today') // for one time
+  // updateFacebookInsights('today') // for one time
   // updatePB_Spreadsheet()
   // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))
   if (!disableCron) {
