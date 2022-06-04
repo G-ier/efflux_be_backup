@@ -29,11 +29,15 @@ module.exports = class MetricsCalculator1 {
     ave_conversion,
     ave_revenue_y,
     ave_conversion_y,
-    ave_rpc
+    ave_rpc,
+    link_clicks,
+    fb_impressions
   }) {
     this.campaign_id = campaign_id
     this.adset_id = adset_id
     this.date = date
+    this.link_clicks = link_clicks
+    this.fb_impressions = fb_impressions
     this.ave_rpc = ave_rpc
     this.campaign_name = campaign_name
     this.network = network
