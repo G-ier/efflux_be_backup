@@ -1,9 +1,9 @@
 const CronJob = require("cron").CronJob;
 const { todayYMD, yesterdayYMD, todayHH, tomorrowYMD } = require("../common/day");
 const Rules = require("../constants/cron");
-const { updateFacebookInsights, updateFacebookData, updateFacebookAdAccountsTodaySpent} = require("../controllers/facebookController");
+const { updateFacebookInsights, updateFacebookData} = require("../controllers/facebookController");
 const moment = require("moment-timezone");
-const {updatePB_Spreadsheet} = require('../controllers/spreadsheetController');
+const {updatePB_Spreadsheet, updatePB_UnknownSpreadsheet} = require('../controllers/spreadsheetController');
 
 const disableCron = process.env.DISABLE_CRON === "true";
 
@@ -24,6 +24,7 @@ async function updateFacebookInsightsJob(day) {
   }
   // await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
   updatePB_Spreadsheet()
+  updatePB_UnknownSpreadsheet()
  }
 
 async function updateFacebookDataJob() {
@@ -58,6 +59,7 @@ const facebookDataJob = new CronJob(
 const initializeFBCron = () => {
   // updateFacebookInsightsJob('today') // for one time
   // updatePB_Spreadsheet()
+  // updatePB_UnknownSpreadsheet()
   // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))
   if (!disableCron) {
     newFacebookYesterdayCron.start();

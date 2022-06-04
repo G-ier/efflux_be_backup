@@ -11,7 +11,7 @@ const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
 const {CROSSROADS_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
-const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr} = require('../constants/postback')
+const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr} = require('../constants/postback')
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -21,6 +21,22 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
+function calculateTotalsForSpreadsheet(data, columns){
+  const totals = columns.reduce((acc, column) => {
+    data.forEach(item => {
+      if(Number.isFinite(item[column])) {
+        if(acc[column]) acc[column] += item[column] || 0
+        else acc[column] = item[column] || 0
+      }
+    })
+    return acc
+  }, {
+    campaign_name: 'TOTAL'
+  })
+
+  data = [totals, ...data]
+  return { columns, rows: data }
+}
 function calculateValuesForSpreadsheet(data, columns) {
   const totals = columns.reduce((acc, column) => {
     data.forEach(item => {
@@ -374,7 +390,20 @@ async function updateYesterdayPB_Spreadsheet() {
   }
 }
 
-
+async function updatePB_UnknownSpreadsheet() {
+  for(let i = 0; i < unknownSheetArr.length; i++){
+    let todayData = await aggregatePBUnknownConversionReport(unknownSheetArr[i]);    
+    const columns = todayData.fields.map((field) => field.name);
+    todayData = calculateTotalsForSpreadsheet(todayData.rows, columns)
+    await spreadsheets.updateSpreadsheet(
+      {rows:todayData.rows, columns},
+      {
+        spreadsheetId: unknownSheetArr[i].spreadsheetId,
+        sheetName: unknownSheetArr[i].sheetName,
+        excludedFields:unknownSheetArr[i].excludedFields
+      });
+  }
+}
 
 async function updatePR_Spreadsheet() {
   const spreadsheetId = process.env.PR_SPREADSHEET_ID
@@ -420,5 +449,6 @@ module.exports = {
   updatePR_Spreadsheet,
   updatePB_Spreadsheet,
   updateYesterdayPB_Spreadsheet,
-  updateSedo_Spreadsheet
+  updateSedo_Spreadsheet,
+  updatePB_UnknownSpreadsheet
 }
