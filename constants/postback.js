@@ -191,9 +191,37 @@ const sheetsArr = [
   //   ]
   // },
 ]
+
+const unknownSheetArr = [
+  {
+    table: 'system1',
+    spreadsheetId:"1oTrQRVA0xF6NU96NpCN9938N7XwB3Caw6cRTToZZwRw",
+    sheetName:"System1 Unknown",
+    excludedFields: ['id', 'created_at', 'utc_hour', 'last_updated']
+  },
+  {
+    table: 's1_conversions',
+    spreadsheetId:"1oTrQRVA0xF6NU96NpCN9938N7XwB3Caw6cRTToZZwRw",
+    sheetName:"S1 Postback Unknown",
+    excludedFields: ['id', 'created_at', 'fbclid','event_time','event_id','posted_to_ts', 'fbc', 'referrer_url', 'gclid', 'rskey', 'hour']
+  },
+  {
+    table: 'sedo',
+    spreadsheetId:"1oTrQRVA0xF6NU96NpCN9938N7XwB3Caw6cRTToZZwRw",
+    sheetName:"Sedo Unknown",
+    excludedFields: ['id', 'created_at', ]
+  },
+  {
+    table: 'sedo_conversions',
+    spreadsheetId:"1oTrQRVA0xF6NU96NpCN9938N7XwB3Caw6cRTToZZwRw",
+    sheetName:"Sedo Postback Unknown",
+    excludedFields: ['id', 'created_at', ]
+  },
+]
 module.exports = {
   POSTBACK_SHEET_VALUES,
   POSTBACK_EXCLUDEDFIELDS,
   pbNetMapFields,
-  sheetsArr
+  sheetsArr,
+  unknownSheetArr
 }
