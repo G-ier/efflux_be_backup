@@ -22,6 +22,8 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'live_cpa',
     'ave_rpc',
     'network',
+    'link_clicks',
+    'fb_impressions',
     's1_campaign', // s1 
     's1_revenue',
     's1_conversion',
