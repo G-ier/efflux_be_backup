@@ -1,5 +1,5 @@
 const CronJob = require("cron").CronJob;
-const { todayYMD, yesterdayYMD, todayHH } = require("../common/day");
+const { todayYMD, yesterdayYMD, todayHH, tomorrowYMD } = require("../common/day");
 const Rules = require("../constants/cron");
 const { updateFacebookInsights, updateFacebookData, updateFacebookAdAccountsTodaySpent} = require("../controllers/facebookController");
 const moment = require("moment-timezone");
@@ -7,8 +7,22 @@ const {updatePB_Spreadsheet} = require('../controllers/spreadsheetController');
 
 const disableCron = process.env.DISABLE_CRON === "true";
 
-async function updateFacebookInsightsJob(date) { 
-  await updateFacebookInsights(date);
+async function updateFacebookInsightsJob(day) {
+
+  let date;
+  if (day === "today") {
+    // date = todayYMD();
+    date = todayYMD('UTC');
+    await updateFacebookInsights(date);
+    date = tomorrowYMD(null, 'UTC');
+    await updateFacebookInsights(date);
+  }
+  else if (day === "yesterday") {
+    date = yesterdayYMD(null, 'UTC');
+    await updateFacebookInsights(date);
+    // date = yesterdayYMD();
+  }
+  // await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
   updatePB_Spreadsheet()
  }
 
@@ -42,7 +56,7 @@ const facebookDataJob = new CronJob(
 )
  
 const initializeFBCron = () => {
-  // updateFacebookInsights('today') // for one time
+  // updateFacebookInsightsJob('today') // for one time
   // updatePB_Spreadsheet()
   // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))
   if (!disableCron) {
