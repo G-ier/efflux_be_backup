@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const soapRequest = require('easy-soap-request');
 const xml2js = require('xml2js');
-const {yesterdayYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD} = require("../common/day");
 const db = require('../data/dbConfig');
 
 const parseXml = async (body) => {
@@ -44,27 +44,23 @@ const getDomainParkingFinalStatistics = async (date) => {
     'results'       : 10000,
   });
   const query = params.toString();
-  return new Promise(async (resolve, reject) => {
-    try{
-      const { response } = await soapRequest({ url: url + query, timeout: 10000 });
-      const { body, statusCode } = response;
-      if(statusCode == 200) {
-        let bodyRes = await parseXml(body);          
-        if(!bodyRes.SEDOSTATS) {          
-          throw JSON.stringify(bodyRes.SEDOFAULT.faultstring)          
-        }
-        bodyRes = await extractDomainStatistics(bodyRes);
-        resolve(bodyRes)
+  return new Promise(async (resolve, reject) => {    
+    const { response } = await soapRequest({ url: url + query, timeout: 10000 });
+    const { body, statusCode } = response;
+    if(statusCode == 200) {
+      let bodyRes = await parseXml(body);         
+      if(!bodyRes.SEDOSTATS) {          
+        reject(bodyRes.SEDOFAULT.faultstring)          
       }
-    }      
-    catch(err) {
-      reject(err)
-    }
+      bodyRes = await extractDomainStatistics(bodyRes);
+      resolve(bodyRes)
+    }    
   })  
 }
 
 const extractDomainSubIdReport = async (str) => {
-  return new Promise((resolve, reject) => {        
+  return new Promise((resolve, reject) => {  
+    try{      
       let stats = str.SEDOSTATS.item;      
       stats = stats.map(item => {
         return {
@@ -80,6 +76,9 @@ const extractDomainSubIdReport = async (str) => {
       })
       stats = stats.filter(item => !!item.domain)
       resolve(stats)       
+    } catch(err) {
+      reject(err)
+    }
   })
 }
 
@@ -102,12 +101,16 @@ const getDomainParkingSubIdReport = async (date) => {
       const { response } = await soapRequest({ url: url + query, timeout: 10000 }); // Optional timeout parameter(milliseconds)
       const { body, statusCode } = response;
       if(statusCode == 200) {
-        let bodyRes = await parseXml(body);
+        let bodyRes = await parseXml(body);        
         if(!bodyRes.SEDOSTATS) {          
-          throw JSON.stringify(bodyRes.SEDOFAULT.faultstring)          
+          reject(bodyRes.SEDOFAULT.faultstring)          
+        } else{
+          bodyRes = await extractDomainSubIdReport(bodyRes);
+          resolve(bodyRes)
         }
-        bodyRes = await extractDomainSubIdReport(bodyRes);
-        resolve(bodyRes)
+      }
+      else{
+        reject(body)
       }
     })
     
@@ -177,7 +180,7 @@ async function updateData(data, date) {
 
 async function updateSedoDaily() {
   try{   
-    const date = yesterdayYMD(null, process.env.SEDO_TIMEZONE);
+    const date = yesterdayYMD(null, process.env.SEDO_TIMEZONE);    
     
     const dailyDomainStats = await getDomainParkingSubIdReport(date);
     console.log('dailyDomainStats', dailyDomainStats)
