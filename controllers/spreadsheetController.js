@@ -435,10 +435,6 @@ async  function updateSedo_Spreadsheet() {
   const yesterdayDataByAdset = await aggregateSedoConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), 'adset_id');
   await spreadsheets.mergeSpreadsheet(yesterdayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdsetForYesterday});
 
-  // export unknown postback tables
-  // const pbUnknownData = await aggregatePBUnknownConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id')
-  // console.log('pbUnknownData',pbUnknownData);
-  // await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetNameByUnknown});
 }
 
 module.exports = {
