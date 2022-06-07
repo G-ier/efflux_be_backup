@@ -116,9 +116,11 @@ function processFacebookInsights(data, date) {
     const hour = item.hourly_stats_aggregated_by_advertiser_time_zone.slice(0,2)
 
     const conversions =
-      item?.actions?.find(i => i.action_type==='offsite_conversion.fb_pixel_purchase')?.value ||
+      item?.actions?.find(i => i.action_type === 'purchase')?.value ||
       _.sumBy(item.conversions, ({value}) => _.isNaN(Number(value)) ? 0 : Number(value))
-
+    const conversion_value = 
+      item?.cost_per_action_type?.find(i => i.action_type === 'purchase')?.value  
+      
     return {
       ad_account_id: item.account_id,
       ad_id: item.ad_id,
@@ -132,7 +134,8 @@ function processFacebookInsights(data, date) {
       total_spent: item?.spend ?? 0,
       cpc: item?.cpc ?? 0,
       reporting_currency: item.account_currency,
-      conversions: conversions
+      conversions: _.isNaN(Number(conversions)) ? 0 : Number(conversions),
+      conversion_value: _.isNaN(Number(conversion_value)) ? 0 : Number(conversion_value) * _.isNaN(Number(conversions)) ? 0 : Number(conversions),
     }
   })
 }

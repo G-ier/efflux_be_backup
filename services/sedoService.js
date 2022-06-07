@@ -184,7 +184,7 @@ async function updateSedoDaily() {
     
     const dailyDomainStats = await getDomainParkingSubIdReport(date);
     console.log('dailyDomainStats', dailyDomainStats)
-    await updateData(dailyDomainStats, yesterdayYMD(null, 'UTC'));
+    await updateData(dailyDomainStats, yesterdayYMD(null, process.env.SEDO_TIMEZONE));
   }
   catch(err) {
     console.log('err', err)
