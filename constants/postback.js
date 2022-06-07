@@ -24,6 +24,8 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'network',
     'link_clicks',
     'fb_impressions',
+    'fb_conversions',
+    'fb_conversion_amount',
     's1_campaign', // s1 
     's1_revenue',
     's1_conversion',

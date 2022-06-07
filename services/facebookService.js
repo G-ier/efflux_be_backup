@@ -72,7 +72,7 @@ async function getAdInsights(access_token, adArray, date) {
     ? {date_preset: date}
     : {time_range: {since: date, until: date}};
 
-  const fields = "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
+  const fields = "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions,cost_per_action_type";
 
   const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {
     console.log('ad_account_ID', adSetId)
