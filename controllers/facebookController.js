@@ -116,8 +116,8 @@ function processFacebookInsights(data, date) {
     const hour = item.hourly_stats_aggregated_by_advertiser_time_zone.slice(0,2)
 
     const conversions =
-      item?.actions?.find(i => i.action_type === 'purchase')?.value ||
-      _.sumBy(item.conversions, ({value}) => _.isNaN(Number(value)) ? 0 : Number(value))
+      item?.actions?.find(i => i.action_type === 'purchase')?.value
+      // _.sumBy(item.conversions, ({value}) => _.isNaN(Number(value)) ? 0 : Number(value))
     const conversion_value = 
       item?.cost_per_action_type?.find(i => i.action_type === 'purchase')?.value  
       
