@@ -161,8 +161,7 @@ async function mergeSpreadsheet(data, options) {
 
   const { values: sheetValues } = await getSheetValues(spreadsheetId, {
     range
-  });
-  console.log('rows', rows)
+  });  
   const updatedRows = sheetValues.map((row) => {    
     return rows.filter(record => record[0] == row[3])[0]?.slice(1) || []
   })
