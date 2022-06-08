@@ -23,8 +23,8 @@ async function updateFacebookInsightsJob(day) {
     // date = yesterdayYMD();
   }
   // await updateFacebookAdAccountsTodaySpent(todayYMD('UTC'));
-  updatePB_Spreadsheet()
-  updatePB_UnknownSpreadsheet()
+  // updatePB_Spreadsheet()
+  // updatePB_UnknownSpreadsheet()
  }
 
 async function updateFacebookDataJob() {
@@ -57,7 +57,7 @@ const facebookDataJob = new CronJob(
 )
  
 const initializeFBCron = () => {
-  // updateFacebookInsightsJob('today') // for one time
+  // updateFacebookInsightsJob('yesterday') // for one time
   // updatePB_Spreadsheet()
   // updatePB_UnknownSpreadsheet()
   // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))

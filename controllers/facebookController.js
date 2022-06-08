@@ -8,8 +8,10 @@ const { updateAdsets } = require("../services/adsetsService");
 const {
   getAdAccounts,
   getAdInsights,
+  getAdInsightsByDay,
   getAdCampaigns,
   addFacebookData,
+  addFacebookDataByDay,
   getAdsets,
   getFacebookPixels,
   getAdAccountsTodaySpent
@@ -63,6 +65,7 @@ async function updateFacebookInsights(date) {
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
 
     const facebookInsights = [];
+    const facebookInsightsByDay = [];
     const adAccountsIdsMap = {};
     for (const account of accounts) {      
       const adAccounts = await getAccountAdAccounts(account.id);
@@ -74,11 +77,20 @@ async function updateFacebookInsights(date) {
 
       const accountInsights = await getAdInsights(account.token, adAccountsIds, date);
       facebookInsights.push(...accountInsights);
+
+      // get facebook_conversion data
+      const accountInsightsByDay = await getAdInsightsByDay(account.token, adAccountsIds, date);
+      facebookInsightsByDay.push(...accountInsightsByDay);
     }
 
     const processedInsights = processFacebookInsights(facebookInsights, date)
     await addFacebookData(processedInsights, date);
+    
+    // add facebook_conversion data
+    const processedInsightsByDay = processFacebookInsightsByDay(facebookInsightsByDay, date)
+    await addFacebookDataByDay(processedInsightsByDay, date);
     console.log('FINISH UPDATING FACEBOOK INSIGHTS')
+
   } catch (e) {
     console.log('UPDATING FACEBOOK INSIGHTS ERROR')
     console.log(e)
@@ -118,9 +130,7 @@ function processFacebookInsights(data, date) {
     const conversions =
       item?.actions?.find(i => i.action_type === 'purchase')?.value
       // _.sumBy(item.conversions, ({value}) => _.isNaN(Number(value)) ? 0 : Number(value))
-    const conversion_value = 
-      item?.cost_per_action_type?.find(i => i.action_type === 'purchase')?.value  
-      
+    
     return {
       ad_account_id: item.account_id,
       ad_id: item.ad_id,
@@ -134,8 +144,21 @@ function processFacebookInsights(data, date) {
       total_spent: item?.spend ?? 0,
       cpc: item?.cpc ?? 0,
       reporting_currency: item.account_currency,
-      conversions: _.isNaN(Number(conversions)) ? 0 : Number(conversions),
-      conversion_value: _.isNaN(Number(conversion_value)) ? 0 : Number(conversion_value) * _.isNaN(Number(conversions)) ? 0 : Number(conversions),
+      conversions: _.isNaN(Number(conversions)) ? 0 : Number(conversions),      
+    }
+  })
+}
+
+function processFacebookInsightsByDay(data, date) {
+  return data.filter(item => item.cost_per_action_type).map(item => {    
+    const cost_per_conversion = 
+      item?.cost_per_action_type?.find(i => i.action_type === 'purchase')?.value
+    return {      
+      ad_id: item.ad_id,
+      adset_id: item.adset_id,
+      campaign_id: item.campaign_id,
+      date: date,
+      cost_per_conversion  
     }
   })
 }

@@ -72,10 +72,9 @@ async function getAdInsights(access_token, adArray, date) {
     ? {date_preset: date}
     : {time_range: {since: date, until: date}};
 
-  const fields = "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions,cost_per_action_type";
+  const fields = "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
 
-  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {
-    console.log('ad_account_ID', adSetId)
+  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {    
     let paging = {}
     const insights = []
     let url = `${FB_API_URL}${adSetId}/insights`
@@ -95,13 +94,53 @@ async function getAdInsights(access_token, adArray, date) {
       const {data = []} = await axios.get(url, {
         params
       }).catch((err) => {
-        console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+        // console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
         return {}
       })
       paging = {...data?.paging}
       if (data?.data?.length) insights.push(...data?.data)
     } while(paging?.next)
-    console.log('insights.length', insights.length)
+    // console.log('insights.length', insights.length)
+    return insights.length ? cleanInsightsData(insights) : [];
+  });
+
+  return _.flatten(allInsights);
+}
+
+async function getAdInsightsByDay(access_token, adArray, date) {
+  const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
+  const dateParam = isPreset
+    ? {date_preset: date}
+    : {time_range: {since: date, until: date}};
+
+  const fields = "ad_id,adset_id,campaign_id,date_start,actions,cost_per_action_type";
+
+  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {    
+    let paging = {}
+    const insights = []
+    let url = `${FB_API_URL}${adSetId}/insights`
+    let params = {
+      fields,
+      level: "ad",
+      ...dateParam,
+      access_token,
+      limit: 5000,
+    }
+    do {
+      if (paging?.next) {
+        url = paging.next
+        params = {}
+      }
+      const {data = []} = await axios.get(url, {
+        params
+      }).catch((err) => {
+        // console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+        return {}
+      })
+      paging = {...data?.paging}
+      if (data?.data?.length) insights.push(...data?.data)
+    } while(paging?.next)
+    // console.log('insights.length', insights.length)
     return insights.length ? cleanInsightsData(insights) : [];
   });
 
@@ -146,6 +185,19 @@ async function addFacebookData(data, date) {
 
 }
 
+async function addFacebookDataByDay(data, date) {
+  const removeIds = _.map(data, "campaign_id");
+
+  if (removeIds.length) {
+      const removed = await db("facebook_conversion").whereIn("campaign_id", removeIds).andWhere({date}).del();
+    console.info(`DELETED ${removed} rows on date ${date}`);
+  }
+  data = [... new Map(data.map(item => [item['campaign_id'], item])).values()]
+  await add("facebook_conversion", data);
+  console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
+
+}
+
 async function getAdCampaigns(access_token, adAccountIds, date = "today") {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
   const dateParam = isPreset
@@ -164,7 +216,10 @@ async function getAdCampaigns(access_token, adAccountIds, date = "today") {
         limit: 10000,
       }
     })
-      .catch((err) => console.warn('ad_account_id:', adAccountId, "facebook campaigns failure", err.response?.data ?? err));
+      .catch((err) => 
+      // console.warn('ad_account_id:', adAccountId, "facebook campaigns failure", err.response?.data ?? err)
+      console.warn()
+      );
 
     return response?.data?.data || [];
   });
@@ -228,7 +283,9 @@ module.exports = {
   getAdAccount,
   getAdAccounts,
   addFacebookData,
+  addFacebookDataByDay,
   getAdInsights,
+  getAdInsightsByDay,
   getAdsets,
   getAdCampaigns,
   getAdCampaignIds,
