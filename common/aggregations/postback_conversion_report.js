@@ -18,8 +18,7 @@ return db.raw(`
       MAX(ada.tz_offset) as time_zone,
       CAST(SUM(fb.link_clicks) AS INTEGER) as link_clicks,
       CAST(SUM(fb.impressions) AS INTEGER) as impressions,
-      CAST(SUM(fb.conversions) AS INTEGER) as fb_conversions,
-      CAST(ROUND(SUM(fb.conversion_value)::decimal, 2) AS FLOAT) as fb_conversion_amount,
+      CAST(SUM(fb.conversions) AS INTEGER) as fb_conversions,      
       MAX(c.network) as network,
       CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
     FROM facebook as fb
@@ -28,6 +27,14 @@ return db.raw(`
     WHERE 
       ${WHERE_BY_NETWORK({network, startDate, endDate, yestStartDate, timezone})}           
     GROUP BY fb.${groupBy}
+  ),
+  agg_fc AS (
+    SELECT fc.${groupBy},      
+    CAST(ROUND(MAX(fc.cost_per_conversion)::decimal, 2) AS FLOAT) as fb_cost_per_conversion
+    FROM facebook_conversion as fc
+      INNER JOIN campaigns c ON fc.campaign_id = c.id AND c.traffic_source = 'facebook'
+    WHERE fc.date > '${startDate}' AND fc.date <= '${endDate}'
+    GROUP BY fc.${groupBy}
   ),
   agg_s1 AS (
     SELECT s1.${groupBy},
@@ -98,7 +105,10 @@ return db.raw(`
     (CASE WHEN SUM(agg_fb.link_clicks) IS null THEN 0 ELSE CAST(SUM(agg_fb.link_clicks) AS FLOAT) END) as link_clicks,    
     (CASE WHEN SUM(agg_fb.impressions) IS null THEN 0 ELSE CAST(SUM(agg_fb.impressions) AS FLOAT) END) as fb_impressions,
     (CASE WHEN SUM(agg_fb.fb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversions) AS FLOAT) END) as fb_conversions,
-    (CASE WHEN SUM(agg_fb.fb_conversion_amount) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversion_amount) AS FLOAT) END) as fb_conversion_amount,
+    (
+      CASE WHEN SUM(agg_fb.fb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversions) AS FLOAT) END * 
+      CASE WHEN SUM(agg_fc.fb_cost_per_conversion) IS null THEN 0 ELSE CAST(SUM(agg_fc.fb_cost_per_conversion) AS FLOAT) END 
+    ) as fb_conversion_amount,
     (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as amount_spent,
     MAX(agg_fb.last_updated) as last_updated,
     (CASE WHEN SUM(agg_pb_s1.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_pb_s1.pb_conversion) AS FLOAT) END) as s1_pb_conversion,
@@ -122,6 +132,7 @@ return db.raw(`
     (CASE WHEN SUM(agg_sedo.revenue) IS null THEN 0 ELSE CAST(SUM(agg_sedo.revenue) AS FLOAT) END) as sd_pb_revenue
     
   FROM agg_fb 
+    FULL OUTER JOIN agg_fc USING (${groupBy})
     FULL OUTER JOIN agg_s1 USING (${groupBy})
     FULL OUTER JOIN agg_s2 USING (${groupBy})
     FULL OUTER JOIN agg_pb_s1 USING (${groupBy})
