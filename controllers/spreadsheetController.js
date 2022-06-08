@@ -336,8 +336,7 @@ async function updatePB_Spreadsheet() {
     const {spreadsheetId, sheetName, sheetNameByAdset, accounts, network, timezone} = sheetsArr[i];
     // campaign sheet
     let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone) , 'campaign_id', accounts, network, timezone);    
-    const aveByCampaignData = await aggregateCampaignConversionReport(network);
-    console.log('unknown', aveByCampaignData.rows)
+    const aveByCampaignData = await aggregateCampaignConversionReport(network);    
     todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
 
