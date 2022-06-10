@@ -24,6 +24,7 @@ const updatePostbackSheetJob = new CronJob(
 
 function initializeSedoCron() {     
   // updateSedoTodayDaily()
+  // updateSedoDaily()
   if (!disableCron) {    
     updatePostbackSheetJob.start();
     updateSedoDataDailyJob.start();
