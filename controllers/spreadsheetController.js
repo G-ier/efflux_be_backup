@@ -128,6 +128,7 @@ function mapAveRpc(data) {
 }
 
 function calculateValuesForSpreadsheet1(data, columns, alias) {
+  console.log('data', data.filter(item => item.fb_lead))
   data = data.filter(item => item.campaign_name !== null)  
   // data = mapAveRpc(data);
   // return;
@@ -141,8 +142,7 @@ function calculateValuesForSpreadsheet1(data, columns, alias) {
     return acc
   }, {
     campaign_name: alias
-  })  
-
+  })    
   data = [totals, ...data]
   const rows = data.map(item => {
     const calcResult = new MetricsCalculator1(item)
@@ -336,7 +336,7 @@ async function updatePB_Spreadsheet() {
     const {spreadsheetId, sheetName, sheetNameByAdset, accounts, network, timezone} = sheetsArr[i];
     // campaign sheet
     let todayData = await aggregatePostbackConversionReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone) , 'campaign_id', accounts, network, timezone);    
-    const aveByCampaignData = await aggregateCampaignConversionReport(network);    
+    const aveByCampaignData = await aggregateCampaignConversionReport(network, 'today');    
     todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
 
@@ -365,7 +365,7 @@ async function updateYesterdayPB_Spreadsheet() {
   for(let i=0;i<sheetsArr.length;i++){
     const {spreadsheetId, sheetName_Y: sheetName, sheetNameByAdset_Y: sheetNameByAdset, accounts, network, timezone} = sheetsArr[i];
     let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'),threeDaysAgoYMD(null, 'UTC'), 'campaign_id', accounts, network, timezone);
-    const aveByCampaignData = await aggregateCampaignConversionReport(network);
+    const aveByCampaignData = await aggregateCampaignConversionReport(network, 'yesterday');
     todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL')
 

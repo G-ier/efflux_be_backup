@@ -55,8 +55,8 @@ const facebookDataJob = new CronJob(
   updateFacebookDataJob
 )
  
-const initializeFBCron = () => {
-  // updateFacebookInsightsJob('yesterday') // for one time
+const initializeFBCron = async () => {
+  // await updateFacebookInsightsJob('today') // for one time
   // updatePB_Spreadsheet()
   // updatePB_UnknownSpreadsheet()
   // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))

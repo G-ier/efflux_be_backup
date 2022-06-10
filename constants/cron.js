@@ -20,5 +20,6 @@ module.exports = {
   SYSTEM1_HOURLY: process.env.SYSTEM1_HOURLY || '*/10 * * * *',
   SYSTEM1_DAILY: process.env.SYSTEM1_DAILY|| '15 8 * * *',
   SEDO_REGULAR: process.env.SEDO_REGULAR || '*/5 * * * *',
-  SEDO_DAILY: process.env.SEDO_REGULAR || '15 * * * *'
+  SEDO_DAILY: process.env.SEDO_REGULAR || '25 * * * *',
+  SEDO_HOURLY: process.env.SEDO_REGULAR || '5 * * * *'
 }

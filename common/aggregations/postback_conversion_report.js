@@ -18,6 +18,7 @@ return db.raw(`
       MAX(ada.tz_offset) as time_zone,
       CAST(SUM(fb.link_clicks) AS INTEGER) as link_clicks,
       CAST(SUM(fb.impressions) AS INTEGER) as impressions,
+      (CASE WHEN SUM(fb.lead) IS null THEN 0 ELSE CAST(SUM(fb.lead) AS INTEGER) END) as fb_lead,    
       CAST(SUM(fb.conversions) AS INTEGER) as fb_conversions,      
       MAX(c.network) as network,
       CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
@@ -105,6 +106,7 @@ return db.raw(`
     (CASE WHEN SUM(agg_fb.link_clicks) IS null THEN 0 ELSE CAST(SUM(agg_fb.link_clicks) AS FLOAT) END) as link_clicks,    
     (CASE WHEN SUM(agg_fb.impressions) IS null THEN 0 ELSE CAST(SUM(agg_fb.impressions) AS FLOAT) END) as fb_impressions,
     (CASE WHEN SUM(agg_fb.fb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversions) AS FLOAT) END) as fb_conversions,
+    (CASE WHEN SUM(agg_fb.fb_lead) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_lead) AS INTEGER) END) as fb_lead,
     (
       CASE WHEN SUM(agg_fb.fb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversions) AS FLOAT) END * 
       CASE WHEN SUM(agg_fc.fb_cost_per_conversion) IS null THEN 0 ELSE CAST(SUM(agg_fc.fb_cost_per_conversion) AS FLOAT) END 

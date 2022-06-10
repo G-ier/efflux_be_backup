@@ -25,6 +25,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'link_clicks',
     'fb_impressions',
     'fb_conversions',
+    'fb_lead',
     'fb_conversion_amount',
     's1_campaign', // s1 
     's1_revenue',
@@ -77,6 +78,7 @@ const POSTBACK_EXCLUDEDFIELDS = [
   'ave_conversion',
   'ave_revenue_y',
   'ave_conversion_y',
+  'fb_lead',
 ]
 
 const pbNetMapFields = {
