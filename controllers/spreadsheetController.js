@@ -128,6 +128,7 @@ function mapAveRpc(data) {
 }
 
 function calculateValuesForSpreadsheet1(data, columns, alias) {
+  console.log('data', data.filter(item => item.fb_lead))
   data = data.filter(item => item.campaign_name !== null)  
   // data = mapAveRpc(data);
   // return;
@@ -141,8 +142,7 @@ function calculateValuesForSpreadsheet1(data, columns, alias) {
     return acc
   }, {
     campaign_name: alias
-  })  
-
+  })    
   data = [totals, ...data]
   const rows = data.map(item => {
     const calcResult = new MetricsCalculator1(item)
