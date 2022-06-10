@@ -4,6 +4,9 @@ const xml2js = require('xml2js');
 const {yesterdayYMD, todayYMD} = require("../common/day");
 const db = require('../data/dbConfig');
 
+const browserObject = require('./../scripts/sedoScrape/browser');
+const pageScraper = require('./../scripts/sedoScrape/pageScraper');
+
 const parseXml = async (body) => {
   return new Promise((resolve, reject) => {
     xml2js.parseString(body, (err, result) => {
@@ -139,7 +142,6 @@ async function updateData(data, date) {
         existedSystem.visitors !== item.visitors
       ) return 'updateArr';
       return 'skipArr';
-
     }
   });
 
@@ -178,6 +180,66 @@ async function updateData(data, date) {
   return result;
 }
 
+async function updateSedoDomainData(data, date) {
+  const existedData = await db.select('*').from('sedo_domain')
+   .whereRaw('date >= ?', [date])
+
+  const existedDataMap = _.keyBy(existedData, ({domain, date}) => {
+    return `${domain}||${date}`;
+  });
+
+  const {skipArr = [], updateArr = [], createArr = []} = _.groupBy(data, item => {
+    const key = `${item.domain}||${item.date}`
+    const existedSystem = existedDataMap[key];
+    if (!existedSystem) return 'createArr';
+    if (existedSystem) {
+      if (existedSystem.earnings !== item.earnings ||
+        existedSystem.clicks !== item.clicks ||
+        existedSystem.visitors !== item.visitors
+      ) return 'updateArr';
+      return 'skipArr';
+
+    }
+  });
+
+  let result = {
+    created: 0,
+    updated: 0,
+    skipped: 0,
+  };
+
+  if (createArr.length) {
+    const created = await db('sedo_domain').insert(createArr);
+    result.created = created.rowCount;
+  }
+
+  if (updateArr.length) {
+    const updated = await Promise.all(
+      updateArr.map(item => {
+        return db('sedo_domain')
+          .where({domain: item.domain, date: item.date}).first()
+          .update({
+            earnings: item.earnings,
+            clicks: item.clicks,
+            visitors: item.visitors,          
+            epc: item.epc,          
+            ctr: item.ctr,          
+            rpm: item.rpm     
+          }).returning('id')
+      })
+    );
+    result.updated = updated.length;
+  }
+
+   result.skipped = skipArr.length;
+
+  console.log(`ADDED ${result.created} ROWS FROM SEDO`);
+  console.log(`UPDATED ${result.updated} ROWS FROM SEDO`);
+  console.log(`SKIPPED ${result.skipped} ROWS FROM SEDO`);
+
+  return result;
+}
+
 async function updateSedoDaily() {
   try{   
     const date = yesterdayYMD(null, process.env.SEDO_TIMEZONE);    
@@ -190,8 +252,46 @@ async function updateSedoDaily() {
     console.log('err', err)
   } 
 }
+function processSedoData(data){
+  return data.map(item => {
+    return {
+      ...item,
+      date: todayYMD(process.env.SEDO_TIMEZONE),
+      visitors: Number(item.visitors),
+      clicks: Number(item.clicks),
+      earnings: Number(item.earnings.replace('USD', '')), // '5.04 USD',
+      ctr: Number(item.ctr.replace('%', '')), // '5.04 USD',
+      epc: Number(item.epc.replace('USD', '')), // '5.04 USD',
+      rpm: Number(item.rpm.replace('USD', '')) // '5.04 USD',
+    }
+  })
 
+}
+
+async function scrapeAll(browserInstance){
+	let browser;
+	try{
+		browser = await browserInstance;
+		let sedoTodayData = await pageScraper.scraper(browser);	
+    
+    sedoTodayData = processSedoData(sedoTodayData)
+    const date = todayYMD(process.env.SEDO_TIMEZONE);
+    await updateSedoDomainData(sedoTodayData, date)
+    
+	}
+	catch(err){
+		console.log("Could not resolve the browser instance => ", err);
+	}
+}
+
+async function updateSedoTodayDaily() {
+  //Start the browser and create a browser instance
+  let browserInstance = browserObject.startBrowser();
+  // Pass the browser instance to the scraper controller
+  scrapeAll(browserInstance)
+}
 
 module.exports = {
-  updateSedoDaily
+  updateSedoDaily,
+  updateSedoTodayDaily
 }
