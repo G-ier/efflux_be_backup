@@ -127,11 +127,8 @@ function mapAveRpc(data) {
   return data
 }
 
-function calculateValuesForSpreadsheet1(data, columns, alias) {
-  console.log('data', data.filter(item => item.fb_lead))
-  data = data.filter(item => item.campaign_name !== null)  
-  // data = mapAveRpc(data);
-  // return;
+function calculateValuesForSpreadsheet1(data, columns, alias) {  
+  data = data.filter(item => item.campaign_name !== null)    
   const totals = columns.reduce((acc, column) => {
     data.forEach(item => {
       if(Number.isFinite(item[column])) {
