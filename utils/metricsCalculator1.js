@@ -17,6 +17,13 @@ module.exports = class MetricsCalculator1 {
     s1_revenue,
     s1_revenue_y,
     s1_last_updated,
+    cr_pb_conversion,
+    cr_pb_last_updated,
+    cr_conversion,
+    cr_conversion_y,
+    cr_revenue,
+    cr_revenue_y,
+    cr_last_updated,
     sd_revenue,
     sd_last_updated,
     sd_revenue_y,
@@ -58,6 +65,13 @@ module.exports = class MetricsCalculator1 {
     this.s1_revenue = s1_revenue
     this.s1_revenue_y = s1_revenue_y
     this.s1_last_updated = s1_last_updated
+    this.cr_pb_conversion = cr_pb_conversion
+    this.cr_pb_last_updated = cr_pb_last_updated
+    this.cr_conversion = cr_conversion
+    this.cr_conversion_y = cr_conversion_y
+    this.cr_revenue = cr_revenue
+    this.cr_revenue_y = cr_revenue_y
+    this.cr_last_updated = cr_last_updated
     this.sd_pb_conversion = sd_pb_conversion
     this.sd_revenue = sd_revenue || sd_pb_revenue
     this.sd_last_updated = sd_last_updated
@@ -70,14 +84,14 @@ module.exports = class MetricsCalculator1 {
     this.ave_conversion = ave_conversion // ave_rpc
     this.ave_revenue_y = ave_revenue_y // ave_rpc
     this.ave_conversion_y = ave_conversion_y // ave_rpc    
-    this.nt_conversion = this.s1_conversion || this.sd_conversion || 0
-    this.nt_conversion_y = this.s1_conversion_y || this.sd_conversion_y || 0
-    this.revenue = this.s1_revenue || this.cr_revenue || this.sd_revenue || 0
-    this.revenue_y = this.s1_revenue_y || this.sd_revenue_y || 0
+    this.nt_conversion = this.s1_conversion || this.sd_conversion || this.cr_conversion || 0
+    this.nt_conversion_y = this.s1_conversion_y || this.sd_conversion_y || this.cr_conversion_y || 0
+    this.revenue = this.s1_revenue || this.sd_revenue || this.cr_revenue || 0
+    this.revenue_y = this.s1_revenue_y || this.sd_revenue_y || this.cr_revenue_y || 0
     this.nt_last_updated = this.s1_last_updated || this.cr_last_updated || this.sd_last_updated || 0
     this.pb_last_updated = this.s1_pb_last_updated || this.cr_pb_last_updated || this.sd_pb_last_updated || 0
     this.pb_conversion = this.s1_pb_conversion || this.cr_pb_conversion || this.sd_pb_conversion || 0     
-    this.pb_payout = this.s1_pb_revenue || this.cr_pb_revenue || this.sd_pb_revenue || 0
+    this.pb_payout = this.s1_pb_revenue || this.sd_pb_revenue || this.cr_pb_revenue || 0
   }
 
   get rpc() {

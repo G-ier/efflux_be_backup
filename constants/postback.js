@@ -91,12 +91,12 @@ const pbNetMapFields = {
     conversion_y: 's1_conversion_y',
   },
   crossroads: {
-    campaign: 's1_campaign',
-    campaign_y: 's1_campaign_y',
-    revenue: 's1_revenue',
-    revenue_y: 's1_revenue_y',
-    conversion: 's1_conversion',
-    conversion_y: 's1_conversion_y',
+    campaign: 'cr_campaign',
+    campaign_y: 'cr_campaign_y',
+    revenue: 'cr_revenue',
+    revenue_y: 'cr_revenue_y',
+    conversion: 'cr_conversion',
+    conversion_y: 'cr_conversion_y',
   },
   unknown: {
     campaign: 'sd_campaign',
@@ -139,9 +139,7 @@ const sheetsArr = [
       '1203724037104268',
       '674170930541058',
       '502814237897602',
-      '517645539533852',
       '846097499367741',
-      '2963315007246755',
       '957442114827495',
       '1201450900278028'
     ]
@@ -170,6 +168,19 @@ const sheetsArr = [
     sheetNameByAdset_Y: "Adset For Yesterday",
     accounts:[
       '995674611312775'
+    ]
+  },
+  {
+    network: 'crossroads',
+    timezone: 'America/Los_Angeles',
+    spreadsheetId:"1TTRitP_kKzaQhVyE6nCztjPiitUoJ-I6lOg92s7RBdA",
+    sheetName:"Campaign", // crossroads 
+    sheetNameByAdset:"Adset",
+    sheetName_Y:"Campaign For Yesterday",
+    sheetNameByAdset_Y: "Adset For Yesterday",
+    accounts:[
+      '517645539533852',
+      '2963315007246755',
     ]
   },
 

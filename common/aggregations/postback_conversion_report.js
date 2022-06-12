@@ -1,13 +1,109 @@
 const db = require('../../data/dbConfig');
-const {WHERE_BY_NETWORK} = require("./selects");
+const {WHERE_BY_NETWORK, FACEBOOK, FACEBOOK_CONVERSIONS, CROSSROADS} = require("./selects");
 const mapField = {
   campaign_id: 'sub1',
   adset_id: 'sub3'
 }
 
 const aggregatePostbackConversionReport = (startDate, endDate, yestStartDate, groupBy, accounts, network, timezone) =>{
-
-return db.raw(`
+switch(network){
+  case 'crossroads':
+    return db.raw(`
+    WITH agg_fb AS (
+      SELECT fb.${groupBy},
+        MAX(c.name) as campaign_name,
+        MAX(c.status) as status,
+        MAX(ada.name) as ad_account_name,
+        MAX(ada.tz_offset) as time_zone,           
+        MAX(c.network) as network,
+        ${FACEBOOK}
+      FROM facebook as fb
+        INNER JOIN campaigns c ON fb.campaign_id = c.id AND            
+            c.traffic_source = 'facebook'
+        INNER JOIN ad_accounts ada ON ada.account_id = '20' AND fb.ad_account_id = ada.fb_account_id AND ada.fb_account_id = ANY('{${accounts}}')
+      WHERE ${WHERE_BY_NETWORK({network, startDate, endDate, yestStartDate, timezone})}      
+      GROUP BY fb.${groupBy}
+    ),
+    agg_fc AS (
+      SELECT fc.${groupBy},      
+      CAST(ROUND(MAX(fc.cost_per_conversion)::decimal, 2) AS FLOAT) as fb_cost_per_conversion
+      FROM facebook_conversion as fc
+        INNER JOIN campaigns c ON fc.campaign_id = c.id AND c.traffic_source = 'facebook'
+      WHERE fc.date > '${startDate}' AND fc.date <= '${endDate}'
+      GROUP BY fc.${groupBy}
+    ),
+    agg_fbc AS (
+      SELECT fbc.${groupBy},
+        ${FACEBOOK_CONVERSIONS}
+      FROM fb_conversions as fbc
+        INNER JOIN campaigns c ON fbc.campaign_id = c.id AND         
+         c.traffic_source = 'facebook'
+      WHERE fbc.date > '${startDate}' AND fbc.date <= '${endDate}'
+      GROUP BY fbc.${groupBy}
+    ),
+    agg_cr AS (
+      SELECT cr.${groupBy},
+        ${CROSSROADS},
+        MAX(cc.id) as cr_campaign_id,
+        MAX(cc.name) as cr_campaign_name
+      FROM crossroads_stats as cr
+        INNER JOIN campaigns c ON cr.campaign_id = c.id AND            
+            c.traffic_source = 'facebook'
+        INNER JOIN crossroads_campaigns cc ON cr.crossroads_campaign_id = cc.id
+      WHERE cr.request_date > '${startDate}' AND cr.request_date <= '${endDate}'
+      GROUP BY cr.${groupBy}
+    ),
+    agg_cr2 AS (
+      SELECT cr.${groupBy},
+        ${CROSSROADS},
+        MAX(cc.id) as cr_campaign_id,
+        MAX(cc.name) as cr_campaign_name
+      FROM crossroads_stats as cr
+        INNER JOIN campaigns c ON cr.campaign_id = c.id AND            
+            c.traffic_source = 'facebook'
+        INNER JOIN crossroads_campaigns cc ON cr.crossroads_campaign_id = cc.id
+      WHERE cr.request_date > '${yestStartDate}' AND cr.request_date <= '${startDate}'
+      GROUP BY cr.${groupBy}
+    )
+    SELECT
+      (CASE
+        WHEN agg_fb.${groupBy} IS NOT null THEN agg_fb.${groupBy} ELSE CAST(MAX(agg_cr.cr_campaign_id) AS VARCHAR)
+      END) as ${groupBy},
+      MAX(agg_fb.date) as date,      
+      (CASE
+        WHEN MAX(agg_fb.campaign_name) IS NOT null THEN MAX(agg_fb.campaign_name) ELSE MAX(agg_cr.cr_campaign_name)
+      END) as campaign_name,
+      MAX(agg_fb.network) as network,
+      MAX(agg_fb.status) as status,
+      MAX(agg_fb.ad_account_name) as ad_account_name,
+      MAX(agg_fb.time_zone) as time_zone,
+      (CASE WHEN SUM(agg_fb.link_clicks) IS null THEN 0 ELSE CAST(SUM(agg_fb.link_clicks) AS FLOAT) END) as link_clicks,
+      (CASE WHEN SUM(agg_fb.impressions) IS null THEN 0 ELSE CAST(SUM(agg_fb.impressions) AS FLOAT) END)  as fb_impressions,
+      (CASE WHEN SUM(agg_fb.fb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversions) AS FLOAT) END) as fb_conversions,
+      (CASE WHEN SUM(agg_fb.fb_lead) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_lead) AS INTEGER) END) as fb_lead,
+      (
+        CASE WHEN SUM(agg_fb.fb_conversions) IS null THEN 0 ELSE CAST(SUM(agg_fb.fb_conversions) AS FLOAT) END * 
+        CASE WHEN SUM(agg_fc.fb_cost_per_conversion) IS null THEN 0 ELSE CAST(SUM(agg_fc.fb_cost_per_conversion) AS FLOAT) END 
+      ) as fb_conversion_amount,
+      (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as amount_spent,
+      MAX(agg_fb.last_updated) as last_updated,
+      (CASE WHEN SUM(agg_fbc.pb_conversion) IS null THEN 0 ELSE CAST(SUM(agg_fbc.pb_conversion) AS FLOAT) END) as cr_pb_conversion,
+      MAX(agg_fbc.last_updated) as cr_pb_last_updated,      
+      (CASE WHEN SUM(agg_cr.revenue) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue) AS FLOAT) END) as cr_revenue,
+      (CASE WHEN SUM(agg_cr.conversions) IS null THEN 0 ELSE CAST(SUM(agg_cr.conversions) AS FLOAT) END) as cr_conversion,
+      (CASE WHEN SUM(agg_cr2.revenue) IS null THEN 0 ELSE CAST(SUM(agg_cr2.revenue) AS FLOAT) END) as cr_revenue_y,
+      (CASE WHEN SUM(agg_cr2.conversions) IS null THEN 0 ELSE CAST(SUM(agg_cr2.conversions) AS FLOAT) END) as cr_conversion_y,
+      MAX(agg_cr.last_updated) as cr_last_updated      
+    FROM agg_fb
+      FULL OUTER JOIN agg_fbc USING (${groupBy})
+      FULL OUTER JOIN agg_fc USING (${groupBy})
+      FULL OUTER JOIN agg_cr USING (${groupBy})
+      FULL OUTER JOIN agg_cr2 USING (${groupBy})
+    GROUP BY agg_fb.${groupBy}`);
+  
+  
+    default:
+    return db.raw(`
   WITH agg_fb AS (
     SELECT fb.${groupBy},
       MAX(fb.date) as date,
@@ -143,5 +239,7 @@ return db.raw(`
     FULL OUTER JOIN agg_sd2 ON agg_sd2.${mapField[groupBy]} = agg_fb.${groupBy}  
   GROUP BY agg_fb.${groupBy}
 `);
+}
+
   }
 module.exports = aggregatePostbackConversionReport;

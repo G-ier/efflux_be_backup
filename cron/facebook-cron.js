@@ -59,7 +59,7 @@ const initializeFBCron = async () => {
   // await updateFacebookInsightsJob('today') // for one time
   // updatePB_Spreadsheet()
   // updatePB_UnknownSpreadsheet()
-  // console.log('cet',moment().tz('CET').format('YYYY-MM-DD HH:mm'))
+  // console.log('PST',moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm'))
   if (!disableCron) {
     newFacebookYesterdayCron.start();
     facebookInsisghtsJob.start();
