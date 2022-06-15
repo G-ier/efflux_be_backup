@@ -85,8 +85,8 @@ module.exports = {
 				return `
 					ada.tz_offset >= 0 AND fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND fb.hour >=ada.tz_offset OR
 					ada.tz_offset >= 0 AND fb.date > '${option.endDate}' AND fb.date <= '${tomorrowYMD(option.endDate, option.timezone)}' AND fb.hour < ada.tz_offset OR
-					ada.tz_offset < 0 AND fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND fb.hour <= 23-ada.tz_offset OR
-					ada.tz_offset < 0 AND fb.date > '${option.yestStartDate}' AND fb.date <= '${option.startDate}' AND fb.hour > 23-ada.tz_offset`
+					ada.tz_offset < 0 AND fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND fb.hour <= 23+ada.tz_offset OR
+					ada.tz_offset < 0 AND fb.date > '${option.yestStartDate}' AND fb.date <= '${option.startDate}' AND fb.hour > 23+ada.tz_offset`
 				
 			case 'unknown':
 				return `					
