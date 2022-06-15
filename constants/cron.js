@@ -15,7 +15,7 @@ module.exports = {
   GDN_DAILY: process.env.GDN_DAILY || '15 8 * * *',
   AMG_TEN_MINUTES: process.env.AMG_TEN_MINUTES || '*/10 * * * *',
   G_FIVE_MINUTES: process.env.G_FIVE_MINUTES || '*/5 * * * *',
-  SHEET_REGULAR: process.env.SHEET_REGULAR || '13,28,43,0 * * * *',
+  SHEET_REGULAR: process.env.SHEET_REGULAR || '13,28,2,0 * * * *',
   SHEET_HOURLY: process.env.SHEET_HOURLY || '2 * * * *',
   SYSTEM1_HOURLY: process.env.SYSTEM1_HOURLY || '*/10 * * * *',
   SYSTEM1_DAILY: process.env.SYSTEM1_DAILY|| '15 8 * * *',
