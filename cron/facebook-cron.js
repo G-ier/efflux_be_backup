@@ -24,6 +24,7 @@ async function updateFacebookInsightsJob(day) {
     await updateFacebookInsights(date);
     // date = yesterdayYMD();
   }  
+  await updateFacebookData(todayYMD())
   updatePB_Spreadsheet()
   updatePB_UnknownSpreadsheet()
  }
@@ -67,7 +68,6 @@ const initializeFBCron = async () => {
     facebookInsisghtsJob.start();
     facebookAfterMidnight.start();
     facebookAfternoon.start();
-    facebookDataJob.start();
   }
 
   // DEBUG: uncomment to test immediately

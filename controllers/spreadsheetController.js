@@ -127,10 +127,10 @@ function mapAveRpc(data) {
   return data
 }
 
-function calculateValuesForSpreadsheet1(data, columns, alias) {  
+function calculateValuesForSpreadsheet1(data, columns, alias) {    
   data = data.filter(item => item.campaign_name !== null)    
   const totals = columns.reduce((acc, column) => {
-    data.forEach(item => {
+    data.forEach(item => {      
       if(Number.isFinite(item[column])) {
         if(acc[column]) acc[column] += item[column] || 0
         else acc[column] = item[column] || 0
@@ -138,8 +138,10 @@ function calculateValuesForSpreadsheet1(data, columns, alias) {
     })
     return acc
   }, {
-    campaign_name: alias
-  })    
+    campaign_name: alias,
+    date: '',
+  })   
+  totals.time_zone = undefined
   data = [totals, ...data]
   const rows = data.map(item => {
     const calcResult = new MetricsCalculator1(item)
@@ -155,7 +157,6 @@ function calculateValuesForSpreadsheet1(data, columns, alias) {
     }
     return preferredOrder(result, columns)
   })
-
   return { columns, rows }
 }
 
@@ -337,7 +338,7 @@ async function updatePB_Spreadsheet() {
     todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
 
-    let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD(timezone), accounts);    
+    let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD(timezone), accounts, network, timezone);    
     todayTotalSpent = calculateValuesForSpreadsheet1(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")
     let todayDataDiff = mapValuesForSpreadsheetDiff(todayData.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
     todayData = {...todayData, rows: [todayTotalSpent.rows[0], todayData.rows[0], todayDataDiff].concat(todayData.rows.slice(1))}
@@ -366,7 +367,7 @@ async function updateYesterdayPB_Spreadsheet() {
     todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);    
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL')
 
-    let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(yesterdayYMD(null, 'UTC'), accounts);    
+    let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(yesterdayYMD(null, 'UTC'), accounts, network, timezone);    
     todayTotalSpent = calculateValuesForSpreadsheet1(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")
     
     let todayDataDiff = mapValuesForSpreadsheetDiff(todayData.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")  
