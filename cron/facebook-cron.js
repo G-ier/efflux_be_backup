@@ -12,6 +12,8 @@ async function updateFacebookInsightsJob(day) {
   let date;
   if (day === "today") {
     // date = todayYMD();
+    date = yesterdayYMD(null, 'UTC');
+    await updateFacebookInsights(date);
     date = todayYMD('UTC');
     await updateFacebookInsights(date);
     date = tomorrowYMD(null, 'UTC');
