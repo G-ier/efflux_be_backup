@@ -50,12 +50,12 @@ module.exports = class MetricsCalculator1 {
     this.fb_impressions = fb_impressions    
     this.fb_conversions = fb_conversions || fb_lead
     this.fb_conversion_amount = fb_conversion_amount
-    this.ave_rpc = ave_rpc
+    this.ave_rpc = ave_rpc || 0
     this.campaign_name = campaign_name
     this.network = network
     this.status = status
     this.ad_account_name = ad_account_name
-    this.time_zone = time_zone >= 0 ? 'UTC +' + time_zone : 'UTC ' + time_zone
+    this.time_zone = time_zone >= 0 ? 'UTC +' + time_zone : time_zone < 0 ? 'UTC ' + time_zone : ''
     this.amount_spent = amount_spent
     this.last_updated = last_updated
     this.s1_pb_conversion = s1_pb_conversion
