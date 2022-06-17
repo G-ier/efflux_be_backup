@@ -1,5 +1,5 @@
 const CronJob = require("cron").CronJob;
-const { todayYMD, yesterdayYMD, todayHH, tomorrowYMD } = require("../common/day");
+const { todayYMD, yesterdayYMD, todayHH, dayBeforeYesterdayYMD, tomorrowYMD } = require("../common/day");
 const Rules = require("../constants/cron");
 const { updateFacebookInsights, updateFacebookData} = require("../controllers/facebookController");
 const moment = require("moment-timezone");
@@ -21,6 +21,8 @@ async function updateFacebookInsightsJob(day) {
   }
   else if (day === "yesterday") {
     date = yesterdayYMD(null, 'UTC');
+    await updateFacebookInsights(date);
+    date = dayBeforeYesterdayYMD(null, 'UTC');
     await updateFacebookInsights(date);
     // date = yesterdayYMD();
   }  
@@ -59,7 +61,7 @@ const facebookDataJob = new CronJob(
 )
  
 const initializeFBCron = async () => {
-  // await updateFacebookInsightsJob('today') // for one time
+  // await updateFacebookInsightsJob('yesterday') // for one time
   // updatePB_Spreadsheet()
   // updatePB_UnknownSpreadsheet()
   // console.log('PST',moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm'))

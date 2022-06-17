@@ -9,7 +9,7 @@ function aggregateFacebookAdsTodaySpentReport(date, accounts, network, timezone)
     INNER JOIN campaigns c ON fb.campaign_id = c.id AND c.traffic_source = 'facebook'
       INNER JOIN ad_accounts ada ON ada.account_id = '20' AND fb.ad_account_id = ada.fb_account_id AND ada.fb_account_id = ANY('{${accounts}}')
     WHERE 
-    ${WHERE_BY_NETWORK({network, startDate: yesterdayYMD(date, timezone), endDate: date, yestStartDate: dayBeforeYesterdayYMD(null, timezone), timezone})}      
+    ${WHERE_BY_NETWORK({network, startDate: yesterdayYMD(date, timezone), endDate: date, yestStartDate: dayBeforeYesterdayYMD(date, timezone), timezone})}      
     
   `);
 }
