@@ -3,7 +3,7 @@ const axios = require("axios");
 const async = require("async");
 const {ServiceUnavailable} = require('http-errors');
 const db = require("../data/dbConfig");
-const {FB_API_URL, fieldsFilter} = require("../constants/facebook");
+const {FB_API_URL, fieldsFilter, delay} = require("../constants/facebook");
 const {add} = require("../common/models");
 
 async function getAdAccount(adAccountId, token) {
@@ -65,7 +65,6 @@ async function getAdAccountsTodaySpent(access_token, Ids, date) {
 
   return _.flatten(allSpent);
 }
-const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function getAdInsights(access_token, adArray, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
@@ -90,8 +89,7 @@ async function getAdInsights(access_token, adArray, date) {
     do {
       if (paging?.next) {
         url = paging.next
-        params = {}
-        await delay(1000);
+        params = {}        
       }
       const {data = []} = await axios.get(url, {
         params
@@ -101,6 +99,7 @@ async function getAdInsights(access_token, adArray, date) {
       })
       paging = {...data?.paging}
       if (data?.data?.length) insights.push(...data?.data)
+      await delay(1000);
     } while(paging?.next)
     // console.log('insights.length', insights.length)
     return insights.length ? cleanInsightsData(insights) : [];
@@ -126,7 +125,7 @@ async function getAdInsightsByDay(access_token, adArray, date) {
       level: "ad",
       ...dateParam,
       access_token,
-      limit: 5000,
+      limit: 500,
     }
     do {
       if (paging?.next) {
@@ -141,6 +140,7 @@ async function getAdInsightsByDay(access_token, adArray, date) {
       })
       paging = {...data?.paging}
       if (data?.data?.length) insights.push(...data?.data)
+      await delay(1000);
     } while(paging?.next)
     // console.log('insights.length', insights.length)
     return insights.length ? cleanInsightsData(insights) : [];
@@ -182,7 +182,7 @@ async function addFacebookData(data, date) {
     console.info(`DELETED ${removed} rows on date ${date}`);
   }
   // console.log('data', data)
-  data = [... new Map(data.map(item => [item['ad_id:'] + item['hour'], item])).values()]
+  data = [... new Map(data.map(item => [item['campaign_id'] + item['ad_id'] + item['hour'], item])).values()]
 
   await add("facebook", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);

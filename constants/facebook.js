@@ -15,6 +15,8 @@ const adAccountFieldsForTodaySpent = [
   'spent'
 ];
 
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
+
 const fieldsFilter = adAccountFields.join(',');
 const fieldsForTodaySpent = adAccountFieldsForTodaySpent.join(',');
 
@@ -22,4 +24,5 @@ module.exports = {
   FB_API_URL,
   fieldsFilter,
   fieldsForTodaySpent,
+  delay
 };
