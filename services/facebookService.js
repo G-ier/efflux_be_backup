@@ -65,6 +65,7 @@ async function getAdAccountsTodaySpent(access_token, Ids, date) {
 
   return _.flatten(allSpent);
 }
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms))
 
 async function getAdInsights(access_token, adArray, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
@@ -84,17 +85,18 @@ async function getAdInsights(access_token, adArray, date) {
       breakdowns: "hourly_stats_aggregated_by_advertiser_time_zone",
       ...dateParam,
       access_token,
-      limit: 5000,
+      limit: 500,
     }
     do {
       if (paging?.next) {
         url = paging.next
         params = {}
+        await delay(1000);
       }
       const {data = []} = await axios.get(url, {
         params
       }).catch((err) => {
-        // console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+        console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
         return {}
       })
       paging = {...data?.paging}
@@ -179,7 +181,9 @@ async function addFacebookData(data, date) {
       const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({date}).del();
     console.info(`DELETED ${removed} rows on date ${date}`);
   }
-  data = [... new Map(data.map(item => [item['campaign_id'] + item['hour'], item])).values()]
+  // console.log('data', data)
+  data = [... new Map(data.map(item => [item['ad_id:'] + item['hour'], item])).values()]
+
   await add("facebook", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
 

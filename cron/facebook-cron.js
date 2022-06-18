@@ -61,7 +61,7 @@ const facebookDataJob = new CronJob(
 )
  
 const initializeFBCron = async () => {
-  // await updateFacebookInsightsJob('yesterday') // for one time
+  // await updateFacebookInsights('2022-06-17') // for one time
   // updatePB_Spreadsheet()
   // updatePB_UnknownSpreadsheet()
   // console.log('PST',moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm'))
