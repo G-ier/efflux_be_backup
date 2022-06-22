@@ -7,7 +7,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'status',
     'date',
     'amount_spent',
-    'last_updated',
+    'elapsed_time',
     'pb_conversion',
     'pb_payout',
     'pb_last_updated',
@@ -50,6 +50,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'ave_conversion',
     'ave_revenue_y',
     'ave_conversion_y',
+    'last_updated',
   ]
 };
  
@@ -187,17 +188,20 @@ const sheetsArr = [
   // test
   
   // {
-  //   network: 'unknown', // local development 
-  //   timezone: 'CET',
+  //   network: 'system1', // local development 
+  //   timezone: 'UTC',
   //   spreadsheetId:"112mVXGcbs1ckvua44OcEyUl9_MexD6cUjPefOEYod3o",
   //   sheetName:"Campaign", //Sean 
   //   sheetNameByAdset:"Adset",
   //   sheetName_Y:"Campaign For Yesterday",
   //   sheetNameByAdset_Y: "Adset For Yesterday",
   //   accounts: [
-  //     '699028961232077',
-  //     '347091310767011',
-  //     '3229297027345837'
+  //     '457104922468676',
+  //     '331918771765149',
+  //     '1161945751010436',
+  //     '633235807758573',
+  //     '995674611312775',
+  //     '514891343712186',
   //   ]
   // },
   // {
