@@ -180,8 +180,7 @@ const sheetsArr = [
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
     accounts:[
-      '517645539533852',
-      '2963315007246755',
+      '757173685396824',
     ]
   },
 

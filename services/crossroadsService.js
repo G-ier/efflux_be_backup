@@ -395,7 +395,7 @@ function getTrafficSource(stat) {
 async function updateCrossroadsCampaigns(key) {
   const campaigns = await getCrossroadsCampaigns(key)
   return db("crossroads_campaigns")
-    .insert(campaigns)
+    .insert(campaigns.map(item => {return {id: item.id, name: item.name, type: item.type, created_at: item.created_at}}))
     .onConflict("id")
     .merge()
 }
