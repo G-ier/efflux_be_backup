@@ -1,4 +1,4 @@
-const FB_API_URL = "https://graph.facebook.com/v13.0/";
+const FB_API_URL = "https://graph.facebook.com/v15.0/";
 
 const adAccountFields = [
   'name',
