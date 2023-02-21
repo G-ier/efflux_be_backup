@@ -9,7 +9,7 @@ module.exports = {
 
   FACEBOOK: `MAX(fb.date) as date,
             MAX(fb.updated_at) as last_updated,
-            (CASE WHEN SUM(fb.lead) IS null THEN 0 ELSE CAST(SUM(fb.lead) AS INTEGER) END) as fb_lead,    
+            (CASE WHEN SUM(fb.lead) IS null THEN 0 ELSE CAST(SUM(fb.lead) AS INTEGER) END) as fb_lead,
             CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend,
             CAST(SUM(fb.link_clicks) AS INTEGER) as link_clicks,
             CAST(SUM(fb.conversions) AS INTEGER) as fb_conversions,
@@ -41,8 +41,9 @@ module.exports = {
         CAST(SUM(amg.impressions) AS INTEGER) as impressions,
         CAST(SUM(amg.spam_impressions) AS INTEGER) as spam_impressions`,
 
-  FACEBOOK_CONVERSIONS: `CAST(COUNT(fbc.event_id) AS INTEGER) as pb_conversion,
-                        MAX(fbc.updated_at) as last_updated
+  FACEBOOK_CONVERSIONS: `CAST(COUNT(fbc.event_id) AS INTEGER) as pb_conversions,
+                        MAX(fbc.updated_at) as last_updated,
+                        CAST(COUNT(distinct (CASE WHEN fbc.event_name = 'lead' THEN fbclid END)) AS INTEGER) as pb_uniq_conversions
                         `,
 
   FACEBOOK_CROSSROADS: `CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) as revenue,
@@ -87,9 +88,9 @@ module.exports = {
 					ada.tz_offset >= 0 AND fb.date > '${option.endDate}' AND fb.date <= '${tomorrowYMD(option.endDate, option.timezone)}' AND fb.hour < ada.tz_offset OR
 					ada.tz_offset < 0 AND fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}' AND fb.hour <= 23+ada.tz_offset OR
 					ada.tz_offset < 0 AND fb.date > '${option.yestStartDate}' AND fb.date <= '${option.startDate}' AND fb.hour > 23+ada.tz_offset`
-				
+
 			case 'unknown':
-				return `					
+				return `
 					fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}'`
                   case 'crossroads':
                         return `fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}'`

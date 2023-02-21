@@ -3,7 +3,7 @@ const {
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
   aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport
 } = require("../common/aggregations");
-const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
 const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
@@ -294,7 +294,7 @@ async function updateCR_ThreeDaySpreadsheet() {
   const sheetName = process.env.CR_THREE_DAY_SHEET_NAME;
   const sheetNameByAdset = process.env.CR_THREE_DAY_SHEET_BY_ADSET;
 
-  let threeDayFacebookPostbackConversions = await aggregateCRConversions(fourDaysAgoYMD(), yesterdayYMD(), 'campaign_id');
+  let threeDayFacebookPostbackConversions = await aggregateCRConversions(someDaysAgoYMD(7), yesterdayYMD(), 'campaign_id');
   threeDayFacebookPostbackConversions = calculateValuesForSpreadsheet(threeDayFacebookPostbackConversions.rows, ['campaign_id', 'campaign_name', ...CROSSROADS_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(threeDayFacebookPostbackConversions, {spreadsheetId, sheetName});
 

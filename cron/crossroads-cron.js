@@ -1,8 +1,9 @@
 const { CronJob } = require('cron');
-const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD} = require('../common/day');
+const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD, someDaysAgoYMD} = require('../common/day');
 const { updateCrossroadsData, getFinalInfo } = require('../services/crossroadsService');
 const Rules = require('../constants/cron');
-const { CROSSROADS_ACCOUNTS } = require('../constants/crossroads')
+const { CROSSROADS_ACCOUNTS } = require('../constants/crossroads');
+const { updateCR_ThreeDaySpreadsheet } = require('../controllers/spreadsheetController');
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 
@@ -49,6 +50,20 @@ const crossroadsSixMinCron = new CronJob(
 );
 
 const initializeCRCron = () => {
+  (async () => {
+    // for (let i = 0; i < 1; i++) {
+    //   console.log(`Getting final Crossroads on request_date = ${someDaysAgoYMD(i + 1)} data...`);
+    //   await Promise.all(
+    //     CROSSROADS_ACCOUNTS.map((account) => {
+    //       const isFinal = getFinalInfo(account.key, someDaysAgoYMD(i + 1));
+    //       console.log(`${i}th is final? ${isFinal ? "yes" : "no"}`);
+    //       if (isFinal) return updateCrossroadsData(account, someDaysAgoYMD(i + 1));
+    //     })
+    //   );
+    // }
+    await updateCR_ThreeDaySpreadsheet();
+  })();
+
   if (!disableCron) {
     crossroadsFinalDataCron.start();
     crossroadsSixMinCron.start();
