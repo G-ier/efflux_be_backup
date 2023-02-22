@@ -192,8 +192,10 @@ function parseTGParams(stat, regex) {
       fbclid: stat.tg3 || stat.gclid,
       gclid: null,
       pixel_id: stat.tg5,
-      adset_id: stat.tg6,
+      adset_id: stat.tg5,
       ad_id:  stat.tg7,
+      campaign_name: stat.campaign_number,
+      adset_name: stat.tg4
     }
   } else if(traffic_source === PROVIDERS.OUTBRAIN) {
     return {
@@ -269,6 +271,8 @@ function processCrossroadsData(data, account, request_date) {
     return {
       crossroads_campaign_id: click.crossroads_campaign_id || null,
       campaign_id: click.campaign_id || null,
+      campaign_name: click.campaign_name || null,
+      adset_name: click.adset_name || null,
       adset_id: click.adset_id || null,
       section_id: click.section_id || null,
       ad_id: click.ad_id || null,
@@ -311,6 +315,8 @@ function aggregateAdsetList(adsets = []) {
   const adset = {
     crossroads_campaign_id: element.crossroads_campaign_id,
     campaign_id: element.campaign_id,
+    campaign_name: element.campaign_name,
+    adset_name: element.adset_name,
     adset_id: element.adset_id,
     pixel_id: element.pixel_id,
     ad_id: element.ad_id,

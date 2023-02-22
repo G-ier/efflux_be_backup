@@ -1,5 +1,5 @@
 const {
-  aggregateCRConversions, aggregateOBConversionReport, aggregateSystem1ConversionReport,
+  crossroadsCampaigns, crossroadsAdsets, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
   aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport
 } = require("../common/aggregations");
@@ -9,7 +9,7 @@ const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
 const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
-const {CROSSROADS_SHEET_VALUES} = require('../constants/crossroads')
+const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
 const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr} = require('../constants/postback')
 
@@ -47,7 +47,8 @@ function calculateValuesForSpreadsheet(data, columns) {
     })
     return acc
   }, {
-    campaign_name: 'TOTAL'
+    campaign_name: 'TOTAL',
+    adset_name: 'TOTAL'
   })
 
   data = [totals, ...data]
@@ -294,13 +295,27 @@ async function updateCR_ThreeDaySpreadsheet() {
   const sheetName = process.env.CR_THREE_DAY_SHEET_NAME;
   const sheetNameByAdset = process.env.CR_THREE_DAY_SHEET_BY_ADSET;
 
-  let threeDayFacebookPostbackConversions = await aggregateCRConversions(someDaysAgoYMD(7), yesterdayYMD(), 'campaign_id');
+  let threeDayFacebookPostbackConversions = await aggregateCRConversions(someDaysAgoYMD(4), yesterdayYMD(), 'campaign_id');
   threeDayFacebookPostbackConversions = calculateValuesForSpreadsheet(threeDayFacebookPostbackConversions.rows, ['campaign_id', 'campaign_name', ...CROSSROADS_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(threeDayFacebookPostbackConversions, {spreadsheetId, sheetName});
 
-  let threeDayFacebookPostbackConversionsByAdset = await aggregateCRConversions(fourDaysAgoYMD(), yesterdayYMD(), 'adset_id');
+  let threeDayFacebookPostbackConversionsByAdset = await aggregateCRConversions(someDaysAgoYMD(4), yesterdayYMD(), 'adset_id');
   threeDayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(threeDayFacebookPostbackConversionsByAdset.rows, ['adset_id', 'campaign_name', ...CROSSROADS_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(threeDayFacebookPostbackConversionsByAdset, {
+    spreadsheetId,
+    sheetName: sheetNameByAdset
+  });
+}
+
+async function updateCR_DaySpreadsheet(sheetData) {
+  const {spreadsheetId, sheetName, sheetNameByAdset, day} = sheetData;
+  let dayFacebookPostbackConversions = await crossroadsCampaigns(someDaysAgoYMD(day), yesterdayYMD());
+  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
+
+  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsets(someDaysAgoYMD(day), yesterdayYMD());
+  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
     spreadsheetId,
     sheetName: sheetNameByAdset
   });
@@ -437,6 +452,7 @@ async  function updateSedo_Spreadsheet() {
 module.exports = {
   updateCR_Spreadsheet,
   updateCR_ThreeDaySpreadsheet,
+  updateCR_DaySpreadsheet,
   updateOB_Spreadsheet,
   updateS1_Spreadsheet,
   updatePR_Spreadsheet,

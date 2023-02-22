@@ -1,3 +1,4 @@
+const { crossroadsCampaigns, crossroadsAdsets } = require('./crossroads_campaigns');
 const crossroadsByDateAndCampaign = require('./crossroads_by_date_campaigns');
 const aggregateConversionReport = require('./conversion_report');
 const hourlyMediaBuyerFacebookCrossroads = require('./facebook_crossroads/hourly_media_buyer_facebook_crossroads');
@@ -45,6 +46,8 @@ const aggregateFacebookAdsTodaySpentReport = require('./facebook_total_spent_by_
 const aggregateCampaignConversionReport = require('./campaign_conversion_report');
 
 module.exports = {
+  crossroadsCampaigns,
+  crossroadsAdsets,
   aggregateConversionReport,
   aggregateAMGConversions,
   aggregateCRConversions,

@@ -44,6 +44,16 @@ const CROSSROADS_SHEET_VALUES = [
   'visitors'
 ]
 
+const CROSSROADSDATA_SHEET_VALUES = [
+  'revenue',
+  'searches',
+  'lander_visits',
+  'revenue_clicks',
+  'visitors',
+  'tracked_visitors',
+  'cr_rpm',
+  'cr_rpc'
+]
 const CROSSROADS_ACCOUNTS = [
   {
     id: 'account-1',
@@ -51,10 +61,32 @@ const CROSSROADS_ACCOUNTS = [
   }
 ];
 
+const sheetsArr = [
+  {
+    day: 8,
+    spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
+    sheetName: 'Campaign Last 7days',
+    sheetNameByAdset:'Adset Last 7days'
+  },
+  {
+    day: 4,
+    spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
+    sheetName: 'Campaign Last 3days',
+    sheetNameByAdset:'Adset Last 3days'
+  },
+  {
+    day: 2,
+    spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
+    sheetName: 'Campaign Yesterday',
+    sheetNameByAdset:'Adset Yesterday'
+  },
+]
 module.exports = {
   CROSSROADS_URL,
   CROSSROADS_LABELS,
   CROSSROADS_MIRROR: mirror(CROSSROADS_LABELS),
   CROSSROADS_ACCOUNTS,
-  CROSSROADS_SHEET_VALUES
+  CROSSROADS_SHEET_VALUES,
+  CROSSROADSDATA_SHEET_VALUES,
+  sheetsArr
 };

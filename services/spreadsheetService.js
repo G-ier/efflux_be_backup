@@ -7,6 +7,7 @@ const KEY_FILE = './cert/google.json';
 const IgnoredColumns = [];
 const DefaultValues = {
   campaign_name: 'N/A',
+  adset_name: 'N/A'
 };
 
 fs.access(KEY_FILE, (err) => {
@@ -147,7 +148,7 @@ async function mergeSpreadsheet(data, options) {
 
   // find target sheet
   let sheet;
-  if (sheetName) {    
+  if (sheetName) {
     sheet = doc.sheets.find((item) => item.properties.title === sheetName);
   } else {
     sheet = doc.sheets.find((item) => item.properties.index === 0);
@@ -161,17 +162,17 @@ async function mergeSpreadsheet(data, options) {
 
   const { values: sheetValues } = await getSheetValues(spreadsheetId, {
     range
-  });  
-  const updatedRows = sheetValues.map((row) => {    
+  });
+  const updatedRows = sheetValues.map((row) => {
     return rows.filter(record => record[0] == row[3])[0]?.slice(1) || []
   })
 
   // add last_update column
   columns.push('last_update');
   updatedRows[0] = columns.slice(1);
-  updatedRows[1] = [];  
+  updatedRows[1] = [];
   // const newRows = rows.filter(el=> !(sheetValues.map(row => row[3]).includes(el[0])));
-  // const newFormattedRows = newRows.map(row => [...row, row[0]].slice(1))  
+  // const newFormattedRows = newRows.map(row => [...row, row[0]].slice(1))
   // fill sheet with data
   const body = {
     range: `${range}!W:AH`,
