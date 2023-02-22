@@ -68,6 +68,8 @@ function calculateValuesForSpreadsheet(data, columns) {
       rpm: calcResult.rpm,
       est_profit: calcResult.est_profit,
       rpc: calcResult.rpc,
+      cr_rpc: calcResult.cr_rpc,
+      cr_rpm: calcResult.cr_rpm,
       live_cpa: calcResult.live_cpa,
       cpc: calcResult.cpc,
       unique_cpa: calcResult.unique_cpa,
