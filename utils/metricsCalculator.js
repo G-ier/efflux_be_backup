@@ -1,8 +1,6 @@
 module.exports = class MetricsCalculator {
   constructor({
                 total_spent,
-                cr_rpc,
-                cr_rpm,
                 searches,
                 lander_visits,
                 revenue_clicks,
@@ -26,8 +24,6 @@ module.exports = class MetricsCalculator {
               }) {
     this.total_spent = total_spent
     this.searches = searches
-    this.cr_rpc = cr_rpc
-    this.cr_rpm = cr_rpm
     this.lander_visits = lander_visits
     this.revenue_clicks = revenue_clicks
     this.tracked_visitors = tracked_visitors
@@ -54,6 +50,11 @@ module.exports = class MetricsCalculator {
   get rpc() {
     if (!this.network_conversions) return 0
     return this.revenue / this.network_conversions
+  }
+
+  get cr_rpc() {
+    if (!this.revenue_clicks) return 0
+    return this.revenue / this.revenue_clicks
   }
 
   get live_cpa() {
@@ -116,6 +117,11 @@ module.exports = class MetricsCalculator {
   get rpm() {
     if (!this.fb_impressions) return 0
     return this.revenue / this.fb_impressions * 1000
+  }
+
+  get cr_rpm() {
+    if (!this.tracked_visitors) return 0
+    return this.revenue / this.tracked_visitors * 1000
   }
 
   get unique_cpa() {
