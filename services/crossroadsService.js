@@ -206,6 +206,20 @@ function parseTGParams(stat, regex) {
       ad_id: stat.tg6,
       cid: stat.tg7
     }
+  } else if(traffic_source === PROVIDERS.TIKTOK) {
+    return {
+      ...stat,
+      traffic_source,
+      campaign_id: stat.tg2,
+      //NOTE: if tg3 = '{{fbclid}}' real fbclid in gclid property
+      fbclid: stat.tg3 || stat.gclid,
+      gclid: null,
+      pixel_id: stat.tg5,
+      adset_id: stat.tg5,
+      ad_id:  stat.tg7,
+      campaign_name: stat.tg1,
+      adset_name: stat.tg4
+    }
   }
   return {
     ...stat,
@@ -386,6 +400,9 @@ function getTrafficSource(stat) {
     stat.referrer.includes(PROVIDERS.OUTBRAIN) ||
     stat.campaign__name.includes('OUTB')
   ) return PROVIDERS.OUTBRAIN
+  if(stat.campaign__name.includes('TT') ||
+    stat.referrer.includes(PROVIDERS.TIKTOK)
+  ) return PROVIDERS.TIKTOK
   else {
     return PROVIDERS.UNKNOWN
   }
