@@ -319,6 +319,7 @@ function aggregateAdsetList(adsets = []) {
     adset_name: element.adset_name,
     adset_id: element.adset_id,
     pixel_id: element.pixel_id,
+    traffic_source: element.traffic_source,
     ad_id: element.ad_id,
     hour: element.hour,
     date: element.date,

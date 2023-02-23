@@ -66,19 +66,22 @@ const sheetsArr = [
     day: 8,
     spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
     sheetName: 'Campaign Last 7days',
-    sheetNameByAdset:'Adset Last 7days'
+    sheetNameByAdset:'Adset Last 7days',
+    traffic_source: 'facebook',
   },
   {
     day: 4,
     spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
     sheetName: 'Campaign Last 3days',
-    sheetNameByAdset:'Adset Last 3days'
+    sheetNameByAdset:'Adset Last 3days',
+    traffic_source: 'facebook',
   },
   {
     day: 2,
     spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
     sheetName: 'Campaign Yesterday',
-    sheetNameByAdset:'Adset Yesterday'
+    sheetNameByAdset:'Adset Yesterday',
+    traffic_source: 'facebook',
   },
 ]
 module.exports = {

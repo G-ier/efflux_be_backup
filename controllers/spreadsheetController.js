@@ -310,12 +310,12 @@ async function updateCR_ThreeDaySpreadsheet() {
 }
 
 async function updateCR_DaySpreadsheet(sheetData) {
-  const {spreadsheetId, sheetName, sheetNameByAdset, day} = sheetData;
-  let dayFacebookPostbackConversions = await crossroadsCampaigns(someDaysAgoYMD(day), yesterdayYMD());
+  const {spreadsheetId, sheetName, sheetNameByAdset, day, traffic_source} = sheetData;
+  let dayFacebookPostbackConversions = await crossroadsCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source);
   dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
 
-  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsets(someDaysAgoYMD(day), yesterdayYMD());
+  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsets(someDaysAgoYMD(day), yesterdayYMD(), traffic_source);
   dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
     spreadsheetId,
