@@ -38,23 +38,14 @@ route.get('/', async (req, res) => {
   const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
   const client_user_agent = req.headers['user-agent'];
   const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
-  //
-  // if(req.isBot) {
-  //   await models.add('bot_conversions', {
-  //     referrer_url,
-  //     ip: client_ip_address,
-  //     user_agent: client_user_agent,
-  //   });
-  //   return res.end()
-  // }
 
   console.log('POSTBACK CROSSROADS query', req.query)
 
   const {
-    pixel_id,
-    fbclid,
-    tg2,
-    tg6,
+    tg2, // campaign_id
+    tg3: fbclid, // fbclid
+    tg5, // adset_id
+    tg6, // ad_id
     tg7,
     city,
     state,
@@ -72,9 +63,8 @@ route.get('/', async (req, res) => {
 
   const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
   const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
-  
+
   await models.add('postback_events', {
-    pixel_id,
     fbclid,
     city,
     state,
@@ -99,7 +89,6 @@ route.get('/', async (req, res) => {
   })
 
   await models.add('cr_postback_events', {
-    pixel_id,
     fbclid,
     city,
     state,
@@ -125,21 +114,19 @@ route.get('/', async (req, res) => {
   const isConversion = eventType === 'Purchase'
 
   try {
-    if (pixel_id && fbclid) {
+    if (fbclid) {
       let traffic_source;
       let campaign_id;
       let ad_id;
       let adset_id;
       let website;
-      let pixelToken;
-      let event_source_url;
 
-      const pixelAvailable = await models.findBy('fb_pixels', { pixel_id });
+      // const pixelAvailable = await models.findBy('fb_pixels', { pixel_id });
 
-      if (pixelAvailable) {
-        pixelToken = pixelAvailable.token;
-        event_source_url = `https://${pixelAvailable.domain}/`;
-      }
+      // if (pixelAvailable) {
+      //   pixelToken = pixelAvailable.token;
+      //   event_source_url = `https://${pixelAvailable.domain}/`;
+      // }
 
       if (tg2 && tg2.includes('_')) {
         const split = tg2.split('_');
@@ -149,11 +136,13 @@ route.get('/', async (req, res) => {
         website = split[3];
       } else {
         campaign_id = tg2;
-        adset_id = tg6;
+        ad_id = tg6;
+        adset_id = tg5;
+        // TODO: traffic_source param should be received from query
+        // traffic_source = tgxxxx
+        // unique key need to be created
+        // fbclid need to be received from query
       }
-
-      let pixelEvents;
-      let conversionId;
       const generateFbc = `fb.1.${moment()
         .tz('America/Los_Angeles')
         .unix()}.${fbclid}`;
@@ -179,47 +168,10 @@ route.get('/', async (req, res) => {
       );
 
       let event_id = md5(searchterm + fbclid);
-      if (!isConversion) {
-        const [pixelId] = await models.add('pixel_clicks', {
-          pixel_id,
-          fbc: generateFbc,
-          fbclid,
-          event_id,
-          event_time: moment().unix(),
-          event_name: eventType,
-          traffic_source,
-          campaign_id,
-          ad_id,
-          adset_id,
-          website,
-          referrer_url,
-        });
-
-        event_id = pixelId;
-
-        pixelEvents = [
-          {
-            event_name: eventType,
-            action_source: 'website',
-            event_id,
-            event_time: moment().tz('America/Los_Angeles').unix(),
-            user_data: {
-              client_user_agent,
-              client_ip_address,
-              fbc: generateFbc,
-              ct,
-              st,
-              zp,
-              country: countryHashed,
-            },
-          },
-        ];
-
-        // console.log('NOT A CONVERSION', pixelEvents);
-      } else {
+      if (isConversion)
+      {
         const conversion = {
           date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
-          pixel_id,
           fbclid,
           event_id,
           fbc: generateFbc,
@@ -240,64 +192,10 @@ route.get('/', async (req, res) => {
           hour: todayHH()
         };
 
-        [conversionId] = await models.add('fb_conversions', conversion);
+        await models.add('fb_conversions', conversion);
 
-        event_id = conversionId;
-
-        pixelEvents = [
-          {
-            event_name: eventType,
-            currency: 'USD',
-            action_source: 'website',
-            value,
-            event_id,
-            event_time: moment().tz('America/Los_Angeles').unix(),
-            user_data: {
-              client_user_agent,
-              client_ip_address,
-              fbc: generateFbc,
-              ct,
-              st,
-              zp,
-              country: countryHashed,
-            },
-          },
-        ];
-
-        // console.log('CONVERSION', pixelEvents);
       }
-
-      const testObject = test_event_code
-        ? {
-          params: {
-            data: pixelEvents,
-            test_event_code,
-          },
-        }
-        : {
-          params: {
-            data: pixelEvents,
-          },
-        };
-
-      const response = await axios.post(
-        `${FB_API_URL}${pixel_id}/events?access_token=${pixelToken}`,
-        null,
-        testObject,
-      ).catch((err) => {
-        const message = err.response ? err.response.data?.message : err.message;
-        console.warn(`failed to post event to fb due: ${message}`)
-        // console.log('post event to fb error', err)
-        return null;
-      });
-
-
-
-      const result = {
-        ...(response ? response.data: {}),
-      };
-
-      res.status(200).json(result);
+      res.status(200).json({});
     } else {
       res.status(200).json({
         message:
