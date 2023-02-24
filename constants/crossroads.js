@@ -52,7 +52,8 @@ const CROSSROADSDATA_SHEET_VALUES = [
   'visitors',
   'tracked_visitors',
   'cr_rpm',
-  'cr_rpc'
+  'cr_rpc',
+  'cr_camp_name',
 ]
 const CROSSROADS_ACCOUNTS = [
   {

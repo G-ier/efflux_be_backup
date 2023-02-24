@@ -7,7 +7,8 @@ const KEY_FILE = './cert/google.json';
 const IgnoredColumns = [];
 const DefaultValues = {
   campaign_name: 'N/A',
-  adset_name: 'N/A'
+  adset_name: 'N/A',
+  cr_camp_name: 'N/A'
 };
 
 fs.access(KEY_FILE, (err) => {
