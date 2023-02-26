@@ -12,6 +12,7 @@ const { FB_API_URL } = require('../../constants/facebook');
 const models = require('../../common/helpers');
 const {todayHH, todayYMD} = require("../../common/day");
 const PROVIDERS = require('../../constants/providers');
+const db = require('../../data/dbConfig');
 
 route.get('/system1', (req, res, next) => {
   postbackCtrl.trackSystem1(req).then((response) => {
@@ -68,7 +69,10 @@ route.get('/', async (req, res) => {
   const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
   if(tg1.includes('FB') || src.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
   else if(tg1.includes('TT') || src.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
-  await models.add('postback_events', {
+  // check event_timestamp exist
+  const isEvent = await db('postback_events').where('event_timestamp', '=', event_timestamp).returning('id').first();
+
+  const pb_conversion = {
     fbclid,
     city,
     state,
@@ -93,7 +97,14 @@ route.get('/', async (req, res) => {
     network: 'crossroads',
     traffic_source,
     kwp
-  })
+  }
+  if(!isEvent){
+    await models.add('postback_events', pb_conversion )
+  }
+  else {
+    await models.update('postback_events',isEvent.id,  pb_conversion)
+  }
+
 
   const isConversion = eventType === 'Purchase'
 
