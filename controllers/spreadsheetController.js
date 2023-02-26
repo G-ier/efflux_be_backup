@@ -377,16 +377,16 @@ async function updatePB_Spreadsheet() {
 
 async function updatePB_SpreadsheetByTraffic() {
   for(let i=0;i<PB_SHEETS.length;i++){
-    const {spreadsheetId, sheetName, sheetNameByAdset, network, traffic} = PB_SHEETS[i];
+    const {spreadsheetId, sheetName, sheetNameByAdset, network, traffic, timezone} = PB_SHEETS[i];
     // campaign sheet
-    let todayData = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone) , 'campaign_id', network, traffic);
+    let todayData = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone) , 'campaign_id', network, traffic);
     todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id','campaign_name', ...PB_SHEET_VALUES]);
     await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
 
     // adset sheet
-    let todayDataByAdset = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone), 'adset_id', network, traffic);
+    let todayDataByAdset = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), 'adset_id', network, traffic);
     todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id','campaign_name', ...PB_SHEET_VALUES]);
-    await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetNameByAdset});
+    await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
 
   }
 

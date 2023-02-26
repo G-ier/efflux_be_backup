@@ -252,8 +252,8 @@ const PB_SHEETS = [
     network: 'crossroads',
     timezone: 'UTC',
     spreadsheetId:"1D-66Tf5VcQGghBkpukNgsNmKe8nHFyMTOsIwe5RnNtk",
-    sheetName:"Campaign",
-    sheetNameByAdset:"Adset",
+    sheetName: "Campaign",
+    sheetNameByAdset: "Adset",
     traffic: 'facebook',
   },
 ]
