@@ -63,10 +63,11 @@ route.get('/', async (req, res) => {
   } = req.query;
 
   const ua = parser(client_user_agent);
-
+  let traffic_source;
   const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
   const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
-
+  if(tg1.includes('FB') || src.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
+  else if(tg1.includes('TT') || src.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
   await models.add('postback_events', {
     fbclid,
     city,
@@ -85,16 +86,18 @@ route.get('/', async (req, res) => {
     device: ua.device.name,
     os: `${ua.os.name} - ${ua.os.version}`,
     browser: ua.browser.name,
+    campaign_name: tg1,
     campaign_id: tg2,
     adset_id: tg5,
     ad_id: tg6,
     network: 'crossroads',
+    traffic_source,
+    kwp
   })
 
   const isConversion = eventType === 'Purchase'
 
   try {
-    let traffic_source;
     let campaign_id;
     let ad_id;
     let adset_id;
@@ -110,8 +113,6 @@ route.get('/', async (req, res) => {
       campaign_id = tg2;
       ad_id = tg6;
       adset_id = tg5;
-      if(tg1.includes('FB') || src.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
-      else if(tg1.includes('TT') || src.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
     }
     const generateFbc = `fb.1.${moment()
       .tz('America/Los_Angeles')

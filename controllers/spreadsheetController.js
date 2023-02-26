@@ -1,7 +1,7 @@
 const {
   crossroadsCampaigns, crossroadsAdsets, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport,
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -11,7 +11,7 @@ const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
 const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
-const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr} = require('../constants/postback')
+const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback')
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -375,6 +375,23 @@ async function updatePB_Spreadsheet() {
 
 }
 
+async function updatePB_SpreadsheetByTraffic() {
+  for(let i=0;i<PB_SHEETS.length;i++){
+    const {spreadsheetId, sheetName, sheetNameByAdset, network, traffic, timezone} = PB_SHEETS[i];
+    // campaign sheet
+    let todayData = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone) , 'campaign_id', network, traffic);
+    todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id','campaign_name', ...PB_SHEET_VALUES]);
+    await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+
+    // adset sheet
+    let todayDataByAdset = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), 'adset_id', network, traffic);
+    todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id','campaign_name', ...PB_SHEET_VALUES]);
+    await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+
+  }
+
+}
+
 async function updateYesterdayPB_Spreadsheet() {
 
   for(let i=0;i<sheetsArr.length;i++){
@@ -459,6 +476,7 @@ module.exports = {
   updateS1_Spreadsheet,
   updatePR_Spreadsheet,
   updatePB_Spreadsheet,
+  updatePB_SpreadsheetByTraffic,
   updateYesterdayPB_Spreadsheet,
   updateSedo_Spreadsheet,
   updatePB_UnknownSpreadsheet
