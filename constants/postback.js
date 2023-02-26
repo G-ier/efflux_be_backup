@@ -27,7 +27,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'fb_conversions',
     'fb_lead',
     'fb_conversion_amount',
-    's1_campaign', // s1 
+    's1_campaign', // s1
     's1_revenue',
     's1_conversion',
     's1_last_updated',
@@ -53,9 +53,9 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
     'last_updated',
   ]
 };
- 
+
 const POSTBACK_EXCLUDEDFIELDS = [
-  's1_campaign', // s1 
+  's1_campaign', // s1
   's1_revenue',
   's1_conversion',
   's1_last_updated',
@@ -114,7 +114,7 @@ const sheetsArr = [
     network: 'system1',
     timezone: 'UTC',
     spreadsheetId:"17UZgfakONENIwmR5qQL_betjWxnPHzi5cYGOFzghhoo",
-    sheetName:"Campaign", //Sean 
+    sheetName:"Campaign", //Sean
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
@@ -131,7 +131,7 @@ const sheetsArr = [
     network: 'system1',
     timezone: 'UTC',
     spreadsheetId:"13bqIaR5dMC3OjlKAAeJpRQWbrTViUZOZk9_3P1gNL2k",
-    sheetName:"Campaign", // Patrick 
+    sheetName:"Campaign", // Patrick
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
@@ -149,7 +149,7 @@ const sheetsArr = [
     network: 'unknown',
     timezone: process.env.SEDO_TIMEZONE,
     spreadsheetId:"1dJFEgKe_eGwV9_xa9hNtY9-dk7qA-oJpAhasHrxqlmE",
-    sheetName:"Campaign", // sedo 
+    sheetName:"Campaign", // sedo
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
@@ -163,7 +163,7 @@ const sheetsArr = [
     network: 'system1',
     timezone: 'UTC',
     spreadsheetId:"1qg1RO6iNatq2hGIIX9zJHIlF9ZR0kUYWucV_ryQEiJg",
-    sheetName:"Campaign", // utc14 
+    sheetName:"Campaign", // utc14
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
@@ -175,7 +175,7 @@ const sheetsArr = [
     network: 'crossroads',
     timezone: 'America/Los_Angeles',
     spreadsheetId:"1TTRitP_kKzaQhVyE6nCztjPiitUoJ-I6lOg92s7RBdA",
-    sheetName:"Campaign", // crossroads 
+    sheetName:"Campaign", // crossroads
     sheetNameByAdset:"Adset",
     sheetName_Y:"Campaign For Yesterday",
     sheetNameByAdset_Y: "Adset For Yesterday",
@@ -185,12 +185,12 @@ const sheetsArr = [
   },
 
   // test
-  
+
   // {
-  //   network: 'system1', // local development 
+  //   network: 'system1', // local development
   //   timezone: 'UTC',
   //   spreadsheetId:"112mVXGcbs1ckvua44OcEyUl9_MexD6cUjPefOEYod3o",
-  //   sheetName:"Campaign", //Sean 
+  //   sheetName:"Campaign", //Sean
   //   sheetNameByAdset:"Adset",
   //   sheetName_Y:"Campaign For Yesterday",
   //   sheetNameByAdset_Y: "Adset For Yesterday",
@@ -204,10 +204,10 @@ const sheetsArr = [
   //   ]
   // },
   // {
-  //   network: 'system1', // local development 
+  //   network: 'system1', // local development
   //   timezone: 'UTC',
   //   spreadsheetId:"112mVXGcbs1ckvua44OcEyUl9_MexD6cUjPefOEYod3o",
-  //   sheetName:"Campaign", //Sean 
+  //   sheetName:"Campaign", //Sean
   //   sheetNameByAdset:"Adset",
   //   sheetName_Y:"Campaign For Yesterday",
   //   sheetNameByAdset_Y: "Adset For Yesterday",
@@ -247,10 +247,22 @@ const unknownSheetArr = [
   },
 ]
 
+const PB_SHEETS = [
+  {
+    network: 'crossroads',
+    timezone: 'UTC',
+    spreadsheetId:"1D-66Tf5VcQGghBkpukNgsNmKe8nHFyMTOsIwe5RnNtk",
+    sheetName:"Campaign",
+    sheetNameByAdset:"Adset",
+    traffic: 'facebook',
+  },
+]
+
 module.exports = {
   POSTBACK_SHEET_VALUES,
   POSTBACK_EXCLUDEDFIELDS,
   pbNetMapFields,
   sheetsArr,
-  unknownSheetArr, 
+  unknownSheetArr,
+  PB_SHEETS,
 }
