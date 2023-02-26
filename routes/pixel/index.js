@@ -70,8 +70,8 @@ route.get('/', async (req, res) => {
   if(tg1.includes('FB') || src.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
   else if(tg1.includes('TT') || src.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
   // check event_timestamp exist
-  const isEvent = await db('postback_events').where('event_timestamp', '=', event_timestamp).returning('id').first();
-
+  let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
+  const isEvent = await db('postback_events').where('event_id', '=', event_id).returning('id').first();
   const pb_conversion = {
     fbclid,
     city,
@@ -96,12 +96,15 @@ route.get('/', async (req, res) => {
     ad_id: tg6,
     network: 'crossroads',
     traffic_source,
-    kwp
+    kwp,
+    event_id
   }
   if(!isEvent){
+    console.log('add postback_events')
     await models.add('postback_events', pb_conversion )
   }
   else {
+    console.log('update postback_events')
     await models.update('postback_events',isEvent.id,  pb_conversion)
   }
 
@@ -129,7 +132,6 @@ route.get('/', async (req, res) => {
       .tz('America/Los_Angeles')
       .unix()}.${fbclid}`;
 
-    let event_id = md5(event_timestamp);
     if (isConversion)
     {
       const conversion = {
