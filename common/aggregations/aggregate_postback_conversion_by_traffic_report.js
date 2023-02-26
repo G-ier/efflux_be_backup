@@ -3,7 +3,7 @@ const {
   dayYMD, yesterdayYMD, dayYMDHM, yesterdayYMDHM,
 } = require('../day');
 
-const aggregatePpostbackConversionByTrafficReport = (startDate, endDate, network, traffic_source) => db.raw(`
+const aggregatePostbackConversionByTrafficReport = (startDate, endDate, network, traffic_source) => db.raw(`
   SELECT pb.campaign_id as campaign_id,
   MAX(pb.campaign_name) as campaign_name,
   MAX(pb.traffic_source) as traffic_source,
@@ -17,4 +17,4 @@ const aggregatePpostbackConversionByTrafficReport = (startDate, endDate, network
   GROUP BY pb.campaign_id
 `)
 
-module.exports = aggregatePpostbackConversionByTrafficReport;
+module.exports = aggregatePostbackConversionByTrafficReport;
