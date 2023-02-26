@@ -23,7 +23,7 @@ function initializePostbackCron() {
   }
 
   // Debug Code
-  updatePB_SpreadsheetByTraffic().then(() => { console.log('POSTBACK SHEET UPDATE DONE') });
+  // updatePB_SpreadsheetByTraffic().then(() => { console.log('POSTBACK SHEET UPDATE DONE') });
   // updateSystem1Hourly().then(() => { console.log('SYSTEM1 HOURLY UPDATE DONE') });
   // updateSystem1Daily().then(() => { console.log('SYSTEM1 DAILY UPDATE DONE') });
   // updateSpreadsheet().then(() => { console.log('spreadsheet updated') });
