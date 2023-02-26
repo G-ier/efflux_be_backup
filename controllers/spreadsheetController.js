@@ -1,7 +1,7 @@
 const {
   crossroadsCampaigns, crossroadsAdsets, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePpostbackConversionByTrafficReport,
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport,
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -11,7 +11,7 @@ const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
 const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
-const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS} = require('../constants/postback')
+const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback')
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -377,29 +377,17 @@ async function updatePB_Spreadsheet() {
 
 async function updatePB_SpreadsheetByTraffic() {
   for(let i=0;i<PB_SHEETS.length;i++){
-    const {spreadsheetId, sheetName, network, traffic} = PB_SHEETS[i];
+    const {spreadsheetId, sheetName, sheetNameByAdset, network, traffic} = PB_SHEETS[i];
     // campaign sheet
-    let todayData = await aggregatePpostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone) , 'campaign_id', network, traffic);
-    const aveByCampaignData = await aggregateCampaignConversionReport(network, 'today');
-    todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);
-    todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL SHEET')
-
-    let todayTotalSpent = await aggregateFacebookAdsTodaySpentReport(todayYMD(timezone), accounts, network, timezone);
-    todayTotalSpent = calculateValuesForSpreadsheet1(todayTotalSpent.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], "TOTAL API")
-    let todayDataDiff = mapValuesForSpreadsheetDiff(todayData.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")
-    todayData = {...todayData, rows: [todayTotalSpent.rows[0], todayData.rows[0], todayDataDiff].concat(todayData.rows.slice(1))}
-
-    await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName,  excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
+    let todayData = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone) , 'campaign_id', network, traffic);
+    todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id','campaign_name', ...PB_SHEET_VALUES]);
+    await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
 
     // adset sheet
-    let todayDataByAdset = await aggregatePpostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone), 'adset_id', accounts, network);
-    todayDataByAdset.rows = mergeAvgRPC(todayDataByAdset.rows, aveByCampaignData.rows);
-    todayDataByAdset = calculateValuesForSpreadsheet1(todayDataByAdset.rows, [...POSTBACK_SHEET_VALUES('adset_id')], 'TOTAL SHEET')
+    let todayDataByAdset = await aggregatePostbackConversionByTrafficReport(yesterdayYMD(null, timezone), todayYMD(timezone), dayBeforeYesterdayYMD(null, timezone), 'adset_id', network, traffic);
+    todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id','campaign_name', ...PB_SHEET_VALUES]);
+    await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetNameByAdset});
 
-    todayDataDiff = mapValuesForSpreadsheetDiff(todayDataByAdset.rows[0], todayTotalSpent.rows[0], [...POSTBACK_SHEET_VALUES('campaign_id')], "DIFFERENCE")
-    todayDataByAdset = {...todayDataByAdset, rows: [todayTotalSpent.rows[0], todayDataByAdset.rows[0], todayDataDiff].concat(todayDataByAdset.rows.slice(1))}
-
-    await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset, excludedFields: [...POSTBACK_EXCLUDEDFIELDS]});
   }
 
 }

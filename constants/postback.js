@@ -258,6 +258,11 @@ const PB_SHEETS = [
   },
 ]
 
+const PB_SHEET_VALUES = [
+  'revenue',
+  'conversions',
+  'traffic_source'
+]
 module.exports = {
   POSTBACK_SHEET_VALUES,
   POSTBACK_EXCLUDEDFIELDS,
@@ -265,4 +270,5 @@ module.exports = {
   sheetsArr,
   unknownSheetArr,
   PB_SHEETS,
+  PB_SHEET_VALUES
 }

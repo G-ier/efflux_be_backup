@@ -86,6 +86,7 @@ route.get('/', async (req, res) => {
     device: ua.device.name,
     os: `${ua.os.name} - ${ua.os.version}`,
     browser: ua.browser.name,
+    campaign_name: tg1,
     campaign_id: tg2,
     adset_id: tg5,
     ad_id: tg6,
