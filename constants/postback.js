@@ -256,6 +256,14 @@ const PB_SHEETS = [
     sheetNameByAdset: "Adset",
     traffic: 'facebook',
   },
+  {
+    network: 'crossroads',
+    timezone: 'UTC',
+    spreadsheetId:"190Lf-lxTnihSO0mtzSYlX-OYNmuOp4JKGrZxykETnpI",
+    sheetName: "Campaign",
+    sheetNameByAdset: "Adset",
+    traffic: 'tiktok',
+  },
 ]
 
 const PB_SHEET_VALUES = [
