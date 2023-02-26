@@ -20,6 +20,7 @@ module.exports = class MetricsCalculator {
                 campaign_id,
                 campaign_name,
                 traffic_source,
+                cr_camp_name,
                 adset_id,
                 adset_name,
               }) {
@@ -43,6 +44,7 @@ module.exports = class MetricsCalculator {
     this.campaign_id = campaign_id
     this.campaign_name = campaign_name
     this.traffic_source = traffic_source
+    this.cr_camp_name = cr_camp_name
     this.adset_id = adset_id
     this.adset_name = adset_name
     this.network_conversions = this.s1_conversions || this.cr_conversions || 0

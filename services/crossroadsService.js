@@ -206,6 +206,20 @@ function parseTGParams(stat, regex) {
       ad_id: stat.tg6,
       cid: stat.tg7
     }
+  } else if(traffic_source === PROVIDERS.TIKTOK) {
+    return {
+      ...stat,
+      traffic_source,
+      campaign_id: stat.tg2,
+      //NOTE: if tg3 = '{{fbclid}}' real fbclid in gclid property
+      fbclid: stat.tg3 || stat.gclid,
+      gclid: null,
+      pixel_id: stat.tg5,
+      adset_id: stat.tg5,
+      ad_id:  stat.tg7,
+      campaign_name: stat.tg1,
+      adset_name: stat.tg4
+    }
   }
   return {
     ...stat,
@@ -272,6 +286,7 @@ function processCrossroadsData(data, account, request_date) {
       crossroads_campaign_id: click.crossroads_campaign_id || null,
       campaign_id: click.campaign_id || null,
       campaign_name: click.campaign_name || null,
+      cr_camp_name: click.campaign__name || null,
       adset_name: click.adset_name || null,
       adset_id: click.adset_id || null,
       section_id: click.section_id || null,
@@ -316,6 +331,7 @@ function aggregateAdsetList(adsets = []) {
     crossroads_campaign_id: element.crossroads_campaign_id,
     campaign_id: element.campaign_id,
     campaign_name: element.campaign_name,
+    cr_camp_name: element.cr_camp_name,
     adset_name: element.adset_name,
     adset_id: element.adset_id,
     pixel_id: element.pixel_id,
@@ -386,6 +402,9 @@ function getTrafficSource(stat) {
     stat.referrer.includes(PROVIDERS.OUTBRAIN) ||
     stat.campaign__name.includes('OUTB')
   ) return PROVIDERS.OUTBRAIN
+  if(stat.campaign__name.includes('TT') ||
+    stat.referrer.includes(PROVIDERS.TIKTOK)
+  ) return PROVIDERS.TIKTOK
   else {
     return PROVIDERS.UNKNOWN
   }

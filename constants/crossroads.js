@@ -52,7 +52,8 @@ const CROSSROADSDATA_SHEET_VALUES = [
   'visitors',
   'tracked_visitors',
   'cr_rpm',
-  'cr_rpc'
+  'cr_rpc',
+  'cr_camp_name',
 ]
 const CROSSROADS_ACCOUNTS = [
   {
@@ -82,6 +83,27 @@ const sheetsArr = [
     sheetName: 'Campaign Yesterday',
     sheetNameByAdset:'Adset Yesterday',
     traffic_source: 'facebook',
+  },
+  {
+    day: 8,
+    spreadsheetId: '1LXkbP4X-uUGl_Fk5AKciL0DvQSbFN_apJga-x3g0_t4',
+    sheetName: 'Campaign Last 7days',
+    sheetNameByAdset:'Adset Last 7days',
+    traffic_source: 'tiktok',
+  },
+  {
+    day: 4,
+    spreadsheetId: '1LXkbP4X-uUGl_Fk5AKciL0DvQSbFN_apJga-x3g0_t4',
+    sheetName: 'Campaign Last 3days',
+    sheetNameByAdset:'Adset Last 3days',
+    traffic_source: 'tiktok',
+  },
+  {
+    day: 2,
+    spreadsheetId: '1LXkbP4X-uUGl_Fk5AKciL0DvQSbFN_apJga-x3g0_t4',
+    sheetName: 'Campaign Yesterday',
+    sheetNameByAdset:'Adset Yesterday',
+    traffic_source: 'tiktok',
   },
 ]
 module.exports = {

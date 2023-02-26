@@ -59,18 +59,18 @@ const crossroadsSixMinCron = new CronJob(
 );
 
 const initializeCRCron = () => {
-  (async () => {
+  // (async () => {
 
-    // console.log(`Getting Crossroads data...`);
-    // await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
-    //   return updateCrossroadsData(account, someDaysAgoYMD(1));
-    // }))
+  //   // console.log(`Getting Crossroads data...`);
+  //   // await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
+  //   //   return updateCrossroadsData(account, someDaysAgoYMD(8));
+  //   // }))
 
-    // for(let i=0;i<sheetsArr.length;i++) {
-    //   await updateCR_DaySpreadsheet(sheetsArr[i]);
-    // }
+  //   // for(let i=0;i<sheetsArr.length;i++) {
+  //   //   await updateCR_DaySpreadsheet(sheetsArr[i]);
+  //   // }
 
-  })();
+  // })();
 
   if (!disableCron) {
     crossroadsFinalDataCron.start();
