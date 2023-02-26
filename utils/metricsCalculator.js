@@ -16,6 +16,7 @@ module.exports = class MetricsCalculator {
                 link_clicks,
                 pb_unique_conversions,
                 cr_unique_conversions,
+                conversions,
                 visitors,
                 campaign_id,
                 campaign_name,
@@ -30,6 +31,7 @@ module.exports = class MetricsCalculator {
     this.revenue_clicks = revenue_clicks
     this.tracked_visitors = tracked_visitors
     this.revenue = revenue
+    this.conversions = conversions
     this.pb_conversions = pb_conversions
     this.cr_conversions = cr_conversions
     this.s1_conversions = s1_conversions
