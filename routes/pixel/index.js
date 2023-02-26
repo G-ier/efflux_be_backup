@@ -90,7 +90,8 @@ route.get('/', async (req, res) => {
     adset_id: tg5,
     ad_id: tg6,
     network: 'crossroads',
-    traffic_source
+    traffic_source,
+    kwp
   })
 
   const isConversion = eventType === 'Purchase'
