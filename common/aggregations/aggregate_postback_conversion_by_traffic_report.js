@@ -14,6 +14,7 @@ const aggregatePostbackConversionByTrafficReport = (startDate, endDate, groupBy,
     AND pb.date <= '${endDate}'
     AND pb.traffic_source = '${traffic_source}'
     AND network = '${network}'
+    AND event_type = 'Purchase'
   GROUP BY pb.${groupBy}
 `)
 
