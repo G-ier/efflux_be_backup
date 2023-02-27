@@ -38,6 +38,7 @@ function calculateTotalsForSpreadsheet(data, columns){
   return { columns, rows: data }
 }
 function calculateValuesForSpreadsheet(data, columns) {
+  data = data.filter(item => !isNaN(item[columns[0]]) && Number(item[columns[0]]) != 0);
   const totals = columns.reduce((acc, column) => {
     data.forEach(item => {
       if(Number.isFinite(item[column])) {
