@@ -71,7 +71,7 @@ route.get('/', async (req, res) => {
   else if(tg1.includes('TT') || src.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
   // check event_timestamp exist
   let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
-  const isEvent = await db('postback_events').where('event_id', '=', event_id).returning('id').first();
+  const isEvent = false && await db('postback_events').where('event_id', '=', event_id).returning('id').first();
   const pb_conversion = {
     fbclid,
     city,
