@@ -54,6 +54,7 @@ const POSTBACK_SHEET_VALUES = (groupBy) => {
   ]
 };
 
+const PB_TIMEZONE = 'America/Los_Angeles';
 const POSTBACK_EXCLUDEDFIELDS = [
   's1_campaign', // s1
   's1_revenue',
@@ -250,25 +251,50 @@ const unknownSheetArr = [
 const PB_SHEETS = [
   {
     network: 'crossroads',
-    timezone: 'UTC',
+    timezone: PB_TIMEZONE,
     spreadsheetId:"1D-66Tf5VcQGghBkpukNgsNmKe8nHFyMTOsIwe5RnNtk",
     sheetName: "Campaign",
     sheetNameByAdset: "Adset",
     traffic: 'facebook',
+    fromDay: 1,
+    toDay: 0,
   },
   {
     network: 'crossroads',
-    timezone: 'UTC',
+    timezone: PB_TIMEZONE,
+    spreadsheetId:"1D-66Tf5VcQGghBkpukNgsNmKe8nHFyMTOsIwe5RnNtk",
+    sheetName: "Campaign Yesterday",
+    sheetNameByAdset: "Adset Yesterday",
+    traffic: 'facebook',
+    fromDay: 2,
+    toDay: 1,
+  },
+  {
+    network: 'crossroads',
+    timezone: PB_TIMEZONE,
     spreadsheetId:"190Lf-lxTnihSO0mtzSYlX-OYNmuOp4JKGrZxykETnpI",
     sheetName: "Campaign",
     sheetNameByAdset: "Adset",
     traffic: 'tiktok',
+    fromDay: 1,
+    toDay: 0,
+  },
+  {
+    network: 'crossroads',
+    timezone: PB_TIMEZONE,
+    spreadsheetId:"190Lf-lxTnihSO0mtzSYlX-OYNmuOp4JKGrZxykETnpI",
+    sheetName: "Campaign Yesterday",
+    sheetNameByAdset: "Adset Yesterday",
+    traffic: 'tiktok',
+    fromDay: 2,
+    toDay: 1,
   },
 ]
 
 const PB_SHEET_VALUES = [
   'revenue',
   'conversions',
+  'rpc',
   'traffic_source'
 ]
 module.exports = {
@@ -278,5 +304,6 @@ module.exports = {
   sheetsArr,
   unknownSheetArr,
   PB_SHEETS,
-  PB_SHEET_VALUES
+  PB_SHEET_VALUES,
+  PB_TIMEZONE
 }

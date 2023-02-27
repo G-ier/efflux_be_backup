@@ -8,7 +8,7 @@ const aggregatePostbackConversionByTrafficReport = (startDate, endDate, groupBy,
   MAX(pb.campaign_name) as campaign_name,
   MAX(pb.traffic_source) as traffic_source,
   SUM(pb.pb_value) as revenue,
-  COUNT(pb.event_type) as conversions
+  CAST(COUNT(pb.event_type) AS INTEGER) as conversions
   FROM postback_events pb
   WHERE pb.date > '${startDate}'
     AND pb.date <= '${endDate}'

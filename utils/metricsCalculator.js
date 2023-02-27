@@ -49,7 +49,7 @@ module.exports = class MetricsCalculator {
     this.cr_camp_name = cr_camp_name
     this.adset_id = adset_id
     this.adset_name = adset_name
-    this.network_conversions = this.s1_conversions || this.cr_conversions || 0
+    this.network_conversions = this.s1_conversions || this.cr_conversions || this.pb_conversions || this.conversions || 0
     this.network_unique_conversions = this.cr_unique_conversions || 0
   }
 
