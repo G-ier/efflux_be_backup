@@ -164,7 +164,7 @@ async function updateData(data, date) {
     const updated = await Promise.all(
       updateArr.map(item => {
         return db('sedo')
-          .where({domain: item.domain, date: item.date, sub1: item.sub1, sub2: item.sub2, sub3: item.sub3, campaign_id:item.campaign_id, adset_id: item.adset_id}).first()
+          .where({domain: item.domain, date: item.date, sub1: item.sub1, sub2: item.sub2, sub3: item.sub3, campaign_id: item.campaign_id, adset_id: item.adset_id}).first()
           .update({
             revenue: item.revenue,
             clicks: item.clicks,

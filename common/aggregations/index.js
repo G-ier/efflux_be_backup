@@ -4,6 +4,7 @@ const aggregateConversionReport = require('./conversion_report');
 const aggregatePostbackConversionByTrafficReport = require('./aggregate_postback_conversion_by_traffic_report');
 const hourlyMediaBuyerFacebookCrossroads = require('./facebook_crossroads/hourly_media_buyer_facebook_crossroads');
 const hourlyMediaBuyerGoogleCrossroads = require('./hourly_media_buyer_google_crossroads');
+const aggregateSedoConversion1Report = require('./aggregate_sedo_conversion_report');
 const dailyCampaignFacebookCrossroads = require('./facebook_crossroads/daily_campaign_facebook_crossroads');
 const dailyCampaignGoogleCrossroads = require('./daily_campaign_google_crossroads');
 const facebookByDate = require('./facebook_by_date');
@@ -94,5 +95,6 @@ module.exports = {
   facebookSystem1ByCampaignId,
   aggregateOBConversionReport,
   aggregateFacebookAdsTodaySpentReport,
-  aggregateCampaignConversionReport
+  aggregateCampaignConversionReport,
+  aggregateSedoConversion1Report
 };

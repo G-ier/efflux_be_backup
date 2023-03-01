@@ -2,6 +2,7 @@ module.exports = class MetricsCalculator {
   constructor({
                 total_spent,
                 searches,
+                domain,
                 lander_visits,
                 revenue_clicks,
                 tracked_visitors,
@@ -26,6 +27,7 @@ module.exports = class MetricsCalculator {
                 adset_name,
               }) {
     this.total_spent = total_spent
+    this.domain = domain
     this.searches = searches
     this.lander_visits = lander_visits
     this.revenue_clicks = revenue_clicks

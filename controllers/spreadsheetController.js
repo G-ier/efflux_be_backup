@@ -1,7 +1,7 @@
 const {
   crossroadsCampaigns, crossroadsAdsets, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport,
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report,
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -11,7 +11,8 @@ const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
 const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
-const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback')
+const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback');
+const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -390,7 +391,6 @@ async function updatePB_SpreadsheetByTraffic() {
     await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
 
   }
-
 }
 
 async function updateYesterdayPB_Spreadsheet() {
@@ -469,6 +469,22 @@ async  function updateSedo_Spreadsheet() {
 
 }
 
+async function updateSedo_Conversion_Spreadsheet() {
+  for(let i=0;i<SEDO_SHEET.length;i++){
+    const {spreadsheetId, sheetName, sheetNameByAdset, timezone, fromDay, toDay} = SEDO_SHEET[i];
+    // campaign sheet
+    let todayData = await aggregateSedoConversion1Report(someDaysAgoYMD(fromDay, null, timezone), someDaysAgoYMD(toDay, null, timezone) , 'campaign_id');
+    todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id', ...SEDO_SHEET_VALUES]);
+    await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
+
+    // adset sheet
+    let todayDataByAdset = await aggregateSedoConversion1Report(someDaysAgoYMD(fromDay, null, timezone), someDaysAgoYMD(toDay, null, timezone), 'adset_id');
+    todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id', ...SEDO_SHEET_VALUES]);
+    await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+
+  }
+}
+
 module.exports = {
   updateCR_Spreadsheet,
   updateCR_ThreeDaySpreadsheet,
@@ -480,5 +496,6 @@ module.exports = {
   updatePB_SpreadsheetByTraffic,
   updateYesterdayPB_Spreadsheet,
   updateSedo_Spreadsheet,
+  updateSedo_Conversion_Spreadsheet,
   updatePB_UnknownSpreadsheet
 }
