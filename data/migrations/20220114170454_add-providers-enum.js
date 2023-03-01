@@ -1,6 +1,6 @@
 exports.up = function(knex) {
   return knex.raw(`
-    CREATE TYPE providers AS ENUM ('facebook', 'google', 'auth0', 'outbrain', 'unknown');
+    CREATE TYPE providers AS ENUM ('facebook', 'google', 'auth0', 'outbrain', 'tiktok', 'unknown');
     ALTER TABLE users
       ALTER COLUMN provider TYPE providers USING provider::providers,
       ALTER COLUMN provider SET DEFAULT 'unknown';

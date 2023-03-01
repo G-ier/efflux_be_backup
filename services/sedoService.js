@@ -1,7 +1,7 @@
 const _ = require('lodash');
 const soapRequest = require('easy-soap-request');
 const xml2js = require('xml2js');
-const {yesterdayYMD, todayYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD, someDaysAgoYMD} = require("../common/day");
 const db = require('../data/dbConfig');
 
 const browserObject = require('./../scripts/sedoScrape/browser');
@@ -14,19 +14,19 @@ const parseXml = async (body) => {
       resolve(result)
     })
   })
-  
+
 }
 
 const extractDomainStatistics = async (str) => {
-  return new Promise((resolve, reject) => {    
-    let stats = str.SEDOSTATS.item;       
+  return new Promise((resolve, reject) => {
+    let stats = str.SEDOSTATS.item;
     stats = stats.map(item => {
       return {
         domain: item.domain[0]._,
         date: item.date[0]._,
         visitors: item.visitors[0]._,
         clicks: item.clicks[0]._,
-        earnings: item.earnings[0]._,        
+        earnings: item.earnings[0]._,
       }
     })
     stats = stats.filter(item => !!item.domain)
@@ -40,45 +40,49 @@ const getDomainParkingFinalStatistics = async (date) => {
     'signkey'       : process.env.SEDO_SIGNKEY,
     'username'      : process.env.SEDO_USERNAME,
     'password'      : process.env.SEDO_PASSWORD,
-    'output_method' : 'xml',    
+    'output_method' : 'xml',
     'period'        : 0,
     'date'          : date,
     'startfrom'     : 0,
     'results'       : 10000,
   });
   const query = params.toString();
-  return new Promise(async (resolve, reject) => {    
+  return new Promise(async (resolve, reject) => {
     const { response } = await soapRequest({ url: url + query, timeout: 10000 });
     const { body, statusCode } = response;
     if(statusCode == 200) {
-      let bodyRes = await parseXml(body);         
-      if(!bodyRes.SEDOSTATS) {          
-        reject(bodyRes.SEDOFAULT.faultstring)          
+      let bodyRes = await parseXml(body);
+      if(!bodyRes.SEDOSTATS) {
+        reject(bodyRes.SEDOFAULT.faultstring)
       }
       bodyRes = await extractDomainStatistics(bodyRes);
       resolve(bodyRes)
-    }    
-  })  
+    }
+  })
 }
 
 const extractDomainSubIdReport = async (str) => {
-  return new Promise((resolve, reject) => {  
-    try{      
-      let stats = str.SEDOSTATS.item;      
+  return new Promise((resolve, reject) => {
+    try{
+      let stats = str.SEDOSTATS.item;
       stats = stats.map(item => {
+        const [campaign_id, adset_id] = item.c1[0]._ ? (item.c1[0]._).split('-'): ['', ''];
+
         return {
           domain: item.domain[0]._,
           date: item.date[0]._,
           sub1: item.c1[0]._,
           sub2: item.c2[0]._,
           sub3: item.c3[0]._,
+          campaign_id,
+          adset_id,
           visitors: item.uniques[0]._,
           clicks: item.clicks[0]._,
-          earnings: item.earnings[0]._,        
+          earnings: item.earnings[0]._,
         }
       })
       stats = stats.filter(item => !!item.domain)
-      resolve(stats)       
+      resolve(stats)
     } catch(err) {
       reject(err)
     }
@@ -104,9 +108,9 @@ const getDomainParkingSubIdReport = async (date) => {
       const { response } = await soapRequest({ url: url + query, timeout: 10000 }); // Optional timeout parameter(milliseconds)
       const { body, statusCode } = response;
       if(statusCode == 200) {
-        let bodyRes = await parseXml(body);        
-        if(!bodyRes.SEDOSTATS) {          
-          reject(bodyRes.SEDOFAULT.faultstring)          
+        let bodyRes = await parseXml(body);
+        if(!bodyRes.SEDOSTATS) {
+          reject(bodyRes.SEDOFAULT.faultstring)
         } else{
           bodyRes = await extractDomainSubIdReport(bodyRes);
           resolve(bodyRes)
@@ -116,9 +120,9 @@ const getDomainParkingSubIdReport = async (date) => {
         reject(body)
       }
     })
-    
+
   }
-  catch(err) {    
+  catch(err) {
     console.log('err', err)
     return err
   }
@@ -128,12 +132,12 @@ async function updateData(data, date) {
   const existedData = await db.select('*').from('sedo')
    .whereRaw('date >= ?', [date])
 
-  const existedDataMap = _.keyBy(existedData, ({domain, date, sub1, sub2, sub3}) => {
-    return `${domain}||${date}||${sub1}||${sub2}||${sub3}`;
+  const existedDataMap = _.keyBy(existedData, ({domain, date, sub1, sub2, sub3, campaign_id, adset_id}) => {
+    return `${domain}||${date}||${sub1}||${sub2}||${sub3}||${campaign_id}||${adset_id}`;
   });
 
   const {skipArr = [], updateArr = [], createArr = []} = _.groupBy(data, item => {
-    const key = `${item.domain}||${item.date}||${item.sub1}||${item.sub2}||${item.sub3}`
+    const key = `${item.domain}||${item.date}||${item.sub1}||${item.sub2}||${item.sub3}||${item.campaign_id}||${item.adset_id}`
     const existedSystem = existedDataMap[key];
     if (!existedSystem) return 'createArr';
     if (existedSystem) {
@@ -160,11 +164,11 @@ async function updateData(data, date) {
     const updated = await Promise.all(
       updateArr.map(item => {
         return db('sedo')
-          .where({domain: item.domain, date: item.date, sub1: item.sub1, sub2: item.sub2, sub3: item.sub3}).first()
+          .where({domain: item.domain, date: item.date, sub1: item.sub1, sub2: item.sub2, sub3: item.sub3, campaign_id:item.campaign_id, adset_id: item.adset_id}).first()
           .update({
             revenue: item.revenue,
             clicks: item.clicks,
-            visitors: item.visitors,            
+            visitors: item.visitors,
           }).returning('id')
       })
     );
@@ -221,10 +225,10 @@ async function updateSedoDomainData(data, date) {
           .update({
             earnings: item.earnings,
             clicks: item.clicks,
-            visitors: item.visitors,          
-            epc: item.epc,          
-            ctr: item.ctr,          
-            rpm: item.rpm     
+            visitors: item.visitors,
+            epc: item.epc,
+            ctr: item.ctr,
+            rpm: item.rpm
           }).returning('id')
       })
     );
@@ -241,16 +245,17 @@ async function updateSedoDomainData(data, date) {
 }
 
 async function updateSedoDaily() {
-  try{   
-    const date = yesterdayYMD(null, process.env.SEDO_TIMEZONE);    
-    
+  try{
+    const date = someDaysAgoYMD(1, null, process.env.SEDO_TIMEZONE);
+
     const dailyDomainStats = await getDomainParkingSubIdReport(date);
     console.log('dailyDomainStats', dailyDomainStats)
-    await updateData(dailyDomainStats, yesterdayYMD(null, process.env.SEDO_TIMEZONE));
+    await updateData(dailyDomainStats, someDaysAgoYMD(1, null, process.env.SEDO_TIMEZONE));
+    console.log('SEDO DAILY UPDATE DONE')
   }
   catch(err) {
     console.log('err', err)
-  } 
+  }
 }
 function processSedoData(data){
   return data.map(item => {
@@ -272,12 +277,12 @@ async function scrapeAll(browserInstance){
 	let browser;
 	try{
 		browser = await browserInstance;
-		let sedoTodayData = await pageScraper.scraper(browser);	
-    
-    sedoTodayData = processSedoData(sedoTodayData)
+		let sedoTodayData = await pageScraper.scraper(browser);
+
+    sedoTodayDataf = processSedoData(sedoTodayData)
     const date = todayYMD(process.env.SEDO_TIMEZONE);
     await updateSedoDomainData(sedoTodayData, date)
-    
+
 	}
 	catch(err){
 		console.log("Could not resolve the browser instance => ", err);

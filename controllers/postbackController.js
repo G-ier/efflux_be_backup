@@ -42,7 +42,7 @@ console.log('useragent', userAgent)
   //   .unix()}.${ip.replace(/\.|\:/g, '')}`;
 
   const event_id = md5(rskey + fbclid);
-  
+
   const existData = await db.select('*').from('s1_conversions')
    .whereRaw('event_time >= ?', [moment().unix() - 2])
    .whereRaw('event_name = ?', [event_name.toLowerCase()])
@@ -83,7 +83,7 @@ console.log('useragent', userAgent)
   return { message: 'No click id or pixel id provided, please send a click id down and try again' }
 }
 
- 
+
 async function trackSedo(req) {
   console.log('SEDO POSTBACK')
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -96,8 +96,8 @@ async function trackSedo(req) {
     amount, sub1, sub2, sub3, kw, position, url
   } = req.query;
 
-  
-  await models.add('postback_events', { 
+
+  await models.add('postback_events', {
     referrer_url,
     pb_value: amount,
     event_type: "sedo_conversion",
@@ -108,7 +108,7 @@ async function trackSedo(req) {
     os: `${ua.os.name} - ${ua.os.version}`,
     browser: ua.browser.name,
     campaign_id: sub1,
-    adset_id: sub3,    
+    adset_id: sub3,
     network: 'sedo',
   })
 
@@ -118,8 +118,8 @@ async function trackSedo(req) {
     amount,
     sub1,
     sub2,
-    sub3, 
-    kw, 
+    sub3,
+    kw,
     position,
     url
   }
