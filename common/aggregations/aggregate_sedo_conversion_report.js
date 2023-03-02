@@ -6,7 +6,7 @@ function aggregateSedoConversion1Report(startDate, endDate, groupBy) {
   MAX(sd.domain) as domain,
   CAST(SUM(sd.visitors) AS INTEGER) as visitors,
   CAST(SUM(sd.clicks) AS INTEGER) as revenue_clicks,
-  ROUND(SUM(sd.earnings)::decimal, 2) as revenue
+  CAST(ROUND(SUM(sd.earnings)::decimal, 2) AS FLOAT) as revenue
   FROM sedo sd
   WHERE sd.date > '${startDate}'
     AND sd.date <= '${endDate}'
