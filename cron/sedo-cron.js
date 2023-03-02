@@ -4,7 +4,7 @@ const {
   updateSedoDaily,
   updateSedoTodayDaily
 } = require('../services/sedoService');
-const {updateSedo_Spreadsheet, updateSedo_Conversion_Spreadsheet} = require('../controllers/spreadsheetController');
+const {updateSedo_Conversion_Spreadsheet} = require('../controllers/spreadsheetController');
 const disableCron = process.env.DISABLE_CRON === 'true';
 
 const updateSedoDataDailyJob = new CronJob(
