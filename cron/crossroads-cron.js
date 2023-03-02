@@ -2,8 +2,8 @@ const { CronJob } = require('cron');
 const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD, someDaysAgoYMD} = require('../common/day');
 const { updateCrossroadsData, getFinalInfo } = require('../services/crossroadsService');
 const Rules = require('../constants/cron');
-const { CROSSROADS_ACCOUNTS } = require('../constants/crossroads');
-const { updateCR_DaySpreadsheet } = require('../controllers/spreadsheetController');
+const { CROSSROADS_ACCOUNTS, todaySheetsArr } = require('../constants/crossroads');
+const { updateCR_DaySpreadsheet, updateCR_TodaySpreadsheet } = require('../controllers/spreadsheetController');
 const { sheetsArr } = require('../constants/crossroads');
 
 const disableCron = process.env.DISABLE_CRON === 'true'
@@ -11,6 +11,9 @@ const disableCron = process.env.DISABLE_CRON === 'true'
 const updateCR_Sheet = async () => {
   for(let i=0;i<sheetsArr.length;i++) {
     await updateCR_DaySpreadsheet(sheetsArr[i]);
+  }
+  for(let i=0;i<todaySheetsArr.length;i++){
+    await updateCR_TodaySpreadsheet(todaySheetsArr[i]);
   }
 }
 const crossroadsFinalDataCron = new CronJob(

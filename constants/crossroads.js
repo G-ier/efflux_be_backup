@@ -106,6 +106,20 @@ const sheetsArr = [
     traffic_source: 'tiktok',
   },
 ]
+const todaySheetsArr = [
+  {
+    spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
+    sheetName: 'Campaign',
+    sheetNameByAdset:'Adset',
+    traffic_source: 'facebook',
+  },
+  {
+    spreadsheetId: '1LXkbP4X-uUGl_Fk5AKciL0DvQSbFN_apJga-x3g0_t4',
+    sheetName: 'Campaign',
+    sheetNameByAdset:'Adset',
+    traffic_source: 'tiktok',
+  },
+]
 module.exports = {
   CROSSROADS_URL,
   CROSSROADS_LABELS,
@@ -113,5 +127,6 @@ module.exports = {
   CROSSROADS_ACCOUNTS,
   CROSSROADS_SHEET_VALUES,
   CROSSROADSDATA_SHEET_VALUES,
-  sheetsArr
+  sheetsArr,
+  todaySheetsArr
 };
