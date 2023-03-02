@@ -64,7 +64,7 @@ route.get('/', async (req, res) => {
   } = req.query;
 
   const ua = parser(client_user_agent);
-  let traffic_source;
+  let traffic_source = 'unknown';
   const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
   const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
   if(tg1.includes('FB') || src.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
