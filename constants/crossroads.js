@@ -108,17 +108,26 @@ const sheetsArr = [
 ]
 const todaySheetsArr = [
   {
+    hour: -2,
     spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
-    sheetName: 'Campaign',
-    sheetNameByAdset:'Adset',
+    sheetName: 'Campaign Today',
+    sheetNameByAdset:'Adset Today',
     traffic_source: 'facebook',
   },
   {
+    hour: -2,
     spreadsheetId: '1LXkbP4X-uUGl_Fk5AKciL0DvQSbFN_apJga-x3g0_t4',
-    sheetName: 'Campaign',
-    sheetNameByAdset:'Adset',
+    sheetName: 'Campaign Today',
+    sheetNameByAdset:'Adset Today',
     traffic_source: 'tiktok',
   },
+    // {
+    //   hour: -2,  // testing
+    //   spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
+    //   sheetName: 'Local Campaign Today',
+    //   sheetNameByAdset:'Local Adset Today',
+    //   traffic_source: 'facebook',
+    // },
 ]
 module.exports = {
   CROSSROADS_URL,

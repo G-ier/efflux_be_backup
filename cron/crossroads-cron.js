@@ -69,9 +69,11 @@ const initializeCRCron = () => {
     //   return updateCrossroadsData(account, someDaysAgoYMD(8));
     // }))
 
-  //   // for(let i=0;i<sheetsArr.length;i++) {
-  //   //   await updateCR_DaySpreadsheet(sheetsArr[i]);
-  //   // }
+    // for(let i=0;i<todaySheetsArr.length;i++){
+    //   await updateCR_TodaySpreadsheet(todaySheetsArr[i]);
+    // }
+    // console.log(`Done Updating Today's Crossroads data...`);
+
 
   })();
 

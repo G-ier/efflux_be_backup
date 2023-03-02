@@ -3,7 +3,7 @@ const {
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
   aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report,
 } = require("../common/aggregations");
-const {yesterdayYMD, todayYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD, todayHH} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
 const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
@@ -326,13 +326,14 @@ async function updateCR_DaySpreadsheet(sheetData) {
 }
 
 async function updateCR_TodaySpreadsheet(sheetData) {
-  const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source} = sheetData;
-  let dayFacebookPostbackConversions = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source);
-  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source, hour} = sheetData;
+  console.log('todayHH(hour)',todayHH(), todayHH(hour))
+  let dayFacebookPostbackConversions = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
+  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES, 'hour']);
   await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
 
-  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsetsByHour(yesterdayYMD(), todayYMD(), traffic_source);
-  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsetsByHour(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
+  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES, 'hour']);
   await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
     spreadsheetId,
     sheetName: sheetNameByAdset
