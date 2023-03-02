@@ -25,9 +25,11 @@ module.exports = class MetricsCalculator {
                 cr_camp_name,
                 adset_id,
                 adset_name,
+                hour,
               }) {
     this.total_spent = total_spent
     this.domain = domain
+    this.hour = hour
     this.searches = searches
     this.lander_visits = lander_visits
     this.revenue_clicks = revenue_clicks

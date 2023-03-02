@@ -1,9 +1,9 @@
 const {
-  crossroadsCampaigns, crossroadsAdsets, aggregateOBConversionReport, aggregateSystem1ConversionReport,
+  crossroadsCampaigns, crossroadsAdsets,crossroadsCampaignsByHour, crossroadsAdsetsByHour, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
   aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report,
 } = require("../common/aggregations");
-const {yesterdayYMD, todayYMD, fourDaysAgoYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD} = require("../common/day");
+const {yesterdayYMD, todayYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD, todayHH} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
 const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
@@ -325,6 +325,21 @@ async function updateCR_DaySpreadsheet(sheetData) {
   });
 }
 
+async function updateCR_TodaySpreadsheet(sheetData) {
+  const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source, hour} = sheetData;
+  console.log('todayHH(hour)',todayHH(), todayHH(hour))
+  let dayFacebookPostbackConversions = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
+  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES, 'hour']);
+  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
+
+  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsetsByHour(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
+  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES, 'hour']);
+  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
+    spreadsheetId,
+    sheetName: sheetNameByAdset
+  });
+}
+
 async function updateOB_Spreadsheet() {
   const spreadsheetId = process.env.OB_SPREADSHEET_ID;
   const sheetName = process.env.OB_SHEET_NAME;
@@ -497,5 +512,6 @@ module.exports = {
   updateYesterdayPB_Spreadsheet,
   updateSedo_Spreadsheet,
   updateSedo_Conversion_Spreadsheet,
-  updatePB_UnknownSpreadsheet
+  updatePB_UnknownSpreadsheet,
+  updateCR_TodaySpreadsheet
 }
