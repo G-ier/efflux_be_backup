@@ -129,6 +129,21 @@ const todaySheetsArr = [
     //   traffic_source: 'facebook',
     // },
 ]
+const hourlySheetArr = [
+  {
+    spreadsheetId: '1PqFLxtWzj8N4BAeyL0G8GWOBcXhDUwzl_tCw-QkvtLE',
+    sheetName: 'Campaign',
+    sheetNameByAdset:'Adset',
+    traffic_source: 'facebook',
+  },
+    // {
+    //   hour: -2,  // testing
+    //   spreadsheetId: '1bHmSnTCWRLO5kzMuzuZxc2MVcyaS-eVTtE0w0XisCbs',
+    //   sheetName: 'Local Campaign Today',
+    //   sheetNameByAdset:'Local Adset Today',
+    //   traffic_source: 'facebook',
+    // },
+]
 module.exports = {
   CROSSROADS_URL,
   CROSSROADS_LABELS,
@@ -137,5 +152,6 @@ module.exports = {
   CROSSROADS_SHEET_VALUES,
   CROSSROADSDATA_SHEET_VALUES,
   sheetsArr,
-  todaySheetsArr
+  todaySheetsArr,
+  hourlySheetArr
 };
