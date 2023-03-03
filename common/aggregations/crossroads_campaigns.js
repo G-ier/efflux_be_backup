@@ -36,6 +36,44 @@ function crossroadsAdsets(startDate, endDate, traffic_source) {
   `)
 }
 
+function crossroadsCampaignsForToday(startDate, endDate, traffic_source, hour) {
+  return db.raw(`
+    SELECT cr.campaign_id as campaign_id,
+    MAX(cr.campaign_name) as campaign_name,
+    MAX(cr.traffic_source) as traffic_source,
+    MAX(cr.cr_camp_name) as cr_camp_name,
+    SUM(cr.total_revenue) as revenue,
+    CAST(SUM(cr.total_searches) AS INTEGER) as searches,
+    CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
+    CAST(SUM(cr.total_revenue_clicks) AS INTEGER) as revenue_clicks,
+    CAST(SUM(cr.total_visitors) AS INTEGER) as visitors,
+    CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors
+    FROM crossroads cr
+    WHERE cr.date > '${startDate}' AND cr.date <= '${endDate}' AND cr.traffic_source = '${traffic_source}'
+    AND cr.hour < '${hour}'
+    GROUP BY cr.campaign_id
+  `)
+}
+
+function crossroadsAdsetsForToday(startDate, endDate, traffic_source, hour) {
+  return db.raw(`
+    SELECT cr.adset_id as adset_id,
+    MAX(cr.adset_name) as adset_name,
+    MAX(cr.traffic_source) as traffic_source,
+    MAX(cr.cr_camp_name) as cr_camp_name,
+    SUM(cr.total_revenue) as revenue,
+    CAST(SUM(cr.total_searches) AS INTEGER) as searches,
+    CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
+    CAST(SUM(cr.total_revenue_clicks) AS INTEGER) as revenue_clicks,
+    CAST(SUM(cr.total_visitors) AS INTEGER) as visitors,
+    CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors
+    FROM crossroads cr
+    WHERE cr.date > '${startDate}' AND cr.date <= '${endDate}' AND cr.traffic_source = '${traffic_source}'
+    AND cr.hour < '${hour}'
+    GROUP BY cr.adset_id
+  `)
+}
+
 function crossroadsCampaignsByHour(startDate, endDate, traffic_source, hour) {
   return db.raw(`
     SELECT DISTINCT ON(cr.hour) hour,
@@ -51,7 +89,7 @@ function crossroadsCampaignsByHour(startDate, endDate, traffic_source, hour) {
     CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors
     FROM crossroads cr
     WHERE cr.date > '${startDate}' AND cr.date <= '${endDate}' AND cr.traffic_source = '${traffic_source}'
-    AND cr.hour <= '${hour}'
+    AND cr.hour < '${hour}'
     GROUP BY cr.hour
   `)
 }
@@ -73,7 +111,7 @@ function crossroadsAdsetsByHour(startDate, endDate, traffic_source, hour) {
     CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors
     FROM crossroads cr
     WHERE cr.date > '${startDate}' AND cr.date <= '${endDate}' AND cr.traffic_source = '${traffic_source}'
-    AND cr.hour <= '${hour}'
+    AND cr.hour < '${hour}'
     GROUP BY cr.hour
   `)
 }
@@ -81,6 +119,8 @@ function crossroadsAdsetsByHour(startDate, endDate, traffic_source, hour) {
 module.exports = {
   crossroadsCampaigns,
   crossroadsCampaignsByHour,
+  crossroadsCampaignsForToday,
+  crossroadsAdsetsForToday,
   crossroadsAdsets,
   crossroadsAdsetsByHour
 }
