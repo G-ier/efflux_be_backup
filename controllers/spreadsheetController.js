@@ -314,13 +314,13 @@ async function updateCR_ThreeDaySpreadsheet() {
 
 async function updateCR_DaySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, day, traffic_source} = sheetData;
-  let dayFacebookPostbackConversions = await crossroadsCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source);
-  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
+  let campData = await crossroadsCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source);
+  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
 
-  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsets(someDaysAgoYMD(day), yesterdayYMD(), traffic_source);
-  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
+  let adsetData = await crossroadsAdsets(someDaysAgoYMD(day), yesterdayYMD(), traffic_source);
+  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(adsetData, {
     spreadsheetId,
     sheetName: sheetNameByAdset
   });
@@ -329,13 +329,13 @@ async function updateCR_DaySpreadsheet(sheetData) {
 async function updateCR_TodaySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source, hour} = sheetData;
 
-  let dayFacebookPostbackConversions = await crossroadsCampaignsForToday(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
-  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
+  let campData = await crossroadsCampaignsForToday(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
+  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
 
-  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsetsForToday(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
-  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
+  let adsetData = await crossroadsAdsetsForToday(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
+  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(adsetData, {
     spreadsheetId,
     sheetName: sheetNameByAdset
   });
@@ -344,13 +344,13 @@ async function updateCR_TodaySpreadsheet(sheetData) {
 async function updateCR_HourlySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source} = sheetData;
 
-  let dayFacebookPostbackConversions = await crossroadsCampaignsForToday(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
-  dayFacebookPostbackConversions = calculateValuesForSpreadsheet(dayFacebookPostbackConversions.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversions, {spreadsheetId, sheetName});
+  let campData = await crossroadsCampaignsForToday(yesterdayYMD(), todayYMD(), traffic_source);
+  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
 
-  let dayFacebookPostbackConversionsByAdset = await crossroadsAdsetsForToday(yesterdayYMD(), todayYMD(), traffic_source, todayHH(hour));
-  dayFacebookPostbackConversionsByAdset = calculateValuesForSpreadsheet(dayFacebookPostbackConversionsByAdset.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(dayFacebookPostbackConversionsByAdset, {
+  let adsetData = await crossroadsAdsetsForToday(yesterdayYMD(), todayYMD(), traffic_source);
+  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(adsetData, {
     spreadsheetId,
     sheetName: sheetNameByAdset
   });
