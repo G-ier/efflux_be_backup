@@ -9,7 +9,7 @@ const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
 const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
-const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES} = require('../constants/crossroads')
+const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES, CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
 const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback');
 const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
@@ -344,12 +344,12 @@ async function updateCR_TodaySpreadsheet(sheetData) {
 async function updateCR_HourlySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source} = sheetData;
 
-  let campData = await crossroadsCampaignsForToday(yesterdayYMD(), todayYMD(), traffic_source);
-  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  let campData = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source, 'campaign_id', 'campaign_name');
+  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
 
-  let adsetData = await crossroadsAdsetsForToday(yesterdayYMD(), todayYMD(), traffic_source);
-  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CROSSROADSDATA_SHEET_VALUES]);
+  let adsetData = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source, 'adset_id', 'adset_name');
+  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(adsetData, {
     spreadsheetId,
     sheetName: sheetNameByAdset

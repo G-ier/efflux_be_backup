@@ -2,7 +2,7 @@ const { CronJob } = require('cron');
 const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD, someDaysAgoYMD} = require('../common/day');
 const { updateCrossroadsData, getFinalInfo } = require('../services/crossroadsService');
 const Rules = require('../constants/cron');
-const { CROSSROADS_ACCOUNTS, todaySheetsArr } = require('../constants/crossroads');
+const { CROSSROADS_ACCOUNTS, todaySheetsArr, hourlySheetArr } = require('../constants/crossroads');
 const { updateCR_DaySpreadsheet, updateCR_TodaySpreadsheet, updateCR_HourlySpreadsheet } = require('../controllers/spreadsheetController');
 const { sheetsArr } = require('../constants/crossroads');
 
@@ -72,10 +72,10 @@ const initializeCRCron = () => {
     //   return updateCrossroadsData(account, someDaysAgoYMD(8));
     // }))
 
-    // for(let i=0;i<todaySheetsArr.length;i++){
-    //   await updateCR_TodaySpreadsheet(todaySheetsArr[i]);
-    // }
-    // console.log(`Done Updating Today's Crossroads data...`);
+    hourlySheetArr.forEach(async (sheet) => {
+      await updateCR_HourlySpreadsheet(sheet);
+    })
+    console.log(`Done Updating Today's Crossroads data...`);
 
 
   })();

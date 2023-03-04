@@ -74,29 +74,45 @@ function crossroadsAdsetsForToday(startDate, endDate, traffic_source, hour) {
   `)
 }
 
-function crossroadsCampaignsByHour(startDate, endDate, traffic_source, hour) {
+function crossroadsCampaignsByHour(startDate, endDate, traffic_source, groupBy, groupByName) {
   return db.raw(`
-    SELECT DISTINCT ON(cr.hour) hour,
-    MAX(cr.campaign_id) as campaign_id,
-    MAX(cr.campaign_name) as campaign_name,
-    MAX(cr.traffic_source) as traffic_source,
-    MAX(cr.cr_camp_name) as cr_camp_name,
-    SUM(cr.total_revenue) as revenue,
-    CAST(SUM(cr.total_searches) AS INTEGER) as searches,
-    CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
-    CAST(SUM(cr.total_revenue_clicks) AS INTEGER) as revenue_clicks,
-    CAST(SUM(cr.total_visitors) AS INTEGER) as visitors,
-    CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors
-    FROM crossroads cr
-    WHERE cr.date > '${startDate}' AND cr.date <= '${endDate}' AND cr.traffic_source = '${traffic_source}'
-    AND cr.hour < '${hour}'
-    GROUP BY cr.hour
+    WITH agg_fb AS (
+      SELECT fb.hour,
+      fb.${groupBy},
+        CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend
+      FROM facebook as fb
+      WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
+      GROUP BY fb.${groupBy}, fb.hour
+    ),
+    agg_cr AS (
+      SELECT cr.hour as hour,
+      MAX(cr.${groupBy}) as ${groupBy},
+      MAX(cr.${groupByName}) as ${groupByName},
+      SUM(cr.total_revenue) as revenue,
+      CAST(SUM(cr.total_revenue_clicks) AS INTEGER) as revenue_clicks
+      FROM crossroads cr
+      WHERE cr.date > '${startDate}' AND cr.date <= '${endDate}' AND cr.traffic_source = '${traffic_source}'
+      GROUP BY cr.${groupBy}, cr.hour
+    )
+    SELECT
+    (CASE
+      WHEN agg_fb.${groupBy} IS NOT null THEN agg_fb.${groupBy} ELSE CAST(MAX(agg_cr.${groupBy}) AS VARCHAR)
+    END) as ${groupBy},
+    MAX(agg_cr.${groupByName}) as ${groupByName},
+    CAST(MAX(agg_cr.hour) AS VARCHAR) || ':00 - ' || CAST(MAX(agg_cr.hour+1) AS VARCHAR) || ':00' as hour,
+    (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as spend,
+    (CASE WHEN SUM(agg_cr.revenue) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue) AS FLOAT) END) as revenue,
+    (CASE WHEN SUM(agg_cr.revenue_clicks) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue_clicks) AS INTEGER) END) as revenue_clicks
+    FROM agg_cr
+    FULL OUTER JOIN agg_fb USING (${groupBy}, hour)
+    GROUP BY agg_cr.${groupBy}, agg_fb.${groupBy}, agg_cr.hour, agg_fb.hour
+
   `)
 }
 
 
 
-function crossroadsAdsetsByHour(startDate, endDate, traffic_source, hour) {
+function crossroadsAdsetsByHour(startDate, endDate, traffic_source) {
   return db.raw(`
     SELECT DISTINCT ON(cr.hour) hour,
     MAX(cr.adset_id) as adset_id,

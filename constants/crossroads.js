@@ -55,6 +55,13 @@ const CROSSROADSDATA_SHEET_VALUES = [
   'cr_rpc',
   'cr_camp_name',
 ]
+
+const CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES = [
+  'spend',
+  'revenue',
+  'revenue_clicks',
+  'roi'
+]
 const CROSSROADS_ACCOUNTS = [
   {
     id: 'account-1',
@@ -151,6 +158,7 @@ module.exports = {
   CROSSROADS_ACCOUNTS,
   CROSSROADS_SHEET_VALUES,
   CROSSROADSDATA_SHEET_VALUES,
+  CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES,
   sheetsArr,
   todaySheetsArr,
   hourlySheetArr
