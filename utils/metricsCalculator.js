@@ -3,6 +3,7 @@ module.exports = class MetricsCalculator {
                 total_spent,
                 searches,
                 domain,
+                spend,
                 lander_visits,
                 revenue_clicks,
                 tracked_visitors,
@@ -28,6 +29,7 @@ module.exports = class MetricsCalculator {
                 hour,
               }) {
     this.total_spent = total_spent
+    this.spend = spend
     this.domain = domain
     this.hour = hour
     this.searches = searches

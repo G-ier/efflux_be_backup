@@ -100,8 +100,9 @@ function crossroadsCampaignsByHour(startDate, endDate, traffic_source, groupBy, 
     END) as ${groupBy},
     MAX(agg_cr.${groupByName}) as ${groupByName},
     CAST(MAX(agg_cr.hour) AS VARCHAR) || ':00 - ' || CAST(MAX(agg_cr.hour+1) AS VARCHAR) || ':00' as hour,
+    (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as total_spent,
     (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as spend,
-    (CASE WHEN SUM(agg_cr.revenue) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue) AS FLOAT) END) as revenue,
+    (CASE WHEN SUM(agg_cr.revenue) IS null THEN 0 ELSE CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) END) as revenue,
     (CASE WHEN SUM(agg_cr.revenue_clicks) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue_clicks) AS INTEGER) END) as revenue_clicks
     FROM agg_cr
     FULL OUTER JOIN agg_fb USING (${groupBy}, hour)
