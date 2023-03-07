@@ -374,6 +374,7 @@ async function updateCR_HourlySpreadsheet(sheetData) {
     allCampData.columns = campData.columns;
     allCampData.rows = _.merge(allCampData.rows, campData.rows);
   }))
+  allCampData.rows = _.orderBy(allCampData.rows, ['campaign_id','campaign_name','hour'],['desc'])
   await spreadsheets.updateSpreadsheet(allCampData, {spreadsheetId, sheetName});
 
   let allAdsetData = {};
@@ -386,6 +387,7 @@ async function updateCR_HourlySpreadsheet(sheetData) {
     allAdsetData.columns = adsetData.columns;
     allAdsetData.rows = _.merge(allAdsetData.rows, adsetData.rows);
   }))
+  allAdsetData.rows = _.orderBy(allAdsetData.rows, ['adset_id','adset_name','hour'],['desc'])
   await spreadsheets.updateSpreadsheet(allAdsetData, {spreadsheetId, sheetName: sheetNameByAdset});
 }
 
