@@ -83,9 +83,9 @@ const initializeCRCron = () => {
     //   return updateCrossroadsData(account, someDaysAgoYMD(8));
     // }))
 
-    hourlySheetArr.forEach(async (sheet) => {
-      await updateCR_HourlySpreadsheet(sheet);
-    })
+    // hourlySheetArr.forEach(async (sheet) => {
+    //   await updateCR_HourlySpreadsheet(sheet);
+    // })
     // console.log(`Done Updating Today's Crossroads data...`);
 
 
