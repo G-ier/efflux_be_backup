@@ -3,7 +3,7 @@ name: Build and Deploy
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   build-and-deploy:
@@ -12,7 +12,7 @@ jobs:
 
     if:
       contains('
-        refs/heads/main        
+        refs/heads/master        
       ', github.ref)
     steps:
       - name: remote commands
