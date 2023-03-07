@@ -92,8 +92,8 @@ module.exports = {
 			case 'unknown':
 				return `
 					fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}'`
-                  case 'crossroads':
-                        return `fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}'`
+      case 'crossroads':
+        return `fb.date > '${option.startDate}' AND fb.date <= '${option.endDate}'`
 		}
 	}
 }

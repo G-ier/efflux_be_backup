@@ -57,10 +57,22 @@ const CROSSROADSDATA_SHEET_VALUES = [
 ]
 
 const CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES = [
-  'spend',
-  'revenue',
-  'revenue_clicks',
-  'roi'
+  'spend_today',
+  'revenue_today',
+  'revenue_clicks_today',
+  'roi_today',
+  'spend_yesterday',
+  'revenue_yesterday',
+  'revenue_clicks_yesterday',
+  'roi_yesterday',
+  'spend_2_days_ago',
+  'revenue_2_days_ago',
+  'revenue_clicks_2_days_ago',
+  'roi_2_days_ago',
+  'spend_3_days_ago',
+  'revenue_3_days_ago',
+  'revenue_clicks_3_days_ago',
+  'roi_3_days_ago',
 ]
 const CROSSROADS_ACCOUNTS = [
   {

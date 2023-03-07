@@ -42,6 +42,17 @@ const crossroadsAfterMidnight = new CronJob(
   }),
 );
 
+const crossroadsFinalYesterday = new CronJob(
+  Rules.CR_DAILY2,
+  (async () => {
+    console.log(`Getting after midnight Crossroads data...`);
+    await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
+        return updateCrossroadsData(account, yesterdayYMD());
+    }));
+    updateCR_Sheet();
+  }),
+);
+
 const crossroadsHourlyCron = new CronJob(
   Rules.CR_HOURLY,
   (async () => {
@@ -72,10 +83,10 @@ const initializeCRCron = () => {
     //   return updateCrossroadsData(account, someDaysAgoYMD(8));
     // }))
 
-    hourlySheetArr.forEach(async (sheet) => {
-      await updateCR_HourlySpreadsheet(sheet);
-    })
-    console.log(`Done Updating Today's Crossroads data...`);
+    // hourlySheetArr.forEach(async (sheet) => {
+    //   await updateCR_HourlySpreadsheet(sheet);
+    // })
+    // console.log(`Done Updating Today's Crossroads data...`);
 
 
   })();
@@ -84,6 +95,7 @@ const initializeCRCron = () => {
     crossroadsFinalDataCron.start();
     crossroadsSixMinCron.start();
     crossroadsAfterMidnight.start();
+    crossroadsFinalYesterday.start();
     crossroadsHourlyCron.start();
   }
 };

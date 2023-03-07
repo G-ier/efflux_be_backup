@@ -10,6 +10,7 @@ module.exports = {
   OB_REGULAR: process.env.OB_REGULAR || '*/2 * * * *',
   AFTER_MIDNIGHT: process.env.AFTER_MIDNIGHT || '5 0 * * *',
   CR_DAILY: process.env.CR_DAILY || '15 8 * * *',
+  CR_DAILY2: process.env.CR_DAILY2 || '5 20 * * *',
   FB_DAILY: process.env.FB_DAILY || '5 8 * * *',
   FB_AFTERNOON: process.env.FB_DAILY || '5 12 * * *',
   GDN_DAILY: process.env.GDN_DAILY || '15 8 * * *',

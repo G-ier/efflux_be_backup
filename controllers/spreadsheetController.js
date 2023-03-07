@@ -1,3 +1,4 @@
+const _ = require('lodash');
 const {
   crossroadsCampaigns, crossroadsAdsets,crossroadsCampaignsByHour, crossroadsAdsetsByHour, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
@@ -14,6 +15,7 @@ const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
 const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback');
 const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
 const { crossroadsAdsetsForToday, crossroadsCampaignsForToday } = require("../common/aggregations/crossroads_campaigns");
+const e = require('express');
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -65,6 +67,10 @@ function calculateValuesForSpreadsheet(data, columns) {
       live_ctr: calcResult.live_ctr,
       est_revenue: calcResult.est_revenue,
       roi: calcResult.roi,
+      roi_today: calcResult.roi_today,
+      roi_yesterday: calcResult.roi_yesterday,
+      roi_2_days_ago: calcResult.roi_2_days_ago,
+      roi_3_days_ago: calcResult.roi_3_days_ago,
       est_roi: calcResult.est_roi,
       profit: calcResult.profit,
       cpm: calcResult.cpm,
@@ -343,17 +349,44 @@ async function updateCR_TodaySpreadsheet(sheetData) {
 
 async function updateCR_HourlySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source} = sheetData;
+  const daysArr = [
+    {
+      day: 4,
+      suffix: '_3_days_ago'
+    },
+    { day:3,
+      suffix: '_2_days_ago'
+    },
+    {day: 2,
+      suffix: '_yesterday'
+    },
+    { day: 1,
+      suffix: '_today'
+    },
+  ];
+  let allCampData = {};
+  await Promise.all(daysArr.map(async (item) => {
+    let campData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.day), someDaysAgoYMD(item.day - 1), traffic_source, 'campaign_id', 'campaign_name', item.suffix);
+    campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
+    if(!allCampData.rows) {
+      allCampData.rows = campData.rows;
+    }
+    allCampData.columns = campData.columns;
+    allCampData.rows = _.merge(allCampData.rows, campData.rows);
+  }))
+  await spreadsheets.updateSpreadsheet(allCampData, {spreadsheetId, sheetName});
 
-  let campData = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source, 'campaign_id', 'campaign_name');
-  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
-
-  let adsetData = await crossroadsCampaignsByHour(yesterdayYMD(), todayYMD(), traffic_source, 'adset_id', 'adset_name');
-  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
-  await spreadsheets.updateSpreadsheet(adsetData, {
-    spreadsheetId,
-    sheetName: sheetNameByAdset
-  });
+  let allAdsetData = {};
+  await Promise.all(daysArr.map(async (item) => {
+    let adsetData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.day), someDaysAgoYMD(item.day - 1), traffic_source, 'adset_id', 'adset_name', item.suffix);
+    adsetData = calculateValuesForSpreadsheet(adsetData.rows,['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
+    if(!allAdsetData.rows) {
+      allAdsetData.rows = adsetData.rows;
+    }
+    allAdsetData.columns = adsetData.columns;
+    allAdsetData.rows = _.merge(allAdsetData.rows, adsetData.rows);
+  }))
+  await spreadsheets.updateSpreadsheet(allAdsetData, {spreadsheetId, sheetName: sheetNameByAdset});
 }
 
 async function updateOB_Spreadsheet() {

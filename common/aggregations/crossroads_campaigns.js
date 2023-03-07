@@ -74,7 +74,7 @@ function crossroadsAdsetsForToday(startDate, endDate, traffic_source, hour) {
   `)
 }
 
-function crossroadsCampaignsByHour(startDate, endDate, traffic_source, groupBy, groupByName) {
+function crossroadsCampaignsByHour(startDate, endDate, traffic_source, groupBy, groupByName, suffix) {
   return db.raw(`
     WITH agg_fb AS (
       SELECT fb.hour,
@@ -101,11 +101,11 @@ function crossroadsCampaignsByHour(startDate, endDate, traffic_source, groupBy, 
     MAX(agg_cr.${groupByName}) as ${groupByName},
     CAST(MAX(agg_cr.hour) AS VARCHAR) || ':00 - ' || CAST(MAX(agg_cr.hour+1) AS VARCHAR) || ':00' as hour,
     (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as total_spent,
-    (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as spend,
-    (CASE WHEN SUM(agg_cr.revenue) IS null THEN 0 ELSE CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) END) as revenue,
-    (CASE WHEN SUM(agg_cr.revenue_clicks) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue_clicks) AS INTEGER) END) as revenue_clicks
+    (CASE WHEN SUM(agg_fb.spend) IS null THEN 0 ELSE CAST(SUM(agg_fb.spend) AS FLOAT) END) as spend${suffix},
+    (CASE WHEN SUM(agg_cr.revenue) IS null THEN 0 ELSE CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) END) as revenue${suffix},
+    (CASE WHEN SUM(agg_cr.revenue_clicks) IS null THEN 0 ELSE CAST(SUM(agg_cr.revenue_clicks) AS INTEGER) END) as revenue_clicks${suffix}
     FROM agg_cr
-    FULL OUTER JOIN agg_fb USING (${groupBy}, hour)
+    LEFT JOIN agg_fb USING (${groupBy}, hour)
     GROUP BY agg_cr.${groupBy}, agg_fb.${groupBy}, agg_cr.hour, agg_fb.hour
 
   `)

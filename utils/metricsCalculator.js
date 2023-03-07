@@ -4,10 +4,21 @@ module.exports = class MetricsCalculator {
                 searches,
                 domain,
                 spend,
+                spend_today,
+                spend_yesterday,
+                revenue_yesterday,
+                revenue_clicks_yesterday,
+                spend_2_days_ago,
+                revenue_2_days_ago,
+                revenue_clicks_2_days_ago,
+                spend_3_days_ago,
+                revenue_3_days_ago,
+                revenue_clicks_3_days_ago,
                 lander_visits,
-                revenue_clicks,
+                revenue_clicks_today,
                 tracked_visitors,
                 revenue,
+                revenue_today,
                 pb_conversions,
                 cr_conversions,
                 s1_conversions,
@@ -30,13 +41,24 @@ module.exports = class MetricsCalculator {
               }) {
     this.total_spent = total_spent
     this.spend = spend
+    this.spend_today = spend_today
+    this.spend_yesterday = spend_yesterday
+    this.revenue_yesterday = revenue_yesterday
+    this.revenue_clicks_yesterday = revenue_clicks_yesterday
+    this.spend_2_days_ago = spend_2_days_ago
+    this.revenue_2_days_ago = revenue_2_days_ago
+    this.revenue_clicks_2_days_ago = revenue_clicks_2_days_ago
+    this.spend_3_days_ago = spend_3_days_ago
+    this.revenue_3_days_ago = revenue_3_days_ago
+    this.revenue_clicks_3_days_ago = revenue_clicks_3_days_ago
     this.domain = domain
     this.hour = hour
     this.searches = searches
     this.lander_visits = lander_visits
-    this.revenue_clicks = revenue_clicks
+    this.revenue_clicks_today = revenue_clicks_today
     this.tracked_visitors = tracked_visitors
     this.revenue = revenue
+    this.revenue_today = revenue_today
     this.conversions = conversions
     this.pb_conversions = pb_conversions
     this.cr_conversions = cr_conversions
@@ -81,6 +103,22 @@ module.exports = class MetricsCalculator {
   get roi() {
     if (!this.total_spent) return 0
     return (this.revenue - this.total_spent) / this.total_spent * 100
+  }
+  get roi_today() {
+    if (!this.total_spent) return 0
+    return (this.revenue_today - this.total_spent) / this.total_spent * 100 || undefined
+  }
+  get roi_yesterday() {
+    if (!this.total_spent) return 0
+    return (this.revenue_yesterday - this.total_spent) / this.total_spent * 100 || undefined
+  }
+  get roi_2_days_ago() {
+    if (!this.total_spent) return 0
+    return (this.revenue_2_days_ago - this.total_spent) / this.total_spent * 100 || undefined
+  }
+  get roi_3_days_ago() {
+    if (!this.total_spent) return 0
+    return (this.revenue_3_days_ago - this.total_spent) / this.total_spent * 100 || undefined
   }
 
   get est_roi() {
