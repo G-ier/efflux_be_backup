@@ -14,6 +14,12 @@ module.exports = class MetricsCalculator {
                 spend_3_days_ago,
                 revenue_3_days_ago,
                 revenue_clicks_3_days_ago,
+                spend_last_3_days_total,
+                revenue_last_3_days_total,
+                revenue_clicks_last_3_days_total,
+                spend_last_7_days_total,
+                revenue_last_7_days_total,
+                revenue_clicks_last_7_days_total,
                 lander_visits,
                 revenue_clicks_today,
                 tracked_visitors,
@@ -51,6 +57,12 @@ module.exports = class MetricsCalculator {
     this.spend_3_days_ago = spend_3_days_ago
     this.revenue_3_days_ago = revenue_3_days_ago
     this.revenue_clicks_3_days_ago = revenue_clicks_3_days_ago
+    this.spend_last_3_days_total = spend_last_3_days_total
+    this.revenue_last_3_days_total = revenue_last_3_days_total
+    this.revenue_clicks_last_3_days_total = revenue_clicks_last_3_days_total
+    this.spend_last_7_days_total = spend_last_7_days_total
+    this.revenue_last_7_days_total = revenue_last_7_days_total
+    this.revenue_clicks_last_7_days_total = revenue_clicks_last_7_days_total
     this.domain = domain
     this.hour = hour
     this.searches = searches
@@ -120,7 +132,14 @@ module.exports = class MetricsCalculator {
     if (!this.total_spent) return 0
     return (this.revenue_3_days_ago - this.total_spent) / this.total_spent * 100 || undefined
   }
-
+  get roi_last_3_days_total() {
+    if (!this.total_spent) return 0
+    return (this.revenue_last_3_days_total - this.total_spent) / this.total_spent * 100 || undefined
+  }
+  get roi_last_7_days_total() {
+    if (!this.total_spent) return 0
+    return (this.revenue_last_7_days_total - this.total_spent) / this.total_spent * 100 || undefined
+  }
   get est_roi() {
     if (!this.total_spent) return 0
     return (this.est_revenue - this.total_spent) / this.total_spent * 100

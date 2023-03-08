@@ -67,7 +67,7 @@ async function updateFacebookInsights(date) {
     const facebookInsights = [];
     const facebookInsightsByDay = [];
     const adAccountsIdsMap = {};
-    for (const account of accounts) {      
+    for (const account of accounts) {
       const adAccounts = await getAccountAdAccounts(account.id);
       adAccounts.forEach((item) => {
         adAccountsIdsMap[item.provider_id] = item.id;
@@ -85,7 +85,7 @@ async function updateFacebookInsights(date) {
 
     const processedInsights = processFacebookInsights(facebookInsights, date)
     await addFacebookData(processedInsights, date);
-    
+
     // add facebook_conversion data
     const processedInsightsByDay = processFacebookInsightsByDay(facebookInsightsByDay, date)
     await addFacebookDataByDay(processedInsightsByDay, date);
@@ -101,9 +101,9 @@ async function updateFacebookAdAccountsTodaySpent(date) {
   try {
     console.log('START UPDATING FACEBOOK AD ACCOUNTS TODAY SPENT')
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
- 
+
     const adAccountsIdsMap = {};
-    for (const account of accounts) {      
+    for (const account of accounts) {
       const adAccounts = await getAccountAdAccounts(account.id);
       adAccounts.forEach((item) => {
         adAccountsIdsMap[item.provider_id] = item.id;
@@ -111,9 +111,9 @@ async function updateFacebookAdAccountsTodaySpent(date) {
       const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
       const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
 
-      const AdAccountsData = await getAdAccountsTodaySpent(account.token, adAccountsIds, date);      
-      
-      await updateUserAdAccountsTodaySpent(AdAccountsData);      
+      const AdAccountsData = await getAdAccountsTodaySpent(account.token, adAccountsIds, date);
+
+      await updateUserAdAccountsTodaySpent(AdAccountsData);
     }
 
     console.log('FINISH UPDATING FACEBOOK AD ACCOUNTS TODAY SPENT')
@@ -130,14 +130,14 @@ function processFacebookInsights(data, date) {
     const conversions =
       item?.actions?.find(i => i.action_type === 'offsite_conversion.fb_pixel_purchase')?.value
       // _.sumBy(item.conversions, ({value}) => _.isNaN(Number(value)) ? 0 : Number(value))
-    const lead = 
+    const lead =
       item?.actions?.find(i => i.action_type === 'offsite_conversion.fb_pixel_lead')?.value
     return {
       ad_account_id: item.account_id,
       ad_id: item.ad_id,
       adset_id: item.adset_id,
       campaign_id: item.campaign_id,
-      campaign_name: item.campaign_name,      
+      campaign_name: item.campaign_name,
       date: date,
       hour: +(hour.startsWith('0') ? hour.replace('0', '') : hour),
       impressions: item?.impressions ?? 0,
@@ -146,21 +146,21 @@ function processFacebookInsights(data, date) {
       cpc: item?.cpc ?? 0,
       reporting_currency: item.account_currency,
       conversions: _.isNaN(Number(conversions)) ? 0 : Number(conversions),
-      lead    
+      lead
     }
   })
 }
 
 function processFacebookInsightsByDay(data, date) {
-  return data.filter(item => item.cost_per_action_type).map(item => {    
-    const cost_per_conversion = 
+  return data.filter(item => item.cost_per_action_type).map(item => {
+    const cost_per_conversion =
       item?.cost_per_action_type?.find(i => i.action_type === 'purchase')?.value
-    return {      
+    return {
       ad_id: item.ad_id,
       adset_id: item.adset_id,
       campaign_id: item.campaign_id,
       date: date,
-      cost_per_conversion  
+      cost_per_conversion
     }
   })
 }

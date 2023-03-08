@@ -71,6 +71,8 @@ function calculateValuesForSpreadsheet(data, columns) {
       roi_yesterday: calcResult.roi_yesterday,
       roi_2_days_ago: calcResult.roi_2_days_ago,
       roi_3_days_ago: calcResult.roi_3_days_ago,
+      roi_last_3_days_total: calcResult.roi_last_3_days_total,
+      roi_last_7_days_total: calcResult.roi_last_7_days_total,
       est_roi: calcResult.est_roi,
       profit: calcResult.profit,
       cpm: calcResult.cpm,
@@ -351,22 +353,39 @@ async function updateCR_HourlySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source} = sheetData;
   const daysArr = [
     {
-      day: 4,
+      startDay: 8,
+      endDay: 1,
+      suffix: '_last_7_days_total'
+    },
+    {
+      startDay: 4,
+      endDay: 1,
+      suffix: '_last_3_days_total'
+    },
+    {
+      startDay: 4,
+      endDay: 3,
       suffix: '_3_days_ago'
     },
-    { day:3,
+    {
+      startDay: 3,
+      endDay: 2,
       suffix: '_2_days_ago'
     },
-    {day: 2,
+    {
+      startDay: 2,
+      endDay: 1,
       suffix: '_yesterday'
     },
-    { day: 1,
+    {
+      startDay: 1,
+      endDay: 0,
       suffix: '_today'
     },
   ];
   let allCampData = {};
   await Promise.all(daysArr.map(async (item) => {
-    let campData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.day), someDaysAgoYMD(item.day - 1), traffic_source, 'campaign_id', 'campaign_name', item.suffix);
+    let campData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.startDay), someDaysAgoYMD(item.endDay), traffic_source, 'campaign_id', 'campaign_name', item.suffix);
     campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
     if(!allCampData.rows) {
       allCampData.rows = campData.rows;
@@ -379,7 +398,7 @@ async function updateCR_HourlySpreadsheet(sheetData) {
 
   let allAdsetData = {};
   await Promise.all(daysArr.map(async (item) => {
-    let adsetData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.day), someDaysAgoYMD(item.day - 1), traffic_source, 'adset_id', 'adset_name', item.suffix);
+    let adsetData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.startDay), someDaysAgoYMD(item.endDay), traffic_source, 'adset_id', 'adset_name', item.suffix);
     adsetData = calculateValuesForSpreadsheet(adsetData.rows,['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
     if(!allAdsetData.rows) {
       allAdsetData.rows = adsetData.rows;
