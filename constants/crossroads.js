@@ -81,7 +81,8 @@ const CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES = [
   'revenue_last_7_days_total',
   'revenue_clicks_last_7_days_total',
   'roi_last_7_days_total',
-]
+  ]
+
 const CROSSROADS_ACCOUNTS = [
   {
     id: 'account-1',
@@ -158,7 +159,7 @@ const todaySheetsArr = [
 ]
 const hourlySheetArr = [
   {
-    spreadsheetId: '1PqFLxtWzj8N4BAeyL0G8GWOBcXhDUwzl_tCw-QkvtLE',
+    spreadsheetId: '1kZujlRa1OWsyrZrLYYGFgSCs6G6G0uExImZfeHoUlkE',
     sheetName: 'Campaign',
     sheetNameByAdset:'Adset',
     traffic_source: 'facebook',
@@ -171,6 +172,39 @@ const hourlySheetArr = [
     //   traffic_source: 'facebook',
     // },
 ]
+const hourlySheetDaysArr = [
+  {
+    startDay: 8,
+    endDay: 1,
+    suffix: '_last_7_days_total'
+  },
+  {
+    startDay: 4,
+    endDay: 1,
+    suffix: '_last_3_days_total'
+  },
+  {
+    startDay: 4,
+    endDay: 3,
+    suffix: '_3_days_ago'
+  },
+  {
+    startDay: 3,
+    endDay: 2,
+    suffix: '_2_days_ago'
+  },
+  {
+    startDay: 2,
+    endDay: 1,
+    suffix: '_yesterday'
+  },
+  {
+    startDay: 1,
+    endDay: 0,
+    suffix: '_today'
+  },
+];
+
 module.exports = {
   CROSSROADS_URL,
   CROSSROADS_LABELS,
@@ -181,5 +215,6 @@ module.exports = {
   CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES,
   sheetsArr,
   todaySheetsArr,
-  hourlySheetArr
+  hourlySheetArr,
+  hourlySheetDaysArr
 };
