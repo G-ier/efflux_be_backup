@@ -10,7 +10,7 @@ const {updateSpreadsheet} = require("../services/spreadsheetService");
 const MetricsCalculator = require('../utils/metricsCalculator')
 const MetricsCalculator1 = require('../utils/metricsCalculator1')
 
-const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES, CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES} = require('../constants/crossroads')
+const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES, CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES, hourlySheetDaysArr} = require('../constants/crossroads')
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
 const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback');
 const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
@@ -351,40 +351,9 @@ async function updateCR_TodaySpreadsheet(sheetData) {
 
 async function updateCR_HourlySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source} = sheetData;
-  const daysArr = [
-    {
-      startDay: 8,
-      endDay: 1,
-      suffix: '_last_7_days_total'
-    },
-    {
-      startDay: 4,
-      endDay: 1,
-      suffix: '_last_3_days_total'
-    },
-    {
-      startDay: 4,
-      endDay: 3,
-      suffix: '_3_days_ago'
-    },
-    {
-      startDay: 3,
-      endDay: 2,
-      suffix: '_2_days_ago'
-    },
-    {
-      startDay: 2,
-      endDay: 1,
-      suffix: '_yesterday'
-    },
-    {
-      startDay: 1,
-      endDay: 0,
-      suffix: '_today'
-    },
-  ];
+
   let allCampData = {};
-  await Promise.all(daysArr.map(async (item) => {
+  await Promise.all(hourlySheetDaysArr.map(async (item) => {
     let campData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.startDay), someDaysAgoYMD(item.endDay), traffic_source, 'campaign_id', 'campaign_name', item.suffix);
     campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
     if(!allCampData.rows) {
@@ -397,7 +366,7 @@ async function updateCR_HourlySpreadsheet(sheetData) {
   await spreadsheets.updateSpreadsheet(allCampData, {spreadsheetId, sheetName});
 
   let allAdsetData = {};
-  await Promise.all(daysArr.map(async (item) => {
+  await Promise.all(hourlySheetDaysArr.map(async (item) => {
     let adsetData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.startDay), someDaysAgoYMD(item.endDay), traffic_source, 'adset_id', 'adset_name', item.suffix);
     adsetData = calculateValuesForSpreadsheet(adsetData.rows,['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
     if(!allAdsetData.rows) {

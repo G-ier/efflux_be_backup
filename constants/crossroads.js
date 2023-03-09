@@ -171,6 +171,39 @@ const hourlySheetArr = [
     //   traffic_source: 'facebook',
     // },
 ]
+const hourlySheetDaysArr = [
+  {
+    startDay: 8,
+    endDay: 1,
+    suffix: '_last_7_days_total'
+  },
+  {
+    startDay: 4,
+    endDay: 1,
+    suffix: '_last_3_days_total'
+  },
+  {
+    startDay: 4,
+    endDay: 3,
+    suffix: '_3_days_ago'
+  },
+  {
+    startDay: 3,
+    endDay: 2,
+    suffix: '_2_days_ago'
+  },
+  {
+    startDay: 2,
+    endDay: 1,
+    suffix: '_yesterday'
+  },
+  {
+    startDay: 1,
+    endDay: 0,
+    suffix: '_today'
+  },
+];
+
 module.exports = {
   CROSSROADS_URL,
   CROSSROADS_LABELS,
@@ -181,5 +214,6 @@ module.exports = {
   CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES,
   sheetsArr,
   todaySheetsArr,
-  hourlySheetArr
+  hourlySheetArr,
+  hourlySheetDaysArr
 };
