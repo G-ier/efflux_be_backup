@@ -14,7 +14,7 @@ const {CROSSROADS_SHEET_VALUES, CROSSROADSDATA_SHEET_VALUES, CROSSROADS_TODAY_HO
 const {SYSTEM1_SHEET_VALUES} = require('../constants/system1')
 const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr, unknownSheetArr, PB_SHEETS, PB_SHEET_VALUES} = require('../constants/postback');
 const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
-const { crossroadsAdsetsForToday, crossroadsCampaignsForToday } = require("../common/aggregations/crossroads_campaigns");
+const { crossroadsAdsetsForToday, crossroadsCampaignsForToday, crossroadsNames } = require("../common/aggregations/crossroads_campaigns");
 const e = require('express');
 
 function preferredOrder(obj, order) {
@@ -355,26 +355,41 @@ async function updateCR_HourlySpreadsheet(sheetData) {
   let allCampData = {};
   await Promise.all(hourlySheetDaysArr.map(async (item) => {
     let campData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.startDay), someDaysAgoYMD(item.endDay), traffic_source, 'campaign_id', 'campaign_name', item.suffix);
-    campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
     if(!allCampData.rows) {
       allCampData.rows = campData.rows;
     }
-    allCampData.columns = campData.columns;
-    allCampData.rows = _.merge(allCampData.rows, campData.rows);
+    const merged = _.merge(_.keyBy(allCampData.rows, ({campaign_id, hour}) => {return `${campaign_id}||${hour}`}), _.keyBy(campData.rows, ({campaign_id, hour}) => {return `${campaign_id}||${hour}`}));
+    allCampData.rows = _.values(merged);
   }))
+
+  const { rows:campaignNames } = await crossroadsNames();
+  allCampData.rows = allCampData.rows.map(el => {
+    const mapName = _.find(campaignNames, (item) => item.campaign_id == el.campaign_id) || el
+    return {...el, campaign_name: mapName.campaign_name}
+  })
+
+  allCampData = calculateValuesForSpreadsheet(allCampData.rows, ['campaign_id','campaign_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
   allCampData.rows = _.orderBy(allCampData.rows, ['campaign_id','campaign_name','hour'],['desc'])
   await spreadsheets.updateSpreadsheet(allCampData, {spreadsheetId, sheetName});
 
   let allAdsetData = {};
   await Promise.all(hourlySheetDaysArr.map(async (item) => {
     let adsetData = await crossroadsCampaignsByHour(someDaysAgoYMD(item.startDay), someDaysAgoYMD(item.endDay), traffic_source, 'adset_id', 'adset_name', item.suffix);
-    adsetData = calculateValuesForSpreadsheet(adsetData.rows,['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
+
     if(!allAdsetData.rows) {
       allAdsetData.rows = adsetData.rows;
     }
-    allAdsetData.columns = adsetData.columns;
-    allAdsetData.rows = _.merge(allAdsetData.rows, adsetData.rows);
+    const merged = _.merge(_.keyBy(allAdsetData.rows, ({adset_id, hour}) => {return `${adset_id}||${hour}`}), _.keyBy(adsetData.rows, ({adset_id, hour}) => {return `${adset_id}||${hour}`}));
+    allAdsetData.rows = _.values(merged);
   }))
+
+  const { rows:adsetNames } = await crossroadsNames();
+  allAdsetData.rows = allAdsetData.rows.map(el => {
+    const mapName = _.find(adsetNames, (item) => item.adset_id == el.adset_id) || el
+    return {...el, adset_name: mapName.adset_name}
+  })
+
+  allAdsetData = calculateValuesForSpreadsheet(allAdsetData.rows,['adset_id','adset_name', 'hour', ...CROSSROADS_TODAY_HOURLY_DATA_SHEET_VALUES]);
   allAdsetData.rows = _.orderBy(allAdsetData.rows, ['adset_id','adset_name','hour'],['desc'])
   await spreadsheets.updateSpreadsheet(allAdsetData, {spreadsheetId, sheetName: sheetNameByAdset});
 }
