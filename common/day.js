@@ -52,6 +52,10 @@ function dayYMDHM(date, timeZone = 'America/Los_Angeles') {
   return moment(date).tz(timeZone).format('YYYY-MM-DD HH:mm:ss');
 }
 
+function todayTenMinsAgoYMDHM(timeZone = 'America/Los_Angeles') {
+  return moment().tz(timeZone).subtract(10, 'minutes').format('YYYY-MM-DD HH:mm:ss');
+}
+
 function threeDaysAgoYMD(date, timeZone = 'America/Los_Angeles') {
   const m = date ? moment(date) : moment().tz(timeZone);
   return m.subtract(3, 'days').format('YYYY-MM-DD');
@@ -82,5 +86,6 @@ module.exports = {
   convertDayYMD,
   convertDayHH,
   dayBeforeYesterdayYMD,
-  someDaysAgoYMD
+  someDaysAgoYMD,
+  todayTenMinsAgoYMDHM
 };

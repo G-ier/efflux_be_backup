@@ -1,33 +1,32 @@
 const { CronJob } = require('cron');
-const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD, someDaysAgoYMD} = require('../common/day');
-const { updateCrossroadsData, getFinalInfo } = require('../services/crossroadsService');
+const { todayYMDHM, todayTenMinsAgoYMDHM } = require('../common/day');
+const { updateClickflareData } = require('../services/clickflareService');
 const Rules = require('../constants/cron');
-const { CROSSROADS_ACCOUNTS, todaySheetsArr } = require('../constants/crossroads');
-const { updateCR_DaySpreadsheet, updateCR_TodaySpreadsheet } = require('../controllers/spreadsheetController');
-const { sheetsArr } = require('../constants/crossroads');
+const { clickflareTimezone } = require('../constants/clickflare');
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 
-const crossroadsHourlyCron = new CronJob(
-  Rules.CR_DAILY,
+const updateClickflare = async () => {
+  const startDate = todayTenMinsAgoYMDHM()
+  const endDate = todayYMDHM()
+  const timezone = clickflareTimezone;
+  await updateClickflareData(startDate, endDate, timezone);
+}
+const clickflareRegularCron = new CronJob(
+  Rules.CF_REGULAR,
   (async () => {
-
-    await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
-      const isFinal = getFinalInfo(account.key, dayBeforeYesterdayYMD())
-      if(isFinal) return updateCrossroadsData(account, dayBeforeYesterdayYMD());
-    }));
-    updateCR_Sheet();
+    updateClickflare();
   }),
 );
 
 
 const initializeCFCron = () => {
   (async () => {
-
+    updateClickflare()
   })();
 
   if (!disableCron) {
-    crossroadsHourlyCron.start();
+    clickflareRegularCron.start();
   }
 };
 
