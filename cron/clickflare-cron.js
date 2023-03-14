@@ -12,6 +12,7 @@ const updateClickflare = async () => {
   const timezone = clickflareTimezone;
   await updateClickflareData(startDate, endDate, timezone);
 }
+
 const clickflareRegularCron = new CronJob(
   Rules.CF_REGULAR,
   (async () => {

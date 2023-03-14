@@ -280,7 +280,6 @@ function mergeAvgRPC(left, right){
       ave_rpc
     }
   })
-  // console.log('mergedData', mergedData)
   return mergedData;
 }
 
