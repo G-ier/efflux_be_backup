@@ -4,7 +4,7 @@ function clickflareCampaigns(startDate, endDate, traffic_source, groupBy, groupB
   return db.raw(`
     SELECT cf.${groupBy} as ${groupBy},
     MAX(cf.${groupByName}) as ${groupByName},
-    SUM(cf.revenue) as revenue,
+    CAST(ROUND(SUM(cf.revenue)::decimal, 2) AS FLOAT) as revenue,
     CAST(COUNT(CASE WHEN cf.event_type = 'visit' THEN 1 ELSE null END) AS INTEGER) as visits,
     CAST(COUNT(CASE WHEN cf.event_type = 'click' THEN 1 ELSE null END) AS INTEGER) as clicks,
     CAST(COUNT(CASE WHEN cf.event_type = 'conversion' THEN 1 ELSE null END) AS INTEGER) as conversions

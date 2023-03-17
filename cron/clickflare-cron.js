@@ -30,9 +30,9 @@ const clickflareRegularCron = new CronJob(
 
 
 const initializeCFCron = () => {
-  (async () => {
-    updateClickflare()
-  })();
+  // (async () => {
+  //   updateClickflare()
+  // })();
 
   if (!disableCron) {
     clickflareRegularCron.start();
