@@ -2,7 +2,8 @@ const { CronJob } = require('cron');
 const { todayYMDHM, todayTenMinsAgoYMDHM } = require('../common/day');
 const { updateClickflareData } = require('../services/clickflareService');
 const Rules = require('../constants/cron');
-const { clickflareTimezone } = require('../constants/clickflare');
+const { clickflareTimezone, sheetsArr } = require('../constants/clickflare');
+const { updateCF_DaySpreadsheet } = require('../controllers/spreadsheetController');
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 
@@ -11,6 +12,10 @@ const updateClickflare = async () => {
   const endDate = todayYMDHM()
   const timezone = clickflareTimezone;
   await updateClickflareData(startDate, endDate, timezone);
+
+  sheetsArr.forEach(async (sheet) => {
+    await updateCF_DaySpreadsheet(sheet)
+  })
 }
 
 const clickflareRegularCron = new CronJob(

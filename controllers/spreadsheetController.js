@@ -2,7 +2,7 @@ const _ = require('lodash');
 const {
   crossroadsCampaigns, crossroadsAdsets,crossroadsCampaignsByHour, crossroadsAdsetsByHour, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report,
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report, clickflareCampaigns,
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD, todayHH} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -16,6 +16,7 @@ const {POSTBACK_SHEET_VALUES, POSTBACK_EXCLUDEDFIELDS, pbNetMapFields, sheetsArr
 const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
 const { crossroadsAdsetsForToday, crossroadsCampaignsForToday, crossroadsNames } = require("../common/aggregations/crossroads_campaigns");
 const e = require('express');
+const { CLICKFLAREDATA_SHEET_VALUES } = require('../constants/clickflare');
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -333,6 +334,20 @@ async function updateCR_DaySpreadsheet(sheetData) {
   });
 }
 
+async function updateCF_DaySpreadsheet(sheetData) {
+  const {spreadsheetId, sheetName, sheetNameByAdset, day, traffic_source} = sheetData;
+  let campData = await clickflareCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source, 'campaign_id', 'campaign_name');
+  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CLICKFLAREDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
+
+  let adsetData = await clickflareCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source, 'adset_id', 'adset_name');
+  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CLICKFLAREDATA_SHEET_VALUES]);
+  await spreadsheets.updateSpreadsheet(adsetData, {
+    spreadsheetId,
+    sheetName: sheetNameByAdset
+  });
+}
+
 async function updateCR_TodaySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source, hour} = sheetData;
 
@@ -567,5 +582,6 @@ module.exports = {
   updateSedo_Conversion_Spreadsheet,
   updatePB_UnknownSpreadsheet,
   updateCR_TodaySpreadsheet,
-  updateCR_HourlySpreadsheet
+  updateCR_HourlySpreadsheet,
+  updateCF_DaySpreadsheet
 }
