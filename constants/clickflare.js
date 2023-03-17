@@ -66,7 +66,6 @@ const CLICKFLAREDATA_SHEET_VALUES = [
   'visits',
   'clicks',
   'conversions',
-
 ]
 module.exports = {
   CLICKFLARE_URL,

@@ -336,11 +336,13 @@ async function updateCR_DaySpreadsheet(sheetData) {
 
 async function updateCF_DaySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, day, traffic_source} = sheetData;
-  let campData = await clickflareCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source, 'campaign_id', 'campaign_name');
+  const endDay = day == 1 ? todayYMD() : yesterdayYMD();
+
+  let campData = await clickflareCampaigns(someDaysAgoYMD(day), endDay, traffic_source, 'campaign_id', 'campaign_name');
   campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CLICKFLAREDATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
 
-  let adsetData = await clickflareCampaigns(someDaysAgoYMD(day), yesterdayYMD(), traffic_source, 'adset_id', 'adset_name');
+  let adsetData = await clickflareCampaigns(someDaysAgoYMD(day), endDay, traffic_source, 'adset_id', 'adset_name');
   adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CLICKFLAREDATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(adsetData, {
     spreadsheetId,

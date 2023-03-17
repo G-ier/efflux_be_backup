@@ -61,6 +61,7 @@ async function getclickflareData(startDate, endDate, timezone, metrics) {
   let pageSize = 1000;
   let next = false;
   do {
+    console.log('next page: ', page)
     next = false;
     const payload = {
       startDate,
@@ -159,27 +160,29 @@ async function updateClickflareTB(data, provider) {
     }
   });
 
-  let result = [];
-
   if (createArr.length) {
-    const created = await db("clickflare").insert(createArr).returning(fields);
-    console.log(`CREATED clickflare ${provider} LENGTH`, created.length)
-    result.push(...created);
+    const clickChunks = _.chunk(createArr, 500);
+    for (const chunk of clickChunks) {
+      await db("clickflare").insert(chunk);
+    }
+    console.log(`CREATED clickflare ${provider} LENGTH`, createArr.length)
   }
-
   console.log(`SKIPPED clickflare ${provider} LENGTH`, skipArr.length)
-  result.push(...skipArr);
-  return result;
 }
 
 async function updateClickflareData(startDate, endDate, timezone) {
+
+  console.log('start getAvailableFields')
   const availableFields = await getAvailableFields();
   const metrics = await mapAvailableFields(availableFields);
   const clickflareData = await getclickflareData(startDate, endDate, timezone, metrics);
 
+  console.log('start processClickflareFBData')
   // process & save FB data
   const processedCFFBdata = await processClickflareFBData(clickflareData);
   await updateClickflareTB(processedCFFBdata, PROVIDERS.FACEBOOK)
+
+  console.log('start processClickflareTTData')
   // process & save TT data
   const processedCFTTdata = await processClickflareTTData(clickflareData);
   await updateClickflareTB(processedCFTTdata, PROVIDERS.TIKTOK)
