@@ -7,6 +7,7 @@ const { initializeSystem1Cron } = require("./system1-cron");
 const { initializeSedoCron } = require("./sedo-cron");
 const { initializeOBCron } = require("./outbrain-cron");
 const { initializePostbackCron } = require("./postback-cron");
+const { initializeCFCron } = require("./clickflare-cron");
 
 const initializeCronJobs = () => {
   initializeFBCron();
@@ -18,6 +19,7 @@ const initializeCronJobs = () => {
   initializeSystem1Cron();
   initializeSedoCron();
   initializeOBCron();
+  initializeCFCron();
 };
 
 module.exports = { initializeCronJobs };

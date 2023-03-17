@@ -44,9 +44,13 @@ module.exports = class MetricsCalculator {
                 adset_id,
                 adset_name,
                 hour,
+                visits,
+                clicks,
               }) {
     this.total_spent = total_spent
     this.spend = spend
+    this.visits = visits
+    this.clicks = clicks
     this.spend_today = spend_today
     this.spend_yesterday = spend_yesterday
     this.revenue_yesterday = revenue_yesterday
