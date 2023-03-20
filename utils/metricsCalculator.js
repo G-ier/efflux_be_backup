@@ -22,6 +22,7 @@ module.exports = class MetricsCalculator {
                 revenue_clicks_last_7_days_total,
                 lander_visits,
                 revenue_clicks_today,
+                revenue_clicks,
                 tracked_visitors,
                 revenue,
                 revenue_today,
@@ -72,6 +73,7 @@ module.exports = class MetricsCalculator {
     this.searches = searches
     this.lander_visits = lander_visits
     this.revenue_clicks_today = revenue_clicks_today
+    this.revenue_clicks = revenue_clicks
     this.tracked_visitors = tracked_visitors
     this.revenue = revenue
     this.revenue_today = revenue_today
