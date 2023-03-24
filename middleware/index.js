@@ -19,6 +19,7 @@ const campaigns = require('../routes/campaigns');
 const proper = require('../routes/proper');
 const system1 = require('../routes/system1');
 const knexLogger = require('./knexLogger');
+const develop = require('../routes/develop');
 
 const configureMiddleware = (server) => {
   server.use(helmet());
@@ -28,6 +29,7 @@ const configureMiddleware = (server) => {
   server.use("/trk", isBot, pixel);
   server.use(morgan("dev"));
   server.use("/api/auth0", auth0);
+  server.use('/api/develop', develop);
   server.use(paginate.middleware(10, 50));
   server.use('/api/proper', proper);
   server.use(jwtCheck);
