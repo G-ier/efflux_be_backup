@@ -24,7 +24,7 @@ route.get("/debug-cron-jobs", async (req, res) => {
   }
   catch (err) {
     console.log(err);
-    res.status(500).send({ error: err.toString() });
+    res.status(500).send({ error: `${err.toString()}, Spreadsheet Id: ${process.env.SYSTEM1_SPREADSHEET_ID}` });
   }
 
 });
