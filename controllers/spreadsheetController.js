@@ -436,11 +436,11 @@ async function updateS1_Spreadsheet() {
   const spreadsheetId = "1_3GJaATTKXvhxGVfyL5okufs8fXyLrVYh3kGWgAkz68"
 
   // Update Timepoints
-  const today = todayYMD('UTC');
-  const yesterday = yesterdayYMD(null, 'UTC');
-  const dayBeforeYesterday = dayBeforeYesterdayYMD(null, 'UTC');
-  const threeDaysAgo = threeDaysAgoYMD(null, 'UTC');
-  const weekAgo = someDaysAgoYMD(7, null, 'UTC');
+  const today = todayYMD();
+  const yesterday = yesterdayYMD(null);
+  const dayBeforeYesterday = dayBeforeYesterdayYMD(null);
+  const threeDaysAgo = threeDaysAgoYMD(null);
+  const weekAgo = someDaysAgoYMD(7, null);
 
   // Sheet Names and Timepoints
   const SYSTEM1_SHEET_SPECIFICS = [
