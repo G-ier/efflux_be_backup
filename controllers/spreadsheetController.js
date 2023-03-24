@@ -426,7 +426,7 @@ function mapColumnsSystem1Spreadsheet(data, columns) {
       }
     });
   });
-  totals['rpc'] = totals['revenue_clicks'] > 0 ? totals['revenue'] / totals['revenue_clicks'] : null;
+  totals['rpc'] = totals['revenue_clicks'] > 0 ? (totals['revenue'] / totals['revenue_clicks']).toFixed(2) : null;
   data.unshift({ ...totals, [columns[0]]: null, [columns[1]]: 'Total' });
   const rows = data.map(obj => columns.reduce((row, column) => ({ ...row, [column]: obj[column] || null }), {}));
   return { columns, rows };
@@ -467,22 +467,22 @@ async function updateS1_Spreadsheet() {
     {
     name: "Campaign - Last 3days",
     startTime: threeDaysAgo,
-    endTime: today,
+    endTime: yesterday,
     },
     {
     name: "Adset - Last 3days",
     startTime: threeDaysAgo,
-    endTime: today,
+    endTime: yesterday,
     },
     {
     name: "Campaign - Last 7days",
     startTime: weekAgo,
-    endTime: today,
+    endTime: yesterday,
     },
     {
     name: "Adset - Last 7days",
     startTime: weekAgo,
-    endTime: today,
+    endTime: yesterday,
     }
   ]
 
