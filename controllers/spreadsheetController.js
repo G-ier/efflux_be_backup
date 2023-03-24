@@ -433,7 +433,7 @@ function mapColumnsSystem1Spreadsheet(data, columns) {
 }
 
 async function updateS1_Spreadsheet() {
-  const spreadsheetId = process.env.SYSTEM1_SPREADSHEET_ID
+  const spreadsheetId = "1_3GJaATTKXvhxGVfyL5okufs8fXyLrVYh3kGWgAkz68"
 
   // Update Timepoints
   const today = todayYMD('UTC');
