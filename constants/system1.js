@@ -13,28 +13,17 @@ const SYSTEM1_LABELS = {
 }
 
 const SYSTEM1_SHEET_VALUES = [
-  'total_spent',
   'revenue',
-  'est_revenue',
-  'pb_conversions',
-  's1_conversions',
-  'pb_search',
-  'pb_impressions',
-  'rpc',
-  'est_roi',
-  'profit',
-  'est_profit',
-  'live_cpa',
-  'link_clicks',
-  'ts_conversions',
-  'fb_impressions',
-  'cpa',
-  'facebook_ctr',
-  'cpc',
-  'live_ctr',
-  'cpm',
+  'searches',
+  'lander_visits',
+  'revenue_clicks',
+  'visitors',
+  'tracked_visitors',
   'rpm',
+  'rpc',
+  's1_camp_name'
 ]
+
 
 module.exports = {
   SYSTEM1_BASE_URL,

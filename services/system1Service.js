@@ -158,24 +158,39 @@ function processSubId(sub_id) {
   }
 }
 
-async function updateSystem1Hourly() {
-  try {
-    let hourlyData = await getHourlyData(2);
-    hourlyData = processHourlyData(hourlyData);
+async function updateSystem1Hourly(TELEMETRY=false) {
 
-    const campaignIds = hourlyData.map(i => i.campaign_id);
-    const campaignNames = await getCampaignNames(campaignIds);
-    hourlyData = hourlyData.map(item => {
-      return {
-        ...item,
-        campaign_name: campaignNames[item.campaign_id]?.name ?? null
-      };
-    });
+  // Retrieve the data from the API
+  const apiData = await getHourlyData(2)
 
-    await updateData(hourlyData, threeDaysAgoYMD(null, 'UTC'));
-  } catch (e) {
-    console.log(e);
-  }
+  if (TELEMETRY) console.log("Pre-processed Data", apiData[0])
+
+  // Process the data
+  let processedData = processHourlyData(apiData)
+
+  if (TELEMETRY) console.log("Post-processed Data", processedData[0])
+
+  // Group the campaign ids in a list
+  const campaignIds = processedData.map(i => i.campaign_id);
+
+  if (TELEMETRY) console.log("Campaign IDs", campaignIds)
+
+  // NOTE: We don't find any campaign names
+  // NOTE: Not all the add accounts are in the database
+  const campaignNames = await getCampaignNames(campaignIds);
+
+  if (TELEMETRY) console.log("Campaign Names", campaignNames)
+
+  // Add the campaign names to the data
+  processedData = processedData.map(item => {
+    return {
+      ...item,
+      campaign_name: campaignNames[item.campaign_id]?.name ?? null
+    };
+  });
+
+  // Update the database with the following style
+  await updateData(processedData, threeDaysAgoYMD());
 }
 
 async function updateSystem1Daily() {

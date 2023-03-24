@@ -18,7 +18,7 @@ const updateSystem1DataDailyJob = new CronJob(
 );
 
 const updateSystem1SheetJob = new CronJob(
-  Rules.SHEET_REGULAR,
+  Rules.SYSTEM1_EVERY_5_MINUTES,
   updateS1_Spreadsheet,
 );
 

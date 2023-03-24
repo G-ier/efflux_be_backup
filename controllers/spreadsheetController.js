@@ -42,6 +42,7 @@ function calculateTotalsForSpreadsheet(data, columns){
   data = [totals, ...data]
   return { columns, rows: data }
 }
+
 function calculateValuesForSpreadsheet(data, columns) {
   data = data.filter(item => !isNaN(item[columns[0]]) && Number(item[columns[0]]) != 0);
   const totals = columns.reduce((acc, column) => {
@@ -174,8 +175,6 @@ function calculateValuesForSpreadsheet1(data, columns, alias) {
   })
   return { columns, rows }
 }
-
-
 
 function mapValuesForSpreadsheet(data, columns, alias) {
   // get ave_rpc
@@ -418,20 +417,94 @@ async function updateOB_Spreadsheet() {
   await spreadsheets.updateSpreadsheet(data, {spreadsheetId, sheetName});
 }
 
-async function updateS1_Spreadsheet() {
-  const spreadsheetId = process.env.SEDO_SPREADSHEET_ID;
-  const sheetName = process.env.PB_SYSTEM1_SHEET_NAME;
-  const sheetNameByAdset = process.env.PB_SYSTEM1_SHEET_BY_ADSET;
-
-  let todayData = await aggregateSystem1ConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'campaign_id');
-  todayData = calculateValuesForSpreadsheet(todayData.rows, ['campaign_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
-  await spreadsheets.updateSpreadsheet(todayData, {spreadsheetId, sheetName});
-
-  let todayDataByAdset = await aggregateSystem1ConversionReport(yesterdayYMD(null, 'UTC'), todayYMD('UTC'), 'adset_id');
-  todayDataByAdset = calculateValuesForSpreadsheet(todayDataByAdset.rows, ['adset_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES])
-  await spreadsheets.updateSpreadsheet(todayDataByAdset, {spreadsheetId, sheetName: sheetNameByAdset});
+function mapColumnsSystem1Spreadsheet(data, columns) {
+  const totals = {};
+  data.forEach(item => {
+    columns.forEach(column => {
+      if (Number.isFinite(item[column])) {
+        totals[column] = (totals[column] || 0) + item[column];
+      }
+    });
+  });
+  totals['rpc'] = totals['revenue_clicks'] > 0 ? totals['revenue'] / totals['revenue_clicks'] : null;
+  data.unshift({ ...totals, [columns[0]]: null, [columns[1]]: 'Total' });
+  const rows = data.map(obj => columns.reduce((row, column) => ({ ...row, [column]: obj[column] || null }), {}));
+  return { columns, rows };
 }
 
+async function updateS1_Spreadsheet() {
+  const spreadsheetId = process.env.SYSTEM1_SPREADSHEET_ID
+
+  // Update Timepoints
+  const today = todayYMD('UTC');
+  const yesterday = yesterdayYMD(null, 'UTC');
+  const dayBeforeYesterday = dayBeforeYesterdayYMD(null, 'UTC');
+  const threeDaysAgo = threeDaysAgoYMD(null, 'UTC');
+  const weekAgo = someDaysAgoYMD(7, null, 'UTC');
+
+  // Sheet Names and Timepoints
+  const SYSTEM1_SHEET_SPECIFICS = [
+    {
+    name: "Campaigns - Today",
+    startTime: yesterday,
+    endTime: today,
+    },
+    {
+    name: "Adset - Today",
+    startTime: yesterday,
+    endTime: today,
+    },
+    {
+    name: "Campaign - Yesterday",
+    startTime: dayBeforeYesterday,
+    endTime: yesterday,
+    },
+    {
+    name: "Adset - Yesterday",
+    startTime: dayBeforeYesterday,
+    endTime: yesterday,
+    },
+    {
+    name: "Campaign - Last 3days",
+    startTime: threeDaysAgo,
+    endTime: today,
+    },
+    {
+    name: "Adset - Last 3days",
+    startTime: threeDaysAgo,
+    endTime: today,
+    },
+    {
+    name: "Campaign - Last 7days",
+    startTime: weekAgo,
+    endTime: today,
+    },
+    {
+    name: "Adset - Last 7days",
+    startTime: weekAgo,
+    endTime: today,
+    }
+  ]
+
+  for (const sheet of SYSTEM1_SHEET_SPECIFICS) {
+    const { name, startTime, endTime } = sheet
+    console.log(name, startTime, endTime)
+    let groupBy;
+    let sheetValues;
+    if (name.includes("Campaign")) {
+      groupBy = 'campaign_id'
+      sheetValues = ['campaign_id', 'campaign_name', ...SYSTEM1_SHEET_VALUES]
+    }
+    else {
+      groupBy = 'adset_id'
+      sheetValues = ['adset_id', 'adset_name', ...SYSTEM1_SHEET_VALUES]
+    }
+    const sheetAggregatedData = await aggregateSystem1ConversionReport(startTime, endTime, groupBy);
+    const postCalculatedData = mapColumnsSystem1Spreadsheet(sheetAggregatedData.rows, sheetValues)
+    await spreadsheets.updateSpreadsheet(postCalculatedData, { spreadsheetId, sheetName: name});
+  }
+
+}
 
 async function updatePB_Spreadsheet() {
   for(let i=0;i<sheetsArr.length;i++){

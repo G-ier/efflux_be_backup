@@ -6,9 +6,12 @@ let serviceEnabled = false;
 const KEY_FILE = './cert/google.json';
 const IgnoredColumns = [];
 const DefaultValues = {
+  campaign_id: 'N/A',
   campaign_name: 'N/A',
+  adset_id: 'N/A',
   adset_name: 'N/A',
-  cr_camp_name: 'N/A'
+  cr_camp_name: 'N/A',
+  s1_camp_name: 'N/A',
 };
 
 fs.access(KEY_FILE, (err) => {
@@ -82,8 +85,10 @@ async function updateSheetValues(spreadsheetId, values, options) {
   return data;
 }
 
-async function updateSpreadsheet(data, options) {
+async function updateSpreadsheet(data, options, predifeniedRange="") {
+
   const { spreadsheetId, sheetName, excludedFields = [] } = options
+
   const now = todayYMDHM();
   // Get column names
   const columns = data.columns.filter((col) => IgnoredColumns.concat(excludedFields).indexOf(col) === -1)
@@ -110,7 +115,7 @@ async function updateSpreadsheet(data, options) {
     throw new Error(`Sheet ${sheetName} not found`);
   }
 
-  const range = sheet.properties.title;
+  const range = sheet.properties.title + predifeniedRange;
 
   // clear sheet
   await clearSheet(spreadsheetId, {
