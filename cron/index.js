@@ -19,7 +19,7 @@ const initializeCronJobs = () => {
   initializeSystem1Cron();
   initializeSedoCron();
   initializeOBCron();
-  initializeCFCron();
+  // initializeCFCron();
 };
 
 module.exports = { initializeCronJobs };
