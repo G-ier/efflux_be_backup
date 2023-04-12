@@ -1,13 +1,9 @@
 const route = require("express").Router();
-
 const {
-  updateSystem1Hourly
-} = require('../../services/system1Service');
-
-
-const {
-  updateS1_Spreadsheet,
-} = require("../../controllers/spreadsheetController");
+  updateClickflare
+} = require("../../cron/clickflare-cron")
+const db = require('../../data/dbConfig');
+const _ = require('lodash');
 
 
 // @route     /api/debug-cron-jobs
@@ -15,11 +11,7 @@ const {
 route.get("/debug-cron-jobs", async (req, res) => {
 
   try {
-    // Update the database
-    await updateSystem1Hourly();
-
-    // Update the spreadsheet
-    await updateS1_Spreadsheet();
+    updateClickflare()
     res.status(200).send({ message: "debug-cron-jobs" });
   }
   catch (err) {

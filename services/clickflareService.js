@@ -2,8 +2,6 @@ const _ = require('lodash');
 const axios = require('axios');
 const db = require('../data/dbConfig');
 const { CLICKFLARE_URL, API_KEY } = require('../constants/clickflare');
-const { dayHH, dayYMD } = require('../common/day');
-const PROVIDERS = require("../constants/providers");
 
 /**
  * @name getAvailableFields
@@ -45,7 +43,6 @@ async function mapAvailableFields(fields) {
  * https://documenter.getpostman.com/view/1342820/2s8YRnnsPW
  * @returns {Promise<Array<object>>}
  */
-
 async function getclickflareData(startDate, endDate, timezone, metrics) {
   const config = {
     headers: {
@@ -85,89 +82,61 @@ async function getclickflareData(startDate, endDate, timezone, metrics) {
   return clickflareData;
 }
 
-/**
- * @name processClickflareData
- * @returns {Promise<Array<object>>}
- */
-
-async function processClickflareFBData(data) {
-  return data.filter(item => item.ConnectionReferrer.includes(PROVIDERS.FACEBOOK)).map(item => {
-    return {
-      ad_id: item.TrackingField1,
-      adset_id: item.TrackingField2,
-      campaign_id: item.TrackingField3,
-      adset_name: item.TrackingField5,
-      campaign_name: item.TrackingField6,
-      traffic_source: PROVIDERS.FACEBOOK,
-      date: dayYMD(item.ClickTime),
-      hour: dayHH(item.ClickTime),
-      revenue: item.Cost,
-      event_type: item.EventType,
-      external_id: item.ExternalID,
-      flow_id: item.FlowID,
-      click_id: item.ClickID,
-      click_time: item.ClickTime,
-      connection_ip: item.ConnectionIP,
-      connection_referrer: item.ConnectionReferrer,
-      device_user_agent: item.DeviceUserAgent,
-      visit_id: item.VisitID,
-      traffic_source_id: item.TrafficSourceID
-    }
-  })
-}
-
-async function processClickflareTTData(data) {
-  return data.filter(item => item.ConnectionReferrer.includes(PROVIDERS.TIKTOK)).map(item => {
-    return {
-      campaign_id: item.TrackingField1,
-      campaign_name: item.TrackingField2,
-      adset_id: item.TrackingField3,
-      adset_name: item.TrackingField4,
-      ad_id: item.TrackingField5,
-      traffic_source: PROVIDERS.TIKTOK,
-      date: dayYMD(item.ClickTime),
-      hour: dayHH(item.ClickTime),
-      revenue: item.Cost,
-      event_type: item.EventType,
-      external_id: item.ExternalID,
-      flow_id: item.FlowID,
-      click_id: item.ClickID,
-      click_time: item.ClickTime,
-      connection_ip: item.ConnectionIP,
-      connection_referrer: item.ConnectionReferrer,
-      device_user_agent: item.DeviceUserAgent,
-      visit_id: item.VisitID,
-      traffic_source_id: item.TrafficSourceID
-    }
-  })
-}
-
-async function updateClickflareTB(data, provider) {
-  const fields = ["traffic_source_id","visit_id","device_user_agent", "connection_referrer","connection_ip", "click_time", "click_id", "flow_id", "external_id", "event_type", "revenue", "traffic_source", "campaign_id", "adset_id", "ad_id"];
-  const existedClickflare = await db.select("*")
-    .from("clickflare")
-    .where({traffic_source: provider});
-  const existedClickflareMap = _.keyBy(existedClickflare, (item) => {
-    return `${item.traffic_source_id}||${item.visit_id}||${item.device_user_agent}||${item.connection_referrer}||${item.connection_ip}||${item.click_time}||${item.click_id}||${item.flow_id}||${item.external_id}||${item.event_type}||${item.revenue}||${item.traffic_source}||${item.campaign_id}||${item.adset_id}||${item.ad_id}`
-  });
-
-
-  const {skipArr = [], createArr = []} = _.groupBy(data, item => {
-    const existedClickflare = existedClickflareMap[`${item.traffic_source_id}||${item.visit_id}||${item.device_user_agent}||${item.connection_referrer}||${item.connection_ip}||${item.click_time}||${item.click_id}||${item.flow_id}||${item.external_id}||${item.event_type}||${item.revenue}||${item.traffic_source}||${item.campaign_id}||${item.adset_id}||${item.ad_id}`];
-    if (!existedClickflare) return "createArr";
-    if (existedClickflare) {
-      return "skipArr";
-    }
-  });
-
-  if (createArr.length) {
-    const clickChunks = _.chunk(createArr, 500);
-    for (const chunk of clickChunks) {
-      await db("clickflare").insert(chunk);
-    }
-    console.log(`CREATED clickflare ${provider} LENGTH`, createArr.length)
+function processKey(input) {
+  let suffix = '';
+  const idSuffix = input.includes('ID');
+  if (idSuffix) {
+    suffix = "_id"
   }
-  console.log(`SKIPPED clickflare ${provider} LENGTH`, skipArr.length)
+  const osSuffix = input.includes('OS');
+  if (osSuffix) {
+    suffix = "_os"
+  }
+  const trackingSuffix = input.includes("TrackingField")
+  if (trackingSuffix) {
+    suffix = "_" + input.replace("TrackingField", "")
+  }
+  const conversionParamSuffix = input.includes("ConversionParameter")
+  if (conversionParamSuffix) {
+    suffix = "_" + input.replace("ConversionParameter", "")
+  }
+  const customConversion = input.includes("CustomConversion")
+
+  if (customConversion && !input.includes("ConversionNumber")) {
+    suffix = "_" + input.replace("CustomConversion", "")
+  }
+  // Then, split the updated input string into separate words based on the capital letters
+  const words = input.match(/[A-Z][a-z]+/g);
+
+  // Then, join the words with underscores and convert to lowercase
+  const output = words.join('_').toLowerCase();
+  return output + suffix
+}
+
+async function processClickflareLogs(logs) {
+  return logs.map((log) => {
+    let obj = {}
+    Object.entries(log).forEach(([key, value]) => {
+      obj[processKey(key)] = value
+    })
+    return obj
+  })
+}
+
+function overWriteData(){
+  return new Promise((resolve) => {
+    db.raw(`
+      DELETE FROM tracking_data
+      WHERE id IN (
+        SELECT MIN(id)
+        FROM tracking_data
+        GROUP BY click_id, click_time, conversion_transaction, conversion_date, custom_conversion_number
+        HAVING COUNT(*) > 1
+      )
+    `).then(result => {
+        resolve(result.rowCount);
+      })
+    }); 
 }
 
 async function updateClickflareData(startDate, endDate, timezone) {
@@ -175,16 +144,24 @@ async function updateClickflareData(startDate, endDate, timezone) {
   console.log('start getAvailableFields')
   const availableFields = await getAvailableFields();
   const metrics = await mapAvailableFields(availableFields);
+
   const clickflareData = await getclickflareData(startDate, endDate, timezone, metrics);
+  let clickflareLogs = await processClickflareLogs(clickflareData);
 
-  console.log('start processClickflareFBData')
-  // process & save FB data
-  const processedCFFBdata = await processClickflareFBData(clickflareData);
-  await updateClickflareTB(processedCFFBdata, PROVIDERS.FACEBOOK)
+  // Separate the incoming data in chunks
+  const clickChunks = _.chunk(clickflareLogs, 500);
+  console.log("Entering Loop");
+  for (let i = 0; i < clickChunks.length; i++) {
+    await db("tracking_data").insert(clickChunks[i]);
+  }
 
-  console.log('start processClickflareTTData')
-  // process & save TT data
-  const processedCFTTdata = await processClickflareTTData(clickflareData);
-  await updateClickflareTB(processedCFTTdata, PROVIDERS.TIKTOK)
+  // Clear the table from the dublicates
+  console.log(`CREATED tracking_data LENGTH`, clickflareLogs.length)
+  let rowsDeleted = await overWriteData();
+  console.log("ROWS OVERWRITTEN tracking_data: ", rowsDeleted);
+
 }
+
 module.exports = { updateClickflareData };
+
+

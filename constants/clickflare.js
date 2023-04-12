@@ -1,6 +1,6 @@
 const CLICKFLARE_URL = 'https://api.clickflare.io/api/';
 const API_KEY = '7af4a2fa1d29f14c6359238362cbc439423358f95445ba859a23b2b678140e2b.60c17b1fd0de84655a648c9aceef873842558757';
-const clickflareTimezone = 'America/Los_Angeles';
+const clickflareTimezone = 'UTC';
 
 const sheetsArr = [
   {
@@ -17,7 +17,7 @@ const sheetsArr = [
     sheetNameByAdset:'Adset Last 3days',
     traffic_source: 'facebook',
   },
-  {
+   {
     day: 2,
     spreadsheetId: '1J7-neUUgaN9rgcKFSTIJ7RHY-tlFwDLz3biD2g2M-P8',
     sheetName: 'Campaign Yesterday',
@@ -66,6 +66,7 @@ const CLICKFLAREDATA_SHEET_VALUES = [
   'visits',
   'clicks',
   'conversions',
+  'timezone',
 ]
 module.exports = {
   CLICKFLARE_URL,

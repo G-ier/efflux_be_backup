@@ -24,6 +24,6 @@ module.exports = {
   SEDO_DAILY: process.env.SEDO_REGULAR || '25 * * * *',
   SEDO_HOURLY: process.env.SEDO_REGULAR || '5 * * * *',
   PB_REGULAR: process.env.PB_REGULAR || '*/15 * * * *',
-  CF_REGULAR: process.env.CF_REGULAR || '*/5 * * * *',
+  CF_REGULAR: process.env.CF_REGULAR || '*/15 * * * *',
   SYSTEM1_EVERY_5_MINUTES: process.env.SYSTEM1_EVERY_5_MINUTES || '2-59/5 * * * *',
 }

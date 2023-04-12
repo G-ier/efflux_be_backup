@@ -2,7 +2,7 @@ const _ = require('lodash');
 const {
   crossroadsCampaigns, crossroadsAdsets,crossroadsCampaignsByHour, crossroadsAdsetsByHour, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report, clickflareCampaigns,
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report, //clickflareCampaigns,
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD, todayHH} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");
@@ -17,6 +17,7 @@ const { SEDO_SHEET, SEDO_SHEET_VALUES } = require("../constants/sedo");
 const { crossroadsAdsetsForToday, crossroadsCampaignsForToday, crossroadsNames } = require("../common/aggregations/crossroads_campaigns");
 const e = require('express');
 const { CLICKFLAREDATA_SHEET_VALUES } = require('../constants/clickflare');
+const { campaign } = require('google-ads-api/build/src/protos/autogen/resourceNames');
 
 function preferredOrder(obj, order) {
   let newObject = {};
@@ -57,7 +58,7 @@ function calculateValuesForSpreadsheet(data, columns) {
     campaign_name: 'TOTAL',
     adset_name: 'TOTAL'
   })
-
+  console.log(data);
   data = [totals, ...data]
   const rows = data.map(item => {
     const calcResult = new MetricsCalculator(item)
@@ -333,16 +334,40 @@ async function updateCR_DaySpreadsheet(sheetData) {
   });
 }
 
-async function updateCF_DaySpreadsheet(sheetData) {
+function calculateValuesForCFSpreadsheet(data, columns){
+  const rows = data.map(item => {
+    const result = {
+      //Add campaign_id or adset_id
+      campaign_id: item.campaign_id,
+      adset_id: item.adset_id,
+      campaign_name: item.campaign_name,
+      adset_name: item.adset_name,
+      revenue: item.revenue,
+      visits: item.visits,
+      clicks: item.clicks,
+      conversions: item.conversions,
+      timezone: item.timezone || 'Missing Record',
+    }
+    return preferredOrder(result, columns)
+  })
+
+  return {columns, rows}
+}
+
+async function updateCF_DaySpreadsheet(sheetData, campaign_data, adset_data) {
+  //input sheetdata, campaign_data, adset_data
   const {spreadsheetId, sheetName, sheetNameByAdset, day, traffic_source} = sheetData;
   const endDay = day == 1 ? todayYMD() : yesterdayYMD();
+  console.log("Sheet Name", sheetName, "Start Date in Update CF Sheet", someDaysAgoYMD(day - 1), "End Date", endDay)
 
-  let campData = await clickflareCampaigns(someDaysAgoYMD(day), endDay, traffic_source, 'campaign_id', 'campaign_name');
-  campData = calculateValuesForSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CLICKFLAREDATA_SHEET_VALUES]);
+  let campData = campaign_data // await clickflareCampaigns(someDaysAgoYMD(day), endDay, traffic_source, 'campaign_id', 'campaign_name');
+  // console.log("Campaign Data", campData)
+  campData = calculateValuesForCFSpreadsheet(campData.rows, ['campaign_id','campaign_name', ...CLICKFLAREDATA_SHEET_VALUES]);
   await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
 
-  let adsetData = await clickflareCampaigns(someDaysAgoYMD(day), endDay, traffic_source, 'adset_id', 'adset_name');
-  adsetData = calculateValuesForSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CLICKFLAREDATA_SHEET_VALUES]);
+  let adsetData = adset_data// await clickflareCampaigns(someDaysAgoYMD(day), endDay, traffic_source, 'adset_id', 'adset_name');
+  adsetData = calculateValuesForCFSpreadsheet(adsetData.rows, ['adset_id','adset_name', ...CLICKFLAREDATA_SHEET_VALUES]);
+
   await spreadsheets.updateSpreadsheet(adsetData, {
     spreadsheetId,
     sheetName: sheetNameByAdset
