@@ -14,7 +14,7 @@ function clickflareCampaigns(startDate, endDate, group, traffic_source){ //group
     join_source = `(SELECT c.provider_id, c.name, ad.tz_name, ad.tz_offset FROM adsets c 
       LEFT JOIN ad_accounts ad ON c.ad_account_id = ad.id) tz ON td.tracking_field_2 = tz.provider_id`
     select_id = `GROUPING(td.tracking_field_2) = 1 THEN '1' ELSE td.tracking_field_2 END AS adset_id,
-    CASE WHEN GROUPING(td.tracking_field_2) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_5) END as campaign_name`
+    CASE WHEN GROUPING(td.tracking_field_2) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_5) END as adset_name`
     groupBy = 'td.tracking_field_2'
   }
   return db.raw(`
