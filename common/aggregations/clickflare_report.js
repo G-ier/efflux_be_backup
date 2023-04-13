@@ -6,16 +6,16 @@ function clickflareCampaigns(startDate, endDate, group, traffic_source){ //group
   if (group === 'campaign'){
     join_source = `(SELECT c.id, c.name, ad.tz_name, ad.tz_offset FROM campaigns c 
       LEFT JOIN ad_accounts ad ON c.ad_account_id = ad.id) tz ON td.tracking_field_3 = tz.id`
-    select_id = `GROUPING(tz.id) = 1 THEN 'TOTAL' WHEN tz.id is null or tz.id = '{{campaign.id}}' THEN 'Missing Campaign ID' ELSE tz.id END AS campaign_id,
-    td.tracking_field_6 as campaign_name`
-    groupBy = 'tz.id, td.tracking_field_6'
+    select_id = `GROUPING(td.tracking_field_3) = 1 THEN '1' ELSE td.tracking_field_3 END AS campaign_id,
+    CASE WHEN GROUPING(td.tracking_field_3) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_6) END as campaign_name`
+    groupBy = 'td.tracking_field_3'
   }
   else{
     join_source = `(SELECT c.provider_id, c.name, ad.tz_name, ad.tz_offset FROM adsets c 
       LEFT JOIN ad_accounts ad ON c.ad_account_id = ad.id) tz ON td.tracking_field_2 = tz.provider_id`
-    select_id = `GROUPING(tz.provider_id) = 1 THEN 'TOTAL' WHEN tz.provider_id is null THEN 'Missing Provider ID' ELSE tz.provider_id END AS adset_id,
-    td.tracking_field_5 AS adset_name`
-    groupBy = 'tz.provider_id, td.tracking_field_5'
+    select_id = `GROUPING(td.tracking_field_2) = 1 THEN '1' ELSE td.tracking_field_2 END AS adset_id,
+    CASE WHEN GROUPING(td.tracking_field_2) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_5) END as campaign_name`
+    groupBy = 'td.tracking_field_2'
   }
   return db.raw(`
   SELECT CASE WHEN ${select_id},
@@ -35,6 +35,7 @@ function clickflareCampaigns(startDate, endDate, group, traffic_source){ //group
     (),
     (${groupBy}, tz.tz_name)
     )
+  ORDER BY ${groupBy}
   `)
 }
 
