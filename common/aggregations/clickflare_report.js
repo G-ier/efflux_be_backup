@@ -35,7 +35,7 @@ function clickflareCampaigns(startDate, endDate, group, traffic_source){ //group
     (),
     (${groupBy}, tz.tz_name)
     )
-  ORDER BY ${groupBy}
+  ORDER BY ${groupBy} DESC
   `)
 }
 
