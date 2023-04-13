@@ -9,8 +9,8 @@ const {clickflareCampaigns} = require("../common/aggregations/clickflare_report"
 const disableCron = process.env.DISABLE_CRON === 'true'
 
 const updateClickflare = async () => {
-  const startDate = '2023-04-13 00:00:00';//todayFifteenMinsAgoYMDHM('UTC');
-  const endDate = '2023-04-13 23:59:59';//todayYMDHM('UTC');
+  const startDate = todayFifteenMinsAgoYMDHM('UTC');
+  const endDate = todayYMDHM('UTC');
   //console.log("Start Date: ", startDate);
   //console.log("End Date: ", endDate);
   
