@@ -2,7 +2,8 @@ const _ = require('lodash');
 const {
   crossroadsCampaigns, crossroadsAdsets,crossroadsCampaignsByHour, crossroadsAdsetsByHour, aggregateOBConversionReport, aggregateSystem1ConversionReport,
   aggregatePRConversionReport, aggregateSedoConversionReport,aggregatePBUnknownConversionReport, aggregatePostbackConversionReport,
-  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report, //clickflareCampaigns,
+  aggregateFacebookAdsTodaySpentReport,aggregateCampaignConversionReport, aggregatePostbackConversionByTrafficReport, aggregateSedoConversion1Report,
+  aggregateCRConversions, //clickflareCampaigns,
 } = require("../common/aggregations");
 const {yesterdayYMD, todayYMD, dayBeforeYesterdayYMD, threeDaysAgoYMD, someDaysAgoYMD, todayHH} = require("../common/day");
 const spreadsheets = require("../services/spreadsheetService");

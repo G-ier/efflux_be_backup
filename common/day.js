@@ -19,8 +19,8 @@ function tomorrowYMD(date, timeZone = 'America/Los_Angeles') {
   return m.add(1, 'days').format('YYYY-MM-DD');
 }
 
-function todayYMDHM() {
-  return moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm:ss');
+function todayYMDHM(timezone = 'America/Los_Angeles') {
+  return moment().tz(timezone).format('YYYY-MM-DD HH:mm:ss');
 }
 
 function yesterdayYMDHM(date) {
