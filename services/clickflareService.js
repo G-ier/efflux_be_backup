@@ -65,7 +65,7 @@ async function getclickflareData(startDate, endDate, timezone, metrics) {
       endDate,
       timezone,
       metrics,
-      sortBy: 'ClickTime',
+      sortBy: 'VisitTime',
       orderType: 'desc',
       page,
       pageSize
@@ -73,6 +73,7 @@ async function getclickflareData(startDate, endDate, timezone, metrics) {
 
     const { data } = await axios.post(
       `${CLICKFLARE_URL}event-logs`, payload, config);
+    //console.log("Clickflare Data: ", data);
     if(data.totals.counter > pageSize * page) {
       page++;
       next = true;

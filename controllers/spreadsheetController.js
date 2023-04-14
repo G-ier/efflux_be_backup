@@ -338,7 +338,6 @@ async function updateCR_DaySpreadsheet(sheetData) {
 function calculateValuesForCFSpreadsheet(data, columns){
   const rows = data.map(item => {
     const result = {
-      //Add campaign_id or adset_id
       campaign_id: item.campaign_id,
       adset_id: item.adset_id,
       campaign_name: item.campaign_name,
