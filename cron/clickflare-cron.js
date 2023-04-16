@@ -9,9 +9,9 @@ const {clickflareCampaigns} = require("../common/aggregations/clickflare_report"
 const disableCron = process.env.DISABLE_CRON === 'true'
 
 const clickflareMorningFill = async () => {
-  const startDate = someDaysAgoYMD(2, null, 'UTC') + ' 00:00:00';
+  const startDate = someDaysAgoYMD(1, null, 'UTC') + ' 00:00:00';
   console.log("Start Date: ", startDate);
-  const endDate = someDaysAgoYMD(2, null, 'UTC') + ' 23:59:59';
+  const endDate = someDaysAgoYMD(1, null, 'UTC') + ' 23:59:59';
   console.log("End Date: ", endDate);
   await updateClickflareData(startDate, endDate, clickflareTimezone);
 }
