@@ -10,15 +10,15 @@ const { initializePostbackCron } = require("./postback-cron");
 const { initializeCFCron } = require("./clickflare-cron");
 
 const initializeCronJobs = () => {
-  // initializeFBCron();
-  // initializeCRCron();
-  // initializeGoogleCron();
-  // initializePostbackCron();
-  // // initializeGDNCron();
-  // // initializeAMGCron();
-  // initializeSystem1Cron();
-  // initializeSedoCron();
-  // initializeOBCron();
+  initializeFBCron();
+  initializeCRCron();
+  initializeGoogleCron();
+  initializePostbackCron();
+  // initializeGDNCron();
+  // initializeAMGCron();
+  initializeSystem1Cron();
+  initializeSedoCron();
+  initializeOBCron();
   initializeCFCron();
 };
 
