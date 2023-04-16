@@ -67,19 +67,25 @@ async function getclickflareData(startDate, endDate, timezone, metrics) {
       metrics,
       sortBy: 'VisitTime',
       orderType: 'desc',
-      page,
-      pageSize
+      page: page,
+      pageSize: pageSize
     }
-
     const { data } = await axios.post(
       `${CLICKFLARE_URL}event-logs`, payload, config);
-    //console.log("Clickflare Data: ", data);
+
     if(data.totals.counter > pageSize * page) {
       page++;
       next = true;
     }
     clickflareData.push(...data.items);
   } while(next)
+const visitTimeArray = clickflareData.map(data => new Date(data.VisitTime));
+
+const minVisitTime = new Date(Math.min(...visitTimeArray));
+const maxVisitTime = new Date(Math.max(...visitTimeArray));
+
+console.log('Minimum visit time:', minVisitTime);
+console.log('Maximum visit time:', maxVisitTime);
   return clickflareData;
 }
 
@@ -149,7 +155,7 @@ async function updateClickflareData(startDate, endDate, timezone) {
   const clickflareData = await getclickflareData(startDate, endDate, timezone, metrics);
   let clickflareLogs = await processClickflareLogs(clickflareData);
 
-  // Separate the incoming data in chunks
+  //Separate the incoming data in chunks
   const clickChunks = _.chunk(clickflareLogs, 500);
   console.log("Entering Loop");
   for (let i = 0; i < clickChunks.length; i++) {

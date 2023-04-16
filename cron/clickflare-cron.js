@@ -8,18 +8,25 @@ const {clickflareCampaigns} = require("../common/aggregations/clickflare_report"
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 
+const clickflareMorningFill = async () => {
+  const startDate = someDaysAgoYMD(2, null, 'UTC') + ' 00:00:00';
+  console.log("Start Date: ", startDate);
+  const endDate = someDaysAgoYMD(2, null, 'UTC') + ' 23:59:59';
+  console.log("End Date: ", endDate);
+  await updateClickflareData(startDate, endDate, clickflareTimezone);
+}
+
 const updateClickflare = async () => {
   const startDate = todayFifteenMinsAgoYMDHM('UTC');
   const endDate = todayYMDHM('UTC');
-  //console.log("Start Date: ", startDate);
-  //console.log("End Date: ", endDate);
+  console.log("Start Date: ", startDate);
+  console.log("End Date: ", endDate);
   
-  // Retrieve data in the timelapse specified and save them on the database.
+  //Retrieve data in the timelapse specified and save them on the database.
   await updateClickflareData(startDate, endDate, clickflareTimezone);
-  //16:59 last insert finished
   sheetsArr.forEach(async (sheet) => {
-     let min_date = someDaysAgoYMD(sheet.day - 1); 
-     let endDay = sheet.day == 1 ? todayYMD() : yesterdayYMD(); 
+     let min_date = someDaysAgoYMD(sheet.day - 1, null, 'UTC'); 
+     let endDay = sheet.day == 1 ? todayYMD('UTC') : yesterdayYMD(null, 'UTC'); 
      min_date = min_date + ' 00:00:00';
      endDay = endDay + ' 23:59:59';
      let traffic_source = sheet.traffic_source === 'facebook' ? `('62b23798ab2a2b0012d712f7', '62afb14110d7e20012e65445',
@@ -28,8 +35,16 @@ const updateClickflare = async () => {
      let adset_data = await clickflareCampaigns(min_date, endDay, 'adset', traffic_source);
 
      await updateCF_DaySpreadsheet(sheet, camp_data, adset_data)
-   })
+  })
 }
+
+const clickflareMorningCron = new CronJob(
+  Rules.CF_MORNING_FILL,
+  (async () => {
+    console.log('Morning Fill')
+    clickflareMorningFill();
+  }),
+);
 
 const clickflareRegularCron = new CronJob(
   Rules.CF_REGULAR,
@@ -47,6 +62,7 @@ const initializeCFCron = () => {
 
   if (!disableCron) {
     clickflareRegularCron.start();
+    clickflareMorningCron.start();
   }
 };
 
