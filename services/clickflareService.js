@@ -80,7 +80,7 @@ async function getclickflareData(startDate, endDate, timezone, metrics) {
     clickflareData.push(...data.items);
   } while(next)
 const visitTimeArray = clickflareData.map(data => new Date(data.VisitTime));
-
+console.log(visitTimeArray);
 const minVisitTime = new Date(Math.min(...visitTimeArray));
 const maxVisitTime = new Date(Math.max(...visitTimeArray));
 
@@ -169,6 +169,11 @@ async function updateClickflareData(startDate, endDate, timezone) {
 
 }
 
-module.exports = { updateClickflareData };
+async function migrateHistoricalCFData(date){
+  await db.raw(`SELECT sp_clickflare_store_data_older_than('${date}')`);
+  console.log("Migrated old records");
+}
+
+module.exports = { updateClickflareData, migrateHistoricalCFData};
 
 

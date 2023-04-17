@@ -1,6 +1,6 @@
 const { CronJob } = require('cron');
 const { yesterdayYMD, someDaysAgoYMD, todayYMD, todayYMDHM,todayTenMinsAgoYMDHM, todayFifteenMinsAgoYMDHM} = require('../common/day');
-const { updateClickflareData } = require('../services/clickflareService');
+const { updateClickflareData, migrateHistoricalCFData } = require('../services/clickflareService');
 const Rules = require('../constants/cron');
 const { clickflareTimezone, sheetsArr } = require('../constants/clickflare');
 const { updateCF_DaySpreadsheet } = require('../controllers/spreadsheetController');
@@ -9,11 +9,17 @@ const {clickflareCampaigns} = require("../common/aggregations/clickflare_report"
 const disableCron = process.env.DISABLE_CRON === 'true'
 
 const clickflareMorningFill = async () => {
+  //Morning Refill of previous day data to update revenue.
   const startDate = someDaysAgoYMD(1, null, 'UTC') + ' 00:00:00';
-  console.log("Start Date: ", startDate);
+  console.log("Morning Fill Start Date: ", startDate);
   const endDate = someDaysAgoYMD(1, null, 'UTC') + ' 23:59:59';
-  console.log("End Date: ", endDate);
+  console.log("Morning Fill End Date: ", endDate);
   await updateClickflareData(startDate, endDate, clickflareTimezone);
+
+  //Transfer older unused records to historical table
+  let test_date = someDaysAgoYMD(7, null, 'UTC');
+  console.log("unused date: ", test_date);
+  await migrateHistoricalCFData(test_date);
 }
 
 const updateClickflare = async () => {
@@ -21,12 +27,13 @@ const updateClickflare = async () => {
   const endDate = todayYMDHM('UTC');
   console.log("Start Date: ", startDate);
   console.log("End Date: ", endDate);
-  
   //Retrieve data in the timelapse specified and save them on the database.
   await updateClickflareData(startDate, endDate, clickflareTimezone);
   sheetsArr.forEach(async (sheet) => {
      let min_date = someDaysAgoYMD(sheet.day - 1, null, 'UTC'); 
      let endDay = sheet.day == 1 ? todayYMD('UTC') : yesterdayYMD(null, 'UTC'); 
+     console.log("Min Date: ", min_date);
+     console.log("End Date: ", endDay);
      min_date = min_date + ' 00:00:00';
      endDay = endDay + ' 23:59:59';
      let traffic_source = sheet.traffic_source === 'facebook' ? `('62b23798ab2a2b0012d712f7', '62afb14110d7e20012e65445',
