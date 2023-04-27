@@ -14,8 +14,8 @@ const initializeCronJobs = () => {
   initializeCRCron();
   initializeGoogleCron();
   initializePostbackCron();
-  // initializeGDNCron();
-  // initializeAMGCron();
+  initializeGDNCron();
+  initializeAMGCron();
   initializeSystem1Cron();
   initializeSedoCron();
   initializeOBCron();

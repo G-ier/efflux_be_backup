@@ -85,8 +85,8 @@ async function updateSheetValues(spreadsheetId, values, options) {
   return data;
 }
 
-async function updateSpreadsheet(data, options, predifeniedRange="") {
-
+async function updateSpreadsheet(data, options, predifeniedRange="", include_columns=true, add_last_update=true) {
+  console.log("include columns: ", include_columns);
   const { spreadsheetId, sheetName, excludedFields = [] } = options
 
   const now = todayYMDHM();
@@ -96,10 +96,15 @@ async function updateSpreadsheet(data, options, predifeniedRange="") {
   const rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0).concat(now));
 
   // add last_update column
-  columns.push('last_update');
+  if (add_last_update) columns.push('last_update');
 
-  const values = [columns].concat(rows);
+  let values;
 
+  if (include_columns) {
+    values = [columns].concat(rows);
+  } else{
+    values = rows;
+  }
   // get spreadsheet meta
   const doc = await getSheet(spreadsheetId);
 

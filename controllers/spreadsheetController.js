@@ -683,5 +683,6 @@ module.exports = {
   updatePB_UnknownSpreadsheet,
   updateCR_TodaySpreadsheet,
   updateCR_HourlySpreadsheet,
-  updateCF_DaySpreadsheet
+  updateCF_DaySpreadsheet,
+  preferredOrder
 }

@@ -62,19 +62,28 @@ async function updateFacebookData(date) {
 async function updateFacebookInsights(date) {
   try {
     console.log('START UPDATING FACEBOOK INSIGHTS')
+    //1 Get user accounts related to facebook.
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
 
     const facebookInsights = [];
     const facebookInsightsByDay = [];
     const adAccountsIdsMap = {};
     for (const account of accounts) {
+
+      //2 Get ad accounts  based user account id
       const adAccounts = await getAccountAdAccounts(account.id);
+
+      // Create a dict of provider_id: id from ad accounts
       adAccounts.forEach((item) => {
         adAccountsIdsMap[item.provider_id] = item.id;
       });
+      // provider_id: ad_account value from db
       const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
+      
+      // a list of act_{provider_id} strings
       const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
 
+      // Retrieve data for all the ad accounts from facebook api
       const accountInsights = await getAdInsights(account.token, adAccountsIds, date);
       facebookInsights.push(...accountInsights);
 
@@ -82,7 +91,8 @@ async function updateFacebookInsights(date) {
       const accountInsightsByDay = await getAdInsightsByDay(account.token, adAccountsIds, date);
       facebookInsightsByDay.push(...accountInsightsByDay);
     }
-
+    
+    // Processing the insight for the database.
     const processedInsights = processFacebookInsights(facebookInsights, date)
     await addFacebookData(processedInsights, date);
 
@@ -238,5 +248,6 @@ function processFacebookAdsets(accountId, adsets, adAccountsMap) {
 module.exports = {
   updateFacebookData,
   updateFacebookInsights,
-  updateFacebookAdAccountsTodaySpent
+  updateFacebookAdAccountsTodaySpent,
+  processFacebookInsights
 };
