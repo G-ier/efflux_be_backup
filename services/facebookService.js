@@ -59,7 +59,7 @@ async function getAdAccountsTodaySpent(access_token, Ids, date) {
       })
       paging = {...data?.paging}
       if (data?.data?.length) spent.push(...data?.data)
-    } while(paging?.next)    
+    } while(paging?.next)
     return spent
   });
 
@@ -74,7 +74,7 @@ async function getAdInsights(access_token, adArray, date) {
 
   const fields = "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,clicks,reach,frequency,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
 
-  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {    
+  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {
     let paging = {}
     const insights = []
     let url = `${FB_API_URL}${adSetId}/insights`
@@ -89,7 +89,7 @@ async function getAdInsights(access_token, adArray, date) {
     do {
       if (paging?.next) {
         url = paging.next
-        params = {}        
+        params = {}
       }
       const {data = []} = await axios.get(url, {
         params
@@ -116,7 +116,7 @@ async function getAdInsightsByDay(access_token, adArray, date) {
 
   const fields = "ad_id,adset_id,campaign_id,date_start,actions,cost_per_action_type";
 
-  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {    
+  const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {
     let paging = {}
     const insights = []
     let url = `${FB_API_URL}${adSetId}/insights`
@@ -220,7 +220,7 @@ async function getAdCampaigns(access_token, adAccountIds, date = "today") {
         limit: 10000,
       }
     })
-      .catch((err) => 
+      .catch((err) =>
       // console.warn('ad_account_id:', adAccountId, "facebook campaigns failure", err.response?.data ?? err)
       console.warn()
       );

@@ -5,21 +5,36 @@ const db = require('../../data/dbConfig');
 const { yesterdayYMD, someDaysAgoYMD, todayYMD } = require("../../common/day");
 const { preferredOrder } = require("../../controllers/spreadsheetController")
 const { updateSpreadsheet } = require("../../services/spreadsheetService")
-const { TEMPLATE_SHEET_VALUES, sheetsArr } = require('../../constants/templateSheet');
+const { TEMPLATE_SHEET_VALUES, TEMPLATE_ADSET_SHEET_VALUES,  sheetsArr } = require('../../constants/templateSheet');
 
 
-function mergeDictionaries(list1, list2) {
+function mergeDictionaries(list1, list2, aggregation = 'campaigns') {
+  console.log("aggregation", aggregation)
   const combined = [];
 
   list1.forEach(dict1 => {
-    const match = list2.find(dict2 => dict1.tracking_field_3 === dict2.campaign_id);
+    // Change the match on adset vs campaign
+    let match;
+    aggregation === 'campaigns'
+      ? match = list2.find(dict2 => dict1.tracking_field_3 === dict2.campaign_id)
+      : match = list2.find(dict2 => dict1.tracking_field_2 === dict2.adset_id);
+
+    // Old version
+    // const match = list2.find(dict2 => dict1.tracking_field_3 === dict2.campaign_id);
     let combinedDict = { ...dict1 };
-    delete combinedDict.tracking_field_3;
+
+    // Change the delete on adset vs campaign
+    aggregation === 'campaigns' ? delete combinedDict.tracking_field_3 : delete combinedDict.tracking_field_2
+
+    // Old version
+    // delete combinedDict.tracking_field_3;
 
     if (match) {
       combinedDict = { ...match, ...combinedDict };
     } else {
-      combinedDict.campaign_id = dict1.tracking_field_3;
+      aggregation === 'campaigns' ? combinedDict.campaign_id = dict1.tracking_field_3 : combinedDict.adset_id = dict1.tracking_field_2
+      // Old version
+      // combinedDict.campaign_id = dict1.tracking_field_3;
       for (const key in list2[0]) {
         if (!(key in combinedDict)) {
           combinedDict[key] = 'Missing Record';
@@ -30,7 +45,14 @@ function mergeDictionaries(list1, list2) {
   });
 
   list2.forEach(dict2 => {
-    const match = list1.find(dict1 => dict1.tracking_field_3 === dict2.campaign_id);
+    // Change the match on adset vs campaign
+    let match;
+    aggregation === 'campaigns'
+      ? match = list1.find(dict1 => dict1.tracking_field_3 === dict2.campaign_id)
+      : match = list1.find(dict1 => dict1.tracking_field_2 === dict2.adset_id);
+
+    // Old version
+    // const match = list1.find(dict1 => dict1.tracking_field_3 === dict2.campaign_id);
     if (!match) {
       const missingDict = { ...dict2 };
       for (const key in list1[0]) {
@@ -38,7 +60,11 @@ function mergeDictionaries(list1, list2) {
           missingDict[key] = 'Missing Record';
         }
       }
-      delete missingDict.tracking_field_3;
+      // Change the delete on adset vs campaign
+      aggregation === 'campaigns' ? delete missingDict.tracking_field_3 : delete missingDict.tracking_field_2
+
+      // Old version
+      // delete missingDict.tracking_field_3;
       combined.push(missingDict);
     }
   });
@@ -46,15 +72,14 @@ function mergeDictionaries(list1, list2) {
   return combined;
 }
 
-function calculateValuesForAggSpreadsheet(data, columns){
+function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaigns') {
 
   const rows = data.map(item => {
     const result = {
       // facebook
       ad_account_name: item.ad_account_name,
       time_zone: item.time_zone,
-      campaign_name: item.campaign_name,
-      campaign_id: item.campaign_id,
+      entity_name: item.entity_name,
       status: item.status,
       launch_date: item.launch_date,
       amount_spent: item.amount_spent,
@@ -64,10 +89,10 @@ function calculateValuesForAggSpreadsheet(data, columns){
       link_clicks: item.link_clicks,
       cpc_link_click: item.cpc_link_click,
       clicks_all: null,
-      cpc_all: null,
+      cpc_all: item.cpc_all,
       cpm: item.cpm,
       ctr_fb: item.ctr_fb,
-      results: null,
+      results: item.results,
       cost_per_result: null,
       fb_last_update: item.fb_updated_at,
 
@@ -92,52 +117,100 @@ function calculateValuesForAggSpreadsheet(data, columns){
       cf_last_update: item.created_at
 
     }
+
+    // Change the delete on adset vs campaign
+    aggregation === 'campaigns'
+    ? result.campaign_id = item.campaign_id
+    : result.adset_id = item.adset_id
+
     return preferredOrder(result, columns)
   })
   return {columns, rows}
 }
 
-async function templateSheetFetcher(startDate, endDate, telemetry=false) {
+async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDropdown="campaigns") {
 
-    // Fetch data from facebook and campaigns table
-    let facebook_data = await db.raw(`
+    const facebookDate = startDate.split(' ')[0];
+    const facebookEndDate =  endDate.split(' ')[0];
+
+    let idString; let clickflare_grouping; let selectString; let joinString; let groupBy;
+
+    if (sheetDropdown === "campaigns") {
+
+      idString = "campaign_id";
+      clickflare_grouping = "tracking_field_3";
+
+      selectString = `
+        ad.name as ad_account_name, ad.tz_name as time_zone, fb.campaign_id as campaign_id,
+        c.name as entity_name, c.status, c.created_time as launch_date,
+      `
+      joinString = `
+        LEFT JOIN campaigns c ON fb.campaign_id = CAST(c.id as VARCHAR)
+        LEFT JOIN ad_accounts ad ON ad.id = c.ad_account_id
+      `
+      groupBy = `
+        GROUP BY ad.name, ad.tz_name, fb.campaign_id, c.name, c.status, c.created_time
+      `
+
+    } else if (sheetDropdown === "adsets") {
+
+      idString = "adset_id";
+      clickflare_grouping = "tracking_field_2";
+
+      selectString = `
+        ad.name as ad_account_name, ad.tz_name as time_zone,
+        fb.adset_id as adset_id, ads.name as entity_name, ads.status, ads.created_time as launch_date,
+      `
+      joinString = `
+        LEFT JOIN adsets ads ON fb.campaign_id = CAST(ads.campaign_id as VARCHAR)
+        LEFT JOIN campaigns c ON fb.campaign_id = CAST(c.id as VARCHAR)
+        LEFT JOIN ad_accounts ad ON ad.id = c.ad_account_id
+      `
+      groupBy = `
+        GROUP BY ads.name, ads.status, ads.created_time, fb.adset_id, ad.name, ad.tz_name, fb.adset_id;
+      `
+    }
+
+    let query = `
       SELECT
-          ad.name as ad_account_name, ad.tz_name as time_zone,
-          c.name as campaign_name, c.id as campaign_id, c.status, c.created_time as launch_date,
+          ${selectString}
           CAST(SUM(fb.total_spent) AS FLOAT) as amount_spent,
           CAST(SUM(fb.impressions) AS INTEGER) as impressions,
           CAST(ROUND(SUM(fb.link_clicks), 2) AS FLOAT) as link_clicks,
-          TRUNC(CASE WHEN SUM(fb.total_spent::numeric) = 0 THEN 0 ELSE (SUM(fb.link_clicks)::numeric / SUM(fb.total_spent)::numeric) END, 4) as cpc_link_click,
-          TRUNC(CASE WHEN SUM(fb.impressions::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / (SUM(fb.impressions::numeric) / 1000::numeric)) END, 4) as cpm,
-          TRUNC(CASE WHEN SUM(fb.impressions)::numeric = 0 THEN 0 ELSE (SUM(fb.link_clicks)::numeric / SUM(fb.impressions)::numeric) END, 5) / 100 || '%' as ctr_fb,
+          TRUNC(CASE WHEN SUM(fb.link_clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.link_clicks)::numeric) END, 3) as cpc_link_click,
+          TRUNC(CASE WHEN SUM(fb.impressions::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / (SUM(fb.impressions::numeric) / 1000::numeric)) END, 3) as cpm,
+          TRUNC(CASE WHEN SUM(fb.impressions)::numeric = 0 THEN 0 ELSE (SUM(fb.link_clicks)::numeric / SUM(fb.impressions)::numeric) END, 3) / 100 || '%' as ctr_fb,
+          AVG(fb.cpc) as cpc_all,
           MAX(fb.updated_at) as fb_updated_at
       FROM facebook fb
-        LEFT JOIN campaigns c ON fb.campaign_id = c.id
-        LEFT JOIN ad_accounts ad ON ad.id = c.ad_account_id
-      WHERE fb.created_at > '${startDate}' AND fb.created_at < '${endDate}'
-      GROUP BY ad.name, ad.tz_name, c.name, c.id, c.status, c.created_time;
-    `)
+          ${joinString}
+      WHERE fb.date >= '${facebookDate}' AND fb.date <= '${facebookEndDate}'
+      ${groupBy};
+    `
+    console.log(query)
+    // Fetch data from facebook and campaigns table
+    let facebook_data = await db.raw(query)
 
     // Fetch data from clickflare table
     let clickflare_data = await db.raw(`
-      SELECT 
-        td.tracking_field_3,
+      SELECT
+        td.${clickflare_grouping} as ${clickflare_grouping},
         CAST(ROUND(SUM(td.conversion_payout), 2) AS FLOAT) as tr_revenue,
         CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS INTEGER) as tr_visits,
         CAST(COUNT(CASE WHEN td.event_type = 'click' THEN 1 ELSE null END) AS INTEGER) as tr_clicks,
         CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS INTEGER) as tr_conversions,
-        ROUND(CAST(CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS float) 
+        ROUND(CAST(CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS float)
         / CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS float) * 100 as numeric), 2)  || '%' as tr_ctr,
         MAX(created_at) as created_at
-      FROM tracking_data td 
+      FROM tracking_data td
       WHERE td.visit_time > '${startDate}' AND td.visit_time < '${endDate}' AND traffic_source_id IN ('62b23798ab2a2b0012d712f7', '62afb14110d7e20012e65445','622f32e17150e90012d545ec', '62f194b357dde200129b2189')
-      GROUP BY td.tracking_field_3;
+      GROUP BY td.${clickflare_grouping};
     `)
-    
+
     // Fetch data from crossroads table
     let crossroads_data = await db.raw(`
-      SELECT 
-        cr.campaign_id as tracking_field_3,
+      SELECT
+        cr.${idString} as ${clickflare_grouping},
         SUM(cr.total_tracked_visitors) as visitors,
         SUM(cr.total_lander_visits) as lander_visits,
         SUM(cr.total_searches) as lander_searches,
@@ -150,12 +223,12 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false) {
         MAX(updated_at) as cr_updated_at
       FROM crossroads cr
       WHERE date(date) >= date('${startDate}') AND date(date) <= '${endDate}' AND traffic_source = 'facebook'
-      GROUP BY cr.campaign_id;
+      GROUP BY cr.${idString};
     `)
 
     // Intersection clickflare with facebook data
-    const result = mergeDictionaries(clickflare_data.rows, facebook_data.rows);
-    const result2 = mergeDictionaries(crossroads_data.rows, result);
+    const result = mergeDictionaries(clickflare_data.rows, facebook_data.rows, aggregation=sheetDropdown);
+    const result2 = mergeDictionaries(crossroads_data.rows, result, aggregation=sheetDropdown);
 
     if (telemetry) {
       console.log(
@@ -181,40 +254,54 @@ route.get("/debug-cron-jobs", async (req, res) => {
   try {
 
     for (i=0; i < sheetsArr.length; i ++ ) {
-      console.log("test");
-      // Calculating start-date, end-date for each tab in the sheetsArr[i]
-      let min_date = '2023-04-24 00:00:00'//someDaysAgoYMD(sheetsArr[i].day - 1, null, 'UTC'); 
-      let endDay = '2023-04-24 23:59:59'//sheetsArr[i].day == 1 ? todayYMD('UTC') : yesterdayYMD(null, 'UTC'); 
-      //min_date = min_date + ' 00:00:00';
-      //endDay = endDay + ' 23:59:59';
-      console.log(sheetsArr[i].sheetName, "Min Date: ", min_date, "End Date: ", endDay);
-      const data = await templateSheetFetcher(min_date, endDay)
 
-      // Formating the spreadsheet data and sorting it.
-      let aggregatedData = calculateValuesForAggSpreadsheet(data, TEMPLATE_SHEET_VALUES)
-      // Sort the list of dictionaries by putting those which we find in the database first
-      aggregatedData.rows.sort(function(a, b) {
-        // compare the "missing" attributes
-        if (a.campaign_name === 'Missing Record' && b.campaign_name !== 'Missing Record') {
-            return 1; // move 'a' to the end of the list
-        } else if (a.campaign_name !== 'Missing Record' && b.campaign_name === 'Missing Record') {
-            return -1; // move 'b' to the end of the list
-        } else {
-            return 0; // leave the order unchanged
-        }
-      });
-      // Updating the spreadsheet with the sorted list.
-      await updateSpreadsheet(
-        aggregatedData, 
-        {spreadsheetId: sheetsArr[i].spreadsheetId, sheetName: sheetsArr[i].sheetName}, 
-        predifeniedRange=`!A3:AJ1000`,
-        include_columns = false,
-        add_last_update = false
-      );
+      console.log("test");
+
+      // Calculating start-date, end-date for each tab in the sheetsArr[i]
+      let min_date = someDaysAgoYMD(sheetsArr[i].day - 1, null);
+      let endDay = sheetsArr[i].day == 1 ? todayYMD('UTC') : yesterdayYMD(null);
+      min_date = min_date + ' 00:00:00';
+      endDay = endDay + ' 23:59:59';
+
+      for ( k = 0; k < 2; k ++) {
+
+        aggregation = k == 0 ? 'campaigns' : 'adsets';
+        columnsOrder = k == 0 ? TEMPLATE_SHEET_VALUES : TEMPLATE_ADSET_SHEET_VALUES;
+        sheetName = k == 0 ? sheetsArr[i].sheetName : sheetsArr[i].sheetNameByAdset;
+
+        console.log("Updating sheet: ", sheetName, "Aggregation: ", aggregation)
+
+        // CAMPAIGN SHEET UPDATE!
+        const data = await templateSheetFetcher(min_date, endDay, telemetry=false, sheetDropdown=aggregation)
+
+        // Formating the spreadsheet data and sorting it.
+        let aggregatedData = calculateValuesForAggSpreadsheet(data, columnsOrder, aggregation=aggregation)
+
+        // Sort the list of dictionaries by putting those which we find in the database first
+        aggregatedData.rows.sort(function(a, b) {
+          // compare the "missing" attributes
+          if (a.entity_name === 'Missing Record' && b.entity_name !== 'Missing Record') {
+              return 1; // move 'a' to the end of the list
+          } else if (a.entity_name !== 'Missing Record' && b.entity_name === 'Missing Record') {
+              return -1; // move 'b' to the end of the list
+          } else {
+              return 0; // leave the order unchanged
+          }
+        });
+
+        // Updating the spreadsheet with the sorted list.
+        await updateSpreadsheet(
+          aggregatedData,
+          {spreadsheetId: sheetsArr[i].spreadsheetId, sheetName:  k == 0 ? sheetsArr[i].sheetName : sheetsArr[i].sheetNameByAdset}, // Change sheetName to sheetNameByAdset
+          predifeniedRange=`!A3:AJ1000`,
+          include_columns = false,
+          add_last_update = false
+        );
+
+      }
 
     }
     res.status(200).send({ message: `debug-cron-jobs` });
-
   }
 
   catch (err) {

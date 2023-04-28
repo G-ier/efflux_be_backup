@@ -374,6 +374,90 @@ async function updateCF_DaySpreadsheet(sheetData, campaign_data, adset_data) {
   });
 }
 
+function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaigns') {
+
+  const rows = data.map(item => {
+    const result = {
+      // facebook
+      ad_account_name: item.ad_account_name,
+      time_zone: item.time_zone,
+      entity_name: item.entity_name,
+      status: item.status,
+      launch_date: item.launch_date,
+      amount_spent: item.amount_spent,
+      impressions: item.impressions,
+      reach: null,
+      frequency: null,
+      link_clicks: item.link_clicks,
+      cpc_link_click: item.cpc_link_click,
+      clicks_all: null,
+      cpc_all: item.cpc_all,
+      cpm: item.cpm,
+      ctr_fb: item.ctr_fb,
+      results: item.results,
+      cost_per_result: null,
+      fb_last_update: item.fb_updated_at,
+
+      // crossroads
+      visitors: item.visitors,
+      lander_visits: item.lander_visits,
+      lander_searches: item.lander_searches,
+      revenue_events: item.revenue_events,
+      ctr_cr: item.ctr_cr,
+      rpc: item.rpc,
+      rpm: item.rpm,
+      rpv: item.rpv,
+      publisher_revenue: item.publisher_revenue,
+      cr_last_update: item.cr_updated_at,
+
+      // clickflare
+      tr_visits: item.tr_visits,
+      tr_searches: null,
+      tr_conversions: item.tr_conversions,
+      tr_ctr: item.tr_ctr,
+      tr_revenue: item.tr_revenue,
+      cf_last_update: item.created_at
+
+    }
+
+    // Change the delete on adset vs campaign
+    aggregation === 'campaigns'
+    ? result.campaign_id = item.campaign_id
+    : result.adset_id = item.adset_id
+
+    return preferredOrder(result, columns)
+  })
+  return {columns, rows}
+}
+
+async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpreadsheetId, updateSheetName) {
+
+    // Formating the spreadsheet data and sorting it.
+    let aggregatedData = calculateValuesForAggSpreadsheet(data, columnsOrder, aggregation=aggregation)
+
+    // Sort the list of dictionaries by putting those which we find in the database first
+    aggregatedData.rows.sort(function(a, b) {
+      // compare the "missing" attributes
+      if (a.entity_name === 'Missing Record' && b.entity_name !== 'Missing Record') {
+          return 1; // move 'a' to the end of the list
+      } else if (a.entity_name !== 'Missing Record' && b.entity_name === 'Missing Record') {
+          return -1; // move 'b' to the end of the list
+      } else {
+          return 0; // leave the order unchanged
+      }
+    });
+
+    // Updating the spreadsheet with the sorted list.
+    await updateSpreadsheet(
+      aggregatedData,
+      {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
+      predifeniedRange=`!A3:AJ1000`,
+      include_columns = false,
+      add_last_update = false
+    );
+
+}
+
 async function updateCR_TodaySpreadsheet(sheetData) {
   const {spreadsheetId, sheetName, sheetNameByAdset, traffic_source, hour} = sheetData;
 
@@ -683,6 +767,7 @@ module.exports = {
   updatePB_UnknownSpreadsheet,
   updateCR_TodaySpreadsheet,
   updateCR_HourlySpreadsheet,
+  updateTemplateSheet,
   updateCF_DaySpreadsheet,
   preferredOrder
 }

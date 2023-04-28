@@ -8,18 +8,20 @@ const { initializeSedoCron } = require("./sedo-cron");
 const { initializeOBCron } = require("./outbrain-cron");
 const { initializePostbackCron } = require("./postback-cron");
 const { initializeCFCron } = require("./clickflare-cron");
+const { initializeAggregCron } = require("./aggreagetedSheet-cron");
 
 const initializeCronJobs = () => {
   initializeFBCron();
   initializeCRCron();
   initializeGoogleCron();
   initializePostbackCron();
-  initializeGDNCron();
-  initializeAMGCron();
+  // initializeGDNCron();
+  // initializeAMGCron();
   initializeSystem1Cron();
   initializeSedoCron();
   initializeOBCron();
   initializeCFCron();
+  initializeAggregCron();
 };
 
 module.exports = { initializeCronJobs };
