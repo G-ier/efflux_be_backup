@@ -11,6 +11,7 @@ function mergeDictionaries(list1, list2, aggregation = 'campaigns') {
       ? match = list2.find(dict2 => dict1.tracking_field_3 === dict2.campaign_id)
       : match = list2.find(dict2 => dict1.tracking_field_2 === dict2.adset_id);
 
+
     let combinedDict = { ...dict1 };
 
     // Change the delete on adset vs campaign
@@ -59,6 +60,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
   const facebookEndDate =  endDate.split(' ')[0];
 
   let idString; let clickflare_grouping; let selectString; let joinString; let groupBy;
+  let join_source; let select_id;
 
   if (sheetDropdown === "campaigns") {
 
@@ -76,6 +78,11 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
     groupBy = `
       GROUP BY ad.name, ad.tz_name, fb.campaign_id, c.name, c.status, c.created_time
     `
+    join_source = `(SELECT c.id, c.name, ad.tz_name, ad.tz_offset FROM campaigns c
+      LEFT JOIN ad_accounts ad ON c.ad_account_id = ad.id) tz ON td.tracking_field_3 = tz.id`
+
+    select_id = `GROUPING(td.tracking_field_3) = 1 THEN '1' ELSE td.tracking_field_3 END AS campaign_id,
+    CASE WHEN GROUPING(td.tracking_field_3) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_6) END as campaign_name`
 
   } else if (sheetDropdown === "adsets") {
 
@@ -94,6 +101,11 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
     groupBy = `
       GROUP BY ads.name, ads.status, ads.created_time, fb.adset_id, ad.name, ad.tz_name, fb.adset_id;
     `
+    join_source = `(SELECT c.provider_id, c.name, ad.tz_name, ad.tz_offset FROM adsets c
+      LEFT JOIN ad_accounts ad ON c.ad_account_id = ad.id) tz ON td.tracking_field_2 = tz.provider_id`
+
+    select_id = `GROUPING(td.tracking_field_2) = 1 THEN '1' ELSE td.tracking_field_2 END AS adset_id,
+    CASE WHEN GROUPING(td.tracking_field_2) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_5) END as adset_name`
   }
 
   let query = `
@@ -105,6 +117,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
         TRUNC(CASE WHEN SUM(fb.link_clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.link_clicks)::numeric) END, 3) as cpc_link_click,
         TRUNC(CASE WHEN SUM(fb.impressions::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / (SUM(fb.impressions::numeric) / 1000::numeric)) END, 3) as cpm,
         TRUNC(CASE WHEN SUM(fb.impressions)::numeric = 0 THEN 0 ELSE (SUM(fb.link_clicks)::numeric / SUM(fb.impressions)::numeric) END, 3) / 100 || '%' as ctr_fb,
+        AVG(fb.cpc) as cpc_all,
         MAX(fb.updated_at) as fb_updated_at
     FROM facebook fb
         ${joinString}
@@ -117,18 +130,27 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
 
   // Fetch data from clickflare table
   let clickflare_data = await db.raw(`
-    SELECT
+    SELECT CASE WHEN ${select_id},
       td.${clickflare_grouping} as ${clickflare_grouping},
       CAST(ROUND(SUM(td.conversion_payout), 2) AS FLOAT) as tr_revenue,
       CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS INTEGER) as tr_visits,
       CAST(COUNT(CASE WHEN td.event_type = 'click' THEN 1 ELSE null END) AS INTEGER) as tr_clicks,
       CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS INTEGER) as tr_conversions,
+      CAST(COUNT(CASE WHEN td.custom_conversion_number = 1 THEN 1 ELSE null END) AS INTEGER) as tr_searches,
       ROUND(CAST(CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS float)
-      / CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS float) * 100 as numeric), 2)  || '%' as tr_ctr,
+      / NULLIF(CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS float), 0) * 100 as numeric), 2)  || '%' as tr_ctr,
       MAX(created_at) as created_at
     FROM tracking_data td
-    WHERE td.visit_time > '${startDate}' AND td.visit_time < '${endDate}' AND traffic_source_id IN ('62b23798ab2a2b0012d712f7', '62afb14110d7e20012e65445','622f32e17150e90012d545ec', '62f194b357dde200129b2189')
-    GROUP BY td.${clickflare_grouping};
+    LEFT JOIN ${join_source}
+    WHERE td.visit_time + make_interval(hours => COALESCE(tz.tz_offset, 0))
+    > '${startDate}'
+    AND td.visit_time + make_interval(hours => COALESCE(tz.tz_offset, 0))
+    < '${endDate}'
+    AND traffic_source_id IN ('62b23798ab2a2b0012d712f7', '62afb14110d7e20012e65445','622f32e17150e90012d545ec', '62f194b357dde200129b2189')
+    GROUP BY GROUPING SETS (
+      (),
+      (td.${clickflare_grouping}, tz.tz_name)
+      )
   `)
 
   // Fetch data from crossroads table
@@ -150,9 +172,25 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
     GROUP BY cr.${idString};
   `)
 
+  postback_query = `
+    SELECT
+      pb.${idString} as ${clickflare_grouping},
+      CAST(COUNT(pb.event_type) AS INTEGER) as pb_conversions,
+      SUM(pb.pb_value) as pb_revenue
+    FROM postback_events pb
+      WHERE pb.date >= '${facebookDate}' AND pb.date <= '${facebookEndDate}'
+      AND pb.event_type = 'Purchase'
+      AND pb.traffic_source = 'facebook'
+    GROUP BY pb.${idString};
+  `
+  // console.log("Postback Query \n", postback_query)
+
+  let postback_data = await db.raw(postback_query)
+
   // Intersection clickflare with facebook data
   const result = mergeDictionaries(clickflare_data.rows, facebook_data.rows, aggregation=sheetDropdown);
   const result2 = mergeDictionaries(crossroads_data.rows, result, aggregation=sheetDropdown);
+  const result3 =  mergeDictionaries(postback_data.rows, result2, aggregation=sheetDropdown);
 
   if (telemetry) {
     console.log(
@@ -160,15 +198,18 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       "Facebook Results", facebook_data.rows.length, "\n",
       "Crossroads Results", crossroads_data.rows.length, "\n",
       "No of results after merge 1", result.length, "\n",
-      "No of results after merge 2", result2.length, "\n"
-    );
-    console.log("Result 1: ");
-    console.log(result[0]);
-    console.log("Result 2: ");
-    console.log(result2[0]);
+      "No of results after merge 2", result2.length, "\n",
+      "No of results after merge 3", result2.length, "\n",
+      result3);
   }
 
-  return result2
+  console.log("Result 1: ");
+  console.log(result[0]);
+  console.log("Result 2: ");
+  console.log(result2[0]);
+  console.log("Result 3: ");
+  console.log(result3[0]);
+  return result3
 }
 
 module.exports = {

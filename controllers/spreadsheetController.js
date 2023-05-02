@@ -416,7 +416,11 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       tr_conversions: item.tr_conversions,
       tr_ctr: item.tr_ctr,
       tr_revenue: item.tr_revenue,
-      cf_last_update: item.created_at
+      cf_last_update: item.created_at,
+
+      // postback_events
+      pb_conversions: item.pb_conversions,
+      pb_revenue: item.pb_revenue
 
     }
 
@@ -451,7 +455,7 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
     await updateSpreadsheet(
       aggregatedData,
       {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
-      predifeniedRange=`!A3:AJ1000`,
+      predifeniedRange=`!A3:AL1000`,
       include_columns = false,
       add_last_update = false
     );
@@ -664,7 +668,7 @@ async function updateYesterdayPB_Spreadsheet() {
 
   for(let i=0;i<sheetsArr.length;i++){
     const {spreadsheetId, sheetName_Y: sheetName, sheetNameByAdset_Y: sheetNameByAdset, accounts, network, timezone} = sheetsArr[i];
-    let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'),threeDaysAgoYMD(null, 'UTC'), 'campaign_id', accounts, network, timezone);
+    let todayData = await aggregatePostbackConversionReport(dayBeforeYesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), threeDaysAgoYMD(null, 'UTC'), 'campaign_id', accounts, network, timezone);
     const aveByCampaignData = await aggregateCampaignConversionReport(network, 'yesterday');
     todayData.rows = mergeAvgRPC(todayData.rows, aveByCampaignData.rows);
     todayData = calculateValuesForSpreadsheet1(todayData.rows, [...POSTBACK_SHEET_VALUES('campaign_id')], 'TOTAL')
@@ -769,5 +773,6 @@ module.exports = {
   updateCR_HourlySpreadsheet,
   updateTemplateSheet,
   updateCF_DaySpreadsheet,
-  preferredOrder
+  preferredOrder,
+  calculateValuesForCFSpreadsheet
 }
