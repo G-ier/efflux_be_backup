@@ -177,7 +177,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
     SELECT
       pb.${idString} as ${clickflare_grouping},
       CAST(COUNT(pb.event_type) AS INTEGER) as pb_conversions,
-      SUM(pb.pb_value) as pb_revenue
+      ROUND(SUM(pb.pb_value)::numeric, 2) as pb_revenue
     FROM postback_events pb
       WHERE pb.date >= '${facebookDate}' AND pb.date <= '${facebookEndDate}'
       AND pb.event_type = 'Purchase'

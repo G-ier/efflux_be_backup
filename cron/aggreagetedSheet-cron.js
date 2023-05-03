@@ -10,7 +10,7 @@ const { updateTemplateSheet } = require("../controllers/spreadsheetController");
 const { sendSlackNotification } = require("../services/slackNotificationService");
 
 const disableCron = process.env.DISABLE_CRON === 'true'
-const everyFifteenMinutes = '58-59/15 * * * *';
+const everyFifteenMinutes = '14-59/15 * * * *';
 
 const updateAggregatedSheet = async () => {
   try {
