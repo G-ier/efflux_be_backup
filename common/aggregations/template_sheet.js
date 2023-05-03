@@ -23,7 +23,7 @@ function mergeDictionaries(list1, list2, aggregation = 'campaigns') {
       aggregation === 'campaigns' ? combinedDict.campaign_id = dict1.tracking_field_3 : combinedDict.adset_id = dict1.tracking_field_2
       for (const key in list2[0]) {
         if (!(key in combinedDict)) {
-          combinedDict[key] = 'Missing Record';
+          combinedDict[key] = 'N/A';
         }
       }
     }
@@ -41,7 +41,7 @@ function mergeDictionaries(list1, list2, aggregation = 'campaigns') {
       const missingDict = { ...dict2 };
       for (const key in list1[0]) {
         if (!(key in missingDict)) {
-          missingDict[key] = 'Missing Record';
+          missingDict[key] = 'N/A';
         }
       }
       // Change the delete on adset vs campaign
