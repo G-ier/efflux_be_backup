@@ -119,7 +119,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
         '$' || ROUND(CASE WHEN SUM(fb.impressions::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / (SUM(fb.impressions::numeric) / 1000::numeric)) END, 2) as cpm,
         ROUND(CASE WHEN SUM(fb.clicks)::numeric = 0 THEN 0 ELSE (SUM(fb.clicks)::numeric / SUM(fb.impressions)::numeric) * 100 END, 2) || '%' as ctr_fb,
         '$' || ROUND(CASE WHEN SUM(fb.clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.clicks)::numeric) END, 2) as cpc_all,
-        TO_CHAR(MAX(fb.updated_at), 'Mon dd, yyyy HH24:MI') || ' UTC' as fb_updated_at
+        TO_CHAR(MAX(fb.updated_at), 'Mon dd, yyyy HH24:MI') as fb_updated_at
     FROM facebook fb
         ${joinString}
     WHERE fb.date >= '${facebookDate}' AND fb.date <= '${facebookEndDate}'
@@ -166,8 +166,8 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       CASE WHEN SUM(total_revenue_clicks) = 0 THEN null ELSE ROUND(CAST(SUM(total_revenue) / SUM(total_revenue_clicks) as numeric), 2) END rpc,
       CASE WHEN SUM(total_tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(total_revenue) / SUM(total_tracked_visitors) * 1000 as numeric), 2) END rpm,
       CASE WHEN SUM(total_tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(total_revenue) / SUM(total_tracked_visitors)as numeric), 2) END rpv,
-      SUM(total_revenue) as publisher_revenue,
-      TO_CHAR(MAX(updated_at), 'Mon dd, yyyy HH24:MI') || ' UTC' as cr_updated_at
+      ROUND(SUM(total_revenue)::numeric, 2) as publisher_revenue,
+      TO_CHAR(MAX(updated_at), 'Mon dd, yyyy HH24:MI') as cr_updated_at
     FROM crossroads cr
     WHERE date(date) >= date('${startDate}') AND date(date) <= '${endDate}' AND traffic_source = 'facebook'
     GROUP BY cr.${idString};

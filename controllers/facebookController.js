@@ -17,6 +17,7 @@ const {
   getAdAccountsTodaySpent
 } = require("../services/facebookService");
 const { updatePixels } = require("../services/pixelsService.js");
+const { sendSlackNotification } = require("../services/slackNotificationService");
 
 async function updateFacebookData(date) {
   try {
@@ -54,7 +55,7 @@ async function updateFacebookData(date) {
     }
     console.log('FINISH UPDATING FACEBOOK DATA')
   } catch (e) {
-    console.log('UPDATING FACEBOOK DATA ERROR')
+    await sendSlackNotification(`Facebook Data Update\nError: \n${e.toString()}`);
     console.log(e)
   }
 }
@@ -101,7 +102,7 @@ async function updateFacebookInsights(date) {
     console.log('FINISH UPDATING FACEBOOK INSIGHTS')
 
   } catch (e) {
-    console.log('UPDATING FACEBOOK INSIGHTS ERROR')
+    await sendSlackNotification(`Facebook Insight Fetching\nError: \n${e.toString()}`);
     console.log(e)
   }
 }

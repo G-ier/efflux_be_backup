@@ -131,7 +131,6 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
   return {columns, rows}
 }
 
-
 const {
   aggregatePostbackConversionByTrafficReport
 } = require("../../common/aggregations")
@@ -295,6 +294,8 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
   return result3
 }
 
+const { sendSlackNotification } = require("../../services/slackNotificationService")
+
 // @route     /api/debug-cron-jobs
 // @desc     Runs Cron Jobs
 route.get("/debug-cron-jobs", async (req, res) => {
@@ -357,7 +358,8 @@ route.get("/debug-cron-jobs", async (req, res) => {
 
   catch (err) {
     console.log(err);
-    res.status(500).send({ error: `${err.toString()}, Spreadsheet Id: ${process.env.SYSTEM1_SPREADSHEET_ID}` });
+    await sendSlackNotification(`An error ocurred while trying to update the Fb Revealbot Sheets.\n ERROR: \n${err.toString()}`)
+    res.status(500).send({ error: `${err.toString()}` });
   }
 
 });
@@ -447,5 +449,10 @@ route.get("/testing-facebook-ad-insights", async (req, res) => {
   }
 })
 
+
+route.get("/testing-slack-notifications",  async (req, res) => {
+  await sendSlackNotification("This is a test generated message")
+  res.status(200).send({ message: `debug-clickflare-fetching` });
+})
 
 module.exports = route;

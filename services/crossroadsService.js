@@ -449,50 +449,56 @@ function removeAccountStats(account, request_date) {
  * @returns {Promise<Array<Object>>}
  */
 
+const { sendSlackNotification } = require("../services/slackNotificationService");
+
 async function updateCrossroadsData(account, request_date) {
-  await updateCrossroadsCampaigns(account.key);
-  const available_fields = await getAvailableFields(account.key);
-  const fields = available_fields.join(',');
-  const { request_id } = await prepareBulkData(account.key, request_date, fields);
+  try {
+    await updateCrossroadsCampaigns(account.key);
+    const available_fields = await getAvailableFields(account.key);
+    const fields = available_fields.join(',');
+    const { request_id } = await prepareBulkData(account.key, request_date, fields);
 
-  const file_url = await waitForBulkData(account.key, request_id);
-  // const file_url = 'https://s3-us-west-2.amazonaws.com/cr-api-v2-bulk-data/233afddf-2503-41a6-8d50-5031eb417d1e.json'
+    const file_url = await waitForBulkData(account.key, request_id);
+    // const file_url = 'https://s3-us-west-2.amazonaws.com/cr-api-v2-bulk-data/233afddf-2503-41a6-8d50-5031eb417d1e.json'
 
-  console.log('file_url', file_url);
+    console.log('file_url', file_url);
 
-  const crossroadsData = await getBulkData(file_url);
+    const crossroadsData = await getBulkData(file_url);
 
-  const totals = processTotals(crossroadsData);
-  console.log('DIRECTLY FROM AWS', totals);
+    const totals = processTotals(crossroadsData);
+    console.log('DIRECTLY FROM AWS', totals);
 
-  const processedCrossroadsData = processCrossroadsData(crossroadsData, account.id, request_date)
+    const processedCrossroadsData = processCrossroadsData(crossroadsData, account.id, request_date)
 
-  const deleted = await removeAccountData(account.id, request_date);
-  const deletedConversions = await removeAccountConversions(account.id, request_date);
-  const deletedStats = await removeAccountStats(account.id, request_date)
+    const deleted = await removeAccountData(account.id, request_date);
+    const deletedConversions = await removeAccountConversions(account.id, request_date);
+    const deletedStats = await removeAccountStats(account.id, request_date)
 
-  console.log('DELETED', `${deleted} crossroads from hour ${todayHH()} on date  ${request_date} for ${account.id}`);
-  console.log(`DELETED ${deletedConversions} conversion rows from hour ${todayHH()} on date  ${request_date} for ${account.id}`);
-  console.log(`DELETED ${deletedStats} stats rows from hour ${todayHH()} on date  ${request_date} for ${account.id}`);
+    console.log('DELETED', `${deleted} crossroads from hour ${todayHH()} on date  ${request_date} for ${account.id}`);
+    console.log(`DELETED ${deletedConversions} conversion rows from hour ${todayHH()} on date  ${request_date} for ${account.id}`);
+    console.log(`DELETED ${deletedStats} stats rows from hour ${todayHH()} on date  ${request_date} for ${account.id}`);
 
-  const aggregatedData = aggregateCrossroadsData(processedCrossroadsData);
-  const clicks = _(processedCrossroadsData)
-    .filter(item => item.revenue && item.revenue_clicks)
-    .map(item => _.pick(item, cr_conversionsFields))
-    .value()
+    const aggregatedData = aggregateCrossroadsData(processedCrossroadsData);
+    const clicks = _(processedCrossroadsData)
+      .filter(item => item.revenue && item.revenue_clicks)
+      .map(item => _.pick(item, cr_conversionsFields))
+      .value()
 
-  const aggregatedDataChunks = _.chunk(aggregatedData, 500);
-  for (const chunk of aggregatedDataChunks) {
-    await db('crossroads').insert(chunk);
-  }
-  const clickChunks = _.chunk(clicks, 500);
-  for (const chunk of clickChunks) {
-    await db('cr_conversions').insert(chunk);
-  }
+    const aggregatedDataChunks = _.chunk(aggregatedData, 500);
+    for (const chunk of aggregatedDataChunks) {
+      await db('crossroads').insert(chunk);
+    }
+    const clickChunks = _.chunk(clicks, 500);
+    for (const chunk of clickChunks) {
+      await db('cr_conversions').insert(chunk);
+    }
 
-  const processedChunks = _.chunk(processedCrossroadsData, 500);
-  for (const chunk of processedChunks) {
-    await db('crossroads_stats').insert(chunk);
+    const processedChunks = _.chunk(processedCrossroadsData, 500);
+    for (const chunk of processedChunks) {
+      await db('crossroads_stats').insert(chunk);
+    }
+  } catch(err) {
+    await sendSlackNotification(`Crossroads Data Update\nError: \n${err.toString()}`);
   }
 }
 

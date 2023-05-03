@@ -7,9 +7,10 @@ const {
 const { yesterdayYMD, someDaysAgoYMD, todayYMD } = require("../common/day");
 const { templateSheetFetcher } = require("../common/aggregations/template_sheet");
 const { updateTemplateSheet } = require("../controllers/spreadsheetController");
+const { sendSlackNotification } = require("../services/slackNotificationService");
 
 const disableCron = process.env.DISABLE_CRON === 'true'
-const everyFifteenMinutes = '14-59/15 * * * *';
+const everyFifteenMinutes = '58-59/15 * * * *';
 
 const updateAggregatedSheet = async () => {
   try {
@@ -38,8 +39,7 @@ const updateAggregatedSheet = async () => {
       }
   }
   catch (err) {
-      // TODO: Add slack notification
-      console.log(err);
+      await sendSlackNotification(`Fb Revealbot Sheets.\nError on update: \n${err.toString()}`)
   }
 }
 
