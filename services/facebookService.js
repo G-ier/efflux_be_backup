@@ -101,7 +101,12 @@ async function getAdInsights(access_token, adArray, date) {
       if (data?.data?.length) insights.push(...data?.data)
       await delay(1000);
     } while(paging?.next)
-    // console.log('insights.length', insights.length)
+
+    // Debug & Development Logs
+    // if (insights[0]) console.log('insights1', insights[0]);
+    // if (insights[1]) console.log('insights2', insights[1]);
+    // if (insights[2]) console.log('insights3', insights[2]);
+    // console.log("Inside getAdInsights logs: ", insights)
     return insights.length ? cleanInsightsData(insights) : [];
   });
 
@@ -161,6 +166,7 @@ const defaultInsightsStats = {
   conversions: [{action_type: "default", value: "0"}],
   ctr: 0,
   impressions: 0,
+  clciks: 0,
 };
 
 const defaultDBStats = {

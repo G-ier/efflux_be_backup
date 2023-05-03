@@ -79,7 +79,6 @@ async function updateFacebookInsights(date) {
       });
       // provider_id: ad_account value from db
       const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
-      
       // a list of act_{provider_id} strings
       const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
 
@@ -91,9 +90,9 @@ async function updateFacebookInsights(date) {
       const accountInsightsByDay = await getAdInsightsByDay(account.token, adAccountsIds, date);
       facebookInsightsByDay.push(...accountInsightsByDay);
     }
-    
     // Processing the insight for the database.
     const processedInsights = processFacebookInsights(facebookInsights, date)
+    // console.log('Processed insights', processedInsights)
     await addFacebookData(processedInsights, date);
 
     // add facebook_conversion data
@@ -134,8 +133,21 @@ async function updateFacebookAdAccountsTodaySpent(date) {
 }
 
 function processFacebookInsights(data, date) {
+  // Logs for development
+  // let distinct_actions = []
   return data.filter(item => item.hourly_stats_aggregated_by_advertiser_time_zone).map(item => {
     const hour = item.hourly_stats_aggregated_by_advertiser_time_zone.slice(0,2)
+
+      // Logs for development
+      // item.actions?.forEach(action => {
+      //   if (!distinct_actions.includes(action.action_type)) {
+      //     distinct_actions.push(action.action_type)
+      //     console.log("-------------------------Conversion Action-------------------------\n",
+      //                 distinct_actions,
+      //                 "\n--------------------------------------------------------------------\n"
+      //                 )
+      //   }
+      // })
 
     const conversions =
       item?.actions?.find(i => i.action_type === 'offsite_conversion.fb_pixel_purchase')?.value
@@ -156,6 +168,8 @@ function processFacebookInsights(data, date) {
       cpc: item?.cpc ?? 0,
       reporting_currency: item.account_currency,
       conversions: _.isNaN(Number(conversions)) ? 0 : Number(conversions),
+      results: item?.actions?.filter(i => i.action_type === 'offsite_conversion.fb_pixel_purchase')?.length ?? 0,
+      clicks: Number(item?.clicks) ?? 0,
       lead
     }
   })

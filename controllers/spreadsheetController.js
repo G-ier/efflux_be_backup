@@ -390,7 +390,7 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       frequency: null,
       link_clicks: item.link_clicks,
       cpc_link_click: item.cpc_link_click,
-      clicks_all: null,
+      clicks_all: item.clicks,
       cpc_all: item.cpc_all,
       cpm: item.cpm,
       ctr_fb: item.ctr_fb,
@@ -412,7 +412,7 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
 
       // clickflare
       tr_visits: item.tr_visits,
-      tr_searches: null,
+      tr_searches: item.tr_searches,
       tr_conversions: item.tr_conversions,
       tr_ctr: item.tr_ctr,
       tr_revenue: item.tr_revenue,
