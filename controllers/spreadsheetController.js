@@ -442,9 +442,9 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
     // Sort the list of dictionaries by putting those which we find in the database first
     aggregatedData.rows.sort(function(a, b) {
       // compare the "missing" attributes
-      if (a.entity_name === 'Missing Record' && b.entity_name !== 'Missing Record') {
+      if (a.entity_name === 'N/A' && b.entity_name !== 'N/A') {
           return 1; // move 'a' to the end of the list
-      } else if (a.entity_name !== 'Missing Record' && b.entity_name === 'Missing Record') {
+      } else if (a.entity_name !== 'N/A' && b.entity_name === 'N/A') {
           return -1; // move 'b' to the end of the list
       } else {
           return 0; // leave the order unchanged
