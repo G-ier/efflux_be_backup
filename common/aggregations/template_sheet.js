@@ -182,6 +182,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       WHERE pb.date >= '${facebookDate}' AND pb.date <= '${facebookEndDate}'
       AND pb.event_type = 'Purchase'
       AND pb.traffic_source = 'facebook'
+      AND pb.${idString} != ''
     GROUP BY pb.${idString};
   `
   // console.log("Postback Query \n", postback_query)
