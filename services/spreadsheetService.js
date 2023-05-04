@@ -84,7 +84,6 @@ async function updateSheetValues(spreadsheetId, values, options) {
   });
   return data;
 }
-
 async function updateSpreadsheet(data, options, predifeniedRange="", include_columns=true, add_last_update=true) {
   const { spreadsheetId, sheetName, excludedFields = [] } = options
 
@@ -92,13 +91,14 @@ async function updateSpreadsheet(data, options, predifeniedRange="", include_col
   const columns = data.columns.filter((col) => IgnoredColumns.concat(excludedFields).indexOf(col) === -1)
 
   // get rows as array of values
-  let rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0));
-
+  let rows;
   // add last update column & values
   if (add_last_update) {
     const now = todayYMDHM();
-    rows = rows.concat(now);
-    columns.push('last_update')
+    rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0).concat(now));
+    columns.push('last_update');
+  } else {
+    rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0));
   }
 
   let values;
