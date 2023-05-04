@@ -30,7 +30,7 @@ const sheetsArr = [
 ]
 
 const TEMPLATE_SHEET_VALUES = [
-    'ad_account_name', 'time_zone', 'entity_name', 'campaign_id', 'status', 'launch_date', 'amount_spent', 'impressions', 'reach', 'frequency',
+    'ad_account_name', 'time_zone', 'entity_name', 'campaign_id', 'status', 'launch_date', 'amount_spent', 'impressions',
     'link_clicks', 'cpc_link_click', 'clicks_all', 'cpc_all', 'cpm', 'ctr_fb', 'results', 'cost_per_result', 'fb_last_update',
 
     'visitors', 'lander_visits', 'lander_searches', 'revenue_events', 'ctr_cr', 'rpc', 'rpm', 'rpv', 'publisher_revenue', 'cr_last_update',
@@ -41,7 +41,7 @@ const TEMPLATE_SHEET_VALUES = [
 ]
 
 const TEMPLATE_ADSET_SHEET_VALUES = [
-  'ad_account_name', 'time_zone', 'entity_name', 'adset_id', 'status', 'launch_date', 'amount_spent', 'impressions', 'reach', 'frequency',
+  'ad_account_name', 'time_zone', 'entity_name', 'adset_id', 'status', 'launch_date', 'amount_spent', 'impressions',
   'link_clicks', 'cpc_link_click', 'clicks_all', 'cpc_all', 'cpm', 'ctr_fb', 'results', 'cost_per_result', 'fb_last_update',
 
   'visitors', 'lander_visits', 'lander_searches', 'revenue_events', 'ctr_cr', 'rpc', 'rpm', 'rpv', 'publisher_revenue', 'cr_last_update',

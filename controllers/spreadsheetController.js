@@ -386,8 +386,6 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       launch_date: item.launch_date,
       amount_spent: item.amount_spent,
       impressions: item.impressions,
-      reach: null,
-      frequency: null,
       link_clicks: item.link_clicks,
       cpc_link_click: item.cpc_link_click,
       clicks_all: item.clicks,
