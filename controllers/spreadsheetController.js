@@ -415,14 +415,12 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       tr_searches: item.tr_searches,
       tr_conversions: item.tr_conversions,
       tr_ctr: item.tr_ctr,
-      tr_revenue: item.tr_revenue,
       cf_last_update: item.created_at,
 
       // postback_events
       pb_serp_conversions: item.pb_serp_conversions,
       pb_lander_conversions: item.pb_lander_conversions,
-      pb_conversions: item.pb_conversions,
-      pb_revenue: item.pb_revenue
+      pb_conversions: item.pb_conversions
     }
 
     // Change the delete on adset vs campaign
@@ -456,7 +454,7 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
     await updateSpreadsheet(
       aggregatedData,
       {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
-      predifeniedRange=`!A3:AN1000`,
+      predifeniedRange=`!A3:AL1000`,
       include_columns = false,
       add_last_update = false
     );

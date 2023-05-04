@@ -35,9 +35,9 @@ const TEMPLATE_SHEET_VALUES = [
 
     'visitors', 'lander_visits', 'lander_searches', 'revenue_events', 'ctr_cr', 'rpc', 'rpm', 'rpv', 'publisher_revenue', 'cr_last_update',
 
-    'tr_visits', 'tr_searches', 'tr_conversions', 'tr_ctr', 'tr_revenue', 'cf_last_update',
+    'tr_visits', 'tr_searches', 'tr_conversions', 'tr_ctr', 'cf_last_update',
 
-    'pb_serp_conversions', 'pb_lander_conversions', 'pb_conversions', 'pb_revenue'
+    'pb_serp_conversions', 'pb_lander_conversions', 'pb_conversions'
 ]
 
 const TEMPLATE_ADSET_SHEET_VALUES = [
@@ -46,9 +46,9 @@ const TEMPLATE_ADSET_SHEET_VALUES = [
 
   'visitors', 'lander_visits', 'lander_searches', 'revenue_events', 'ctr_cr', 'rpc', 'rpm', 'rpv', 'publisher_revenue', 'cr_last_update',
 
-  'tr_visits', 'tr_searches', 'tr_conversions', 'tr_ctr', 'tr_revenue', 'cf_last_update',
+  'tr_visits', 'tr_searches', 'tr_conversions', 'tr_ctr', 'cf_last_update',
 
-  'pb_serp_conversions', 'pb_lander_conversions', 'pb_conversions', 'pb_revenue'
+  'pb_serp_conversions', 'pb_lander_conversions', 'pb_conversions'
 ]
 module.exports = {
   sheetsArr,

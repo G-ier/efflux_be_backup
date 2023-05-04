@@ -133,7 +133,6 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
   let clickflare_data = await db.raw(`
     SELECT CASE WHEN ${select_id},
       td.${clickflare_grouping} as ${clickflare_grouping},
-      CAST(ROUND(SUM(td.conversion_payout), 2) AS FLOAT) as tr_revenue,
       CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS INTEGER) as tr_visits,
       CAST(COUNT(CASE WHEN td.event_type = 'click' THEN 1 ELSE null END) AS INTEGER) as tr_clicks,
       CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS INTEGER) as tr_conversions,
@@ -178,8 +177,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       pb.${idString} as ${clickflare_grouping},
       CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
       CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
-      CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
-      ROUND(SUM(pb.pb_value)::numeric, 2) as pb_revenue
+      CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions
     FROM postback_events pb
       WHERE pb.date >= '${facebookDate}' AND pb.date <= '${facebookEndDate}'
       AND pb.traffic_source = 'facebook'
