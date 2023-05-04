@@ -418,8 +418,8 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       cf_last_update: item.created_at,
 
       // postback_events
-      pb_serp_conversions: item.pb_serp_conversions,
       pb_lander_conversions: item.pb_lander_conversions,
+      pb_serp_conversions: item.pb_serp_conversions,
       pb_conversions: item.pb_conversions
     }
 
@@ -456,7 +456,7 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
       {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
       predifeniedRange=`!A3:AL1000`,
       include_columns = false,
-      add_last_update = false
+      add_last_update = true
     );
 
 }
