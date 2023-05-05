@@ -452,7 +452,7 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
     await updateSpreadsheet(
       aggregatedData,
       {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
-      predifeniedRange=`!A3:AL1000`,
+      predifeniedRange=`!A3:AJ1000`,
       include_columns = false,
       add_last_update = true
     );
