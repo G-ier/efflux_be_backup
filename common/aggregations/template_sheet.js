@@ -111,15 +111,15 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
   let query = `
     SELECT
         ${selectString}
-        '$' || ROUND(CAST(SUM(fb.total_spent) AS numeric), 2) as amount_spent,
+        ROUND(CAST(SUM(fb.total_spent) AS numeric), 2) as amount_spent,
         CAST(SUM(fb.impressions) AS INTEGER) as impressions,
         SUM(fb.clicks) as clicks,
         CAST(ROUND(SUM(fb.link_clicks), 2) AS FLOAT) as link_clicks,
-        '$' || TRUNC(CASE WHEN SUM(fb.link_clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.link_clicks)::numeric) END, 2) as cpc_link_click,
-        '$' || ROUND(CASE WHEN SUM(fb.impressions::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / (SUM(fb.impressions::numeric) / 1000::numeric)) END, 2) as cpm,
+        TRUNC(CASE WHEN SUM(fb.link_clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.link_clicks)::numeric) END, 2) as cpc_link_click,
+        ROUND(CASE WHEN SUM(fb.impressions::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / (SUM(fb.impressions::numeric) / 1000::numeric)) END, 2) as cpm,
         ROUND(CASE WHEN SUM(fb.clicks)::numeric = 0 THEN 0 ELSE (SUM(fb.clicks)::numeric / SUM(fb.impressions)::numeric) * 100 END, 2) || '%' as ctr_fb,
-        '$' || ROUND(CASE WHEN SUM(fb.clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.clicks)::numeric) END, 2) as cpc_all,
-        TO_CHAR(MAX(fb.updated_at), 'Mon dd, yyyy HH24:MI') as fb_updated_at
+        ROUND(CASE WHEN SUM(fb.clicks::numeric) = 0 THEN 0 ELSE (SUM(fb.total_spent)::numeric / SUM(fb.clicks)::numeric) END, 2) as cpc_all,
+        TO_CHAR(MAX(fb.updated_at), 'dd HH24:MI') as fb_updated_at
     FROM facebook fb
         ${joinString}
     WHERE fb.date >= '${facebookDate}' AND fb.date <= '${facebookEndDate}'
@@ -139,7 +139,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       CAST(COUNT(CASE WHEN td.custom_conversion_number = 1 THEN 1 ELSE null END) AS INTEGER) as tr_searches,
       ROUND(CAST(CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS float)
       / NULLIF(CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS float), 0) * 100 as numeric), 2)  || '%' as tr_ctr,
-      TO_CHAR(MAX(created_at), 'Mon dd, yyyy HH24:MI') as created_at
+      TO_CHAR(MAX(created_at), 'dd HH24:MI') as created_at
     FROM tracking_data td
     LEFT JOIN ${join_source}
     WHERE td.visit_time + make_interval(hours => COALESCE(tz.tz_offset, 0))
@@ -166,7 +166,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       CASE WHEN SUM(total_tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(total_revenue) / SUM(total_tracked_visitors) * 1000 as numeric), 2) END rpm,
       CASE WHEN SUM(total_tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(total_revenue) / SUM(total_tracked_visitors)as numeric), 2) END rpv,
       ROUND(SUM(total_revenue)::numeric, 2) as publisher_revenue,
-      TO_CHAR(MAX(updated_at), 'Mon dd, yyyy HH24:MI') as cr_updated_at
+      TO_CHAR(MAX(updated_at), 'dd HH24:MI') as cr_updated_at
     FROM crossroads cr
     WHERE date(date) >= date('${startDate}') AND date(date) <= '${endDate}' AND traffic_source = 'facebook'
     GROUP BY cr.${idString};
