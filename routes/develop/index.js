@@ -83,8 +83,6 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       launch_date: item.launch_date,
       amount_spent: item.amount_spent,
       impressions: item.impressions,
-      reach: null,
-      frequency: null,
       link_clicks: item.link_clicks,
       cpc_link_click: item.cpc_link_click,
       clicks_all: item.clicks,
@@ -449,10 +447,22 @@ route.get("/testing-facebook-ad-insights", async (req, res) => {
   }
 })
 
-
 route.get("/testing-slack-notifications",  async (req, res) => {
   await sendSlackNotification("This is a test generated message")
   res.status(200).send({ message: `debug-clickflare-fetching` });
 })
+
+
+route.get("/test-jsonb-arr", async (req, res) => {
+  data = await db.raw(`
+    SELECT purchaser, jsonb_agg(items_purchased) as items_purchased FROM tjsobarr GROUP BY purchaser;
+  `)
+  data.rows.forEach(row => {
+    console.log(row.purchaser, _.flatten(row.items_purchased))
+  })
+
+
+  res.status(200).send({ message: `test-jsonb-arr` });
+});
 
 module.exports = route;
