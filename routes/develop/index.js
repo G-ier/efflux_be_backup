@@ -452,15 +452,24 @@ route.get("/testing-slack-notifications",  async (req, res) => {
   res.status(200).send({ message: `debug-clickflare-fetching` });
 })
 
-
-route.get("/test-jsonb-arr", async (req, res) => {
+route.get("/test-facebook-events", async (req, res) => {
   data = await db.raw(`
-    SELECT purchaser, jsonb_agg(items_purchased) as items_purchased FROM tjsobarr GROUP BY purchaser;
+    SELECT jsonb_agg(events) as events FROM facebook WHERE events != '[]';
   `)
-  data.rows.forEach(row => {
-    console.log(row.purchaser, _.flatten(row.items_purchased))
+
+  distinct_events = []
+
+  results = _.flatten(data.rows[0].events)
+
+  results.forEach(events => {
+    if (!distinct_events.includes(events.action_type)) {
+      distinct_events.push(events.action_type)
+    }
   })
 
+  distinct_events.forEach(action_type => {
+    console.log(`SUM(CASE WHEN (fb_events ->> 'action_type')::varchar = '${action_type}' THEN 1 ELSE 0 END) AS ${action_type},`)
+  })
 
   res.status(200).send({ message: `test-jsonb-arr` });
 });

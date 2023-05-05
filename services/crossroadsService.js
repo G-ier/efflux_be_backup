@@ -105,15 +105,22 @@ async function getFinalInfo(key, date) {
 
 function waitForBulkData(key, requestId) {
   return new Promise((resolve, reject) => {
+
+    let count = 1;
+
     const interval = setInterval(async () => {
       const { status_code, file_url } = await getRequestState(key, requestId);
       if (status_code !== 200) {
+        count++;
         return;
       }
       clearInterval(interval);
+      // Call the slack api here to send a message to the channel
+      await sendSlackNotification(`TELEMETRY FOR THE DEV: Crossroads wait for bulk data called the api ${count} times`);
       resolve(file_url);
     }, 5000);
   });
+
 }
 
 /**
@@ -453,23 +460,33 @@ const { sendSlackNotification } = require("../services/slackNotificationService"
 
 async function updateCrossroadsData(account, request_date) {
   try {
+    // 1) CROSSROADS API CALL : updateCrossroadsCampaigns -> getCrossroadsCampaigns
     await updateCrossroadsCampaigns(account.key);
+
+    // 2) CROSSROADS API CALL : getAvailableFields
     const available_fields = await getAvailableFields(account.key);
     const fields = available_fields.join(',');
+
+    // 3) CROSSROADS API CALL : prepareBulkData
     const { request_id } = await prepareBulkData(account.key, request_date, fields);
 
+    // 4) CROSSROADS API CALL : waitForBulkData
     const file_url = await waitForBulkData(account.key, request_id);
     // const file_url = 'https://s3-us-west-2.amazonaws.com/cr-api-v2-bulk-data/233afddf-2503-41a6-8d50-5031eb417d1e.json'
 
     console.log('file_url', file_url);
 
+    // 5) CROSSROADS API CALL : getBulkData
     const crossroadsData = await getBulkData(file_url);
 
+    // Process totals
     const totals = processTotals(crossroadsData);
     console.log('DIRECTLY FROM AWS', totals);
 
+    // Process the data to shape it for the DB
     const processedCrossroadsData = processCrossroadsData(crossroadsData, account.id, request_date)
 
+    // delete old data (by date)
     const deleted = await removeAccountData(account.id, request_date);
     const deletedConversions = await removeAccountConversions(account.id, request_date);
     const deletedStats = await removeAccountStats(account.id, request_date)
