@@ -11,7 +11,7 @@ const { sendSlackNotification } = require("../services/slackNotificationService"
 const { getSheetValues, updateSpreadsheet } = require("../services/spreadsheetService");
 
 const disableCron = process.env.DISABLE_CRON === 'true'
-const everyFifteenMinutes = '26-59/15 * * * *';
+const everyFifteenMinutes = '14-59/15 * * * *';
 
 function mapActiveAccountValue(data) {
 
