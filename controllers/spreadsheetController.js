@@ -383,6 +383,7 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       time_zone: item.time_zone,
       entity_name: item.entity_name,
       status: item.status,
+      daily_budget: item.daily_budget,
       launch_date: item.launch_date,
       amount_spent: item.amount_spent,
       impressions: item.impressions,
@@ -453,7 +454,7 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
     await updateSpreadsheet(
       aggregatedData,
       {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
-      predifeniedRange=`!A3:AJ1000`,
+      predifeniedRange=`!A3:AK1000`,
       include_columns = false,
       add_last_update = false
     );

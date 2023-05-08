@@ -294,6 +294,11 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
 
 const { sendSlackNotification } = require("../../services/slackNotificationService")
 
+route.get("/testing-slack-notifications",  async (req, res) => {
+  await sendSlackNotification("This is a test generated message")
+  res.status(200).send({ message: `debug-clickflare-fetching` });
+})
+
 // @route     /api/debug-cron-jobs
 // @desc     Runs Cron Jobs
 route.get("/debug-cron-jobs", async (req, res) => {
@@ -362,78 +367,20 @@ route.get("/debug-cron-jobs", async (req, res) => {
 
 });
 
-const { clickflareMorningFill } = require('../../cron/clickflare-cron');
-const { updateClickflareData } = require('../../services/clickflareService');
+const { updateFacebookInsights, updateFacebookData } = require("../../controllers/facebookController")
 
-// @route     /api/clickflare-debugging
-// @desc     Runs Cron Jobs
-route.get("/clickflare-debugging", async (req, res) => {
-
+route.get("/testing-facebook-data-update", async (req, res) => {
   try {
-    startDate = '2023-04-30 00:00:00';
-    endDate = '2023-04-30 23:59:59';
-    console.log("Updating Clickflare Data", "S:", startDate, "E:", endDate)
-    await updateClickflareData(startDate, endDate, 'UTC');
-    // let pb_data = await aggregatePostbackConversionByTrafficReport('2023-04-29', '2023-04-30', 'campaign_id', 'crossroads', 'facebook')
-    // console.log(pb_data.rows)
-    res.status(200).send({ message: `debug-cron-jobs` });
-  }
-
-  catch (err) {
-    console.log(err);
-    res.status(500).send({ error: `${err.toString()}, Spreadsheet Id: ${process.env.SYSTEM1_SPREADSHEET_ID}` });
-  }
-
-});
-
-const { CLICKFLAREDATA_SHEET_VALUES } = require('../../constants/clickflare');
-const { clickflareCampaigns } = require("../../common/aggregations/clickflare_report");
-const { calculateValuesForCFSpreadsheet } = require("../../controllers/spreadsheetController");
-const spreadsheets = require("../../services/spreadsheetService");
-
-route.get("/testing-clickflare",  async (req, res) => {
-
-  try {
-    startDate = '2023-04-25 00:00:00';
-    endDate = '2023-04-25 23:59:59';
-    console.log("Start Date in Update CF Sheet", startDate, "End Date", endDate)
-    await updateClickflareData(startDate, endDate, 'UTC');
-
-    const spreadsheetId = '1J7-neUUgaN9rgcKFSTIJ7RHY-tlFwDLz3biD2g2M-P8'
-    const sheetName = 'Testing'
-    traffic_source = `('62b23798ab2a2b0012d712f7', '62afb14110d7e20012e65445', '622f32e17150e90012d545ec', '62f194b357dde200129b2189')`
-
-    const camp_data = await db.raw(`
-    SELECT
-      CASE WHEN GROUPING(td.tracking_field_3) = 1 THEN '1' ELSE td.tracking_field_3 END AS campaign_id,
-      CASE WHEN GROUPING(td.tracking_field_3) = 1  THEN 'TOTAL' ELSE MIN(td.tracking_field_6) END as campaign_name,
-      CAST(ROUND(SUM(td.conversion_payout), 2) AS FLOAT) as revenue,
-      CAST(COUNT(CASE WHEN td.event_type = 'visit' THEN 1 ELSE null END) AS INTEGER) as visits,
-      CAST(COUNT(CASE WHEN td.event_type = 'click' THEN 1 ELSE null END) AS INTEGER) as clicks,
-      CAST(COUNT(CASE WHEN td.custom_conversion_number = 2 THEN 1 ELSE null END) AS INTEGER) as conversions
-      FROM tracking_data td
-      WHERE td.traffic_source_id IN ${traffic_source}
-      AND td.visit_time > '${startDate}' AND td.visit_time <= '${endDate}'
-      GROUP BY GROUPING SETS (
-        (),
-        (td.tracking_field_3)
-      )
-      ORDER BY td.tracking_field_3 DESC
-    `)
-
-    // let camp_data = await clickflareCampaigns(startDate, endDate, 'campaign', traffic_source);
-    campData = calculateValuesForCFSpreadsheet(camp_data.rows, ['campaign_id','campaign_name', ...CLICKFLAREDATA_SHEET_VALUES]);
-    await spreadsheets.updateSpreadsheet(campData, {spreadsheetId, sheetName});
-    res.status(200).send({ message: `debug-clickflare-fetching` });
+    date = todayYMD('UTC');
+    await updateFacebookData(date)
+    res.status(200).send({ message: `testing-facebook-data-update` });
   }
   catch (err) {
     console.log(err);
-    res.status(500).send({ error: `${err.toString()}, Spreadsheet Id: ${process.env.SYSTEM1_SPREADSHEET_ID}` });
+    res.status(500).send({ error: `${err.toString()}`});
   }
-
 })
 
-const { updateFacebookInsights } = require("../../controllers/facebookController")
 
 route.get("/testing-facebook-ad-insights", async (req, res) => {
   try {
@@ -447,98 +394,5 @@ route.get("/testing-facebook-ad-insights", async (req, res) => {
   }
 })
 
-route.get("/testing-slack-notifications",  async (req, res) => {
-  await sendSlackNotification("This is a test generated message")
-  res.status(200).send({ message: `debug-clickflare-fetching` });
-})
-
-route.get("/test-facebook-events", async (req, res) => {
-  data = await db.raw(`
-    SELECT jsonb_agg(events) as events FROM facebook WHERE events != '[]';
-  `)
-
-  distinct_events = []
-
-  results = _.flatten(data.rows[0].events)
-
-  results.forEach(events => {
-    if (!distinct_events.includes(events.action_type)) {
-      distinct_events.push(events.action_type)
-    }
-  })
-
-  distinct_events.forEach(action_type => {
-    console.log(`SUM(CASE WHEN (fb_events ->> 'action_type')::varchar = '${action_type}' THEN 1 ELSE 0 END) AS ${action_type},`)
-  })
-
-  res.status(200).send({ message: `test-jsonb-arr` });
-});
-
-
-const { getSheetValues } = require('../../services/spreadsheetService');
-
-
-function mapActiveAccountValue(data) {
-
-  return data.map(row => {
-    let processedRow = row.length === 10 ? row.slice(0, 10) : row
-    let dateTime = new Date(processedRow[9])
-    let date = new Date()
-
-    return {
-      '' : processedRow[0],
-      "Ad Account name": processedRow[1],
-      "Ad Account ID": processedRow[2],
-      "Time Zone": processedRow[3],
-      "Currency": processedRow[4],
-      "Maximum Spent": processedRow[5],
-      "Account Limit spent": processedRow[6],
-      "Today Spent": processedRow[7],
-      "Remaining Balance": processedRow[8],
-      "DateTime": `${date.getDate()}/${dateTime.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`,
-      "Last Updated": `${date.getDate()}/${date.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`
-    }
-  })
-}
-
-route.get("/reading-from-spreadsheet", async (req, res) => {
-
-  const spreadsheetId = "1J1S8hO4Ju_4z1-9B1MVnyESDGEST2aoMYfMTo8cUd2M";
-  const sheetName = "Active Accounts";
-
-  const writeSpreadsheetId = "1A6Pfy2GPq0z12b_CtDdaMb5zKWecJa2jkzLVA3BwBuQ"
-  const writeSheetName = "Active Accounts"
-
-  const range = sheetName;
-
-  // get sheet values
-  const { values: sheetValues } = await getSheetValues(spreadsheetId, {
-    range
-  });
-
-  // Removing columns from the sheet.
-  const data =  sheetValues.slice(1, sheetValues.length)
-
-  // Converting sheet list rows to objects.
-  const columns = ["", "Ad Account name", "Ad Account ID", "Time Zone", "Currency",  "Maximum Spent", "Account Limit spent", "Today Spent", "Remaining Balance", "DateTime", "Last Updated"];
-  const rows = mapActiveAccountValue(data)
-
-  const processedData = {
-    columns,
-    rows
-  }
-
-  // Updating spreadsheet
-  await updateSpreadsheet(
-    processedData,
-    {spreadsheetId: writeSpreadsheetId, sheetName: writeSheetName},
-    predifeniedRange = "",
-    include_columns = true,
-    add_last_update = false
-  )
-
-  res.status(200).send({ message: `Reading from spreadsheet` });
-
-})
 
 module.exports = route;

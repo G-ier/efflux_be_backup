@@ -22,31 +22,44 @@ const { sendSlackNotification } = require("../services/slackNotificationService"
 async function updateFacebookData(date) {
   try {
     console.log('START UPDATING FACEBOOK DATA')
+    // Get user accounts related to facebook from user_accounts table
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
 
+    // Get ad accounts from facebook
     for (const account of accounts) {
+
+      // Get ad accounts from facebook linked to user account
       const fbAdAccounts = await getAdAccounts(account.provider_id, account.token);
+
+      // Update ad_accounts table in database
       const processedAdAccounts = processFacebookAdAccounts(account, fbAdAccounts);
       const adAccounts = await updateAdAccounts(account, processedAdAccounts);
 
       const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
       const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
 
+      // Retrieve facebook pixels related to ad account ids from facebook
       let pixels = await getFacebookPixels(account.token, adAccountsIds);
       pixels = _.uniqBy(pixels, 'id')
+      // Update pixels table in database
       const processedPixels = await processFacebookPixels(pixels, adAccountsMap, account.id);
       const pixelIds = processedPixels.map(item => item.pixel_id);
       await updatePixels(processedPixels, pixelIds);
 
+      // Retrieve facebook campaigns related to ad account ids from facebook
       const adCampaigns = await getAdCampaigns(account.token, adAccountsIds, date);
+      console.log('CAMPAIGNS length', adCampaigns.length);
+      // Update campaigns table in database
       const processedAdCampaigns = processFacebookCampaigns(account.id, adCampaigns, adAccountsMap);
       const campaignChunks = _.chunk(processedAdCampaigns, 100)
       for(const chunk of campaignChunks) {
         await updateCampaigns(chunk, PROVIDERS.FACEBOOK);
       }
 
+      // Retrieve facebook adsets related to ad account ids from facebook
       const adsets = await getAdsets(account.token, adAccountsIds, date);
       console.log('ADSETS length', adsets.length);
+      // Update adsets table in database
       const processedAdsets = processFacebookAdsets(account.id, adsets, adAccountsMap);
       const adsetsChunks = _.chunk(processedAdsets, 100)
       for(const chunk of adsetsChunks) {

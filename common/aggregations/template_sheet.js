@@ -71,6 +71,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       ad.name as ad_account_name, ad.tz_name as time_zone, fb.campaign_id as campaign_id,
       c.name as entity_name, c.status,
       TO_CHAR(c.created_time::date, 'mm/dd/yy') as launch_date,
+      CASE WHEN MAX(c.daily_budget) != '' THEN MAX(c.daily_budget)::integer ELSE 0 END  as daily_budget,
     `
     joinString = `
       LEFT JOIN campaigns c ON fb.campaign_id = CAST(c.id as VARCHAR)
@@ -94,6 +95,7 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
       ad.name as ad_account_name, ad.tz_name as time_zone,
       fb.adset_id as adset_id, ads.name as entity_name, ads.status,
       TO_CHAR(ads.created_time::date, 'mm/dd/yy') as launch_date,
+      CASE WHEN MAX(ads.daily_budget) != '' THEN MAX(ads.daily_budget)::integer ELSE 0 END  as daily_budget,
     `
     joinString = `
       LEFT JOIN adsets ads ON fb.campaign_id = CAST(ads.campaign_id as VARCHAR)

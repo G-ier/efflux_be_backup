@@ -227,8 +227,7 @@ async function getAdCampaigns(access_token, adAccountIds, date = "today") {
       }
     })
       .catch((err) =>
-      // console.warn('ad_account_id:', adAccountId, "facebook campaigns failure", err.response?.data ?? err)
-      console.warn()
+      console.warn(err)
       );
 
     return response?.data?.data || [];
