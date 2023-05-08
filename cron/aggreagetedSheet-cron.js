@@ -11,12 +11,14 @@ const { sendSlackNotification } = require("../services/slackNotificationService"
 const { getSheetValues, updateSpreadsheet } = require("../services/spreadsheetService");
 
 const disableCron = process.env.DISABLE_CRON === 'true'
-const everyFifteenMinutes = '14-59/15 * * * *';
+const everyFifteenMinutes = '26-59/15 * * * *';
 
 function mapActiveAccountValue(data) {
 
   return data.map(row => {
     let processedRow = row.length === 10 ? row.slice(0, 10) : row
+    let dateTime = new Date(processedRow[9])
+    let date = new Date()
 
     return {
       '' : processedRow[0],
@@ -28,7 +30,8 @@ function mapActiveAccountValue(data) {
       "Account Limit spent": processedRow[6],
       "Today Spent": processedRow[7],
       "Remaining Balance": processedRow[8],
-      "Referred Sheet Update Time": processedRow[9]
+      "Referred Sheet Update Time": `${date.getDate()}/${dateTime.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`,
+      "Last Updated": `${date.getDate()}/${date.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`
     }
   })
 }
@@ -51,7 +54,7 @@ const updateActiveAccountsTab = async () => {
   const data =  sheetValues.slice(1, sheetValues.length)
 
   // Converting sheet list rows to objects.
-  const columns = ["", "Ad Account name", "Ad Account ID", "Time Zone", "Currency",  "Maximum Spent", "Account Limit spent", "Today Spent", "Remaining Balance", "Referred Sheet Update Time"];
+  const columns = ["", "Ad Account name", "Ad Account ID", "Time Zone", "Currency",  "Maximum Spent", "Account Limit spent", "Today Spent", "Remaining Balance", "Referred Sheet Update Time", "Last Updated"];
   const rows = mapActiveAccountValue(data)
 
   const processedData = {
@@ -65,13 +68,17 @@ const updateActiveAccountsTab = async () => {
     {spreadsheetId: writeSpreadsheetId, sheetName: writeSheetName},
     predifeniedRange = "",
     include_columns = true,
-    add_last_update = true
+    add_last_update = false
   )
 
 }
 
 const updateAggregatedSheet = async () => {
   try {
+
+      // Update the active accounts sheet
+      await updateActiveAccountsTab()
+
       for (i=0; i < sheetsArr.length; i ++ ) {
 
           // Calculating start-date, end-date for each tab in the sheetsArr[i]
@@ -95,10 +102,6 @@ const updateAggregatedSheet = async () => {
               await updateTemplateSheet(data, columnsOrder, aggregation, sheetsArr[i].spreadsheetId, sheetName)
           }
       }
-
-      // Update the active accounts sheet
-      await updateActiveAccountsTab()
-
   }
   catch (err) {
       await sendSlackNotification(`Fb Revealbot Sheets.\nError on update: \n${err.toString()}`)

@@ -482,6 +482,8 @@ function mapActiveAccountValue(data) {
 
   return data.map(row => {
     let processedRow = row.length === 10 ? row.slice(0, 10) : row
+    let dateTime = new Date(processedRow[9])
+    let date = new Date()
 
     return {
       '' : processedRow[0],
@@ -493,7 +495,8 @@ function mapActiveAccountValue(data) {
       "Account Limit spent": processedRow[6],
       "Today Spent": processedRow[7],
       "Remaining Balance": processedRow[8],
-      "DateTime": processedRow[9]
+      "DateTime": `${date.getDate()}/${dateTime.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`,
+      "Last Updated": `${date.getDate()}/${date.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`
     }
   })
 }
@@ -517,7 +520,7 @@ route.get("/reading-from-spreadsheet", async (req, res) => {
   const data =  sheetValues.slice(1, sheetValues.length)
 
   // Converting sheet list rows to objects.
-  const columns = ["", "Ad Account name", "Ad Account ID", "Time Zone", "Currency",  "Maximum Spent", "Account Limit spent", "Today Spent", "Remaining Balance", "DateTime"];
+  const columns = ["", "Ad Account name", "Ad Account ID", "Time Zone", "Currency",  "Maximum Spent", "Account Limit spent", "Today Spent", "Remaining Balance", "DateTime", "Last Updated"];
   const rows = mapActiveAccountValue(data)
 
   const processedData = {

@@ -37,7 +37,7 @@ const TEMPLATE_SHEET_VALUES = [
 
     'tr_visits', 'tr_searches', 'tr_conversions', 'tr_ctr', 'cf_last_update',
 
-    'pb_lander_conversions', 'pb_serp_conversions', 'pb_conversions'
+    'pb_lander_conversions', 'pb_serp_conversions', 'pb_conversions', 'sheet_last_update'
 ]
 
 const TEMPLATE_ADSET_SHEET_VALUES = [
@@ -48,7 +48,7 @@ const TEMPLATE_ADSET_SHEET_VALUES = [
 
   'tr_visits', 'tr_searches', 'tr_conversions', 'tr_ctr', 'cf_last_update',
 
-  'pb_lander_conversions', 'pb_serp_conversions', 'pb_conversions'
+  'pb_lander_conversions', 'pb_serp_conversions', 'pb_conversions', 'sheet_last_update'
 ]
 module.exports = {
   sheetsArr,

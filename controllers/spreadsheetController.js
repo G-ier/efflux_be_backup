@@ -418,7 +418,8 @@ function calculateValuesForAggSpreadsheet(data, columns, aggregation = 'campaign
       // postback_events
       pb_lander_conversions: item.pb_lander_conversions,
       pb_serp_conversions: item.pb_serp_conversions,
-      pb_conversions: item.pb_conversions
+      pb_conversions: item.pb_conversions,
+      sheet_last_update: item.sheet_last_update,
     }
 
     // Change the delete on adset vs campaign
@@ -454,7 +455,7 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
       {spreadsheetId: updateSpreadsheetId, sheetName: updateSheetName}, // Change sheetName to sheetNameByAdset
       predifeniedRange=`!A3:AJ1000`,
       include_columns = false,
-      add_last_update = true
+      add_last_update = false
     );
 
 }
