@@ -190,7 +190,12 @@ async function addFacebookData(data, date) {
   // console.log('data', data)
   data = [... new Map(data.map(item => [item['campaign_id'] + item['ad_id'] + item['hour'], item])).values()]
 
-  await add("facebook", data);
+  const dataChunks = _.chunk(data, 500);
+  for (const chunk of dataChunks) {
+    await add("facebook", chunk);
+  }
+
+  // await add("facebook", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
 
 }
@@ -203,7 +208,13 @@ async function addFacebookDataByDay(data, date) {
     console.info(`DELETED ${removed} rows on date ${date}`);
   }
   data = [... new Map(data.map(item => [item['campaign_id'], item])).values()]
-  await add("facebook_conversion", data);
+
+  const dataChunks = _.chunk(data, 500);
+  for (const chunk of dataChunks) {
+    await add("facebook_conversion", chunk);
+  }
+
+  // await add("facebook_conversion", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
 
 }
