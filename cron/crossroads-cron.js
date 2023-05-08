@@ -76,27 +76,12 @@ const crossroadsSixMinCron = new CronJob(
 );
 
 const initializeCRCron = () => {
-  (async () => {
-
-    // console.log(`Getting Crossroads data...`);
-    // await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
-    //   return updateCrossroadsData(account, someDaysAgoYMD(8));
-    // }))
-
-    // hourlySheetArr.forEach(async (sheet) => {
-    //   await updateCR_HourlySpreadsheet(sheet);
-    // })
-    // console.log(`Done Updating Today's Crossroads data...`);
-
-
-  })();
-
   if (!disableCron) {
     crossroadsFinalDataCron.start();
     crossroadsSixMinCron.start();
     crossroadsAfterMidnight.start();
     crossroadsFinalYesterday.start();
-    crossroadsHourlyCron.start();
+    // crossroadsHourlyCron.start();
   }
 };
 

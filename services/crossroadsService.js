@@ -116,9 +116,8 @@ function waitForBulkData(key, requestId) {
       }
       clearInterval(interval);
       // Call the slack api here to send a message to the channel
-      await sendSlackNotification(`TELEMETRY FOR THE DEV: Crossroads wait for bulk data called the api ${count} times`);
       resolve(file_url);
-    }, 5000);
+    }, 12000);
   });
 
 }
