@@ -31,7 +31,7 @@ function mapActiveAccountValue(data) {
       "Today Spent": processedRow[7],
       "Remaining Balance": processedRow[8],
       "Referred Sheet Update Time": `${date.getDate()}/${dateTime.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`,
-      "Last Updated": `${date.getDate()}/${date.getHours()}:${dateTime.getMinutes() < 10 ? '0' + dateTime.getMinutes() : dateTime.getMinutes()}`
+      "Last Updated": `${date.getDate()}/${date.getHours()}:${date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()}`
     }
   })
 }
