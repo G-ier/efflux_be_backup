@@ -69,7 +69,8 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
 
     selectString = `
       ad.name as ad_account_name, ad.tz_name as time_zone, fb.campaign_id as campaign_id,
-      c.name as entity_name, c.status, c.created_time as launch_date,
+      c.name as entity_name, c.status,
+      TO_CHAR(c.created_time::date, 'mm/dd/yy') as launch_date,
     `
     joinString = `
       LEFT JOIN campaigns c ON fb.campaign_id = CAST(c.id as VARCHAR)
@@ -91,7 +92,8 @@ async function templateSheetFetcher(startDate, endDate, telemetry=false, sheetDr
 
     selectString = `
       ad.name as ad_account_name, ad.tz_name as time_zone,
-      fb.adset_id as adset_id, ads.name as entity_name, ads.status, ads.created_time as launch_date,
+      fb.adset_id as adset_id, ads.name as entity_name, ads.status,
+      TO_CHAR(ads.created_time::date, 'mm/dd/yy') as launch_date,
     `
     joinString = `
       LEFT JOIN adsets ads ON fb.campaign_id = CAST(ads.campaign_id as VARCHAR)
