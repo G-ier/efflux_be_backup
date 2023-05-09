@@ -11,7 +11,7 @@ const { initializeCFCron } = require("./clickflare-cron");
 const { initializeAggregCron } = require("./aggreagetedSheet-cron");
 
 const initializeCronJobs = () => {
-  // initializeFBCron();
+  initializeFBCron();
   initializeCRCron();
   initializeGoogleCron();
   initializePostbackCron();
