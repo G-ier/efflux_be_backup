@@ -22,9 +22,10 @@ const knexLogger = require('./knexLogger');
 const develop = require('../routes/develop');
 
 var corsOptions = {
-  origin: 'https://main.d29s44dh6ax376.amplifyapp.com',
+  origin: ['https://main.d29s44dh6ax376.amplifyapp.com', 'https://cf36-138-68-231-110.ngrok-free.app'],
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
+
 // Tracking requests from postback servers are allowed without authentication.
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
 // basically populate the dashboard with data.
