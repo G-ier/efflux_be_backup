@@ -30,27 +30,27 @@ var corsOptions = {
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
 // basically populate the dashboard with data.
 function configureMiddleware(server) {
-  server.use(cors(corsOptions));
+  // server.use(cors(corsOptions));
   // server.use(helmet());
   server.use(json);
   // server.use(knexLogger);
   server.use("/trk", isBot, pixel);
   server.use(morgan("dev"));
-  server.use("/api/auth0", auth0);
-  server.use('/api/develop', develop);
+  server.use("/api/auth0", cors(corsOptions), auth0);
+  server.use('/api/develop', cors(corsOptions), develop);
   server.use(paginate.middleware(10, 50));
-  server.use('/api/proper', proper);
+  server.use('/api/proper', cors(corsOptions), proper);
   server.use(jwtCheck);
   server.use(jwtPermissions);
   server.use(AuthUser);
-  server.use("/api/auth", auth);
-  server.use("/api/users", users);
-  server.use("/api/crossroads", crossroads);
-  server.use("/api/amg", amg);
-  server.use("/api/system1", system1);
-  server.use("/api/facebook", facebook);
-  server.use('/api/campaigns', campaigns);
-  server.use(ErrorHandler);
+  server.use("/api/auth", cors(corsOptions), auth);
+  server.use("/api/users", cors(corsOptions), users);
+  server.use("/api/crossroads", cors(corsOptions), crossroads);
+  server.use("/api/amg", cors(corsOptions), amg);
+  server.use("/api/system1", cors(corsOptions), system1);
+  server.use("/api/facebook", cors(corsOptions), facebook);
+  server.use('/api/campaigns', cors(corsOptions), campaigns);
+
 }
 
 module.exports = {
