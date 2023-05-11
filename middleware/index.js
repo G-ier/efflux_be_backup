@@ -30,8 +30,8 @@ var corsOptions = {
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
 // basically populate the dashboard with data.
 function configureMiddleware(server) {
-  server.use(helmet());
   server.use(cors(corsOptions));
+  // server.use(helmet());
   server.use(json);
   // server.use(knexLogger);
   server.use("/trk", isBot, pixel);
