@@ -10,26 +10,34 @@ async function getAdAccounts(authUser, networks) {
   const {isAdmin, providerId} = authUser;
   let userId;
   if (!isAdmin) {
+    // Get the user making the request
     const user = await usersService.getSingle({providerId}, ['id'])
     userId = user.id;
   }
 
+  // Find the ad accounts belonging to the user and return them.
   return await adAccountsService.getUserAdAccounts(userId, networks);
 }
 
 async function updateAdAccount(authUser, filter, updateData) {
   const {isAdmin, providerId} = authUser;
   if (!isAdmin) {
+    console.log("Auth User is not admin")
     const user = await usersService.getSingle({providerId}, ['id'])
     filter.user_id = user.id;
   }
 
   if (updateData.user_id === 'admin') {
+    console.log("Update Data User ID is admin")
     const user = await usersService.getSingle({nickname: 'admin'}, ['id'])
     updateData.user_id = user.id;
   } else if (updateData.user_id) {
+    console.log("Update Data User ID is not admin")
     updateData.user_id = parseInt(updateData.user_id, 10);
   }
+
+  console.log("Filter", filter)
+  console.log("updateData", updateData)
 
   // NOTE: prevent assign ad_account with network if tz don't match
 

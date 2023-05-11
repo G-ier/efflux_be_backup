@@ -46,19 +46,21 @@ module.exports = {
                         CAST(COUNT(distinct (CASE WHEN fbc.event_name = 'lead' THEN fbclid END)) AS INTEGER) as pb_uniq_conversions
                         `,
 
-  FACEBOOK_CROSSROADS: `CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) as revenue,
-                        CAST(ROUND(SUM(agg_cr.conversions)::decimal, 2) AS FLOAT) as conversions,
-                        CAST(SUM(agg_cr.uniq_conversions) AS INTEGER) as uniq_conversions,
+  FACEBOOK_CROSSROADS: `
+                        CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) as revenue,
+                        CAST(ROUND(SUM(agg_fb.spend)::decimal, 2) AS FLOAT) as spend,
+                        CAST(SUM(agg_fb.fb_conversions) AS INTEGER) as fb_conversions,
+                        CAST(ROUND(SUM(agg_cr.conversions)::decimal, 2) AS FLOAT) as cr_conversions,
+                        CAST(SUM(agg_cr.uniq_conversions) AS INTEGER) as cr_uniq_conversions,
+                        CAST(SUM(agg_fbc.pb_conversions) AS INTEGER) as pb_conversions,
                         CAST(SUM(agg_cr.searches) AS INTEGER) as searches,
                         CAST(SUM(agg_cr.lander_visits) AS INTEGER) as lander_visits,
                         CAST(SUM(agg_cr.visitors) AS INTEGER) as visitors,
                         CAST(SUM(agg_cr.tracked_visitors) AS INTEGER) as tracked_visitors,
-                        CAST(ROUND(SUM(agg_fb.spend)::decimal, 2) AS FLOAT) as spend,
                         CAST(SUM(agg_fb.link_clicks) AS INTEGER) as link_clicks,
-                        CAST(SUM(agg_fb.ts_conversions) AS INTEGER) as ts_conversions,
-                        CAST(SUM(agg_fb.impressions) AS INTEGER) as impressions,
-                        CAST(SUM(agg_fbc.pb_conversions) AS INTEGER) as pb_conversions,
-                        CAST(SUM(agg_fbc.pb_uniq_conversions) AS INTEGER) as pb_uniq_conversions`,
+                        --CAST(SUM(agg_fbc.pb_uniq_conversions) AS INTEGER) as pb_uniq_conversions,
+                        CAST(SUM(agg_fb.impressions) AS INTEGER) as impressions
+                        `,
 
   FACEBOOK_SYSTEM1: `CAST(ROUND(SUM(agg_s1.revenue)::decimal, 2) AS FLOAT) as revenue,
                      CAST(SUM(agg_s1.searches) AS INTEGER) as searches,

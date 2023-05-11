@@ -72,10 +72,12 @@ route.get('/google/campaign/hours', async (req, res) => {
 // @Access   Private
 route.get('/facebook/campaigns/dates', async (req, res) => {
   const { start_date, end_date } = req.query;
+  console.log("Request Query", req.query)
   try {
     const facebookCrossroads = await getFacebookCrossroadByDates({ start_date, end_date });
     res.status(200).json(facebookCrossroads);
   } catch (err) {
+    console.log(err);
     res.status(500).json(err.message);
   }
 });

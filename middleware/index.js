@@ -21,7 +21,10 @@ const system1 = require('../routes/system1');
 const knexLogger = require('./knexLogger');
 const develop = require('../routes/develop');
 
-const configureMiddleware = (server) => {
+// Tracking requests from postback servers are allowed without authentication.
+// The other routes are meant to be accessed from the dashboard with authenticated users and they
+// basically populate the dashboard with data.
+function configureMiddleware(server) {
   server.use(helmet());
   server.use(cors());
   server.use(json);
@@ -43,7 +46,7 @@ const configureMiddleware = (server) => {
   server.use("/api/facebook", facebook);
   server.use('/api/campaigns', campaigns);
   server.use(ErrorHandler);
-};
+}
 
 module.exports = {
   configureMiddleware,
