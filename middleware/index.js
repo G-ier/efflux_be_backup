@@ -22,7 +22,8 @@ const knexLogger = require('./knexLogger');
 const develop = require('../routes/develop');
 
 var corsOptions = {
-  origin: ['https://main.d29s44dh6ax376.amplifyapp.com', 'https://cf36-138-68-231-110.ngrok-free.app'],
+  origin: '*',
+  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
   optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
