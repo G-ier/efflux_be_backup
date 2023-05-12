@@ -4,6 +4,7 @@ const { initializeCronJobs } = require("../cron");
 const express = require("express");
 const fs = require('fs');
 const https = require('https');
+const http = require('http');
 
 const httpsOptions = {
   key: fs.readFileSync('./ssl/pvt-key.key'),
@@ -13,7 +14,8 @@ const httpsOptions = {
 
 // init express
 const server = express();
-const app = https.createServer(httpsOptions, server);
+const app_htttps = https.createServer(httpsOptions, server);
+const app_htttp = http.createServer(server);
 
 // index route displays name
 server.get("/", (req, res) => {
@@ -30,5 +32,6 @@ initializeCronJobs();
 
 module.exports = {
   server,
-  app
+  app_htttps,
+  app_htttp
 };
