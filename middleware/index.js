@@ -21,19 +21,13 @@ const system1 = require('../routes/system1');
 const knexLogger = require('./knexLogger');
 const develop = require('../routes/develop');
 
-var corsOptions = {
-  origin: '*',
-  methods: ['GET','POST','DELETE','UPDATE','PUT','PATCH'],
-  optionsSuccessStatus: 200 // some legacy browsers (IE11, various SmartTVs) choke on 204
-};
-
 // Tracking requests from postback servers are allowed without authentication.
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
 // basically populate the dashboard with data.
 function configureMiddleware(server) {
+  server.use(helmet());
+  server.use(cors());
   server.use(json);
-  server.use(cors(corsOptions));
-  // server.use(helmet());
   // server.use(knexLogger);
   server.use("/trk", isBot, pixel);
   server.use(morgan("dev"));
