@@ -23,11 +23,7 @@ server.use(function (err, req, res, next) {
 });
 
 const port = 443 //process.env.PORT || 5000;
-const hostname = "efflux-backend.com"
 
 app_htttps.listen(port, () =>
-  console.log(`🔥 -------- listening on port ${hostname}:${port} ---------- 🔥`)
-);
-app_htttp.listen(5000, () =>
-  console.log(`🔥 -------- listening on port ${hostname}:${5000} ---------- 🔥`)
+  console.log(`🔥 -------- listening on port ${port} ---------- 🔥`)
 );
