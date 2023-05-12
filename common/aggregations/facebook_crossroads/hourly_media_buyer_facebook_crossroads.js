@@ -28,68 +28,73 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
    * DISTINCT ON (hour) lets us ensure there are no duplicates (it is optional btw)
    * BUT Don't group by anything except hour, if you don't want to lose data
    */
-  return db.raw(`
-      WITH agg_cr AS (
-        SELECT cr.hour, cr.request_date as date,
-         ${selects.CROSSROADS}
-        FROM crossroads_stats cr
-          INNER JOIN campaigns c ON cr.campaign_id = c.id
-              AND c.traffic_source = 'facebook'
-              AND c.network = 'crossroads'
-              ${mediaBuyerCondition}
-              ${adAccountIdCondition}
-              ${queryCondition}
-        WHERE  cr.request_date >  '${startDate}'
-          AND  cr.request_date <= '${endDate}'
-          ${campaignIDCondition}
-        GROUP BY  cr.hour, cr.request_date
-      ), agg_fb AS (
-        SELECT fb.hour, fb.date,
-          ${selects.FACEBOOK}
-        FROM facebook fb
-          INNER JOIN campaigns c ON fb.campaign_id = c.id
-            AND c.traffic_source = 'facebook'
-            AND c.network = 'crossroads'
-            ${mediaBuyerCondition}
-            ${adAccountIdCondition}
-            ${queryCondition}
-        WHERE  fb.date >  '${startDate}'
-          AND  fb.date <= '${endDate}'
-          ${campaignIDCondition}
-        GROUP BY fb.hour, fb.date
-      ), agg_fbc AS (
-        SELECT fbc.hour, fbc.date,
-        ${selects.FACEBOOK_CONVERSIONS}
-        FROM fb_conversions fbc
-          INNER JOIN campaigns c ON fbc.campaign_id = c.id
-            AND c.traffic_source = 'facebook'
-            AND c.network = 'crossroads'
-            ${mediaBuyerCondition}
-            ${adAccountIdCondition}
-            ${queryCondition}
-        WHERE  fbc.date >  '${startDate}'
-          AND  fbc.date <= '${endDate}'
-          ${campaignIDCondition}
-        GROUP BY fbc.hour, fbc.date
-      )
-        SELECT
-          (CASE
-                WHEN agg_fb.date IS NOT null THEN agg_fb.date
-                WHEN agg_cr.date IS NOT null THEN agg_cr.date
-                WHEN agg_fbc.date IS NOT null THEN agg_fbc.date
-          END) as date,
-          (CASE
-              WHEN agg_fb.hour IS NOT null THEN agg_fb.hour
-              WHEN agg_cr.hour IS NOT null THEN agg_cr.hour
-              WHEN agg_fbc.hour IS NOT null THEN agg_fbc.hour
-          END) as hour,
-         ${selects.FACEBOOK_CROSSROADS}
-        FROM agg_cr
-        FULL OUTER JOIN agg_fb USING (hour, date)
-        FULL OUTER JOIN agg_fbc USING (hour, date)
-        GROUP BY agg_cr.hour, agg_fb.hour, agg_fbc.hour,
-                 agg_cr.date, agg_fb.date, agg_fbc.date
-  `);
+  query = `
+  WITH agg_cr AS (
+    SELECT cr.hour as cr_hour, cr.request_date as cr_date,
+     ${selects.CROSSROADS}
+    FROM crossroads_stats cr
+      INNER JOIN campaigns c ON cr.campaign_id = c.id
+          AND c.traffic_source = 'facebook'
+          --AND c.network = 'crossroads'
+          ${mediaBuyerCondition}
+          ${adAccountIdCondition}
+          ${queryCondition}
+    WHERE  cr.request_date >  '${startDate}'
+      AND  cr.request_date <= '${endDate}'
+      ${campaignIDCondition}
+    GROUP BY  cr.hour, cr.request_date
+  ), agg_fb AS (
+    SELECT fb.hour as fb_hour, fb.date as fb_date,
+      ${selects.FACEBOOK}
+    FROM facebook fb
+      INNER JOIN campaigns c ON fb.campaign_id = c.id
+        AND c.traffic_source = 'facebook'
+        --AND c.network = 'crossroads'
+        ${mediaBuyerCondition}
+        ${adAccountIdCondition}
+        ${queryCondition}
+    WHERE  fb.date >  '${startDate}'
+      AND  fb.date <= '${endDate}'
+      ${campaignIDCondition}
+    GROUP BY fb.hour, fb.date
+  ), agg_fbc AS (
+    SELECT pb.hour as fbc_hour, pb.date as fbc_date,
+    CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
+    CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
+    CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
+    MAX(pb.updated_at) as last_updated,
+    CAST(COUNT(distinct (CASE WHEN pb.event_type = 'lead' THEN fbclid END)) AS INTEGER) as pb_uniq_conversions
+    FROM postback_events pb
+      INNER JOIN campaigns c ON pb.campaign_id = c.id
+        AND c.traffic_source = 'facebook'
+        --AND c.network = 'crossroads'
+        ${mediaBuyerCondition}
+        ${adAccountIdCondition}
+        ${queryCondition}
+    WHERE  pb.date >  '${startDate}'
+      AND  pb.date <= '${endDate}'
+      ${campaignIDCondition}
+    GROUP BY pb.hour, pb.date
+  )
+  SELECT
+      (CASE
+            WHEN agg_fb.fb_date IS NOT null THEN agg_fb.fb_date
+            WHEN agg_cr.cr_date IS NOT null THEN agg_cr.cr_date
+            WHEN agg_fbc.fbc_date IS NOT null THEN agg_fbc.fbc_date
+      END) as date,
+      (CASE
+          WHEN agg_fb.fb_hour IS NOT null THEN agg_fb.fb_hour
+          WHEN agg_cr.cr_hour IS NOT null THEN agg_cr.cr_hour
+          WHEN agg_fbc.fbc_hour IS NOT null THEN agg_fbc.fbc_hour
+      END) as hour,
+     ${selects.FACEBOOK_CROSSROADS}
+  FROM agg_cr
+     FULL OUTER JOIN agg_fb ON agg_cr.cr_date = agg_fb.fb_date AND agg_cr.cr_hour = agg_fb.fb_hour
+     FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_date = agg_fb.fb_date AND agg_fbc.fbc_hour = agg_fb.fb_hour
+     GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour,
+              agg_cr.cr_date, agg_fb.fb_date, agg_fbc.fbc_date
+  `
+  return db.raw(query);
 }
 
 module.exports = hourlyMediaBuyerFacebookCrossroads;

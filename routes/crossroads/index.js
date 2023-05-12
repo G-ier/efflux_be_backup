@@ -21,6 +21,7 @@ route.get('/facebook/campaigns', async (req, res) => {
     const facebookCrossroads = await getCampaignsFacebookCrossroads(req.query);
     res.status(200).send(facebookCrossroads);
   } catch (err) {
+    console.log(err)
     res.status(500).json(err.message);
   }
 });
@@ -40,10 +41,12 @@ route.get('/google/campaigns', async (req, res) => {
  * @access Private
  */
 route.get('/facebook/campaign/hours', async (req, res) => {
+  console.log("Request Query", req.query)
   try {
     const data = await getFacebookHourlyData(req.query);
     res.status(200).json(data);
   } catch (err) {
+    console.log(err)
     res.status(500).json(err.message);
   }
 });

@@ -23,7 +23,12 @@ server.use(function (err, req, res, next) {
 });
 
 const port = process.env.PORT || 5000;
+const http_port = process.env.HTTP_PORT || 4999;
+
+app_htttp.listen(http_port, () =>
+  console.log(`🔥 -------- HTTP listening on port ${http_port} ---------- 🔥`)
+);
 
 app_htttps.listen(port, () =>
-  console.log(`🔥 -------- listening on port ${port} ---------- 🔥`)
+  console.log(`🔥 -------- HTTPS listening on port ${port} ---------- 🔥`)
 );

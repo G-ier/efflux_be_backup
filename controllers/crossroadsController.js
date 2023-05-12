@@ -28,6 +28,7 @@ async function getFacebookHourlyData(options) {
     account_id,
     q,
   );
+  return rows;
 
   return processHourlyData(rows);
 }
