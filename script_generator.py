@@ -7,7 +7,7 @@ def last_60_days():
         partition_name = day.strftime("%Y_%m_%d")
         date_start = day.strftime("%Y-%m-%d")
         date_stop = (day + timedelta(days=1)).strftime("%Y-%m-%d")
-        print(f"CREATE TABLE postback_events_partitioned_{partition_name} PARTITION OF postback_events_partitioned FOR VALUES FROM ('{date_start}') TO ('{date_stop}');")
+        print(f"CREATE TABLE facebook_partitioned_{partition_name} PARTITION OF facebook_partitioned FOR VALUES FROM ('{date_start}') TO ('{date_stop}');")
         # print(f"DROP TABLE postback_events_partitioned_{partition_name};")
 
 last_60_days()

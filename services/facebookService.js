@@ -185,7 +185,9 @@ async function addFacebookData(data, date) {
 
   if (removeIds.length) {
       const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({date}).del();
+      const removed_2 = await db("facebook_partitioned").whereIn("campaign_id", removeIds).andWhere({date}).del();
     console.info(`DELETED ${removed} rows on date ${date}`);
+    console.info(`DELETED ${removed_2} rows on date ${date}`);
   }
   // console.log('data', data)
   data = [... new Map(data.map(item => [item['campaign_id'] + item['ad_id'] + item['hour'], item])).values()]
@@ -193,6 +195,7 @@ async function addFacebookData(data, date) {
   const dataChunks = _.chunk(data, 500);
   for (const chunk of dataChunks) {
     await add("facebook", chunk);
+    await add("facebook_partitioned", chunk);
   }
 
   // await add("facebook", data);

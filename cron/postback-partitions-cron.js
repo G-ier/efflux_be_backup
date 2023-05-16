@@ -1,8 +1,6 @@
 const {CronJob} = require('cron');
 const Rules = require('../constants/cron');
-const { todayYMDHM, tomorrowYMD, someDaysAgoYMD, dayAfterTomorrowYMD } = require('../common/day')
-const db = require('../data/dbConfig');
-const { sendSlackNotification } = require("../services/slackNotificationService");
+const { updateTablePartitions } = require('./helpers');
 
 // For efficiency the table is a partitioned table.
 // The partitions are created in advance.
@@ -10,47 +8,12 @@ const { sendSlackNotification } = require("../services/slackNotificationService"
 // It always keeps the last 60 days of data.
 
 const updateTablePartitionsJob = new CronJob(
-  Rules.POSTBACK_PARTITIONS_DAILY,
-  updateTablePartitions,
+  Rules.PARTITIONS_DAILY,
+  updatePostbackPartitions,
 );
 
-async function updateTablePartitions() {
-  try {
-    console.log("Updating post back table partitions;");
-
-    const tomorrow = tomorrowYMD().replace(/-/g, '_')
-    const someDaysAgo = someDaysAgoYMD(60).replace(/-/g, '_')
-    const dayAfterTomorrow = dayAfterTomorrowYMD().replace(/-/g, '_')
-
-    if (false) {
-      console.log('Today', todayYMDHM().replace(/-/g, '_'));
-      console.log('Tomorrow', tomorrowYMD().replace(/-/g, '_'));
-      console.log('Day After Tomorrow', dayAfterTomorrowYMD().replace(/-/g, '_'));
-      console.log('Some days ago', someDaysAgoYMD(60).replace(/-/g, '_'));
-    }
-
-    // Create a new partition for tomorrow
-    let insertQuery = `
-      CREATE TABLE IF NOT EXISTS postback_events_partitioned_${tomorrow}
-      PARTITION OF postback_events_partitioned
-      FOR VALUES FROM ('${tomorrow}') TO ('${dayAfterTomorrow}');
-    `;
-    await db.raw(insertQuery);
-    console.log(`Created new partition for ${tomorrow}`);
-
-    // Drop the partition from 60 days ago
-    deleteQuery = `
-      DROP TABLE IF EXISTS postback_events_partitioned_${someDaysAgo};
-    `;
-    await db.raw(deleteQuery);
-    console.log(`Deleted old partition for ${someDaysAgo}`);
-
-    console.log("Finished updating post back table partitions;");
-
-  } catch(err) {
-    console.log("Error updating post back table partitions;", err);
-    await sendSlackNotification(`Error updating table partitions\nError: \n${err.toString()}`);
-  }
+async function updatePostbackPartitions() {
+  await updateTablePartitions('postback_events_partitioned')
 }
 
 function initializePostbackPartitionsCron() {
