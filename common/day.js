@@ -19,6 +19,11 @@ function tomorrowYMD(date, timeZone = 'America/Los_Angeles') {
   return m.add(1, 'days').format('YYYY-MM-DD');
 }
 
+function dayAfterTomorrowYMD(date, timeZone = 'America/Los_Angeles') {
+  const m = date ? moment(date) : moment().tz(timeZone);
+  return m.add(2, 'days').format('YYYY-MM-DD');
+}
+
 function todayYMDHM(timezone = 'America/Los_Angeles') {
   return moment().tz(timezone).format('YYYY-MM-DD HH:mm:ss');
 }
@@ -82,6 +87,7 @@ module.exports = {
   todayYMD,
   yesterdayYMD,
   tomorrowYMD,
+  dayAfterTomorrowYMD,
   todayYMDHM,
   todayHH,
   dayYMD,

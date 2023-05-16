@@ -13,6 +13,8 @@ const models = require('../../common/helpers');
 const {todayHH, todayYMD} = require("../../common/day");
 const PROVIDERS = require('../../constants/providers');
 const db = require('../../data/dbConfig');
+const { sendSlackNotification } = require("../../services/slackNotificationService")
+
 
 route.get('/system1', (req, res, next) => {
   postbackCtrl.trackSystem1(req).then((response) => {
@@ -42,7 +44,6 @@ route.get('/', async (req, res) => {
   const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
 
   console.log('POSTBACK CROSSROADS query', req.query)
-
   const {
     tg1,
     tg2, // campaign_id
@@ -102,12 +103,13 @@ route.get('/', async (req, res) => {
   if(!isEvent){
     console.log('add postback_events')
     await models.add('postback_events', pb_conversion )
+    await models.add('postback_events_partitioned', pb_conversion )
   }
   else {
     console.log('update postback_events')
     await models.update('postback_events',isEvent.id,  pb_conversion)
+    await models.update('postback_events_partitioned',isEvent.id,  pb_conversion)
   }
-
 
   const isConversion = eventType === 'Purchase'
 
@@ -164,7 +166,7 @@ route.get('/', async (req, res) => {
 
   } catch (err) {
     console.log(err);
-
+    sendSlackNotification(`Postback Update Error: ${err.message}`)
     Sentry.captureException(err);
     res.status(500).json(err.message);
   }

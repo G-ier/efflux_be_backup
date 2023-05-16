@@ -27,4 +27,5 @@ module.exports = {
   CF_REGULAR: process.env.CF_REGULAR || '*/15 * * * *',
   CF_MORNING_FILL: process.env.CF_REGULAR || '5 3 * * *',
   SYSTEM1_EVERY_5_MINUTES: process.env.SYSTEM1_EVERY_5_MINUTES || '2-59/5 * * * *',
+  POSTBACK_PARTITIONS_DAILY: '15 8 * * *',
 }

@@ -15,6 +15,8 @@ route.get('/',
 // Find the ad accounts belonging to a user and return them.
 route.get('/adAccounts',
   wrap(async (req, res) => {
+    console.log('req.user', req.user)
+    console.log('req.query', req.query)
     const {networks} = req.query;
     const adAccounts = await adAccountsController.getAdAccounts(req.user, networks);
     res.json(adAccounts);
@@ -23,6 +25,8 @@ route.get('/adAccounts',
 
 route.post('/adAccounts',
   wrap(async (req, res) => {
+    console.log('req.body', req.body)
+    console.log('req.user', req.user)
     const {id, updateData} = req.body;
     console.log('updateData', updateData, 'id', id, 'req.user', req.user)
     const {name, count} = await adAccountsController.updateAdAccount(req.user, {id}, updateData);

@@ -18,6 +18,7 @@ const { CROSSROADS_ACCOUNTS } = require('../../constants/crossroads');
 // @Access   Private
 route.get('/facebook/campaigns', async (req, res) => {
   try {
+    console.log("Request Query", req.query)
     const facebookCrossroads = await getCampaignsFacebookCrossroads(req.query);
     res.status(200).send(facebookCrossroads);
   } catch (err) {
@@ -41,8 +42,8 @@ route.get('/google/campaigns', async (req, res) => {
  * @access Private
  */
 route.get('/facebook/campaign/hours', async (req, res) => {
-  console.log("Request Query", req.query)
   try {
+    console.log("Request Query", req.query)
     const data = await getFacebookHourlyData(req.query);
     res.status(200).json(data);
   } catch (err) {

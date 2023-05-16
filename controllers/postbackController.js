@@ -4,6 +4,7 @@ const moment = require("moment-timezone");
 const db = require('../data/dbConfig');
 const md5 = require("md5");
 const { todayYMD, todayHH } = require('../common/day');
+const { sendSlackNotification } = require("../services/slackNotificationService")
 
 async function trackSystem1(req) {
   const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
@@ -83,50 +84,55 @@ console.log('useragent', userAgent)
   return { message: 'No click id or pixel id provided, please send a click id down and try again' }
 }
 
-
 async function trackSedo(req) {
-  console.log('SEDO POSTBACK')
-  const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const user_agent = req.headers['user-agent'];
-  const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
-  const ua = uaParser(user_agent);
-  console.log('req.query', req.query)
+  try {
+    console.log('SEDO POSTBACK')
+    const ip = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const user_agent = req.headers['user-agent'];
+    const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
+    const ua = uaParser(user_agent);
+    console.log('req.query', req.query)
 
-  const {
-    amount, sub1, sub2, sub3, kw, position, url
-  } = req.query;
+    const {
+      amount, sub1, sub2, sub3, kw, position, url
+    } = req.query;
 
+    const pb_event = {
+      referrer_url,
+      pb_value: amount,
+      event_type: "sedo_conversion",
+      date: todayYMD(),
+      hour: todayHH(),
+      ip,
+      device: ua.device.name,
+      os: `${ua.os.name} - ${ua.os.version}`,
+      browser: ua.browser.name,
+      campaign_id: sub1,
+      adset_id: sub3,
+      network: 'sedo',
+    }
 
-  await models.add('postback_events', {
-    referrer_url,
-    pb_value: amount,
-    event_type: "sedo_conversion",
-    date: todayYMD(),
-    hour: todayHH(),
-    ip,
-    device: ua.device.name,
-    os: `${ua.os.name} - ${ua.os.version}`,
-    browser: ua.browser.name,
-    campaign_id: sub1,
-    adset_id: sub3,
-    network: 'sedo',
-  })
+    await models.add('postback_events', pb_event)
+    await models.add('postback_events_partitioned', pb_event)
 
+    const conversionData = {
+      date: moment().tz(process.env.SEDO_TIMEZONE).format('YYYY-MM-DD'),
+      amount,
+      sub1,
+      sub2,
+      sub3,
+      kw,
+      position,
+      url
+    }
 
-  const conversionData = {
-    date: moment().tz(process.env.SEDO_TIMEZONE).format('YYYY-MM-DD'),
-    amount,
-    sub1,
-    sub2,
-    sub3,
-    kw,
-    position,
-    url
+    const [conversionId] = await models.add('sedo_conversions', conversionData);
+    console.log('SEDO EVENT', conversionId, conversionData);
+    return { message: 'No click id or pixel id provided, please send a click id down and try again' }
+  } catch (error) {
+    console.log('SEDO ERROR', error)
+    sendSlackNotification(`SEDO ERROR: ${error.message}`)
   }
-
-  const [conversionId] = await models.add('sedo_conversions', conversionData);
-  console.log('SEDO EVENT', conversionId, conversionData);
-  return { message: 'No click id or pixel id provided, please send a click id down and try again' }
 }
 
 module.exports = {

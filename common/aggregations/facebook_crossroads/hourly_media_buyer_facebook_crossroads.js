@@ -64,7 +64,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
     CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
     MAX(pb.updated_at) as last_updated,
     CAST(COUNT(distinct (CASE WHEN pb.event_type = 'lead' THEN fbclid END)) AS INTEGER) as pb_uniq_conversions
-    FROM postback_events pb
+    FROM postback_events_partitioned pb
       INNER JOIN campaigns c ON pb.campaign_id = c.id
         AND c.traffic_source = 'facebook'
         --AND c.network = 'crossroads'

@@ -84,6 +84,8 @@ async function updateFacebookInsights(date) {
     const adAccountsIdsMap = {};
     for (const account of accounts) {
 
+      console.log("User Account", account)
+
       //2 Get ad accounts  based user account id
       const adAccounts = await getAccountAdAccounts(account.id);
 

@@ -10,27 +10,37 @@ async function getAdAccounts(authUser, networks) {
   const {isAdmin, providerId} = authUser;
   let userId;
   if (!isAdmin) {
-    // Get the user making the request
+    console.log("Auth User is not admin")
+    // Get the user making the request if he is not admin
     const user = await usersService.getSingle({providerId}, ['id'])
     userId = user.id;
   }
 
+  console.log("User ID", userId)
+  console.log("Networks", networks)
+
   // Find the ad accounts belonging to the user and return them.
-  return await adAccountsService.getUserAdAccounts(userId, networks);
+  let ad_accounts = await adAccountsService.getUserAdAccounts(userId, networks);
+  console.log("Ad Accounts No:", ad_accounts.length)
+  return ad_accounts
 }
 
 async function updateAdAccount(authUser, filter, updateData) {
   const {isAdmin, providerId} = authUser;
+
+  // If the user is not admin filter by the user making the request
   if (!isAdmin) {
     console.log("Auth User is not admin")
     const user = await usersService.getSingle({providerId}, ['id'])
     filter.user_id = user.id;
   }
 
+  // If we're assigning a ad_account to the admin user, change the user_id to the admin user id
   if (updateData.user_id === 'admin') {
     console.log("Update Data User ID is admin")
     const user = await usersService.getSingle({nickname: 'admin'}, ['id'])
     updateData.user_id = user.id;
+  // If we're assigning a ad_account to a user, change the user_id to the user id
   } else if (updateData.user_id) {
     console.log("Update Data User ID is not admin")
     updateData.user_id = parseInt(updateData.user_id, 10);
