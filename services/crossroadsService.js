@@ -434,7 +434,8 @@ async function updateCrossroadsCampaigns(key) {
 
 function removeAccountData(account, request_date) {
   if (!request_date) return;
-  return db('crossroads').where({ account, request_date }).del();
+  db('crossroads').where({ account, request_date }).del();
+  return db('crossroads_partitioned').where({ account, request_date }).del();
 }
 
 function removeAccountConversions(account, request_date) {
@@ -503,6 +504,7 @@ async function updateCrossroadsData(account, request_date) {
     const aggregatedDataChunks = _.chunk(aggregatedData, 500);
     for (const chunk of aggregatedDataChunks) {
       await db('crossroads').insert(chunk);
+      await db('crossroads_partitioned').insert(chunk);
     }
     const clickChunks = _.chunk(clicks, 500);
     for (const chunk of clickChunks) {
@@ -514,7 +516,10 @@ async function updateCrossroadsData(account, request_date) {
       await db('crossroads_stats').insert(chunk);
     }
   } catch(err) {
-    await sendSlackNotification(`Crossroads Data Update\nError: \n${err.toString()}`);
+    console.log(err)
+    if (!err.status_code === 429 ) {
+      await sendSlackNotification(`Crossroads Data Update\nError: \n${err.toString()}`);
+    }
   }
 }
 

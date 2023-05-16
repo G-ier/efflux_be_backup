@@ -6,8 +6,8 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
   WITH agg_cr AS (
     SELECT cr.request_date as date,
     MAX(cr.created_at) as cr_last_updated,
-    ${selects.CROSSROADS}
-    FROM crossroads_stats cr
+    ${selects.CROSSROADS_PARTITIONED}
+    FROM crossroads_partitioned cr
       WHERE  cr.request_date >  '${startDate}'
       AND   cr.request_date <= '${endDate}'
       AND cr.traffic_source = 'facebook'

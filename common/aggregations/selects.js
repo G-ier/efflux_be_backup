@@ -27,6 +27,15 @@ module.exports = {
                CAST(SUM(cr.total_visitors) AS INTEGER) as visitors,
                CAST(SUM(cr.tracked_visitors) AS INTEGER) as tracked_visitors`,
 
+  CROSSROADS_PARTITIONED:  `CAST(ROUND(SUM(cr.total_revenue)::decimal, 2) AS FLOAT) as revenue,
+                            CAST(SUM(cr.total_searches) AS INTEGER) as searches,
+                            CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
+                            CAST(SUM(cr.total_revenue_clicks) AS INTEGER) as conversions,
+                            MAX(cr.updated_at) as last_updated,
+                            CAST(SUM(cr.total_visitors) AS INTEGER) as visitors,
+                            0 as uniq_conversions,
+                            CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors`,
+
   SYSTEM1: `CAST(SUM(s1.revenue)::decimal AS FLOAT) as revenue,
             CAST(SUM(s1.searches) AS INTEGER) as searches,
             CAST(SUM(s1.clicks) AS INTEGER) as conversions,

@@ -5,6 +5,7 @@ const Rules = require('../constants/cron');
 const { CROSSROADS_ACCOUNTS, todaySheetsArr, hourlySheetArr } = require('../constants/crossroads');
 const { updateCR_DaySpreadsheet, updateCR_TodaySpreadsheet, updateCR_HourlySpreadsheet } = require('../controllers/spreadsheetController');
 const { sheetsArr } = require('../constants/crossroads');
+const { updateTablePartitions } = require('./helpers');
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 
@@ -19,6 +20,7 @@ const updateCR_Sheet = async () => {
     await updateCR_HourlySpreadsheet(sheet);
   })
 }
+
 const crossroadsFinalDataCron = new CronJob(
   Rules.CR_DAILY,
   (async () => {
@@ -75,7 +77,17 @@ const crossroadsSixMinCron = new CronJob(
   }),
 );
 
+const updateCrossroadsPartitionsJob = new CronJob(
+  Rules.PARTITIONS_DAILY,
+  updateCrossroadsPartitions,
+);
+
+async function updateCrossroadsPartitions() {
+  await updateTablePartitions('crossroads_partitioned')
+}
+
 const initializeCRCron = () => {
+  updateCrossroadsPartitionsJob.start();
   if (!disableCron) {
     crossroadsFinalDataCron.start();
     crossroadsSixMinCron.start();
