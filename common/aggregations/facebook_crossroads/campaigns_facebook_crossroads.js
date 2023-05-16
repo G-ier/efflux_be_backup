@@ -17,8 +17,8 @@ function campaignsFacebookCrossroads(startDate, endDate, mediaBuyer, adAccount, 
   let query = `
   WITH agg_cr AS (
     SELECT cr.campaign_id,
-        ${selects.CROSSROADS}
-    FROM crossroads_stats cr
+        ${selects.CROSSROADS_PARTITIONED}
+    FROM crossroads_partitioned cr
       INNER JOIN campaigns c ON cr.campaign_id = c.id
         AND c.traffic_source = 'facebook'
         --AND c.network = 'crossroads'
