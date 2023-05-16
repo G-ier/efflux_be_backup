@@ -4,6 +4,7 @@ const Rules = require("../constants/cron");
 const { updateFacebookInsights, updateFacebookData} = require("../controllers/facebookController");
 const moment = require("moment-timezone");
 const {updatePB_Spreadsheet, updatePB_UnknownSpreadsheet} = require('../controllers/spreadsheetController');
+const { updateTablePartitions } = require("./helpers");
 
 const disableCron = process.env.DISABLE_CRON === "true";
 
@@ -25,7 +26,7 @@ async function updateFacebookInsightsJob(day) {
     date = dayBeforeYesterdayYMD(null, 'UTC');
     await updateFacebookInsights(date);
     // date = yesterdayYMD();
-  }  
+  }
   await updateFacebookData(todayYMD())
   updatePB_Spreadsheet()
   updatePB_UnknownSpreadsheet()
@@ -59,22 +60,30 @@ const facebookDataJob = new CronJob(
   Rules.FB_HOURLY,
   updateFacebookDataJob
 )
- 
+
+const facebookPartitionsJob = new CronJob(
+  Rules.PARTITIONS_DAILY,
+  updateFacebookPartitions
+)
+
+async function updateFacebookPartitions() {
+  await updateTablePartitions('facebook_partitioned')
+}
+
 const initializeFBCron = async () => {
-  // await updateFacebookInsightsJob('today') // for one time
-  // updatePB_Spreadsheet()
-  // updatePB_UnknownSpreadsheet()
-  // console.log('PST',moment().tz('America/Los_Angeles').format('YYYY-MM-DD HH:mm'))
+  // For efficiency the table is a partitioned table.
+  // The partitions are created in advance.
+  // This cron job updates the partitions.
+  // It always keeps the last 60 days of data.
+  facebookPartitionsJob.start();
+
+  // Update Facebook data every interval
   if (!disableCron) {
     newFacebookYesterdayCron.start();
     facebookInsisghtsJob.start();
     facebookAfterMidnight.start();
     facebookAfternoon.start();
   }
-
-  // DEBUG: uncomment to test immediately
-  // updateFacebookData('today').then(() => {console.log('debug done')});
-  // updateFacebookInsights(yesterdayYMD(null, 'UTC')).then(() => {console.log('debug done')});
 };
 
 module.exports = {

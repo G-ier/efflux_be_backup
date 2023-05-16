@@ -16,7 +16,7 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
       SELECT fb.date as fb_date,
       MAX(fb.created_at) as fb_last_updated,
       ${selects.FACEBOOK}
-      FROM facebook fb
+      FROM facebook_partitioned fb
       INNER JOIN campaigns c ON fb.campaign_id = c.id
         AND c.traffic_source = 'facebook'
         --AND c.network = 'crossroads'

@@ -32,7 +32,7 @@ function campaignsFacebookCrossroads(startDate, endDate, mediaBuyer, adAccount, 
       SELECT fb.campaign_id,
         MAX(c.name) as campaign_name,
         ${selects.FACEBOOK}
-      FROM facebook fb
+      FROM facebook_partitioned fb
         INNER JOIN campaigns c ON fb.campaign_id = c.id
           AND c.traffic_source = 'facebook'
           --AND c.network = 'crossroads'

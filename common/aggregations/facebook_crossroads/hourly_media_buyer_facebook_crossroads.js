@@ -46,7 +46,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
   ), agg_fb AS (
     SELECT fb.hour as fb_hour, fb.date as fb_date,
       ${selects.FACEBOOK}
-    FROM facebook fb
+    FROM facebook_partitioned fb
       INNER JOIN campaigns c ON fb.campaign_id = c.id
         AND c.traffic_source = 'facebook'
         --AND c.network = 'crossroads'
