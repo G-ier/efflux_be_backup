@@ -2,6 +2,8 @@ const {CronJob} = require('cron');
 const Rules = require('../constants/cron');
 const { updateTablePartitions } = require('./helpers');
 
+const disableCron = process.env.DISABLE_CRON === "true";
+
 // For efficiency the table is a partitioned table.
 // The partitions are created in advance.
 // This cron job updates the partitions.
@@ -17,7 +19,9 @@ async function updatePostbackPartitions() {
 }
 
 function initializePostbackPartitionsCron() {
-  updateTablePartitionsJob.start();
+  if (!disableCron) {
+    updateTablePartitionsJob.start();
+  }
 }
 
 module.exports = {initializePostbackPartitionsCron};

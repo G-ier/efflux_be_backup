@@ -36,7 +36,7 @@ route.post('/adAccounts',
 
 route.get('/pixels',
   wrap(async (req, res) => {
-    const pixels = await pixelsController.getPixels({column: "created_at", order: "DESC"});
+    const pixels = await pixelsController.getPixels(req.user, {column: "created_at", order: "DESC"});
     res.json(pixels);
   }),
 );

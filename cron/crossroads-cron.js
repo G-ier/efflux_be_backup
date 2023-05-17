@@ -87,8 +87,8 @@ async function updateCrossroadsPartitions() {
 }
 
 const initializeCRCron = () => {
-  updateCrossroadsPartitionsJob.start();
   if (!disableCron) {
+    updateCrossroadsPartitionsJob.start();
     crossroadsFinalDataCron.start();
     crossroadsSixMinCron.start();
     crossroadsAfterMidnight.start();

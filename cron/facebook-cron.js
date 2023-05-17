@@ -75,10 +75,10 @@ const initializeFBCron = async () => {
   // The partitions are created in advance.
   // This cron job updates the partitions.
   // It always keeps the last 60 days of data.
-  facebookPartitionsJob.start();
 
   // Update Facebook data every interval
   if (!disableCron) {
+    facebookPartitionsJob.start();
     newFacebookYesterdayCron.start();
     facebookInsisghtsJob.start();
     facebookAfterMidnight.start();

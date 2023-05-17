@@ -10,6 +10,16 @@ async function getAll(orderBy, fields = ["*"]) {
   return pixels;
 }
 
+async function getUserPixels(user_id, orderBy, fields = ["*"]) {
+  const pixels = await db.select("fb_pixels." + fields, {token: "fb_pixels.token", name: "fb_pixels.name", account_email: "user_accounts.email" })
+    .from("fb_pixels")
+    .leftOuterJoin("user_accounts", "fb_pixels.account_id", "user_accounts.id",)
+    .where('fb_pixels.user_id', user_id)
+    .orderBy("fb_pixels." + orderBy.column, orderBy.order);
+
+  return pixels;
+}
+
 async function getOne(pixel_id, fields = ["*"]) {
   return db.select(...fields).from("fb_pixels").where({ pixel_id }).first();
 }
@@ -87,4 +97,5 @@ module.exports = {
   update,
   deleteOne,
   updatePixels,
+  getUserPixels
 };

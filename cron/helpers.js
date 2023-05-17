@@ -45,5 +45,4 @@ async function updateTablePartitions(tablename) {
   }
 
 }
-updateTablePartitions('facebook_partitioned')
 module.exports = {updateTablePartitions};
