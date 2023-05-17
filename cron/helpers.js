@@ -10,9 +10,9 @@ async function updateTablePartitions(tablename) {
 
   try {
     console.log(`Updating ${tablename} table partitions;`);
-    const tomorrow = tomorrowYMD().replace(/-/g, '_')
-    const someDaysAgo = someDaysAgoYMD(60).replace(/-/g, '_')
-    const dayAfterTomorrow = dayAfterTomorrowYMD().replace(/-/g, '_')
+    const tomorrow = tomorrowYMD()
+    const someDaysAgo = someDaysAgoYMD(60)
+    const dayAfterTomorrow = dayAfterTomorrowYMD()
 
     if (false) {
       console.log('Today', todayYMDHM().replace(/-/g, '_'));
@@ -23,7 +23,7 @@ async function updateTablePartitions(tablename) {
 
     // Create a new partition for tomorrow
     let insertQuery = `
-      CREATE TABLE IF NOT EXISTS ${tablename}_${tomorrow}
+      CREATE TABLE IF NOT EXISTS ${tablename}_${tomorrow.replace(/-/g, '_')}
       PARTITION OF ${tablename}
       FOR VALUES FROM ('${tomorrow}') TO ('${dayAfterTomorrow}');
     `;
@@ -33,7 +33,7 @@ async function updateTablePartitions(tablename) {
 
     // Drop the partition from 60 days ago
     deleteQuery = `
-      DROP TABLE IF EXISTS ${tablename}_${someDaysAgo};
+      DROP TABLE IF EXISTS ${tablename}_${someDaysAgo.replace(/-/g, '_')};
     `;
     await db.raw(deleteQuery);
     console.log(`Deleted old partition for ${someDaysAgo}`);
@@ -45,5 +45,5 @@ async function updateTablePartitions(tablename) {
   }
 
 }
-
+updateTablePartitions('facebook_partitioned')
 module.exports = {updateTablePartitions};
