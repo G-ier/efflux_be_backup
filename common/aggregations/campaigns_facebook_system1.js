@@ -50,9 +50,9 @@ function campaignsFacebookSystem1(startDate, endDate, mediaBuyer, adAccount) {
           GROUP BY pb_s1.campaign_id
       )
       SELECT *
-      FROM agg_fb
-        FULL OUTER JOIN agg_s1 USING(campaign_id, campaign_name)
-        FULL OUTER JOIN agg_pb_s1 USING(campaign_id)
+      FROM agg_s1
+        INNER JOIN agg_fb USING(campaign_id, campaign_name)
+        INNER JOIN agg_pb_s1 USING(campaign_id)
       ORDER BY agg_fb.campaign_name ASC
   `);
 }

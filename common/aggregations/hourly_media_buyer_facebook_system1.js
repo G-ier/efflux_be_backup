@@ -86,13 +86,12 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
         END) as hour,
         ${selects.FACEBOOK_SYSTEM1}
       FROM agg_s1
-          FULL OUTER JOIN agg_fb ON agg_s1.s1_hour = agg_fb.fb_hour AND agg_s1.s1_date = agg_fb.fb_date
-          FULL OUTER JOIN agg_pb_s1 ON agg_s1.s1_hour = agg_pb_s1.pb_s1_hour AND agg_s1.s1_date = agg_pb_s1.pb_s1_date
+          INNER JOIN agg_fb ON agg_s1.s1_hour = agg_fb.fb_hour AND agg_s1.s1_date = agg_fb.fb_date
+          INNER JOIN agg_pb_s1 ON agg_s1.s1_hour = agg_pb_s1.pb_s1_hour AND agg_s1.s1_date = agg_pb_s1.pb_s1_date
       GROUP BY
           agg_s1.s1_hour, agg_fb.fb_hour, agg_pb_s1.pb_s1_hour,
           agg_s1.s1_date, agg_fb.fb_date, agg_pb_s1.pb_s1_date
   `
-  // console.log("s1 hourly query", query)
   return db.raw(query);
 }
 

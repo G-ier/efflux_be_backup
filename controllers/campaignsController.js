@@ -32,19 +32,18 @@ const aggregations = {
   },
 }
 
-async function getCampaignAgg(id, media_buyer) {
+async function getCampaignAgg(id, media_buyer, network) {
   const where = { id };
   if (media_buyer && media_buyer !== 'admin') {
     where.user_id = media_buyer
   }
-  console.log("where", where)
   // Find the campaign you're looking for
   const campaign = await db('campaigns').where(where).first();
   if (!campaign) {
     throw new Error(`Campaign ${id} not found`);
   }
-  const { network, traffic_source } = campaign;
-  const agg_key = ['crossroads', traffic_source].join('_');
+  const { traffic_source } = campaign;
+  const agg_key = [network, traffic_source].join('_');
   console.log("agg_key", agg_key)
   if (!aggregations[agg_key]) {
     throw new Error(`Unknown combination ${network} ${traffic_source}`)
@@ -53,25 +52,23 @@ async function getCampaignAgg(id, media_buyer) {
   return aggregations[agg_key];
 }
 
-async function getCampaignData(id, start_date, end_date, media_buyer) {
+async function getCampaignData(id, start_date, end_date, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { data: getCampaignData } = await getCampaignAgg(id, media_buyer);
+  const { data: getCampaignData } = await getCampaignAgg(id, media_buyer, network);
   const { rows } = await getCampaignData(id, startDate, endDate);
   return rows;
 }
 
-async function getCampaignDates(id, start_date, endDate, media_buyer) {
-  console.log("Get Campaign Dates")
+async function getCampaignDates(id, start_date, endDate, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
-  const { dates: getCampaignDatesData } = await getCampaignAgg(id, media_buyer);
+  const { dates: getCampaignDatesData } = await getCampaignAgg(id, media_buyer, network);
   const { rows } = await getCampaignDatesData(id, startDate, endDate);
-  console.log("Date Rows", rows)
   return processDateHoles(rows, startDate, endDate);
 }
 
-async function getCampaignHours(id, start_date, end_date, media_buyer) {
-  const { hours: getCampaignHoursData } = await getCampaignAgg(id, media_buyer);
+async function getCampaignHours(id, start_date, end_date, media_buyer, network) {
+  const { hours: getCampaignHoursData } = await getCampaignAgg(id, media_buyer, network);
   const { rows } = await getCampaignHoursData(
     start_date,
     end_date,
