@@ -39,77 +39,86 @@ route.get('/sedo', (req, res, next) => {
 // @desc     GET track
 // @Access   Private
 route.get('/', async (req, res) => {
-  const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-  const client_user_agent = req.headers['user-agent'];
-  const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
+  try {
+    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const client_user_agent = req.headers['user-agent'];
+    const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
 
-  console.log('POSTBACK CROSSROADS query', req.query)
-  const {
-    tg1,
-    tg2, // campaign_id
-    tg3: fbclid, // fbclid
-    tg5, // adset_id
-    tg6, // ad_id
-    tg7,
-    kwp,
-    src,
-    city,
-    state,
-    country,
-    zipcode,
-    eventType,
-    event_time,
-    running_direct,
-    test_event_code,
-    _: event_timestamp,
-  } = req.query;
+    console.log('POSTBACK CROSSROADS query', req.query)
+    const {
+      tg1,
+      tg2, // campaign_id
+      tg3: fbclid, // fbclid
+      tg5, // adset_id
+      tg6, // ad_id
+      tg7,
+      kwp,
+      src,
+      city,
+      state,
+      country,
+      zipcode,
+      eventType,
+      event_time,
+      running_direct,
+      test_event_code,
+      _: event_timestamp,
+    } = req.query;
 
-  const ua = parser(client_user_agent);
-  let traffic_source = 'unknown';
-  const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
-  const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
-  if(tg1?.includes('FB') || src?.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
-  else if(tg1?.includes('TT') || src?.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
-  // check event_timestamp exist
-  let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
-  const isEvent = false && await db('postback_events').where('event_id', '=', event_id).returning('id').first();
-  const pb_conversion = {
-    fbclid,
-    city,
-    state,
-    country,
-    zipcode,
-    event_timestamp,
-    running_direct: running_direct === 'true',
-    step,
-    referrer_url,
-    pb_value: value,
-    event_type: eventType,
-    date: todayYMD(),
-    hour: todayHH(),
-    ip: client_ip_address,
-    device: ua.device.name,
-    os: `${ua.os.name} - ${ua.os.version}`,
-    browser: ua.browser.name,
-    campaign_name: tg1,
-    campaign_id: tg2,
-    adset_id: tg5,
-    ad_id: tg6,
-    network: 'crossroads',
-    traffic_source,
-    kwp,
-    event_id
+    const ua = parser(client_user_agent);
+    let traffic_source = 'unknown';
+    const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
+    const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
+    if(tg1?.includes('FB') || src?.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
+    else if(tg1?.includes('TT') || src?.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
+    // check event_timestamp exist
+    let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
+    const isEvent = false && await db('postback_events').where('event_id', '=', event_id).returning('id').first();
+    const pb_conversion = {
+      fbclid,
+      city,
+      state,
+      country,
+      zipcode,
+      event_timestamp,
+      running_direct: running_direct === 'true',
+      step,
+      referrer_url,
+      pb_value: value,
+      event_type: eventType,
+      date: todayYMD(),
+      hour: todayHH(),
+      ip: client_ip_address,
+      device: ua.device.name,
+      os: `${ua.os.name} - ${ua.os.version}`,
+      browser: ua.browser.name,
+      campaign_name: tg1,
+      campaign_id: tg2,
+      adset_id: tg5,
+      ad_id: tg6,
+      network: 'crossroads',
+      traffic_source,
+      kwp,
+      event_id
+    }
+    if(!isEvent){
+      console.log('add postback_events')
+      await models.add('postback_events', pb_conversion )
+      await models.add('postback_events_partitioned', pb_conversion )
+    }
+    else {
+      console.log('update postback_events')
+      await models.update('postback_events',isEvent.id,  pb_conversion)
+      await models.update('postback_events_partitioned',isEvent.id,  pb_conversion)
+    }
   }
-  if(!isEvent){
-    console.log('add postback_events')
-    await models.add('postback_events', pb_conversion )
-    await models.add('postback_events_partitioned', pb_conversion )
+  catch (err) {
+    console.log('POSTBACK CROSSROADS ERROR', err)
+    sendSlackNotification(`Postback Update Error: ${err.message}`)
+    Sentry.captureException(err);
+    res.status(500).json(err.message);
   }
-  else {
-    console.log('update postback_events')
-    await models.update('postback_events',isEvent.id,  pb_conversion)
-    await models.update('postback_events_partitioned',isEvent.id,  pb_conversion)
-  }
+
 
   const isConversion = eventType === 'Purchase'
 
