@@ -12,8 +12,8 @@ router.get('/', async (req, res) => {
 
 router.get('/:id', async (req, res) => {
   try {
-    const { start_date, end_date, media_buyer } = req.query;
-    const data = await getCampaignData(req.params.id, start_date, end_date, media_buyer);
+    const { start_date, network, end_date, media_buyer } = req.query;
+    const data = await getCampaignData(req.params.id, start_date, end_date, media_buyer, network);
     res.json(data);
   } catch (err) {
     res.status(500).json(err.message);
@@ -31,14 +31,14 @@ router.delete('/', async (req, res) => {
 
 router.get('/:id/dates', async (req, res) => {
   try {
-    const { start_date, end_date, media_buyer } = req.query;
+    const { start_date, network, end_date, media_buyer } = req.query;
     if (!start_date) {
       return res.status(400).json('start_date query parameter is required');
     }
     if (!end_date) {
       return res.status(400).json('end_date query parameter is required');
     }
-    const data = await getCampaignDates(req.params.id, start_date, end_date, media_buyer);
+    const data = await getCampaignDates(req.params.id, start_date, end_date, media_buyer, network);
     res.json(data);
   } catch (err) {
     res.status(500).json(err.message);
@@ -47,8 +47,8 @@ router.get('/:id/dates', async (req, res) => {
 
 router.get('/:id/hours', async (req, res) => {
   try {
-    const { start_date, end_date, media_buyer } = req.query;
-    const data = await getCampaignHours(req.params.id, start_date, end_date, media_buyer);
+    const { start_date, network, end_date, media_buyer } = req.query;
+    const data = await getCampaignHours(req.params.id, start_date, end_date, media_buyer, network);
     res.json(data);
   } catch (err) {
     res.status(500).json(err.message);

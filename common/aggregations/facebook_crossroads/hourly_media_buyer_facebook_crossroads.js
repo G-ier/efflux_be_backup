@@ -89,7 +89,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       END) as hour,
      ${selects.FACEBOOK_CROSSROADS}
   FROM agg_cr
-     FULL OUTER JOIN agg_fb ON agg_cr.cr_date = agg_fb.fb_date AND agg_cr.cr_hour = agg_fb.fb_hour
+     INNER JOIN agg_fb ON agg_cr.cr_date = agg_fb.fb_date AND agg_cr.cr_hour = agg_fb.fb_hour
      FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_date = agg_fb.fb_date AND agg_fbc.fbc_hour = agg_fb.fb_hour
      GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour,
               agg_cr.cr_date, agg_fb.fb_date, agg_fbc.fbc_date

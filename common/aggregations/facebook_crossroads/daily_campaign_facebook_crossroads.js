@@ -35,8 +35,8 @@ const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
         GROUP BY pb.date
     )
   SELECT * FROM agg_cr
-    FULL OUTER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
-    FULL OUTER JOIN agg_fbc on agg_fbc.fbc_date = agg_cr.date
+    INNER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
+    INNER JOIN agg_fbc on agg_fbc.fbc_date = agg_cr.date
   ORDER BY agg_fb.date ASC
   `
   // console.log('query', query)

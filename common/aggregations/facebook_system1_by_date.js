@@ -42,12 +42,11 @@ const facebookSystem1ByDate = (startDate, endDate) => {
     END) as date,
     ${selects.FACEBOOK_SYSTEM1}
   FROM agg_s1
-    FULL OUTER JOIN agg_fb ON agg_s1.s1_date = agg_fb.fb_date
+    INNER JOIN agg_fb ON agg_s1.s1_date = agg_fb.fb_date
     FULL OUTER JOIN agg_pb_s1 ON agg_s1.s1_date = agg_pb_s1.pb_s1_date
   GROUP BY agg_fb.fb_date, agg_pb_s1.pb_s1_date, agg_s1.s1_date
   ORDER BY agg_fb.fb_date ASC
-  `
-  // console.log("facebook system1 by Date", query)
+  `;
   return db.raw(query);
 };
 

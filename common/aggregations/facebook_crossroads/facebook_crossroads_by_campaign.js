@@ -39,11 +39,11 @@ const facebookCrossroadsByCampaignId = (campaign_id, startDate, endDate) => {
         GROUP BY adsets.provider_id
     )
   SELECT * FROM agg_cr
-      FULL OUTER JOIN agg_fb USING (adset_id)
+      INNER JOIN agg_fb USING (adset_id)
+      INNER JOIN agg_adsets USING (adset_id)
       FULL OUTER JOIN agg_fbc USING (adset_id)
-      FULL OUTER JOIN agg_adsets USING (adset_id)
   `
-  console.log("Campaign Query", query);
+  // console.log("Campaign Query", query);
   return db.raw(query);
 
 };
