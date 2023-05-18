@@ -8,6 +8,12 @@ async function main() {
     const date = moment(conversion.created_at).tz('UTC').format('YYYY-MM-DD')
     await db('s1_conversions').where('id', conversion.id).update({date, hour})
   }
+  const s1_conversions_patitioned = await db.select('id', 'created_at').from('s1_conversions_partitioned').whereNull('hour')
+  for(const conversion of s1_conversions_patitioned) {
+    const hour = moment(conversion.created_at).tz('UTC').format('HH')
+    const date = moment(conversion.created_at).tz('UTC').format('YYYY-MM-DD')
+    await db('s1_conversions_partitioned').where('id', conversion.id).update({date, hour})
+  }
 }
 
 main().then(() => {

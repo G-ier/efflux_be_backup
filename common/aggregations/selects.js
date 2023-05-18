@@ -81,7 +81,7 @@ module.exports = {
                      CAST(SUM(agg_pb_s1.pb_searches) AS INTEGER) as pb_searches,
                      CAST(SUM(agg_pb_s1.pb_impressions) AS INTEGER) as pb_impressions,
                      CAST(SUM(agg_fb.link_clicks) AS INTEGER) as link_clicks,
-                     CAST(SUM(agg_fb.ts_conversions) AS INTEGER) as ts_conversions,
+                     CAST(SUM(agg_fb.fb_conversions) AS INTEGER) as fb_conversions,
                      CAST(SUM(agg_fb.impressions) AS INTEGER) as impressions`,
 
   PIXEL: `SUM(total_revenue) as revenue,
