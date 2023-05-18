@@ -33,7 +33,7 @@ async function trackSystem1(req) {
 
   const [campaign_id2, ad_id2, campaign_name2] = sub_id2.split('|');
   const ua = uaParser(userAgent);
-console.log('useragent', userAgent)
+  console.log('useragent', userAgent)
   const fbc = `fb.1.${moment()
     .tz('America/Los_Angeles')
     .unix()}.${fbclid}`;
@@ -76,6 +76,7 @@ console.log('useragent', userAgent)
       referrer_url,
     }
      const [conversionId] = await models.add('s1_conversions', conversionData);
+     await models.add('s1_conversions_partitioned ', conversionData);
      console.log('SYSTEM1 EVENT', conversionId, conversionData);
    }
    else {

@@ -5,6 +5,8 @@ const {
   updateSystem1Daily
 } = require('../services/system1Service');
 const {updateS1_Spreadsheet} = require('../controllers/spreadsheetController');
+const { updateTablePartitions } = require("./helpers");
+
 const disableCron = process.env.DISABLE_CRON === 'true';
 
 const updateSystem1DataHourlyJob = new CronJob(
@@ -22,17 +24,24 @@ const updateSystem1SheetJob = new CronJob(
   updateS1_Spreadsheet,
 );
 
+const system1PartitionsJob = new CronJob(
+  Rules.PARTITIONS_DAILY,
+  updateSystem1Partitions
+)
+
+async function updateSystem1Partitions() {
+  await updateTablePartitions('system1_partitioned')
+  await updateTablePartitions('s1_conversions_partitioned')
+}
+
+
 function initializeSystem1Cron() {
   if (!disableCron) {
+    system1PartitionsJob.start();
     updateSystem1DataHourlyJob.start();
     // updateSystem1DataDailyJob.start();
     updateSystem1SheetJob.start();
   }
-
-  // Debug Code
-  // updateSystem1Hourly().then(() => { console.log('SYSTEM1 HOURLY UPDATE DONE') });
-  // updateSystem1Daily().then(() => { console.log('SYSTEM1 DAILY UPDATE DONE') });
-  // updateSpreadsheet().then(() => { console.log('spreadsheet updated') });
 }
 
 module.exports = {initializeSystem1Cron};

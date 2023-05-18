@@ -73,6 +73,7 @@ async function updateData(data, date) {
 
   if (createArr.length) {
     const created = await db('system1').insert(createArr);
+    await db('system1_partitioned').insert(createArr);
     result.created = created.rowCount;
   }
 
@@ -80,6 +81,18 @@ async function updateData(data, date) {
     const updated = await Promise.all(
       updateArr.map(item => {
         return db('system1')
+          .where({sub_id: item.sub_id, date: item.date, hour: item.hour}).first()
+          .update({
+            revenue: item.revenue,
+            clicks: item.clicks,
+            searches: item.searches,
+            total_visitors: item.total_visitors,
+          }).returning('id')
+      })
+    );
+    await Promise.all(
+      updateArr.map(item => {
+        return db('system1_partitioned')
           .where({sub_id: item.sub_id, date: item.date, hour: item.hour}).first()
           .update({
             revenue: item.revenue,
@@ -158,7 +171,7 @@ function processSubId(sub_id) {
   }
 }
 
-async function updateSystem1Hourly(TELEMETRY=false) {
+async function updateSystem1Hourly(TELEMETRY=true) {
 
   // Retrieve the data from the API
   const apiData = await getHourlyData(2)
