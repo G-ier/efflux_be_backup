@@ -2,7 +2,7 @@ const _ = require('lodash');
 const axios = require('axios');
 const db = require('../data/dbConfig');
 const { CROSSROADS_URL } = require('../constants/crossroads');
-const { todayHH } = require('../common/day');
+const { todayHH, someDaysAgoYMD } = require('../common/day');
 const PROVIDERS = require("../constants/providers");
 const cr_conversionsFields = [
   'traffic_source',
@@ -432,10 +432,13 @@ async function updateCrossroadsCampaigns(key) {
     .merge()
 }
 
-function removeAccountData(account, request_date) {
+async function removeAccountData(account, request_date) {
   if (!request_date) return;
-  db('crossroads').where({ account, request_date }).del();
-  return db('crossroads_partitioned').where({ account, request_date }).del();
+  const cr_del = await db('crossroads').where({ account, request_date }).del().returning('id');
+  const cr_p_del = await db('crossroads_partitioned').where({ account, request_date }).del().returning('id');
+  console.log('Crossroads data deleted: ', cr_del.length);
+  console.log('Crossroads partitioned data deleted: ', cr_p_del.length);
+  return cr_del.length;
 }
 
 function removeAccountConversions(account, request_date) {
@@ -501,11 +504,17 @@ async function updateCrossroadsData(account, request_date) {
       .map(item => _.pick(item, cr_conversionsFields))
       .value()
 
+    let insrt_total = {cr: 0, cr_p: 0}
     const aggregatedDataChunks = _.chunk(aggregatedData, 500);
     for (const chunk of aggregatedDataChunks) {
-      await db('crossroads').insert(chunk);
-      await db('crossroads_partitioned').insert(chunk);
+      const cr = await db('crossroads').insert(chunk).returning('id');
+      insrt_total['cr'] += cr.length
+      let p_chunk = chunk.filter(item => item.date > someDaysAgoYMD(60))
+      const cr_p = await db('crossroads_partitioned').insert(p_chunk).returning('id');
+      insrt_total['cr_p'] += cr_p.length
     }
+    console.log('Crossroads data inserted: ', insrt_total);
+
     const clickChunks = _.chunk(clicks, 500);
     for (const chunk of clickChunks) {
       await db('cr_conversions').insert(chunk);
