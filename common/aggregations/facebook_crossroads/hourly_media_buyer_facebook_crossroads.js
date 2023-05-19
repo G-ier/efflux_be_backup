@@ -73,6 +73,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
         ${queryCondition}
     WHERE  pb.date >  '${startDate}'
       AND  pb.date <= '${endDate}'
+      AND pb.traffic_source = 'facebook'
       ${campaignIDCondition}
     GROUP BY pb.hour, pb.date
   )
@@ -94,7 +95,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
      GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour,
               agg_cr.cr_date, agg_fb.fb_date, agg_fbc.fbc_date
   `
-  // console.log(query);
+  // console.log("By hour",query);
   return db.raw(query);
 }
 

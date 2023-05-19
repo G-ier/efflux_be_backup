@@ -57,6 +57,7 @@ function campaignsFacebookCrossroads(startDate, endDate, mediaBuyer, adAccount, 
             ${adAccountCondition}
             ${queryCondition}
       WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}'
+      AND pb.traffic_source = 'facebook'
       GROUP BY pb.campaign_id
   )
   SELECT agg_cr.conversions as cr_conversions, agg_fb.*, agg_fbc.*, agg_cr.*

@@ -8,9 +8,11 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
     MAX(cr.created_at) as cr_last_updated,
     ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
+    INNER JOIN campaigns c ON cr.campaign_id = c.id
+      AND c.traffic_source = 'facebook'
       WHERE  cr.request_date >  '${startDate}'
       AND   cr.request_date <= '${endDate}'
-      AND cr.traffic_source = 'facebook'
+      --AND cr.traffic_source = 'facebook'
     GROUP BY  cr.request_date
   ), agg_fb AS (
       SELECT fb.date as fb_date,
@@ -32,6 +34,7 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
           --TO_CHAR(CURRENT_TIMESTAMP, 'dd/HH24:MI (TZ)') as sheet_last_update
         FROM postback_events_partitioned pb
         INNER JOIN campaigns c ON pb.campaign_id = c.id
+        AND c.traffic_source = 'facebook'
         WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}'
         AND pb.traffic_source = 'facebook'
       GROUP BY pb.date
@@ -47,12 +50,12 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
     MAX(cr_last_updated) as cr_last_updated,
     ${selects.FACEBOOK_CROSSROADS}
   FROM agg_cr
-    FULL OUTER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
+    INNER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
     FULL OUTER JOIN agg_fbc on agg_fbc.fbc_date = agg_cr.date
   GROUP BY agg_fb.fb_date, agg_fbc.fbc_date, agg_cr.date
   ORDER BY agg_cr.date ASC
   `
-  // console.log(query);
+  // console.log("By Date",query);
   return db.raw(query);
 };
 
