@@ -126,14 +126,15 @@ async function revokeGoogleToken(token) {
 }
 
 async function revokeFacebookToken(token, userId) {
-  await axios.delete(`${FB_API_URL}${userId}/permissions`, {
-    params: {
-      grant_type: 'fb_exchange_token',
-      client_id: process.env.FACEBOOK_APP_ID,
-      client_secret: process.env.FACEBOOK_APP_SECRET,
-      fb_exchange_token: token,
-    }
-  })
+  try {
+    await axios.delete(`${FB_API_URL}${userId}/permissions`, {
+      params: {
+        access_token: token,
+      }
+    })
+  } catch (err) {
+    console.error('Error revoking facebook token', err);
+  }
 }
 
 module.exports = {

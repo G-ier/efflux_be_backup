@@ -236,6 +236,8 @@ async function deleteAccount(accountId) {
       await redis.del(`GOOGLE_ACCESS_TOKEN_${account.provider_id}`);
       break;
   }
+  await db("fb_pixels").where("account_id", account.id).del();
+  await db("adsets").where("account_id", account.id).del();
   await db("campaigns").where("account_id", account.id).del();
   await db("ad_accounts").where("account_id", account.id).del();
   const count = await db("user_accounts").where("id", account.id).del();
