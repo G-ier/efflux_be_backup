@@ -21,17 +21,25 @@ const outbrainService = require("../services/outbrainService");
  * @returns {Promise<Object>}
  */
 async function addFacebookAccount(auth0user, account_details) {
+
+  // Retrieve auth0 and provider id from user making the request.
   const [auth0, providerId] = auth0user.sub.split("|");
+
+  // Find the user in our database thru the provider id.
   const { id: user_id } = await db("users").where({ provider: "auth0", providerId }).first();
 
+  // Destructure the account details from the request body.
   const { name, email, provider, providerId: provider_id, imageUrl: image_url, accessToken } = account_details;
 
+  // Check if the account already exists in our database.
   const exists = await db("user_accounts").where({ provider, provider_id }).first();
 
+  // If it does, return the account and created false.
   if (exists) {
     return { account: exists, created: false };
   }
 
+  // Otherwise, add the account to our database.
   const [account_id] = await models.add("user_accounts", {
     name,
     email,
@@ -42,10 +50,14 @@ async function addFacebookAccount(auth0user, account_details) {
     user_id,
   });
 
+  // Get the long-lived token from Facebook.
   const token = await getFacebookLongToken(accessToken);
   await db("user_accounts").where({ id: account_id }).update({ token });
 
+  // Get the user account from our database.
   const account = await db("user_accounts").where({ id: account_id }).first();
+
+  // Return the account and created true.
   return { account, created: true };
 }
 

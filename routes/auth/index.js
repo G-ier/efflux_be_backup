@@ -4,19 +4,21 @@ const authController = require("../../controllers/authController");
 // @route /api/auth/add_oauth_account
 route.post("/add_facebook_account", async (req, res) => {
   try {
+    console.log("Req user", req.user)
+    console.log("Req body", req.body)
     const { account, created } = await authController.addFacebookAccount(req.user, req.body);
     if (created) {
       res.status(200).json({
-        message: `Successfully added account for ${account.name}`
+        message: `Successfully added account for ${account.name} | ${process.env.FACEBOOK_APP_ID}`
       });
     } else {
       res.status(200).json({
-        message: `Account already exists for ${account.name}`
+        message: `Account already exists for ${account.name} |  ${process.env.FACEBOOK_APP_ID}`
       });
     }
   } catch (error) {
     console.log(error.message);
-    res.status(500).json({ message: error.message, error });
+    res.status(500).json({ message: error.message +  process.env.FACEBOOK_APP_ID, error });
   }
 });
 
