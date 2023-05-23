@@ -124,7 +124,10 @@ async function processClickflareLogs(logs) {
   return logs.map((log) => {
     let obj = {}
     Object.entries(log).forEach(([key, value]) => {
-      obj[processKey(key)] = value
+      let processed_key = processKey(key)
+      if (!processed_key === 'postbacks_executed' && !processed_key === 'postbacks') {
+        obj[processed_key] = value
+      }
     })
     return obj
   })
@@ -143,15 +146,17 @@ function overWriteData(){
     `).then(result => {
         resolve(result.rowCount);
       })
-    }); 
+    });
 }
 
 async function updateClickflareData(startDate, endDate, timezone) {
 
   console.log('start getAvailableFields')
   const availableFields = await getAvailableFields();
-  const metrics = await mapAvailableFields(availableFields);
-
+  console.log('end getAvailableFields', availableFields)
+  let metrics = await mapAvailableFields(availableFields);
+  metrics = metrics.filter(metric => metric !== 'PostbacksExecuted');
+  console.log('metrics', metrics)
   const clickflareData = await getclickflareData(startDate, endDate, timezone, metrics);
   let clickflareLogs = await processClickflareLogs(clickflareData);
 
