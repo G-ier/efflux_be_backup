@@ -16,7 +16,7 @@ async function getUserAccounts(provider) {
     .table('user_accounts')
     .leftJoin('ad_accounts', 'user_accounts.id', 'ad_accounts.account_id')
     .where('user_accounts.provider', provider)
-    .whereIn('user_accounts.id', [20])
+    .whereIn('user_accounts.id', [20, 28, 30])
     .andWhereNot({token: null});
 
   return _(userAccounts)
