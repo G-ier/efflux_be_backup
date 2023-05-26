@@ -5,6 +5,9 @@ const {
 } = require("./constants/facebook");
 const axios = require("axios");
 const { findBy, update } = require('./common/models');
+const { sendSlackNotification } = require('./services/slackNotificationService');
+const db = require('./data/dbConfig');
+const { getUserAccounts } = require("./services/userAccountsService");
 
 let meta_app_id = "1296811510855303" // the id of the app in facebook
 let meta_business_id = "666218791274626" // the id of the business in facebook
@@ -12,9 +15,40 @@ let meta_business_id = "666218791274626" // the id of the business in facebook
 let provider_id = "129446380142398" // id we store on the database
 let unassigned_ad_account_id = "act_583331620511731"  // unassigned ad account id
 let assigned_ad_account_id = "act_920802729340280" // assigned ad account id
-let token = "EAASbcXVx9ocBAIl7HRucZBWG8ZBJ4OZCGxd7mVtmzFIXf9AdxN6VqdeLKAVoZAZC0Vo759LZAP8AbTSGDoRHlNcBHjz3PBPTDvK5jdRtoj8Sh4sD86SSPKVKIFKnHce95OEVGtQwkZBqiNO9c3TrRouPZAEfMYckliBDxp5exCgSTk8aSkbiN2Aw"
+let token = "EAADPDa6rZBb8BAM2uKNXyMANKFc1O8Lw0hVpU6tbFMq2lZCXmBqopZCCajCLR3czLNZA4Czz6Ev0tOZCqPnsx1BcbSGJXcVK2G69RLk6ixrx4kGmYUDFNf9vDoNB6cjwV8n6ly43IsU4yM2YYW8BhRKPU5flzm0WnpYKKNuvDlQZDZD"
 let admin_provider_id = "10159474937571818"
 let admin_token = "EAASbcXVx9ocBAAIS2HukVYXyEoI8cU18OWYjuG7u5LUS9gXtcDmPWYQafUXH92kFFMYDQHcUDPKw1K3vqHnWo9ggcA23NnwhGYmTEAxLmUjzS9adKMZB8OmHA0n1oIvTkwCoWJ9QnlrEupBNvVLZCTiNTkM4FRf48gveotuQZDZD"
+
+async function debug_token(admin_token, access_token) {
+  const url = `${FB_API_URL}debug_token?access_token=${admin_token}&input_token=${access_token}`;
+  try {
+    const response = await axios.get(url);
+    const res = response.data.data;
+
+    if (res.is_valid) {
+      const provider_id = res.user_id;
+      let username = await db.raw(`
+        SELECT name FROM user_accounts WHERE provider_id = '${provider_id}';
+      `)
+      username = username.rows[0].name;
+      const diffTime = Math.abs(new Date() - new Date(res.expires_at * 1000));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      console.log("Token expires in", diffDays, "days");
+      if (diffDays < 4) {
+        console.log("Token is about to expire, please refresh it");
+      }
+      return [username, res.is_valid];
+    } else {
+      console.log("Token is not valid");
+      return ['', false];
+    }
+
+  }
+  catch (err) {
+    console.info("ERROR GETTING OWNED AD ACCOUNTS", err.response?.data.error || err);
+    return null;
+  }
+}
 
 async function get_owned_ad_account(access_token, ad_account_id, business_id) {
 
@@ -175,12 +209,6 @@ async function get_user_permissions(user_id, access_token) {
   }
 }
 
-// get_user_business_id(admin_token, provider_id, true)
-// get_user_permissions(provider_id, token)
-getAdAccounts(provider_id, token)
-// get_bussines_users(meta_business_id, admin_token)
-// invite_user_to_bussines(meta_business_id, admin_token, "patrick@digittopia.com")
-
 async function assign__() {
 
   // const data = await get_owned_ad_account(admin_token, unassigned_ad_account_id, meta_business_id)
@@ -196,4 +224,35 @@ async function assign__() {
 
 }
 
+async function fbInsightPrototype() {
+
+  //1 Get user accounts related to facebook.
+  const accounts = await getUserAccounts('facebook');
+  let accountValidity = {}
+
+  // 2 Check if the accounts are valid
+  for (const account of accounts) {
+    let [username, isValid] = await debug_token(account.token, account.token)
+    accountValidity[account.id] = isValid
+  }
+
+  // 3 If no accounts are valid, return
+  if (Object.values(accountValidity).every(val => val !== true)) {
+    console.log("Not all accounts are valid")
+    return
+  }
+
+  // 4 Get the acount that will do the fetching
+  const validAccount = accounts.filter(account => accountValidity[account.id] === true)[0]
+
+
+
+}
+// get_user_business_id(admin_token, provider_id, true)
+// get_user_permissions(provider_id, token)
+// getAdAccounts(provider_id, token)
+// get_bussines_users(meta_business_id, admin_token)
+// invite_user_to_bussines(meta_business_id, admin_token, "patrick@digittopia.com")
+// debug_token(admin_token, admin_token)
+fbInsightPrototype()
 // assign__()

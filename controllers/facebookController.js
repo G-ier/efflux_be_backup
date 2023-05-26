@@ -14,7 +14,8 @@ const {
   addFacebookDataByDay,
   getAdsets,
   getFacebookPixels,
-  getAdAccountsTodaySpent
+  getAdAccountsTodaySpent,
+  debugToken
 } = require("../services/facebookService");
 const { updatePixels } = require("../services/pixelsService.js");
 const { sendSlackNotification } = require("../services/slackNotificationService");
@@ -22,50 +23,67 @@ const { sendSlackNotification } = require("../services/slackNotificationService"
 async function updateFacebookData(date) {
   try {
     console.log('START UPDATING FACEBOOK DATA')
-    // Get user accounts related to facebook from user_accounts table
+
+    //1 Get user accounts related to facebook.
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
 
-    // Get ad accounts from facebook
+    let accountValidity = {}
+
+    // 2 Check if the accounts are valid
     for (const account of accounts) {
-
-      // Get ad accounts from facebook linked to user account
-      const fbAdAccounts = await getAdAccounts(account.provider_id, account.token);
-
-      // Update ad_accounts table in database
-      const processedAdAccounts = processFacebookAdAccounts(account, fbAdAccounts);
-      const adAccounts = await updateAdAccounts(account, processedAdAccounts);
-
-      const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
-      const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
-
-      // Retrieve facebook pixels related to ad account ids from facebook
-      let pixels = await getFacebookPixels(account.token, adAccountsIds);
-      pixels = _.uniqBy(pixels, 'id')
-      // Update pixels table in database
-      const processedPixels = await processFacebookPixels(pixels, adAccountsMap, account.id);
-      const pixelIds = processedPixels.map(item => item.pixel_id);
-      await updatePixels(processedPixels, pixelIds);
-
-      // Retrieve facebook campaigns related to ad account ids from facebook
-      const adCampaigns = await getAdCampaigns(account.token, adAccountsIds, date);
-      console.log('CAMPAIGNS length', adCampaigns.length);
-      // Update campaigns table in database
-      const processedAdCampaigns = processFacebookCampaigns(account.id, adCampaigns, adAccountsMap);
-      const campaignChunks = _.chunk(processedAdCampaigns, 100)
-      for(const chunk of campaignChunks) {
-        await updateCampaigns(chunk, PROVIDERS.FACEBOOK);
-      }
-
-      // Retrieve facebook adsets related to ad account ids from facebook
-      const adsets = await getAdsets(account.token, adAccountsIds, date);
-      console.log('ADSETS length', adsets.length);
-      // Update adsets table in database
-      const processedAdsets = processFacebookAdsets(account.id, adsets, adAccountsMap);
-      const adsetsChunks = _.chunk(processedAdsets, 100)
-      for(const chunk of adsetsChunks) {
-        await updateAdsets(chunk, PROVIDERS.FACEBOOK);
-      }
+      let [username, isValid] = await debugToken(account.token, account.token)
+      accountValidity[account.id] = isValid
     }
+
+    // 3 If no accounts are valid, return
+    if (Object.values(accountValidity).every(val => val !== true)) {
+      await sendSlackNotification(`Facebook Insight Fetching: All accounts are invalid`);
+      return
+    }
+
+    // 4 Get the acount that will do the fetching
+    const account = accounts.filter(account => accountValidity[account.id] === true)[0]
+
+    console.log("Fetching with account", account)
+
+    // Get ad accounts from facebook linked to user account
+    const fbAdAccounts = await getAdAccounts(account.provider_id, account.token);
+
+    // Update ad_accounts table in database
+    const processedAdAccounts = processFacebookAdAccounts(account, fbAdAccounts);
+    const adAccounts = await updateAdAccounts(account, processedAdAccounts);
+
+    const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
+    const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
+
+    // Retrieve facebook pixels related to ad account ids from facebook
+    let pixels = await getFacebookPixels(account.token, adAccountsIds);
+    pixels = _.uniqBy(pixels, 'id')
+    // Update pixels table in database
+    const processedPixels = await processFacebookPixels(pixels, adAccountsMap, account.id);
+    const pixelIds = processedPixels.map(item => item.pixel_id);
+    await updatePixels(processedPixels, pixelIds);
+
+    // Retrieve facebook campaigns related to ad account ids from facebook
+    const adCampaigns = await getAdCampaigns(account.token, adAccountsIds, date);
+    console.log('CAMPAIGNS length', adCampaigns.length);
+    // Update campaigns table in database
+    const processedAdCampaigns = processFacebookCampaigns(account.id, adCampaigns, adAccountsMap);
+    const campaignChunks = _.chunk(processedAdCampaigns, 100)
+    for(const chunk of campaignChunks) {
+      await updateCampaigns(chunk, PROVIDERS.FACEBOOK);
+    }
+
+    // Retrieve facebook adsets related to ad account ids from facebook
+    const adsets = await getAdsets(account.token, adAccountsIds, date);
+    console.log('ADSETS length', adsets.length);
+    // Update adsets table in database
+    const processedAdsets = processFacebookAdsets(account.id, adsets, adAccountsMap);
+    const adsetsChunks = _.chunk(processedAdsets, 100)
+    for(const chunk of adsetsChunks) {
+      await updateAdsets(chunk, PROVIDERS.FACEBOOK);
+    }
+
     console.log('FINISH UPDATING FACEBOOK DATA')
   } catch (e) {
     await sendSlackNotification(`Facebook Data Update\nError: \n${e.toString()}`);
@@ -75,37 +93,55 @@ async function updateFacebookData(date) {
 
 async function updateFacebookInsights(date) {
   try {
+
     console.log('START UPDATING FACEBOOK INSIGHTS')
+
     //1 Get user accounts related to facebook.
     const accounts = await getUserAccounts(PROVIDERS.FACEBOOK);
+
+    let accountValidity = {}
+
+    // 2 Check if the accounts are valid
+    for (const account of accounts) {
+      let [username, isValid] = await debugToken(account.token, account.token)
+      accountValidity[account.id] = isValid
+    }
+
+    // 3 If no accounts are valid, return
+    if (Object.values(accountValidity).every(val => val !== true)) {
+      await sendSlackNotification(`Facebook Insight Fetching: All accounts are invalid`);
+      return
+    }
+
+    // 4 Get the acount that will do the fetching
+    const account = accounts.filter(account => accountValidity[account.id] === true)[0]
 
     const facebookInsights = [];
     const facebookInsightsByDay = [];
     const adAccountsIdsMap = {};
-    for (const account of accounts) {
 
-      console.log("User Account", account)
+    console.log("User Account", account)
 
-      //2 Get ad accounts  based user account id
-      const adAccounts = await getAccountAdAccounts(account.id);
+    //2 Get ad accounts  based user account id
+    const adAccounts = await getAccountAdAccounts(account.id);
 
-      // Create a dict of provider_id: id from ad accounts
-      adAccounts.forEach((item) => {
-        adAccountsIdsMap[item.provider_id] = item.id;
-      });
-      // provider_id: ad_account value from db
-      const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
-      // a list of act_{provider_id} strings
-      const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
+    // Create a dict of provider_id: id from ad accounts
+    adAccounts.forEach((item) => {
+      adAccountsIdsMap[item.provider_id] = item.id;
+    });
+    // provider_id: ad_account value from db
+    const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
+    // a list of act_{provider_id} strings
+    const adAccountsIds = Object.keys(adAccountsMap).map((provider_id) => `act_${provider_id}`);
 
-      // Retrieve data for all the ad accounts from facebook api
-      const accountInsights = await getAdInsights(account.token, adAccountsIds, date);
-      facebookInsights.push(...accountInsights);
+    // Retrieve data for all the ad accounts from facebook api
+    const accountInsights = await getAdInsights(account.token, adAccountsIds, date);
+    facebookInsights.push(...accountInsights);
 
-      // get facebook_conversion data
-      const accountInsightsByDay = await getAdInsightsByDay(account.token, adAccountsIds, date);
-      facebookInsightsByDay.push(...accountInsightsByDay);
-    }
+    // get facebook_conversion data
+    const accountInsightsByDay = await getAdInsightsByDay(account.token, adAccountsIds, date);
+    facebookInsightsByDay.push(...accountInsightsByDay);
+
     // Processing the insight for the database.
     const processedInsights = processFacebookInsights(facebookInsights, date)
     await addFacebookData(processedInsights, date);

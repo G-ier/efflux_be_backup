@@ -5,6 +5,41 @@ const {ServiceUnavailable} = require('http-errors');
 const db = require("../data/dbConfig");
 const {FB_API_URL, fieldsFilter, delay} = require("../constants/facebook");
 const {add} = require("../common/models");
+const { sendSlackNotification } = require('./slackNotificationService');
+
+async function debugToken(admin_token, access_token) {
+  const url = `${FB_API_URL}debug_token?access_token=${admin_token}&input_token=${access_token}`;
+  try {
+    const response = await axios.get(url);
+    const res = response.data.data;
+
+    if (res.is_valid) {
+      const diffTime = Math.abs(new Date() - new Date(res.expires_at * 1000));
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      console.log("Token expires in", diffDays, "days");
+
+      const provider_id = res.user_id;
+      let username = await db.raw(`
+        SELECT name FROM user_accounts WHERE provider_id = '${provider_id}';
+      `)
+
+      username = username.rows[0].name;
+
+      if (diffDays < 4) {
+
+        await sendSlackNotification(`Facebook API Token of user ${username} is about to expire in ${diffDays} days, please refresh it.`);
+      }
+      return [username, res.is_valid];
+    } else {
+      console.log("Token is not valid");
+      return ['', false];
+    }
+  }
+  catch (err) {
+    console.info("ERROR GETTING OWNED AD ACCOUNTS", err.response?.data.error || err);
+    return null;
+  }
+}
 
 async function getAdAccount(adAccountId, token) {
   const url = `${FB_API_URL}act_${adAccountId}?access_token=${token}&fields=${fieldsFilter}`;
@@ -314,4 +349,5 @@ module.exports = {
   getAdCampaignIds,
   getFacebookPixels,
   getAdAccountsTodaySpent,
+  debugToken
 };
