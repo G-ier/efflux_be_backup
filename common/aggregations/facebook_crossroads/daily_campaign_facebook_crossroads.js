@@ -3,6 +3,22 @@ const {threeDaysAgoYMD} = require("../../day");
 const selects = require("../selects");
 
 const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
+
+  `
+  Summary:
+    Gets the data from crossroads, facebook and postback_events tables for a specific campaign
+    queries by campaign_id and date and aggregates it by date.
+
+  Params:
+    campaign_id: the campaign id
+    startDate: the start date of the data
+    endDate: the end date of the data
+  Returns:
+    the aggregated data for that timespan of the 3 tables
+    for a specific campaign
+    for a timespan
+  `
+
   query = `
   WITH agg_cr AS (
     SELECT cr.request_date as date,
@@ -35,7 +51,7 @@ const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
         GROUP BY pb.date
     )
   SELECT * FROM agg_cr
-    INNER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
+    FULL OUTER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
     FULL OUTER JOIN agg_fbc on agg_fbc.fbc_date = agg_cr.date
   ORDER BY agg_fb.date ASC
   `

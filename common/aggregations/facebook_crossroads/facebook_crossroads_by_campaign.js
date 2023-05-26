@@ -2,6 +2,20 @@ const db = require('../../../data/dbConfig');
 const selects = require("../selects");
 
 const facebookCrossroadsByCampaignId = (campaign_id, startDate, endDate) => {
+  `
+  Summary:
+    Gets the data from crossroads, facebook and postback_events tables for a specific campaign
+    queries by campaign_id and date and aggregates it by adset_id.
+
+  Params:
+    campaign_id: the campaign id
+    startDate: the start date of the data
+    endDate: the end date of the data
+  Returns:
+    the aggregated data for that timespan of the 3 tables
+    for a specific campaign
+  `
+
   query = `
   WITH agg_cr AS (
     SELECT adset_id,
@@ -39,8 +53,8 @@ const facebookCrossroadsByCampaignId = (campaign_id, startDate, endDate) => {
         GROUP BY adsets.provider_id
     )
   SELECT * FROM agg_cr
-      INNER JOIN agg_fb USING (adset_id)
-      INNER JOIN agg_adsets USING (adset_id)
+      FULL OUTER JOIN agg_fb USING (adset_id)
+      FULL OUTER JOIN agg_adsets USING (adset_id)
       FULL OUTER JOIN agg_fbc USING (adset_id)
   `
   // console.log("Campaign Query", query);

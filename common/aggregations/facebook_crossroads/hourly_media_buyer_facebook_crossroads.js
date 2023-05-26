@@ -3,7 +3,26 @@ const { dayYMD, yesterdayYMD } = require('../../day');
 const selects = require("../selects");
 
 function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, campaignId, adAccountId, q) {
-  // TODO Find the way to enable mediaBuyer filter. Prefix is not an option (crossroads) Probably we need to attach mediaBuyerId to data entry
+  `
+  Summary:
+    Gets the data from crossroads, facebook and postback_events tables
+    , queries by date and aggreagates it by date and hour.
+
+    The problem i think it's worth noting for both 1/ and /3 is the date aggregations. When i aggregate by hour in facebook, hour is on the ad
+    account time zone while date in utc, which is a incogruency inside facebook data. Other than this we join this grouping with crossroads
+    and postback data which are in PST. And the start and end date is in the perspective of PST.
+
+  Params:
+    startDate: the start date of the data
+    endDate: the end date of the data
+    mediaBuyer (optional): the media buyer id
+    campaignId (optional): the campaign id
+    adAccountId (optional): the ad account id
+    q (optional): the search query
+
+  Returns:
+    the aggregated data for that timespan of the 3 tables
+  `
 
   const campaignIDCondition = campaignId
     ? `AND campaign_id = '${campaignId}'`
@@ -33,26 +52,32 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
     SELECT cr.hour as cr_hour, cr.request_date as cr_date,
         ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
-      INNER JOIN campaigns c ON cr.campaign_id = c.id
-          AND c.traffic_source = 'facebook'
-          --AND c.network = 'crossroads'
-          ${mediaBuyerCondition}
-          ${adAccountIdCondition}
-          ${queryCondition}
+    ${
+      (mediaBuyerCondition !== '' || adAccountIdCondition !== '' || queryCondition !== '')
+        ? `INNER JOIN campaigns c ON cr.campaign_id = c.id`
+        : ''
+    }
+      ${mediaBuyerCondition}
+      ${adAccountIdCondition}
+      ${queryCondition}
     WHERE  cr.request_date >  '${startDate}'
       AND  cr.request_date <= '${endDate}'
+      AND  cr.traffic_source = 'facebook'
       ${campaignIDCondition}
     GROUP BY  cr.hour, cr.request_date
   ), agg_fb AS (
     SELECT fb.hour as fb_hour, fb.date as fb_date,
       ${selects.FACEBOOK}
     FROM facebook_partitioned fb
-      INNER JOIN campaigns c ON fb.campaign_id = c.id
-        AND c.traffic_source = 'facebook'
-        --AND c.network = 'crossroads'
-        ${mediaBuyerCondition}
-        ${adAccountIdCondition}
-        ${queryCondition}
+      ${
+        (mediaBuyerCondition !== '' || adAccountIdCondition !== '' || queryCondition !== '')
+          ? `INNER JOIN campaigns c ON fb.campaign_id = c.id
+              AND c.traffic_source = 'facebook'`
+          : ''
+      }
+      ${mediaBuyerCondition}
+      ${adAccountIdCondition}
+      ${queryCondition}
     WHERE  fb.date >  '${startDate}'
       AND  fb.date <= '${endDate}'
       ${campaignIDCondition}
@@ -65,15 +90,18 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
     MAX(pb.updated_at) as last_updated,
     CAST(COUNT(distinct (CASE WHEN pb.event_type = 'lead' THEN fbclid END)) AS INTEGER) as pb_uniq_conversions
     FROM postback_events_partitioned pb
-      INNER JOIN campaigns c ON pb.campaign_id = c.id
-        AND c.traffic_source = 'facebook'
-        --AND c.network = 'crossroads'
-        ${mediaBuyerCondition}
-        ${adAccountIdCondition}
-        ${queryCondition}
+    ${
+      (mediaBuyerCondition !== '' || adAccountIdCondition !== '' || queryCondition !== '')
+        ? `INNER JOIN campaigns c ON pb.campaign_id = c.id`
+        : ''
+    }
+      ${mediaBuyerCondition}
+      ${adAccountIdCondition}
+      ${queryCondition}
     WHERE  pb.date >  '${startDate}'
       AND  pb.date <= '${endDate}'
       AND pb.traffic_source = 'facebook'
+      AND pb.network = 'crossroads'
       ${campaignIDCondition}
     GROUP BY pb.hour, pb.date
   )

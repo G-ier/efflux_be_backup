@@ -75,7 +75,7 @@ async function getCampaignHours(id, start_date, end_date, media_buyer, network) 
     media_buyer,
     id
   );
-  // return rows
+  return rows
   return processHourlyData(rows);
 }
 

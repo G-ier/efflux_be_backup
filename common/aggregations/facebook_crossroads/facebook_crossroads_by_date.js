@@ -2,26 +2,38 @@ const db = require("../../../data/dbConfig");
 const selects = require('../selects');
 
 const facebookCrossroadsByDate = (startDate, endDate) => {
+
+  `
+  Summary:
+    Gets the data from crossroads, facebook and postback_events tables
+    queries by date and aggregates by date.
+
+    If I'm quering the joint of traffic source, network and postbacks I have to put not condition on
+    the traffic source, condition the networks on the traffic source and condition the postbacks on the network
+    and traffic source.
+
+  Params:
+    startDate: the start date of the data
+    endDate: the end date of the data
+  Returns:
+    the aggregated data for that timespan of the 3 tables
+  `
+
   query = `
   WITH agg_cr AS (
     SELECT cr.request_date as date,
     MAX(cr.created_at) as cr_last_updated,
     ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
-    INNER JOIN campaigns c ON cr.campaign_id = c.id
-      AND c.traffic_source = 'facebook'
       WHERE  cr.request_date >  '${startDate}'
       AND   cr.request_date <= '${endDate}'
-      --AND cr.traffic_source = 'facebook'
+      AND cr.traffic_source = 'facebook'
     GROUP BY  cr.request_date
   ), agg_fb AS (
       SELECT fb.date as fb_date,
       MAX(fb.created_at) as fb_last_updated,
       ${selects.FACEBOOK}
       FROM facebook_partitioned fb
-      INNER JOIN campaigns c ON fb.campaign_id = c.id
-        AND c.traffic_source = 'facebook'
-        --AND c.network = 'crossroads'
       WHERE  fb.date >  '${startDate}'
       AND  fb.date <= '${endDate}'
       GROUP BY fb.date
@@ -33,10 +45,9 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
           CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
           --TO_CHAR(CURRENT_TIMESTAMP, 'dd/HH24:MI (TZ)') as sheet_last_update
         FROM postback_events_partitioned pb
-        INNER JOIN campaigns c ON pb.campaign_id = c.id
-        AND c.traffic_source = 'facebook'
         WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}'
         AND pb.traffic_source = 'facebook'
+        AND pb.network = 'crossroads'
       GROUP BY pb.date
   )
   SELECT
@@ -50,12 +61,12 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
     MAX(cr_last_updated) as cr_last_updated,
     ${selects.FACEBOOK_CROSSROADS}
   FROM agg_cr
-    INNER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
+    FULL OUTER JOIN agg_fb ON agg_cr.date = agg_fb.fb_date
     FULL OUTER JOIN agg_fbc on agg_fbc.fbc_date = agg_cr.date
   GROUP BY agg_fb.fb_date, agg_fbc.fbc_date, agg_cr.date
   ORDER BY agg_cr.date ASC
-  `
-  // console.log("By Date",query);
+  `;
+  // console.log("facebookCrossroadsByDate", query);
   return db.raw(query);
 };
 

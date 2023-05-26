@@ -48,6 +48,7 @@ router.get('/:id/dates', async (req, res) => {
 router.get('/:id/hours', async (req, res) => {
   try {
     const { start_date, network, end_date, media_buyer } = req.query;
+    console.log(req.query);
     const data = await getCampaignHours(req.params.id, start_date, end_date, media_buyer, network);
     res.json(data);
   } catch (err) {
