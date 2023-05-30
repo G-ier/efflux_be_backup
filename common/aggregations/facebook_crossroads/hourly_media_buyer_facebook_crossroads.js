@@ -49,7 +49,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
    */
   query = `
   WITH agg_cr AS (
-    SELECT cr.hour as cr_hour, cr.request_date as cr_date,
+    SELECT cr.hour as cr_hour,
         ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
     ${
@@ -64,9 +64,9 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       AND  cr.request_date <= '${endDate}'
       AND  cr.traffic_source = 'facebook'
       ${campaignIDCondition}
-    GROUP BY  cr.hour, cr.request_date
+    GROUP BY  cr.hour
   ), agg_fb AS (
-    SELECT fb.hour as fb_hour, fb.date as fb_date,
+    SELECT fb.hour as fb_hour,
       ${selects.FACEBOOK}
     FROM facebook_partitioned fb
       ${
@@ -81,9 +81,9 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
     WHERE  fb.date >  '${startDate}'
       AND  fb.date <= '${endDate}'
       ${campaignIDCondition}
-    GROUP BY fb.hour, fb.date
+    GROUP BY fb.hour
   ), agg_fbc AS (
-    SELECT pb.hour as fbc_hour, pb.date as fbc_date,
+    SELECT pb.hour as fbc_hour,
     CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
     CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
     CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
@@ -103,14 +103,9 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       AND pb.traffic_source = 'facebook'
       AND pb.network = 'crossroads'
       ${campaignIDCondition}
-    GROUP BY pb.hour, pb.date
+    GROUP BY pb.hour
   )
   SELECT
-      (CASE
-            WHEN agg_fb.fb_date IS NOT null THEN agg_fb.fb_date
-            WHEN agg_cr.cr_date IS NOT null THEN agg_cr.cr_date
-            WHEN agg_fbc.fbc_date IS NOT null THEN agg_fbc.fbc_date
-      END) as date,
       (CASE
           WHEN agg_fb.fb_hour IS NOT null THEN agg_fb.fb_hour
           WHEN agg_cr.cr_hour IS NOT null THEN agg_cr.cr_hour
@@ -118,12 +113,11 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       END) as hour,
      ${selects.FACEBOOK_CROSSROADS}
   FROM agg_cr
-     FULL OUTER JOIN agg_fb ON agg_cr.cr_date = agg_fb.fb_date AND agg_cr.cr_hour = agg_fb.fb_hour
-     FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_date = agg_fb.fb_date AND agg_fbc.fbc_hour = agg_fb.fb_hour
-     GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour,
-              agg_cr.cr_date, agg_fb.fb_date, agg_fbc.fbc_date
+     FULL OUTER JOIN agg_fb ON agg_cr.cr_hour = agg_fb.fb_hour
+     FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_hour = agg_fb.fb_hour
+     GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour;
   `
-  // console.log("crossroads campaigns By hour",query);
+  console.log("crossroads campaigns By hour",query);
   return db.raw(query);
 }
 
