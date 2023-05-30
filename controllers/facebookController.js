@@ -206,9 +206,9 @@ function processFacebookInsights(data, date) {
       cpc: item?.cpc ?? 0,
       reporting_currency: item.account_currency,
       conversions: _.isNaN(Number(conversions)) ? 0 : Number(conversions),
-      clicks: Number(item?.clicks) ?? 0,
+      clicks: _.isNaN(Number(item?.clicks)) ? 0: Number(item?.clicks),
       events: JSON.stringify(item.actions),
-      lead
+      lead: _.isNaN(Number(lead)) ? 0 : Number(lead),
     }
   })
 }
