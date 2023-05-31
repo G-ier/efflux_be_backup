@@ -32,7 +32,13 @@ function campaignsFacebookCrossroads(startDate, endDate, mediaBuyer, adAccount, 
     : '';
 
   let query = `
-  WITH agg_cr AS (
+  WITH restriction AS (
+    SELECT DISTINCT campaign_id
+      FROM crossroads_partitioned
+    WHERE
+      request_date > '${startDate}' AND request_date <= '${endDate}'
+    AND traffic_source = 'facebook'
+  ), agg_cr AS (
     SELECT cr.campaign_id,
         ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
@@ -60,6 +66,7 @@ function campaignsFacebookCrossroads(startDate, endDate, mediaBuyer, adAccount, 
           ${queryCondition}
       WHERE  fb.date >  '${startDate}'
         AND  fb.date <= '${endDate}'
+        AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
       GROUP BY fb.campaign_id
   ), agg_fbc AS (
       SELECT pb.campaign_id,

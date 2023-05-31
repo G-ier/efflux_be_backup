@@ -18,9 +18,14 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
   Returns:
     the aggregated data for that timespan of the 3 tables
   `
-
   query = `
-  WITH agg_cr AS (
+  WITH restriction AS (
+    SELECT DISTINCT campaign_id
+      FROM crossroads_partitioned
+    WHERE
+      request_date > '${startDate}' AND request_date <= '${endDate}'
+    AND traffic_source = 'facebook'
+  ), agg_cr AS (
     SELECT cr.request_date as date,
     MAX(cr.created_at) as cr_last_updated,
     ${selects.CROSSROADS_PARTITIONED}
@@ -36,6 +41,7 @@ const facebookCrossroadsByDate = (startDate, endDate) => {
       FROM facebook_partitioned fb
       WHERE  fb.date >  '${startDate}'
       AND  fb.date <= '${endDate}'
+      AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
       GROUP BY fb.date
   ), agg_fbc AS (
         SELECT

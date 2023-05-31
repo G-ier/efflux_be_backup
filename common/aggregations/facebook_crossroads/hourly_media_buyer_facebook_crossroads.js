@@ -48,7 +48,14 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
    * BUT Don't group by anything except hour, if you don't want to lose data
    */
   query = `
-  WITH agg_cr AS (
+
+  WITH restriction AS (
+    SELECT DISTINCT campaign_id
+      FROM crossroads_partitioned
+    WHERE
+      request_date > '${startDate}' AND request_date <= '${endDate}'
+    AND traffic_source = 'facebook'
+  ), agg_cr AS (
     SELECT cr.hour as cr_hour,
         ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
@@ -80,6 +87,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       ${queryCondition}
     WHERE  fb.date >  '${startDate}'
       AND  fb.date <= '${endDate}'
+      AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
       ${campaignIDCondition}
     GROUP BY fb.hour
   ), agg_fbc AS (
@@ -117,7 +125,7 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
      FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_hour = agg_fb.fb_hour
      GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour;
   `
-  console.log("crossroads campaigns By hour",query);
+  // console.log("crossroads campaigns By hour",query);
   return db.raw(query);
 }
 
