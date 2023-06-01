@@ -10,6 +10,8 @@ const { initializePostbackCron } = require("./postback-cron");
 const { initializeCFCron } = require("./clickflare-cron");
 const { initializeAggregCron } = require("./aggreagetedSheet-cron");
 const { initializePostbackPartitionsCron } = require("./postback-partitions-cron");
+const { initializeMediaNetCron } = require("./mediaNet-cron");
+
 
 const initializeCronJobs = () => {
   initializeFBCron();
@@ -24,6 +26,7 @@ const initializeCronJobs = () => {
   initializeCFCron();
   initializeAggregCron();
   initializePostbackPartitionsCron();
+  initializeMediaNetCron();
 };
 
 module.exports = { initializeCronJobs };

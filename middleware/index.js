@@ -21,6 +21,7 @@ const system1 = require('../routes/system1');
 const knexLogger = require('./knexLogger');
 const develop = require('../routes/develop');
 const userAccounts = require("../routes/userAccounts");
+const medianet = require("../routes/medianet");
 
 // Tracking requests from postback servers are allowed without authentication.
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
@@ -42,6 +43,7 @@ function configureMiddleware(server) {
   server.use("/api/auth", auth);
   server.use("/api/users", users);
   server.use("/api/crossroads", crossroads);
+  server.use("/api/medianet", medianet);
   server.use("/api/amg", amg);
   server.use("/api/system1", system1);
   server.use("/api/facebook", facebook);

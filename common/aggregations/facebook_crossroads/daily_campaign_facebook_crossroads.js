@@ -1,5 +1,4 @@
 const db = require('../../../data/dbConfig');
-const {threeDaysAgoYMD} = require("../../day");
 const selects = require("../selects");
 
 const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
@@ -55,7 +54,6 @@ const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
     FULL OUTER JOIN agg_fbc on agg_fbc.fbc_date = agg_cr.date
   ORDER BY agg_fb.date ASC
   `
-  // console.log('query', query)
   return db.raw(query);
 
 }

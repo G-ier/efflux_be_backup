@@ -47,6 +47,11 @@ const aggregateOBConversionReport = require('./ob_conversion_report');
 const aggregatePBUnknownConversionReport = require('./pb_unknown_conversion_report');
 const aggregateFacebookAdsTodaySpentReport = require('./facebook_total_spent_by_date');
 const aggregateCampaignConversionReport = require('./campaign_conversion_report');
+const facebookMediaNetByDate = require('./facebook_medianet/facebook_medianet_by_date');
+const hourlyMediaNetFacebook = require('./facebook_medianet/hourly_facebook_medianet');
+const facebookMedianetByCampaignId = require('./facebook_medianet/facebook_medianet_by_campaign');
+const dailyCampaignFacebookMediaNet = require('./facebook_medianet/daily_campaign_facebook_medianet');
+const campaignsFacebookMedianet = require('./facebook_medianet/campaigns_facebook_medianet');
 
 module.exports = {
   clickflareCampaigns,
@@ -100,5 +105,10 @@ module.exports = {
   aggregateOBConversionReport,
   aggregateFacebookAdsTodaySpentReport,
   aggregateCampaignConversionReport,
-  aggregateSedoConversion1Report
+  aggregateSedoConversion1Report,
+  facebookMediaNetByDate,
+  hourlyMediaNetFacebook,
+  facebookMedianetByCampaignId,
+  dailyCampaignFacebookMediaNet,
+  campaignsFacebookMedianet
 };

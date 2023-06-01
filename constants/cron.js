@@ -28,4 +28,6 @@ module.exports = {
   CF_MORNING_FILL: process.env.CF_REGULAR || '5 3 * * *',
   SYSTEM1_EVERY_5_MINUTES: process.env.SYSTEM1_EVERY_5_MINUTES || '2-59/5 * * * *',
   PARTITIONS_DAILY: '15 8 * * *',
+  MEDIA_NET_REGULAR: '5 * * * *',
+  MEDIA_NET_AFTER_ESTIMATIONS: '0 10,14 * * *',
 }
