@@ -12,9 +12,9 @@ const facebookMediaNetByDate = (startDate, endDate) => {
     ), agg_mn AS (
         SELECT
             date as mn_date,
-            SUM(impressions) AS total_impressions,
+            SUM(impressions) AS pbImpressions,
             SUM(total_clicks) AS total_clicks,
-            SUM(estimated_revenue) AS total_revenue
+            SUM(estimated_revenue) AS revenue
         FROM
             media_net_stats
         WHERE
@@ -37,9 +37,9 @@ const facebookMediaNetByDate = (startDate, endDate) => {
             WHEN agg_mn.mn_date IS NOT null THEN agg_mn.mn_date
             ELSE null
         END) as date,
-        SUM(agg_mn.total_impressions) as total_impressions,
+        SUM(agg_mn.pbImpressions) as pbImpressions,
         SUM(agg_mn.total_clicks) as total_clicks,
-        SUM(agg_mn.total_revenue) as total_revenue,
+        SUM(agg_mn.revenue) as revenue,
         CAST(ROUND(SUM(agg_fb.spend)::decimal, 2) AS FLOAT) as spend,
         CAST(SUM(agg_fb.fb_conversions) AS INTEGER) as fb_conversions,
         CAST(SUM(agg_fb.link_clicks) AS INTEGER) as link_clicks,
@@ -49,9 +49,7 @@ const facebookMediaNetByDate = (startDate, endDate) => {
       GROUP BY agg_fb.fb_date, agg_mn.mn_date
       ORDER BY agg_mn.mn_date ASC;
   `
-  console.log("media.net dates by date", query);
+  // console.log("media.net dates by date", query);
   return db.raw(query);
 }
-
-facebookMediaNetByDate('2023-05-01', '2023-05-31')
 module.exports = facebookMediaNetByDate;

@@ -6,9 +6,9 @@ const facebookMedianetByCampaignId = (campaign_id, startDate, endDate) => {
       WITH agg_mn AS (
         SELECT
             adset_id,
-            SUM(impressions) AS total_impressions,
+            SUM(impressions) AS pbImpressions,
             SUM(total_clicks) AS total_clicks,
-            SUM(estimated_revenue) AS total_revenue
+            SUM(estimated_revenue) AS revenue
         FROM
             media_net_stats
         WHERE

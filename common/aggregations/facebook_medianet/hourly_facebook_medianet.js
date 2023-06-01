@@ -8,7 +8,7 @@ function hourlyMediaNetFacebook(start_date, end_date, mediaBuyer, campaignId, ad
     : '';
 
   const mediaBuyerCondition = (mediaBuyer !== 'admin' && mediaBuyer)
-    ? `AND user_id = ${mediaBuyer}`
+    ? `AND c.user_id = ${mediaBuyer}`
     : '';
 
   const adAccountIdCondition = adAccountId
@@ -21,8 +21,7 @@ function hourlyMediaNetFacebook(start_date, end_date, mediaBuyer, campaignId, ad
 
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  console.log("startDate", startDate);
-  console.log("endDate", endDate);
+
   query = `
     WITH restriction AS (
       SELECT DISTINCT campaign_id
@@ -32,9 +31,9 @@ function hourlyMediaNetFacebook(start_date, end_date, mediaBuyer, campaignId, ad
     ), agg_mn AS (
         SELECT
             hour,
-            SUM(impressions) AS total_impressions,
+            SUM(impressions) AS pbImpressions,
             SUM(total_clicks) AS total_clicks,
-            SUM(estimated_revenue) AS total_revenue
+            SUM(estimated_revenue) AS revenue
         FROM
             media_net_stats
             ${
@@ -74,15 +73,15 @@ function hourlyMediaNetFacebook(start_date, end_date, mediaBuyer, campaignId, ad
               WHEN agg_fb.fb_hour IS NOT null THEN agg_fb.fb_hour
               WHEN agg_mn.hour IS NOT null THEN agg_mn.hour
         END) as hour,
-        SUM(agg_mn.total_impressions) as total_impressions,
+        SUM(agg_mn.pbImpressions) as pbImpressions,
         SUM(agg_mn.total_clicks) as total_clicks,
-        SUM(agg_mn.total_revenue) as total_revenue,
+        SUM(agg_mn.revenue) as revenue,
         CAST(ROUND(SUM(agg_fb.spend)::decimal, 2) AS FLOAT) as spend,
         CAST(SUM(agg_fb.fb_conversions) AS INTEGER) as fb_conversions,
         CAST(SUM(agg_fb.link_clicks) AS INTEGER) as link_clicks,
         CAST(SUM(agg_fb.impressions) AS INTEGER) as impressions
     FROM agg_mn
-        FULL OUTER JOIN agg_fb ON agg_mn.hour = agg_fb.fb_hour;
+        FULL OUTER JOIN agg_fb ON agg_mn.hour = agg_fb.fb_hour
     GROUP BY agg_fb.fb_hour, agg_mn.hour;
   `
   // console.log("media.net campaigns By hour", query);
