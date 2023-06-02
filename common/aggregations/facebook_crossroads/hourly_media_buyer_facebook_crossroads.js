@@ -55,8 +55,26 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
     WHERE
       request_date > '${startDate}' AND request_date <= '${endDate}'
     AND traffic_source = 'facebook'
+  ), inpulse AS (
+    SELECT
+      fb.date as coefficient_date,
+      CASE
+        WHEN SUM(fb.total_spent) >= 0 AND SUM(fb.total_spent) < 1500 THEN 1.1
+        WHEN SUM(fb.total_spent) >= 1500 AND SUM(fb.total_spent) < 3000 THEN 1.08
+        WHEN SUM(fb.total_spent) >= 3000 AND SUM(fb.total_spent) < 6000 THEN 1.06
+        WHEN SUM(fb.total_spent) >= 6000 AND SUM(fb.total_spent) < 10000 THEN 1.04
+        ELSE 1.04
+      END as coefficient
+    FROM facebook_partitioned fb
+    INNER JOIN ad_accounts ad ON ad.fb_account_id = fb.ad_account_id
+    WHERE  fb.date >  '${startDate}'
+    AND  fb.date <= '${endDate}'
+    AND (ad.name LIKE '%INPULSE%' OR ad.name LIKE '%CSUY%')
+    GROUP BY fb.date
   ), agg_cr AS (
-    SELECT cr.hour as cr_hour,
+    SELECT
+      cr.hour as cr_hour,
+      cr.date as cr_date,
         ${selects.CROSSROADS_PARTITIONED}
     FROM crossroads_partitioned cr
     ${
@@ -71,27 +89,31 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       AND  cr.request_date <= '${endDate}'
       AND  cr.traffic_source = 'facebook'
       ${campaignIDCondition}
-    GROUP BY  cr.hour
+    GROUP BY  cr.hour, cr.date
   ), agg_fb AS (
-    SELECT fb.hour as fb_hour,
+    SELECT
+      fb.date as fb_date,
+      fb.hour as fb_hour,
+      CAST(ROUND(SUM(CASE WHEN ad.name LIKE '%Nitido%' THEN fb.total_spent ELSE 0 END)::decimal, 2) AS FLOAT) as nitido_spend,
+      CAST(ROUND(SUM(CASE WHEN ad.name LIKE '%Rebate%' THEN fb.total_spent ELSE 0 END)::decimal, 2) AS FLOAT) as rebate_spend,
+      CAST(ROUND(SUM(CASE WHEN ad.name LIKE '%INPULSE%' OR ad.name LIKE '%CSUY%' THEN fb.total_spent ELSE 0 END)::decimal, 2) AS FLOAT) as inpulse_spend,
+      CAST(ROUND(SUM(CASE WHEN ad.name NOT LIKE '%INPULSE%' AND ad.name NOT LIKE '%CSUY%' AND ad.name NOT LIKE '%Rebate%' AND ad.name NOT LIKE '%Nitido%' THEN fb.total_spent ELSE 0 END)::decimal, 2) AS FLOAT) as own_spend,
       ${selects.FACEBOOK}
     FROM facebook_partitioned fb
-      ${
-        (mediaBuyerCondition !== '' || adAccountIdCondition !== '' || queryCondition !== '')
-          ? `INNER JOIN campaigns c ON fb.campaign_id = c.id
-              AND c.traffic_source = 'facebook'`
-          : ''
-      }
+    INNER JOIN campaigns c ON c.id = fb.campaign_id AND c.traffic_source = 'facebook'
       ${mediaBuyerCondition}
       ${adAccountIdCondition}
       ${queryCondition}
+    INNER JOIN ad_accounts ad ON ad.id = c.ad_account_id
     WHERE  fb.date >  '${startDate}'
       AND  fb.date <= '${endDate}'
       AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
       ${campaignIDCondition}
-    GROUP BY fb.hour
+    GROUP BY fb.hour, fb_date
   ), agg_fbc AS (
-    SELECT pb.hour as fbc_hour,
+    SELECT
+    pb.hour as fbc_hour,
+    pb.date as fbc_date,
     CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
     CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
     CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
@@ -111,22 +133,33 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
       AND pb.traffic_source = 'facebook'
       AND pb.network = 'crossroads'
       ${campaignIDCondition}
-    GROUP BY pb.hour
+    GROUP BY pb.hour, pb.date
   )
   SELECT
-      (CASE
-          WHEN agg_fb.fb_hour IS NOT null THEN agg_fb.fb_hour
-          WHEN agg_cr.cr_hour IS NOT null THEN agg_cr.cr_hour
-          WHEN agg_fbc.fbc_hour IS NOT null THEN agg_fbc.fbc_hour
-      END) as hour,
+      agg_fb.fb_hour as hour,
+      CAST(
+        ROUND(
+          SUM(
+            agg_fb.nitido_spend * 1.02 +
+            agg_fb.rebate_spend * 1.03 +
+            inpulse_spend * inp.coefficient +
+            own_spend
+          )::decimal, 2
+        ) AS FLOAT
+      ) as spend_plus_fee,
      ${selects.FACEBOOK_CROSSROADS}
   FROM agg_cr
-     FULL OUTER JOIN agg_fb ON agg_cr.cr_hour = agg_fb.fb_hour
-     FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_hour = agg_fb.fb_hour
-     GROUP BY agg_cr.cr_hour, agg_fb.fb_hour, agg_fbc.fbc_hour;
+     FULL OUTER JOIN agg_fb ON agg_cr.cr_hour = agg_fb.fb_hour AND agg_cr.cr_date = agg_fb.fb_date
+     FULL OUTER JOIN agg_fbc ON agg_fbc.fbc_hour = agg_fb.fb_hour AND agg_fbc.fbc_date = agg_fb.fb_date
+     INNER JOIN inpulse inp ON inp.coefficient_date = agg_fb.fb_date
+     GROUP BY agg_fb.fb_hour;
   `
-  // console.log("crossroads campaigns By hour",query);
+
   return db.raw(query);
 }
 
+async function main() {
+  await hourlyMediaBuyerFacebookCrossroads('2023-05-30', '2023-06-01')
+}
+main()
 module.exports = hourlyMediaBuyerFacebookCrossroads;
