@@ -157,9 +157,4 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
 
   return db.raw(query);
 }
-
-async function main() {
-  await hourlyMediaBuyerFacebookCrossroads('2023-05-30', '2023-06-01')
-}
-main()
 module.exports = hourlyMediaBuyerFacebookCrossroads;

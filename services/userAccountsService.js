@@ -45,6 +45,12 @@ async function getUserAccounts(provider) {
   .value();
 }
 
+async function getSingle(filter, fields = ['*']) {
+  const user = await db.select(...fields).from('user_accounts').where(filter).first();
+  return user
+}
+
 module.exports = {
-  getUserAccounts
+  getUserAccounts,
+  getSingle
 }

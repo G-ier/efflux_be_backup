@@ -84,7 +84,6 @@ const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
     FULL OUTER JOIN inpulse inp ON inp.coefficient_date = agg_fb.fb_date
   ORDER BY agg_fb.fb_date ASC
   `
-  console.log(query)
   return db.raw(query);
 
 }
