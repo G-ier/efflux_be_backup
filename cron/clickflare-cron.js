@@ -53,7 +53,7 @@ const updateClickflare = async () => {
   }
   catch (err) {
     console.log(err);
-    await sendSlackNotification(`Clicflare Data Fetching & Sheet Update\nError: \n${err.toString()}`);
+    // await sendSlackNotification(`Clicflare Data Fetching & Sheet Update\nError: \n${err.toString()}`);
   }
 }
 
