@@ -84,6 +84,7 @@ async function updateSheetValues(spreadsheetId, values, options) {
   });
   return data;
 }
+
 async function updateSpreadsheet(data, options, predifeniedRange="", include_columns=true, add_last_update=true) {
   const { spreadsheetId, sheetName, excludedFields = [] } = options
 
@@ -101,10 +102,17 @@ async function updateSpreadsheet(data, options, predifeniedRange="", include_col
     rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0));
   }
 
+  console.log("Columns", columns)
+  console.log("Rows Sample",rows[0])
+
   let values;
 
   if (include_columns) {
-    values = [columns].concat(rows);
+    const parsedColumns = columns.map((column) => {
+      return column.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
+    })
+    console.log("Parsed Columns", parsedColumns)
+    values = [parsedColumns].concat(rows);
   } else{
     values = rows;
   }
@@ -205,11 +213,58 @@ async function mergeSpreadsheet(data, options) {
   console.info(`Updated cells:   ${response.updatedCells}`);
 }
 
+async function givePermission(drive, spreadsheetId, email) {
+  try {
+    await drive.permissions.create({
+      resource: {
+        type: 'user',
+        role: 'writer',
+        emailAddress: email,
+      },
+      fileId: spreadsheetId,
+      fields: 'id',
+    });
+    console.log(`Spreadsheet shared with ${email}`);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
+async function createSpreadsheet(title, emails) {
+
+  const drive = google.drive({version: 'v3', auth});
+  const resource = {
+    properties: {
+      title,
+    },
+  };
+
+  try {
+    const response = await sheets.spreadsheets.create({
+      resource,
+      fields: 'spreadsheetId',
+    });
+
+    const fileId = response.data.spreadsheetId;
+    console.log(`Spreadsheet ID: ${fileId}`);
+
+    // Now we will share this spreadsheet with the given emails.
+    for (const email of emails) {
+      givePermission(drive, fileId, email)
+    }
+    return fileId;
+  } catch (err) {
+    console.log(err);
+    return null;
+  }
+}
+
 module.exports = {
   getSheet,
   getSheetValues,
   updateSheetValues,
   clearSheet,
   updateSpreadsheet,
-  mergeSpreadsheet
+  mergeSpreadsheet,
+  createSpreadsheet
 };
