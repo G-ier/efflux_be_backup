@@ -5,7 +5,7 @@ const spreadsheets = require("../../services/spreadsheetService");
 function calculateValuesForGeneratedSpreadsheet(data, columns) {
   const rows = data.map((item) => {
     return results = {
-      ad_archive_id: item.ad_archive_id,
+      ad_library_link: item.ad_library_link,
       ad_starting_date: item.ad_starting_date,
       ad_headline: item.ad_headline,
       ad_primary_text: item.ad_primary_text,
@@ -30,6 +30,7 @@ route.post('/generate-google-spreadsheet',
     // Processing keywords
     for (let i = 0; i < spreadsheetData.length; i++) {
       const ad = spreadsheetData[i]
+      ad.ad_library_link = `https://www.facebook.com/ads/library/?id=${ad.ad_archive_id}`
       ad.keywords = ad.keywords.reduce((acc, keyword) => {
         return acc + (acc !== '' ? ", " : "" ) + keyword
       }, "")
@@ -37,7 +38,7 @@ route.post('/generate-google-spreadsheet',
 
     console.log("Request Data Sample", spreadsheetData[0])
 
-    const columns = ['ad_archive_id', 'ad_starting_date', 'ad_headline', 'ad_primary_text',
+    const columns = ['ad_library_link', 'ad_starting_date', 'ad_headline', 'ad_primary_text',
     'ad_description', 'ad_publisher_name', 'cdn_url', 'keywords', 'network']
 
     // Create the spreadsheet with access to the given emails
