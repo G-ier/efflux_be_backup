@@ -36,15 +36,13 @@ route.post('/generate-google-spreadsheet',
       }, "")
     }
 
-    console.log("Request Data Sample", spreadsheetData[0])
-
     const columns = ['ad_library_link', 'ad_starting_date', 'ad_headline', 'ad_primary_text',
     'ad_description', 'ad_publisher_name', 'cdn_url', 'keywords', 'network']
 
     // Create the spreadsheet with access to the given emails
     const emailsWithAccess = ['deni@roi.ad', 'm@roi.ad', 'p@roi.ad', 'losid@roi.ad', 'timothy@roi.ad']
     let spreadsheetId = '1YnbgGxKuWoCOLfwA6cpFTT-hlM88G-jNPNae8J4d80A'
-    // // spreadsheetId = await spreadsheets.createSpreadsheet('Scrapping Request', emailsWithAccess)
+    spreadsheetId = await spreadsheets.createSpreadsheet('Scrapping Request', emailsWithAccess)
 
     // Check if the spreadsheet was created
     if (!spreadsheetId) return res.status(400).json({"message": "Error creating spreadsheet"});
