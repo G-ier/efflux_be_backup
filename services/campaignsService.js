@@ -73,10 +73,28 @@ async function getCampaignNames(ids) {
   return _.keyBy(data, "id");
 }
 
+async function getCampaignData(filters = {}, selectColumns = ["id", "name"]) {
+
+  let query = db.select(...selectColumns).from("campaigns");
+
+  // Add filters to the query
+  for (const [column, value] of Object.entries(filters)) {
+    if (Array.isArray(value)) {
+      query = query.whereIn(column, value);
+    } else {
+      query = query.where(column, value);
+    }
+  }
+
+  const data = await query;
+
+  return data;
+}
 module.exports = {
   updateCampaigns,
   deleteById,
   get,
   update,
   getCampaignNames,
+  getCampaignData
 };
