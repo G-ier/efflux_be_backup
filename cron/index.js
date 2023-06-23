@@ -11,9 +11,11 @@ const { initializeCFCron } = require("./clickflare-cron");
 const { initializeAggregCron } = require("./aggreagetedSheet-cron");
 const { initializePostbackPartitionsCron } = require("./postback-partitions-cron");
 const { initializeMediaNetCron } = require("./mediaNet-cron");
+const { initializeTTCron } = require("./tiktok-cron");
 
 
 const initializeCronJobs = () => {
+  initializeTTCron();
   initializeFBCron();
   initializeCRCron();
   initializeGoogleCron();

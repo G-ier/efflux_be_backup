@@ -12,7 +12,6 @@ const { getAccountAdAccounts }                = require("./services/adAccountsSe
 const { getCampaignData }                     = require("./services/campaignsService");
 const { add }                                 = require("./common/models");
 const calendar                                = require("./common/day");
-const CronJob                                 = require("cron").CronJob;
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 // CONSTANTS
