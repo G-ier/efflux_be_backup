@@ -221,17 +221,18 @@ const getTikTokCampaigns = (access_token, ad_account_ids, date) => {
   const availableFields = ['campaign_id', 'campaign_name', 'create_time', 'modify_time', 'operation_status', 'advertiser_id', 'budget']
   const additionalParams = availableFields ? {'fields': JSON.stringify(availableFields)} : {};
   additionalParams['creation_filter_start_time'] = date + " 00:00:00";
-  additionalParams['creation_filter_end_time']   = date + " 23:59:59";
+  // additionalParams['creation_filter_end_time']   = date + " 23:59:59";
   return getTikTokData('campaign', access_token, ad_account_ids, additionalParams);
 };
 
 // Ad Groups
 const processTikTokAdGroups = (account, adAccountsMap, adGroupsData, date) => {
-  return adGroupsData.map(({adgroup_name, adgroup_id, create_time, modify_time, operation_status, advertiser_id, budget}) => ({
+  return adGroupsData.map(({campaign_id, adgroup_name, adgroup_id, create_time, modify_time, operation_status, advertiser_id, budget}) => ({
     name: adgroup_name,
     created_time: create_time,
     updated_time: modify_time,
     traffic_source: PROVIDERS.TIKTOK,
+    campaign_id: campaign_id,
     provider_id: adgroup_id,
     status: operation_status,
     user_id: account.user_id,
@@ -245,10 +246,10 @@ const processTikTokAdGroups = (account, adAccountsMap, adGroupsData, date) => {
 }
 
 const getTikTokAdGroups = (access_token, ad_account_ids, date) => {
-  const availableFields = ['adgroup_name', 'adgroup_id', 'create_time', 'modify_time', 'operation_status', 'advertiser_id', 'budget']
+  const availableFields = ['campaign_id', 'adgroup_name', 'adgroup_id', 'create_time', 'modify_time', 'operation_status', 'advertiser_id', 'budget']
   const additionalParams = availableFields ? {'fields': JSON.stringify(availableFields)} : {};
   additionalParams['creation_filter_start_time'] = date + " 00:00:00";
-  additionalParams['creation_filter_end_time']   = date + " 23:59:59";
+  // additionalParams['creation_filter_end_time']   = date + " 23:59:59";
   return getTikTokData('adgroup', access_token, ad_account_ids, additionalParams);
 };
 
@@ -274,7 +275,7 @@ const getTikTokAds = (access_token, ad_account_ids, date) => {
   const availableFields = ['campaign_id', 'advertiser_id', 'adgroup_id', 'ad_id', 'ad_name', 'operation_status', 'create_time', 'modify_time']
   const additionalParams = availableFields ? {'fields': JSON.stringify(availableFields)} : {};
   additionalParams['creation_filter_start_time'] = date + " 00:00:00";
-  additionalParams['creation_filter_end_time']   = date + " 23:59:59";
+  // additionalParams['creation_filter_end_time']   = date + " 23:59:59";
   return getTikTokData('ad', access_token, ad_account_ids, additionalParams);
 };
 

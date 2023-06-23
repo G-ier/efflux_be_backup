@@ -84,6 +84,32 @@ module.exports = {
                      CAST(SUM(agg_fb.fb_conversions) AS INTEGER) as fb_conversions,
                      CAST(SUM(agg_fb.impressions) AS INTEGER) as impressions`,
 
+  TIKTOK: `
+              MAX(tt.updated_at) as last_updated,
+              CAST(ROUND(SUM(tt.total_spent)::decimal, 2) AS FLOAT) as spend,
+              CAST(ROUND(SUM(tt.impressions)::decimal, 2) AS FLOAT) as impressions,
+              CAST(ROUND(SUM(tt.clicks)::decimal, 2) AS FLOAT) as clicks,
+              CAST(ROUND(SUM(tt.conversions)::decimal, 2) AS FLOAT) as conversions
+              `,
+
+  TIKTOK_CROSSROADS: `
+                     CAST(ROUND(SUM(agg_cr.revenue)::decimal, 2) AS FLOAT) as revenue,
+                     CAST(ROUND(SUM(agg_tt.spend)::decimal, 2) AS FLOAT) as spend,
+                     CAST(ROUND(SUM(agg_tt.spend)::decimal, 2) AS FLOAT) as spend_plus_fee,
+                     CAST(SUM(agg_tt.conversions) AS INTEGER) as tt_conversions,
+                     CAST(ROUND(SUM(agg_cr.cr_conversions)::decimal, 2) AS FLOAT) as cr_conversions,
+                     CAST(SUM(agg_cr.uniq_conversions) AS INTEGER) as cr_uniq_conversions,
+                     CAST(SUM(agg_ttc.pb_lander_conversions) AS INTEGER) as pb_lander_conversions,
+                     CAST(SUM(agg_ttc.pb_serp_conversions) AS INTEGER) as pb_serp_conversions,
+                     CAST(SUM(agg_ttc.pb_conversions) AS INTEGER) as pb_conversions,
+                     CAST(SUM(agg_cr.searches) AS INTEGER) as searches,
+                     CAST(SUM(agg_cr.lander_visits) AS INTEGER) as lander_visits,
+                     CAST(SUM(agg_cr.visitors) AS INTEGER) as visitors,
+                     CAST(SUM(agg_cr.tracked_visitors) AS INTEGER) as tracked_visitors,
+                     CAST(SUM(agg_tt.clicks) AS INTEGER) as clicks,
+                     CAST(SUM(agg_tt.impressions) AS INTEGER) as impressions
+                   `,
+
   PIXEL: `SUM(total_revenue) as revenue,
           SUM(total_revenue_clicks) as conversions`,
 
