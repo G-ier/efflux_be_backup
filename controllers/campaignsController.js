@@ -10,6 +10,11 @@ const aggregations = {
     dates: agg.dailyCampaignFacebookCrossroads,
     hours: agg.hourlyMediaBuyerFacebookCrossroads,
   },
+  crossroads_tiktok: {
+    data: agg.tiktokCrossroadsByCampaignId,
+    dates: agg.dailyCampaignsTiktokCrossroads,
+    hours: agg.hourlyMediaBuyerTiktokCrossroads,
+  },
   medianet_facebook: {
     data: agg.facebookMedianetByCampaignId,
     dates: agg.dailyCampaignFacebookMediaNet,

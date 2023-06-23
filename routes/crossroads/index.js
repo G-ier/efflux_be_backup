@@ -8,6 +8,9 @@ const {
   getGoogleCrossroadByDates,
   getCampaignsGoogleCrossroads,
   getCampaignsFacebookCrossroads,
+  getCampaignsTiktokCrossroads,
+  getTiktokHourlyData,
+  getTiktokCrossroadsByDates
 } = require('../../controllers/crossroadsController');
 const { updateCrossroadsData } = require('../../services/crossroadsService');
 const { CROSSROADS_ACCOUNTS } = require('../../constants/crossroads');
@@ -31,6 +34,15 @@ route.get('/google/campaigns', async (req, res) => {
   try {
     const googleCrossroads = await getCampaignsGoogleCrossroads(req.query);
     res.status(200).send(googleCrossroads);
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+route.get('/tiktok/campaigns', async (req, res) => {
+  try {
+    const tiktokCrossroads = await getCampaignsTiktokCrossroads(req.query);
+    res.status(200).send(tiktokCrossroads);
   } catch (err) {
     res.status(500).json(err.message);
   }
@@ -71,6 +83,16 @@ route.get('/google/campaign/hours', async (req, res) => {
   }
 });
 
+route.get('/tiktok/campaign/hours', async (req, res) => {
+  try {
+    const data = await getTiktokHourlyData(req.query);
+    res.status(200).json(data);
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+
+});
+
 // @route     /api/crossroads/facebook
 // @desc     GET crossroads/facebook data
 // @Access   Private
@@ -91,6 +113,16 @@ route.get('/google/campaigns/dates', async (req, res) => {
   try {
     const googleCrossroads = await getGoogleCrossroadByDates({ start_date, end_date });
     res.status(200).json(googleCrossroads);
+  } catch (err) {
+    res.status(500).json(err.message);
+  }
+});
+
+route.get('/tiktok/campaigns/dates', async (req, res) => {
+  const { start_date, end_date } = req.query;
+  try {
+    const tiktokCrossroads = await getTiktokCrossroadsByDates({ start_date, end_date });
+    res.status(200).json(tiktokCrossroads);
   } catch (err) {
     res.status(500).json(err.message);
   }

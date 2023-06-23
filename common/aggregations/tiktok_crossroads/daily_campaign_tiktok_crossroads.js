@@ -38,6 +38,7 @@ const dailyCampaignsTiktokCrossroads = (campaign_id, startDate, endDate) => {
       GROUP BY pb.date
     )
     SELECT
+      agg_tt.spend as spend_plus_fee,
       agg_cr.*,
       agg_tt.*,
       agg_ttc.*

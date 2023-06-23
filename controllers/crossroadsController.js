@@ -7,6 +7,9 @@ const {
   googleCrossroadsByDate,
   campaignsFacebookCrossroads,
   campaignsGoogleCrossroads,
+  campaignsTiktokCrossroads,
+  hourlyMediaBuyerTiktokCrossroads,
+  tiktokCrossroadsByDate,
 } = require('../common/aggregations');
 const { yesterdayYMD, dayYMD } = require('../common/day');
 const { processDateHoles, processHourlyData } = require('../common/helpers');
@@ -32,6 +35,25 @@ async function getFacebookHourlyData(options) {
 
   return processHourlyData(rows);
 }
+
+async function getTiktokHourlyData(options) {
+  const {
+    start_date, end_date, media_buyer, account_id, q
+  } = options;
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
+  const { rows } = await hourlyMediaBuyerTiktokCrossroads(
+    startDate,
+    endDate,
+    media_buyer,
+    null,
+    account_id,
+    q,
+  );
+  return rows;
+
+  return processHourlyData(rows);
+};
 
 /**
  * @name getGoogleHourlyData
@@ -67,10 +89,24 @@ async function getGoogleCrossroadByDates({ start_date, end_date }) {
   return processDateHoles(rows, startDate, endDate);
 }
 
+async function getTiktokCrossroadsByDates({ start_date, end_date }) {
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
+  const { rows } = await tiktokCrossroadsByDate(startDate, endDate);
+  return processDateHoles(rows, startDate, endDate);
+};
+
 async function getCampaignsFacebookCrossroads({ start_date, end_date, media_buyer, ad_account, q }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
   const { rows } = await campaignsFacebookCrossroads(startDate, endDate, media_buyer, ad_account, q);
+  return rows;
+}
+
+async function getCampaignsTiktokCrossroads({ start_date, end_date, media_buyer, ad_account, q }) {
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
+  const { rows } = await campaignsTiktokCrossroads(startDate, endDate, media_buyer, ad_account, q);
   return rows;
 }
 
@@ -88,4 +124,7 @@ module.exports = {
   getGoogleCrossroadByDates,
   getCampaignsFacebookCrossroads,
   getCampaignsGoogleCrossroads,
+  getCampaignsTiktokCrossroads,
+  getTiktokHourlyData,
+  getTiktokCrossroadsByDates,
 };

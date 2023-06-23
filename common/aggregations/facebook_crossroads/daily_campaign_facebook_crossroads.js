@@ -88,11 +88,4 @@ const dailyCampaignFacebookCrossroads = (campaign_id, startDate, endDate) => {
 
 }
 
-async function main() {
-  const {rows} = await dailyCampaignFacebookCrossroads('23854270496050582', '2023-05-26', '2023-06-02')
-  console.log(rows.length)
-}
-
-main();
-
 module.exports = dailyCampaignFacebookCrossroads;
