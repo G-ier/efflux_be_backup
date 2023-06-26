@@ -155,11 +155,15 @@ const getTikTokData = async (endpoint, access_token, ad_account_ids, additionalP
       if (res.data.code === 0) {
         // Accumulate data
         allData.push(...res.data.data.list);
+        if (endpoint === 'report/integrated') {
+          console.log(`Spend for account id ${ad_account_id} : ${res.data.data.list.reduce((acc, item) => acc + new Number(item.metrics.spend), 0)}`);
+        }
       } else {
+        console.log(res.data)
         console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}`);
       }
-    } catch (err) {
-      console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}:`, err);
+    } catch ({ response }) {
+      console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}:`, response);
     }
   }));
   return allData; // Return all data
@@ -210,6 +214,8 @@ const getTikTokAdInsights = async (access_token, ad_account_ids, date) => {
     'start_date': date,
     'end_date': date,
     'metrics' : apiMetrics,
+    'filtering' : JSON.stringify([{"field_name":"ad_status","filter_type":"IN","filter_value":"[\"STATUS_ALL\"]"}]),
+    'query_mode' : 'CHUNK',
   };
 
   return getTikTokData('report/integrated', access_token, ad_account_ids, additionalParams);

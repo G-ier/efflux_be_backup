@@ -16,57 +16,66 @@ const { updateAdsets }                        = require("../services/adsetsServi
 const { updateTikTokAds }                     = require("../services/adsService");
 const { getAccountAdAccounts }                = require("../services/adAccountsService");
 const { getCampaignData }                     = require("../services/campaignsService");
+const { sendSlackNotification }               = require("../services/slackNotificationService");
 
 
 const updateTikTokData = async (date) => {
-  const accounts = await getUserAccounts(PROVIDERS.TIKTOK);
-  if (accounts.length === 0) throw new Error("No accounts found for tik-tok")
-  const account = accounts[0];
+  try {
+    const accounts = await getUserAccounts(PROVIDERS.TIKTOK);
+    if (accounts.length === 0) throw new Error("No accounts found for tik-tok")
+    const account = accounts[0];
 
-  const [adAccountsIds, tikTokAdAccounts] = await getTikTokAdAccounts(account.token);
-  const adAccountsMap = _(await updateAdAccounts(account, processTikTokAdAccounts(account, tikTokAdAccounts))).keyBy("provider_id").value();
+    const [adAccountsIds, tikTokAdAccounts] = await getTikTokAdAccounts(account.token);
+    const adAccountsMap = _(await updateAdAccounts(account, processTikTokAdAccounts(account, tikTokAdAccounts))).keyBy("provider_id").value();
 
-  const dataMap = [
-      { name: "CAMPAIGN", getData: getTikTokCampaigns, processData: processTikTokCampaigns, updateData: updateCampaigns },
-      { name: "ADSET", getData: getTikTokAdGroups, processData: processTikTokAdGroups, updateData: updateAdsets },
-      { name: "AD", getData: getTikTokAds, processData: processTikTokAds, updateData: updateTikTokAds }
-  ];
+    const dataMap = [
+        { name: "CAMPAIGN", getData: getTikTokCampaigns, processData: processTikTokCampaigns, updateData: updateCampaigns },
+        { name: "ADSET", getData: getTikTokAdGroups, processData: processTikTokAdGroups, updateData: updateAdsets },
+        { name: "AD", getData: getTikTokAds, processData: processTikTokAds, updateData: updateTikTokAds }
+    ];
 
-  for (const { name, getData, processData, updateData } of dataMap) {
+    for (const { name, getData, processData, updateData } of dataMap) {
 
-    const data = await getData(account.token, adAccountsIds, date);
-    console.log(`${name}S FROM API: `, data.length);
-    const processedData = processData(account, adAccountsMap, data);
-    const dataChunks = _.chunk(processedData, 100);
-    for (const chunk of dataChunks) {
-        await updateData(chunk, PROVIDERS.TIKTOK);
+      const data = await getData(account.token, adAccountsIds, date);
+      console.log(`${name}S FROM API: `, data.length);
+      const processedData = processData(account, adAccountsMap, data);
+      const dataChunks = _.chunk(processedData, 100);
+      for (const chunk of dataChunks) {
+          await updateData(chunk, PROVIDERS.TIKTOK);
+      }
+
     }
-
+  } catch (error) {
+    console.error("Error updating tik-tok data: ", error);
+    await sendSlackNotification("Error updating tik-tok data: ", error);
   }
 };
 
 const updateTikTokInsights = async (date) => {
-  const accounts = await getUserAccounts(PROVIDERS.TIKTOK);
-  if (accounts.length === 0) throw new Error("No accounts found for tik-tok")
-  const account = accounts[0];
+  try {
+    const accounts = await getUserAccounts(PROVIDERS.TIKTOK);
+    if (accounts.length === 0) throw new Error("No accounts found for tik-tok")
+    const account = accounts[0];
 
-  const adAccountsCampaignIdsMap = {};
-  const adAccounts       = await getAccountAdAccounts(account.id);
-  const adAccountsIds    = adAccounts.map((item) => item.provider_id);
-  const campaignData     = await getCampaignData({ ad_account_id: adAccounts.map((item) => item.id) }, ["id", "ad_account_id"]);
-  campaignData.forEach((item) => {
-    adAccountsCampaignIdsMap[item.id] = item.ad_account_id;
-  });
+    const adAccountsCampaignIdsMap = {};
+    const adAccounts       = await getAccountAdAccounts(account.id);
+    const adAccountsIds    = adAccounts.map((item) => item.provider_id);
+    const campaignData     = await getCampaignData({ ad_account_id: adAccounts.map((item) => item.id) }, ["id", "ad_account_id"]);
+    campaignData.forEach((item) => {
+      adAccountsCampaignIdsMap[item.id] = item.ad_account_id;
+    });
 
-  const insights = await getTikTokAdInsights(account.token, adAccountsIds, date);
-  console.log("INSIGHTS FROM API: ", insights.length);
-  const processedInsights = processTikTokAdInsights(adAccountsCampaignIdsMap, insights);
-  console.log("PROCESSED INSIGHTS: ", processedInsights);
-  const insightsChunks = _.chunk(processedInsights, 100);
-  for (const chunk of insightsChunks) {
-    await updateAdInsights(chunk, date);
+    const insights = await getTikTokAdInsights(account.token, adAccountsIds, date);
+    console.log("INSIGHTS SPEND  : ", insights.reduce((acc, item) => acc + new Number(item.metrics.spend), 0));
+    console.log("INSIGHTS COUNT  : ", insights.length)
+    console.log("INSIGHTS SAMPLE : ", insights[0])
+    const processedInsights = processTikTokAdInsights(adAccountsCampaignIdsMap, insights);
+    console.log("PROCESSED INSIGHTS SPEND: ", processedInsights.reduce((acc, item) => acc + item.total_spent, 0));
+    await updateAdInsights(processedInsights, date);
+  } catch (error) {
+    console.error("Error updating tik-tok insights: ", error);
+    await sendSlackNotification("Error updating tik-tok insights: ", error);
   }
-
 };
 
 const processTikTokAdAccounts = (account, adAccountsData) => {

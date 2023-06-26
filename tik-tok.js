@@ -50,12 +50,15 @@ async function updateAdInsights(data, date) {
 
   data = [... new Map(data.map(item => [item['campaign_id'] + item['ad_id'] + item['hour'], item])).values()]
 
+  console.log("----------------------------------------\nData length in add",
+              data.length,
+              "\n-----------------------------------------------"
+  );
   const dataChunks = _.chunk(data, 500);
   for (const chunk of dataChunks) {
     await add("tiktok", chunk);
   }
 
-  // await add("facebook", data);
   console.info(`DONE ADDING TIKTOK DATA 🎉 for ${date}`);
 
 };
@@ -187,11 +190,15 @@ const getTikTokData = async (endpoint, access_token, ad_account_ids, additionalP
       if (res.data.code === 0) {
         // Accumulate data
         allData.push(...res.data.data.list);
+        if (endpoint === 'report/integrated') {
+          console.log(`Spend for account id ${ad_account_id} : ${res.data.data.list.reduce((acc, item) => acc + new Number(item.metrics.spend), 0)}`);
+        }
       } else {
+        console.log(res.data)
         console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}`);
       }
-    } catch (err) {
-      console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}:`, err);
+    } catch ({ response }) {
+      console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}:`, response);
     }
   }));
   return allData; // Return all data
@@ -324,6 +331,8 @@ const getTikTokAdInsights = async (access_token, ad_account_ids, date) => {
     'start_date': date,
     'end_date': date,
     'metrics' : apiMetrics,
+    'filtering' : JSON.stringify([{"field_name":"ad_status","filter_type":"IN","filter_value":"[\"STATUS_ALL\"]"}]),
+    'query_mode' : 'CHUNK',
   };
 
   return getTikTokData('report/integrated', access_token, ad_account_ids, additionalParams);
@@ -372,14 +381,12 @@ const updateTikTokInsights = async (date) => {
   });
 
   const insights = await getTikTokAdInsights(account.token, adAccountsIds, date);
-  console.log("INSIGHTS FROM API: ", insights.length);
+  console.log("INSIGHTS SPEND: ", insights.reduce((acc, item) => acc + new Number(item.metrics.spend), 0));
+  console.log("INSIGHTS COUNT: ", insights.length)
+  console.log("INSIGHTS SAMPLE: ", insights[0])
   const processedInsights = processTikTokAdInsights(adAccountsCampaignIdsMap, insights);
-  console.log("PROCESSED INSIGHTS: ", processedInsights);
-  const insightsChunks = _.chunk(processedInsights, 100);
-  for (const chunk of insightsChunks) {
-    await updateAdInsights(chunk, date);
-  }
-
+  console.log("PROCESSED INSIGHTS SPEND: ", processedInsights.reduce((acc, item) => acc + item.total_spent, 0));
+  await updateAdInsights(processedInsights, date);
 };
 
 // --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -391,10 +398,13 @@ async function updateTikTokInsightsJob(day) {
   // Update the insights for today, yesterday and tomorrow
   if (day === "today") {
     date = calendar.yesterdayYMD(null, 'UTC');
+    console.log("-------------------------------------------------\nDATE YESTERDAY: ", date);
     await updateTikTokInsights(date);
     date = calendar.todayYMD('UTC');
+    console.log("-------------------------------------------------\nDATE TODAY: ", date);
     await updateTikTokInsights(date);
     date = calendar.tomorrowYMD(null, 'UTC');
+    console.log("-------------------------------------------------\nDATE TOMORROW: ", date);
     await updateTikTokInsights(date);
   } else if (day === "yesterday") {
     date = calendar.yesterdayYMD(null, 'UTC');
@@ -403,7 +413,6 @@ async function updateTikTokInsightsJob(day) {
     await updateTikTokInsights(date);
   }
   await updateTikTokData(calendar.todayYMD())
-  // Either create spreadsheets or populate the dashboard
 }
 
-updateTikTokInsightsJob('today')
+updateTikTokInsightsJob('today');
