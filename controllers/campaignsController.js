@@ -79,9 +79,11 @@ async function getCampaignDates(id, start_date, endDate, media_buyer, network) {
 
 async function getCampaignHours(id, start_date, end_date, media_buyer, network) {
   const { hours: getCampaignHoursData } = await getCampaignAgg(id, media_buyer, network);
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
   const { rows } = await getCampaignHoursData(
-    start_date,
-    end_date,
+    startDate,
+    endDate,
     media_buyer,
     id
   );

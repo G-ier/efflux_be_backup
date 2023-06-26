@@ -1,5 +1,4 @@
 const db = require('../../../data/dbConfig');
-const { dayYMD, yesterdayYMD } = require('../../day');
 const selects = require("../selects");
 
 
@@ -61,6 +60,7 @@ function hourlyMediaBuyerTiktokCrossroads(start_date, end_date, mediaBuyer, camp
     WHERE tt.date >  '${startDate}'
       AND tt.date <= '${endDate}'
       AND tt.campaign_id IN (SELECT campaign_id FROM restriction)
+      ${campaignIDCondition}
     GROUP BY tt.hour
   ), agg_ttc AS (
     SELECT
