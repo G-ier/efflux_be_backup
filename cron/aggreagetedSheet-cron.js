@@ -2,10 +2,12 @@ const { CronJob } = require('cron');
 const {
   TEMPLATE_SHEET_VALUES,
   TEMPLATE_ADSET_SHEET_VALUES,
-  sheetsArr
+  sheetsArr,
+  tikTokSheetsArr
 } = require('../constants/templateSheet');
 const { yesterdayYMD, someDaysAgoYMD, todayYMD } = require("../common/day");
 const { templateSheetFetcher } = require("../common/aggregations/template_sheet");
+const { tikTokTemplateSheetFetcher } = require("../common/aggregations/template_sheet_tiktok");
 const { updateTemplateSheet } = require("../controllers/spreadsheetController");
 const { sendSlackNotification } = require("../services/slackNotificationService");
 const { getSheetValues, updateSpreadsheet } = require("../services/spreadsheetService");
@@ -87,7 +89,7 @@ const updateAggregatedSheet = async () => {
           min_date = min_date + ' 00:00:00';
           endDay = endDay + ' 23:59:59';
 
-          // Iterating over the aggregation types [campaigns, adsets]
+          // Iterating over the aggregation types [campaigns, adsets] for facebook
           for ( k = 0; k < 2; k ++) {
               aggregation = k == 0 ? 'campaigns' : 'adsets';
               columnsOrder = k == 0 ? TEMPLATE_SHEET_VALUES : TEMPLATE_ADSET_SHEET_VALUES;
@@ -100,6 +102,21 @@ const updateAggregatedSheet = async () => {
 
               // Updating the sheet with the fetched data
               await updateTemplateSheet(data, columnsOrder, aggregation, sheetsArr[i].spreadsheetId, sheetName)
+          }
+
+          // Iterating over the aggregation types [campaigns, adsets] for tiktok
+          for ( k = 0; k < 2; k ++) {
+            aggregation = k == 0 ? 'campaigns' : 'adsets';
+            columnsOrder = k == 0 ? TEMPLATE_SHEET_VALUES : TEMPLATE_ADSET_SHEET_VALUES;
+            sheetName = k == 0 ? tikTokSheetsArr[i].sheetName : tikTokSheetsArr[i].sheetNameByAdset;
+
+            console.log("Updating sheet: ", sheetName, "Aggregation: ", aggregation)
+
+            // Fetching the aggregated data from the database
+            const data = await tikTokTemplateSheetFetcher(min_date, endDay, telemetry=false, sheetDropdown=aggregation)
+
+            // Updating the sheet with the fetched data
+            await updateTemplateSheet(data, columnsOrder, aggregation, tikTokSheetsArr[i].spreadsheetId, sheetName)
           }
       }
   }

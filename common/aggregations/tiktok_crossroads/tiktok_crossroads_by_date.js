@@ -42,6 +42,7 @@ const tiktokCrossroadsByDate = (startDate, endDate) => {
       WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}'
       AND pb.traffic_source = 'tiktok'
       AND pb.network = 'crossroads'
+      AND pb.campaign_id IN (SELECT campaign_id FROM restriction)
     GROUP BY pb.date
   )
   SELECT

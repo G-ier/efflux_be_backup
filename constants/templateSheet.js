@@ -29,6 +29,37 @@ const sheetsArr = [
   }
 ]
 
+const tikTokSheetsArr = [
+  {
+    day: 8,
+    spreadsheetId: '1RZ_ni_rHotKDRYiE4wsATVE5g4V0EpSpfuI973OkT1E',
+    sheetName: 'Campaign Last 7days',
+    sheetNameByAdset:'Adset Last 7days',
+    traffic_source: 'tiktok',
+  },
+  {
+    day: 4,
+    spreadsheetId: '1RZ_ni_rHotKDRYiE4wsATVE5g4V0EpSpfuI973OkT1E',
+    sheetName: 'Campaign Last 3days',
+    sheetNameByAdset:'Adset Last 3days',
+    traffic_source: 'tiktok',
+  },
+   {
+    day: 2,
+    spreadsheetId: '1RZ_ni_rHotKDRYiE4wsATVE5g4V0EpSpfuI973OkT1E',
+    sheetName: 'Campaign Yesterday',
+    sheetNameByAdset:'Adset Yesterday',
+    traffic_source: 'tiktok',
+  },
+  {
+    day: 1,
+    spreadsheetId: '1RZ_ni_rHotKDRYiE4wsATVE5g4V0EpSpfuI973OkT1E',
+    sheetName: 'Campaign Today',
+    sheetNameByAdset:'Adset Today',
+    traffic_source: 'tiktok',
+  }
+]
+
 const TEMPLATE_SHEET_VALUES = [
     'ad_account_name', 'time_zone', 'entity_name', 'campaign_id', 'status', 'daily_budget' ,'launch_date', 'amount_spent', 'impressions',
     'link_clicks', 'cpc_link_click', 'clicks_all', 'cpc_all', 'cpm', 'ctr_fb', 'results', 'cost_per_result', 'fb_last_update',
@@ -52,6 +83,7 @@ const TEMPLATE_ADSET_SHEET_VALUES = [
 ]
 module.exports = {
   sheetsArr,
+  tikTokSheetsArr,
   TEMPLATE_SHEET_VALUES,
   TEMPLATE_ADSET_SHEET_VALUES
 }
