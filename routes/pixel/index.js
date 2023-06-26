@@ -72,7 +72,10 @@ route.get('/', async (req, res) => {
 
     // IMPORTANT NOTE: This traffic source defining is crucial for the platform to work properly.
     if(tg1?.includes('FB') || src?.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
-    else if(tg1?.includes('TT') || src?.includes('TT')) traffic_source = PROVIDERS.TIKTOK;
+    else if(tg1?.includes('TT') || src?.includes('TT')) {
+      sendSlackNotification(`Crosroads TikTok Postback tg1: ${tg1} src: ${src}`)
+      traffic_source = PROVIDERS.TIKTOK
+    };
     // check event_timestamp exist
     let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
     const isEvent = false && await db('postback_events').where('event_id', '=', event_id).returning('id').first();
