@@ -10,6 +10,8 @@ const {
   campaignsTiktokCrossroads,
   hourlyMediaBuyerTiktokCrossroads,
   tiktokCrossroadsByDate,
+  crossroadsTotalsByMediaBuyer,
+  crossroadsTotals
 } = require('../common/aggregations');
 const { yesterdayYMD, dayYMD } = require('../common/day');
 const { processDateHoles, processHourlyData } = require('../common/helpers');
@@ -117,6 +119,20 @@ async function getCampaignsGoogleCrossroads({ start_date, end_date, media_buyer,
   return rows;
 }
 
+async function getCrossroadsTotals({start_date, end_date}) {
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
+  const { rows } = await crossroadsTotals(startDate, endDate);
+  return rows;
+}
+
+async function getCrossroadsTotalsByMediaBuyer({start_date, end_date, media_buyer}) {
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
+  const { rows } = await crossroadsTotalsByMediaBuyer(startDate, endDate, media_buyer);
+  return rows;
+}
+
 module.exports = {
   getFacebookHourlyData,
   getGoogleHourlyData,
@@ -127,4 +143,6 @@ module.exports = {
   getCampaignsTiktokCrossroads,
   getTiktokHourlyData,
   getTiktokCrossroadsByDates,
+  getCrossroadsTotals,
+  getCrossroadsTotalsByMediaBuyer
 };

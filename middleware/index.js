@@ -23,6 +23,7 @@ const develop = require('../routes/develop');
 const userAccounts = require("../routes/userAccounts");
 const medianet = require("../routes/medianet");
 const adGenerator = require("../routes/adGenerator");
+const mediaBuyers = require("../routes/mediaBuyers");
 
 // Tracking requests from postback servers are allowed without authentication.
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
@@ -33,6 +34,7 @@ function configureMiddleware(server) {
   server.use(json);
   // server.use(knexLogger);
   server.use("/trk", isBot, pixel);
+  server.use("/api/media-buyers", mediaBuyers);
   server.use(morgan("dev"));
   server.use("/api/auth0", auth0);
   server.use('/api/develop', develop);

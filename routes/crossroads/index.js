@@ -10,11 +10,40 @@ const {
   getCampaignsFacebookCrossroads,
   getCampaignsTiktokCrossroads,
   getTiktokHourlyData,
-  getTiktokCrossroadsByDates
+  getTiktokCrossroadsByDates,
+  getCrossroadsTotals,
+  getCrossroadsTotalsByMediaBuyer
 } = require('../../controllers/crossroadsController');
 const { updateCrossroadsData } = require('../../services/crossroadsService');
 const { CROSSROADS_ACCOUNTS } = require('../../constants/crossroads');
 
+// @route     /api/crossroads/totals
+// @desc     GET crossroads/facebook data
+// @Access   Private
+route.get('/totals', async (req, res) => {
+  try {
+    console.log("Request Query", req.query)
+    const crossroadsTotals = await getCrossroadsTotals(req.query);
+    res.status(200).send(crossroadsTotals);
+  } catch (err) {
+    console.log(err)
+    res.status(500).json(err.message);
+  }
+});
+
+// @route     /api/crossroads/total-by-media-buyer
+// @desc     GET crossroads/facebook data
+// @Access   Private
+route.get('/totals-by-media-buyer', async (req, res) => {
+  try {
+    console.log("Request Query", req.query)
+    const crossroadsTotalsByMediaBuyer = await getCrossroadsTotalsByMediaBuyer(req.query);
+    res.status(200).send(crossroadsTotalsByMediaBuyer);
+  } catch (err) {
+    console.log(err)
+    res.status(500).json(err.message);
+  }
+});
 
 // @route     /api/crossroads/facebook
 // @desc     GET crossroads/facebook data

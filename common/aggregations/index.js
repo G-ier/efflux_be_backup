@@ -57,6 +57,9 @@ const dailyCampaignsTiktokCrossroads = require('./tiktok_crossroads/daily_campai
 const hourlyMediaBuyerTiktokCrossroads = require('./tiktok_crossroads/hourly_media_buyer_tiktok_crossroads');
 const tiktokCrossroadsByCampaignId = require('./tiktok_crossroads/tiktok_crossroads_by_campaign');
 const tiktokCrossroadsByDate = require('./tiktok_crossroads/tiktok_crossroads_by_date');
+const crossroadsTotals = require('./activity_accounting/crossroadsTotals')
+const crossroadsTotalsByMediaBuyer = require('./activity_accounting/crossroadsTotalByMediaBuyer')
+const mediaBuyersActivityCrossroads = require('./activity_accounting/mediaBuyersActivityCrossroads')
 
 module.exports = {
   campaignsTiktokCrossroads,
@@ -120,5 +123,8 @@ module.exports = {
   hourlyMediaNetFacebook,
   facebookMedianetByCampaignId,
   dailyCampaignFacebookMediaNet,
-  campaignsFacebookMedianet
+  campaignsFacebookMedianet,
+  crossroadsTotals,
+  crossroadsTotalsByMediaBuyer,
+  mediaBuyersActivityCrossroads
 };
