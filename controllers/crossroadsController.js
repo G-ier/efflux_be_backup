@@ -121,15 +121,21 @@ async function getCampaignsGoogleCrossroads({ start_date, end_date, media_buyer,
 
 async function getCrossroadsTotals({start_date, end_date}) {
   const startDate = yesterdayYMD(start_date);
-  const endDate = dayYMD(end_date);
-  const { rows } = await crossroadsTotals(startDate, endDate);
+  const endDate = dayYMD(end_date) + " 23:59:59";
+  console.log("Start Date", startDate)
+  console.log("End Date", end_date)
+  const { rows } = await crossroadsTotals(startDate, end_date);
   return rows;
 }
 
 async function getCrossroadsTotalsByMediaBuyer({start_date, end_date, media_buyer}) {
   const startDate = yesterdayYMD(start_date);
-  const endDate = dayYMD(end_date);
-  const { rows } = await crossroadsTotalsByMediaBuyer(startDate, endDate, media_buyer);
+  const endDate = dayYMD(end_date) + " 23:59:59";
+  const mediaBuyer = media_buyer !== 'undefined' ? media_buyer : null;
+  console.log("Start Date", startDate)
+  console.log("End Date", end_date)
+  console.log("Get Crossroads Totals By Media Buyer", mediaBuyer)
+  const { rows } = await crossroadsTotalsByMediaBuyer(startDate, end_date, mediaBuyer);
   return rows;
 }
 

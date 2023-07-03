@@ -3,6 +3,8 @@ const db                    = require('../../../data/dbConfig');
 
 function crossroadsTotalsByMediaBuyer(startDate, endDate, mediaBuyer) {
 
+  console.log("Media Buyer", mediaBuyer, "Media Buyer Type", typeof mediaBuyer)
+
   const mediaBuyerCondition = mediaBuyer
   ? `AND u.id = ${mediaBuyer}`
   : '';

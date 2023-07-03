@@ -2,10 +2,13 @@ const calendar              = require('../../../common/day');
 const db                    = require('../../../data/dbConfig');
 
 
-function mediaBuyersActivityCrossroads({start_date, end_date, mediaBuyer}) {
+function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
   const startDate = start_date
   const endDate = calendar.tomorrowYMD(end_date, timeZone = "UTC")
-
+  const mediaBuyer = media_buyer !== 'undefined' ? media_buyer : null;
+  console.log("Start Date", startDate)
+  console.log("End Date", endDate)
+  console.log("Media Buyer", mediaBuyer)
   const mediaBuyerCondition = mediaBuyer
     ? `WHERE id = ${mediaBuyer}`
     : '';
@@ -128,13 +131,13 @@ function mediaBuyersActivityCrossroads({start_date, end_date, mediaBuyer}) {
     )
     SELECT
         ts.id,
-        ts.name,
-        ts.spend_date,
-        COALESCE(cdt.new_campaigns_tiktok, 0) as new_campaigns_tiktok,
-        COALESCE(adt.new_adsets_tiktok, 0) as new_adsets_tiktok,
+        ts.name as media_buyer,
+        TO_CHAR(ts.spend_date::timestamp, 'YYYY-MM-DD') as date,
+        CAST(COALESCE(cdt.new_campaigns_tiktok, 0) AS FLOAT) as new_campaigns_tiktok,
+        CAST(COALESCE(adt.new_adsets_tiktok, 0) AS FLOAT) as new_adsets_tiktok,
         ts.total_tiktok_spend,
-        COALESCE(cdf.new_facebook_campaigns, 0) as new_facebook_campaigns,
-        COALESCE(adf.new_adsets_facebook, 0) as new_adsets_facebook,
+        CAST(COALESCE(cdf.new_facebook_campaigns, 0) AS FLOAT) as new_facebook_campaigns,
+        CAST(COALESCE(adf.new_adsets_facebook, 0) AS FLOAT) as new_adsets_facebook,
         COALESCE(fs.total_facebook_spend, 0) as total_facebook_spend
     FROM
         tiktok_spent ts
