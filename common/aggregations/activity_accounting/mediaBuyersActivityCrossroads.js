@@ -3,9 +3,12 @@ const db                    = require('../../../data/dbConfig');
 
 
 function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
-  const startDate = start_date
-  const endDate = calendar.tomorrowYMD(end_date, timeZone = "UTC")
+
+
+  const startDate = calendar.yesterdayYMD(start_date);
+  const endDate = end_date;
   const mediaBuyer = media_buyer !== 'undefined' ? media_buyer : null;
+
   console.log("Start Date", startDate)
   console.log("End Date", endDate)
   console.log("Media Buyer", mediaBuyer)
@@ -16,11 +19,15 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
   let query = `
     WITH tiktok_spent AS (
       WITH DateSeries AS (
-          SELECT generate_series(
-              '${startDate}'::date, -- This is the start date
-              '${end_date}'::date, -- This is the end date
-              '1 day'::interval
-          ) AS spend_date
+        SELECT spend_date
+          FROM (
+              SELECT to_char(generate_series(
+                  '${startDate}'::date, -- This is the start date
+                  '${endDate}'::date, -- This is the end date
+                  '1 day'::interval
+              ), 'YYYY-MM-DD') AS spend_date
+          ) AS date_series
+        WHERE spend_date > '${startDate}' AND spend_date <= '${endDate}'
       ), UserIDs AS (
           SELECT id, name
           FROM users
@@ -38,20 +45,24 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
       LEFT JOIN
           campaigns c ON u.id = c.user_id AND c.traffic_source = 'tiktok'
       LEFT JOIN
-          tiktok tt ON c.id = tt.campaign_id AND tt.date::date = d.spend_date
+          tiktok tt ON c.id = tt.campaign_id AND tt.date = d.spend_date
       GROUP BY
           u.id,
           u.name,
           d.spend_date
     ),
     facebook_spent AS (
-        WITH DateSeries AS (
-            SELECT generate_series(
-                '${startDate}'::date,
-                '${end_date}'::date,
-                '1 day'::interval
-            ) AS spend_date
-        ), UserIDs AS (
+      WITH DateSeries AS (
+        SELECT spend_date
+          FROM (
+              SELECT to_char(generate_series(
+                  '${startDate}'::date, -- This is the start date
+                  '${endDate}'::date, -- This is the end date
+                  '1 day'::interval
+              ), 'YYYY-MM-DD') AS spend_date
+          ) AS date_series
+        WHERE spend_date > '${startDate}' AND spend_date <= '${endDate}'
+      ), UserIDs AS (
             SELECT id
             FROM users
             ${mediaBuyerCondition} -- This is the media_buyer_id
@@ -67,7 +78,7 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
         LEFT JOIN
             campaigns c ON u.id = c.user_id AND c.traffic_source = 'facebook'
         LEFT JOIN
-            facebook_partitioned fb ON c.id = fb.campaign_id AND fb.date::date = d.spend_date
+            facebook_partitioned fb ON c.id = fb.campaign_id AND fb.date = d.spend_date
         GROUP BY
             u.id,
             d.spend_date
@@ -75,7 +86,7 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
     CampaignsDataTikTok AS (
         SELECT
             c.user_id,
-            DATE(c.created_time) AS tiktok_campaign_date,
+            to_char(DATE(c.created_time), 'YYYY-MM-DD') AS tiktok_campaign_date,
             COUNT(DISTINCT c.id) AS new_campaigns_tiktok
         FROM
             campaigns c
@@ -89,7 +100,7 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
     AdsetsDataTikTok AS (
         SELECT
             a.user_id,
-            DATE(a.created_time) AS tiktok_adset_date,
+            to_char(DATE(a.created_time), 'YYYY-MM-DD') AS tiktok_adset_date,
             COUNT(DISTINCT a.id) AS new_adsets_tiktok
         FROM
             adsets a
@@ -103,7 +114,7 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
     CampaignsDataFacebook AS (
         SELECT
             c.user_id,
-            DATE(c.created_time) AS facebook_campaign_date,
+            to_char(DATE(c.created_time), 'YYYY-MM-DD') AS facebook_campaign_date,
             COUNT(DISTINCT c.id) AS new_facebook_campaigns
 
         FROM
@@ -118,7 +129,7 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
     AdsetsDataFacebook AS (
         SELECT
             a.user_id,
-            DATE(a.created_time) AS facebook_adset_date,
+            to_char(DATE(a.created_time), 'YYYY-MM-DD') AS facebook_adset_date,
             COUNT(DISTINCT a.id) AS new_adsets_facebook
         FROM
             adsets a
@@ -158,5 +169,18 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
   return db.raw(query)
 }
 
+const main = async () => {
+  const { rows } = await mediaBuyersActivityCrossroads({start_date : '2023-07-04', end_date: '2023-07-04'})
+  console.log(rows[0])
+  const res = rows.reduce((acc, row) => {
+    console.log(row.date)
+    acc += row.total_facebook_spend
+    return acc
+  }, 0)
+  console.log(res)
+
+}
+
+// main()
 
 module.exports = mediaBuyersActivityCrossroads;

@@ -1,9 +1,11 @@
 const db                    = require('../../../data/dbConfig');
+const calendar              = require('../../../common/day');
 
 
 function crossroadsTotalsByMediaBuyer(startDate, endDate, media_buyer) {
 
   const mediaBuyer = media_buyer !== 'undefined' ? media_buyer : null;
+  const logStartingDate = calendar.tomorrowYMD(startDate);
   const mediaBuyerCondition = mediaBuyer
   ? `AND u.id = ${mediaBuyer}`
   : '';
@@ -98,7 +100,7 @@ function crossroadsTotalsByMediaBuyer(startDate, endDate, media_buyer) {
           ${mediaBuyer ? 'WHERE u.id = ' + mediaBuyer : ''}
       )
     SELECT
-      CONCAT('${startDate}', '/', '${endDate}') AS date,
+      CONCAT('${logStartingDate}', '/', '${endDate}') AS date,
       COALESCE(ts.media_buyer, tr.media_buyer, u.media_buyer) as media_buyer,
       COALESCE(ts.fb_spend, 0) as fb_spend,
       COALESCE(ts.fb_spend_plus_fee, 0) as fb_spend_plus_fee,
