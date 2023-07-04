@@ -10,10 +10,6 @@ function generateActivityReport({start_date, end_date, media_buyer}) {
   console.log("Start Date", startDate)
   console.log("End Date", endDate)
 
-  const mediaBuyerSelectorCondition = mediaBuyer
-    ? `MAX(media_buyer) as media_buyer,`
-    : '';
-
   const mediaBuyerCondition = mediaBuyer
     ? `AND media_buyer_id = ${mediaBuyer}`
     : '';
@@ -21,7 +17,7 @@ function generateActivityReport({start_date, end_date, media_buyer}) {
   const query = `
     SELECT
         CONCAT('${start_date}', '/', '${endDate}') AS date,
-        ${mediaBuyerSelectorCondition}
+        media_buyer,
         CAST(SUM(new_campaigns_tiktok) AS FLOAT) as new_campaigns_tiktok,
         CAST(SUM(new_adsets_tiktok) AS FLOAT) as new_adsets_tiktok,
         CAST(SUM(total_tiktok_spend) AS FLOAT) as total_tiktok_spend,
@@ -31,11 +27,18 @@ function generateActivityReport({start_date, end_date, media_buyer}) {
     FROM activity_report
     WHERE date > '${startDate}' AND date <= '${endDate}'
     ${mediaBuyerCondition}
-    ;
+    GROUP BY media_buyer;
   `
   console.log(query)
   return db.raw(query)
 
 };
+
+const main = async () => {
+  const {rows} = await generateActivityReport({start_date: '2023-06-26', end_date: '2023-06-31'})
+  console.log(rows)
+}
+
+// main()
 
 module.exports = generateActivityReport;
