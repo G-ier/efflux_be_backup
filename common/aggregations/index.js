@@ -60,6 +60,7 @@ const tiktokCrossroadsByDate = require('./tiktok_crossroads/tiktok_crossroads_by
 const crossroadsTotals = require('./activity_accounting/crossroadsTotals')
 const crossroadsTotalsByMediaBuyer = require('./activity_accounting/crossroadsTotalByMediaBuyer')
 const mediaBuyersActivityCrossroads = require('./activity_accounting/mediaBuyersActivityCrossroads')
+const generateActivityReport  = require('./activity_accounting/activityReport')
 
 module.exports = {
   campaignsTiktokCrossroads,
@@ -126,5 +127,6 @@ module.exports = {
   campaignsFacebookMedianet,
   crossroadsTotals,
   crossroadsTotalsByMediaBuyer,
-  mediaBuyersActivityCrossroads
+  mediaBuyersActivityCrossroads,
+  generateActivityReport
 };
