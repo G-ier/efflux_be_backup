@@ -130,7 +130,7 @@ function mediaBuyersActivityCrossroads({start_date, end_date, media_buyer}) {
             a.user_id, facebook_adset_date
     )
     SELECT
-        ts.id,
+        ts.id as media_buyer_id,
         ts.name as media_buyer,
         TO_CHAR(ts.spend_date::timestamp, 'YYYY-MM-DD') as date,
         CAST(COALESCE(cdt.new_campaigns_tiktok, 0) AS FLOAT) as new_campaigns_tiktok,

@@ -12,6 +12,7 @@ const { initializeAggregCron } = require("./aggreagetedSheet-cron");
 const { initializePostbackPartitionsCron } = require("./postback-partitions-cron");
 const { initializeMediaNetCron } = require("./mediaNet-cron");
 const { initializeTTCron } = require("./tiktok-cron");
+const { initializeReportsCron } = require("./reports-cron");
 
 
 const initializeCronJobs = () => {
@@ -29,6 +30,7 @@ const initializeCronJobs = () => {
   initializeAggregCron();
   initializePostbackPartitionsCron();
   initializeMediaNetCron();
+  initializeReportsCron();
 };
 
 module.exports = { initializeCronJobs };
