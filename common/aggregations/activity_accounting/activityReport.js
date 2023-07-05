@@ -29,7 +29,6 @@ function generateActivityReport({start_date, end_date, media_buyer}) {
     ${mediaBuyerCondition}
     GROUP BY media_buyer;
   `
-  console.log(query)
   return db.raw(query)
 
 };
