@@ -14,7 +14,7 @@ creativesData = [
 ]
 
 const main = async () => {
-
+  // Update trigger
   // Map each creativeData to a promise
   const promises = creativesData.map(async (creativeData) => {
 
