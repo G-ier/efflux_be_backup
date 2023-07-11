@@ -259,6 +259,30 @@ async function createSpreadsheet(title, emails) {
   }
 }
 
+async function addNewSheet(spreadsheetId, sheetName) {
+  const resource = {
+    requests: [
+      {
+        addSheet: {
+          properties: {
+            title: sheetName,
+          },
+        },
+      },
+    ],
+  };
+
+  try {
+    await sheets.spreadsheets.batchUpdate({
+      spreadsheetId,
+      resource,
+    });
+    console.log(`Sheet ${sheetName} added`);
+  } catch (err) {
+    console.log(err);
+  }
+}
+
 module.exports = {
   getSheet,
   getSheetValues,
@@ -266,5 +290,6 @@ module.exports = {
   clearSheet,
   updateSpreadsheet,
   mergeSpreadsheet,
-  createSpreadsheet
+  createSpreadsheet,
+  addNewSheet
 };
