@@ -20,7 +20,7 @@ const app_htttp = http.createServer(server);
 // index route displays name
 server.get("/", (req, res) => {
   res.send(
-    '<h1 style="color: red; text-align: center; font-size: 40px;">Efflux Server</h1>'
+    '<h1 style="color: red; text-align: center; font-size: 40px;">Efflux Server Updated!</h1>'
   );
 });
 
