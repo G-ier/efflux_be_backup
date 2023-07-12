@@ -7,7 +7,7 @@ const {FB_API_URL, fieldsFilter, delay} = require("../constants/facebook");
 const {add} = require("../common/models");
 const { sendSlackNotification } = require('./slackNotificationService');
 
-const sent      = 0;
+let sent        = 0;
 const max_sent  = 1;
 
 async function debugToken(admin_token, access_token) {
