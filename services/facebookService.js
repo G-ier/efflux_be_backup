@@ -7,6 +7,9 @@ const {FB_API_URL, fieldsFilter, delay} = require("../constants/facebook");
 const {add} = require("../common/models");
 const { sendSlackNotification } = require('./slackNotificationService');
 
+const sent      = 0;
+const max_sent  = 1;
+
 async function debugToken(admin_token, access_token) {
   const url = `${FB_API_URL}debug_token?access_token=${admin_token}&input_token=${access_token}`;
   let res = null;
@@ -31,8 +34,10 @@ async function debugToken(admin_token, access_token) {
     username = username.rows[0].name;
 
     if (diffDays < 4) {
-
-      await sendSlackNotification(`Facebook API Token of user ${username} is about to expire in ${diffDays} days, please refresh it.`);
+      if (sent < max_sent) {
+        await sendSlackNotification(`Facebook API Token of user ${username} is about to expire in ${diffDays} days, please refresh it.`);
+        sent++;
+      }
     }
     return [username, res.is_valid];
   } else {
