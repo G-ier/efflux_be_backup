@@ -22,7 +22,6 @@ const knexLogger = require('./knexLogger');
 const develop = require('../routes/develop');
 const userAccounts = require("../routes/userAccounts");
 const medianet = require("../routes/medianet");
-const adGenerator = require("../routes/adGenerator");
 const mediaBuyers = require("../routes/mediaBuyers");
 
 // Tracking requests from postback servers are allowed without authentication.
@@ -44,7 +43,6 @@ function configureMiddleware(server) {
   server.use(AuthUser);
   server.use("/api/auth", auth);
   server.use("/api/media-buyers", mediaBuyers);
-  server.use("/api/ad-generator", adGenerator);
   server.use("/api/users", users);
   server.use("/api/crossroads", crossroads);
   server.use("/api/medianet", medianet);
