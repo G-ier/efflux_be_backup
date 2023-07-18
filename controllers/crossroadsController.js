@@ -25,9 +25,11 @@ async function getFacebookHourlyData(options) {
   const {
     start_date, end_date, media_buyer, account_id, q
   } = options;
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
   const { rows } = await hourlyMediaBuyerFacebookCrossroads(
-    start_date,
-    end_date,
+    startDate,
+    endDate,
     media_buyer,
     null,
     account_id,

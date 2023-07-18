@@ -2,7 +2,7 @@ const db = require('../../../data/dbConfig');
 const { dayYMD, yesterdayYMD } = require('../../day');
 const selects = require("../selects");
 
-function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, campaignId, adAccountId, q) {
+function hourlyMediaBuyerFacebookCrossroads(startDate, endDate, mediaBuyer, campaignId, adAccountId, q) {
   `
   Summary:
     Gets the data from crossroads, facebook and postback_events tables
@@ -39,9 +39,6 @@ function hourlyMediaBuyerFacebookCrossroads(start_date, end_date, mediaBuyer, ca
   const queryCondition = q
     ? `AND c.name iLike '%${q}%'`
     : '';
-
-  const startDate = yesterdayYMD(start_date);
-  const endDate = dayYMD(end_date);
 
   /**
    * DISTINCT ON (hour) lets us ensure there are no duplicates (it is optional btw)
