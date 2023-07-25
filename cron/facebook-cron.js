@@ -28,8 +28,8 @@ async function updateFacebookInsightsJob(day) {
     // date = yesterdayYMD();
   }
   await updateFacebookData(todayYMD())
-  updatePB_Spreadsheet()
-  updatePB_UnknownSpreadsheet()
+  // updatePB_Spreadsheet()
+  // updatePB_UnknownSpreadsheet()
  }
 
 async function updateFacebookDataJob() {

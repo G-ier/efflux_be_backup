@@ -8,7 +8,6 @@ const md5 = require('md5');
 const postbackCtrl = require('../../controllers/postbackController');
 
 const Sentry = require('@sentry/node');
-const { FB_API_URL } = require('../../constants/facebook');
 const models = require('../../common/helpers');
 const {todayHH, todayYMD} = require("../../common/day");
 const PROVIDERS = require('../../constants/providers');

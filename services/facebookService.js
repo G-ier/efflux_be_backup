@@ -269,7 +269,8 @@ async function getAdCampaigns(access_token, adAccountIds, date = "today") {
     ? {date_preset: date}
     : {time_range: {since: date, until: date}};
 
-  const fields = "id,account_id,ad_strategy_id,status,name,daily_budget,lifetime_budget,created_time,start_time,stop_time,budget_remaining,updated_time";
+  const fields = "id,account_id,budget_remaining,created_time, daily_budget, status,name,lifetime_budget,start_time,stop_time,updated_time";
+  const effective_status = ["ACTIVE", "PAUSED"];
 
   const allCampaigns = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
     const url = `${FB_API_URL}${adAccountId}/campaigns`;
@@ -278,13 +279,11 @@ async function getAdCampaigns(access_token, adAccountIds, date = "today") {
         fields,
         ...dateParam,
         access_token,
-        limit: 10000,
+        effective_status
       }
-    })
-      .catch((err) =>
-      console.warn(err)
-      );
-
+    }).catch((err) =>
+      console.warn(err.response?.data ?? err)
+    );
     return response?.data?.data || [];
   });
 
