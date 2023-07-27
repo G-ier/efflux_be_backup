@@ -2,12 +2,12 @@
 const {
   fieldsFilter,
   FB_API_URL
-} = require("./constants/facebook");
+} = require("../constants/facebook");
 const axios = require("axios");
-const { findBy, update } = require('./common/models');
-const { sendSlackNotification } = require('./services/slackNotificationService');
-const db = require('./data/dbConfig');
-const { getUserAccounts } = require("./services/userAccountsService");
+const { findBy, update } = require('../common/models');
+const { sendSlackNotification } = require('../services/slackNotificationService');
+const db = require('../data/dbConfig');
+const { getUserAccounts } = require("../services/userAccountsService");
 
 let meta_app_id = "1296811510855303" // the id of the app in facebook
 let meta_business_id = "666218791274626" // the id of the business in facebook

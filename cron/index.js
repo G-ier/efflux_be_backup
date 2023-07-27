@@ -13,6 +13,7 @@ const { initializePostbackPartitionsCron } = require("./postback-partitions-cron
 const { initializeMediaNetCron } = require("./mediaNet-cron");
 const { initializeTTCron } = require("./tiktok-cron");
 const { initializeReportsCron } = require("./reports-cron");
+const { initializeInsightsCron } = require("./insights-cron");
 
 
 const initializeCronJobs = () => {
@@ -31,6 +32,7 @@ const initializeCronJobs = () => {
   initializePostbackPartitionsCron();
   initializeMediaNetCron();
   initializeReportsCron();
+  initializeInsightsCron();
 };
 
 module.exports = { initializeCronJobs };
