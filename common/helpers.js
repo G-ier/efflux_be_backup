@@ -455,7 +455,8 @@ function processDateHoles(rows, startDate, endDate) {
   });
 }
 
-const hourlyKeys = ['revenue', 'searches', 'conversions', 'uniq_conversions', 'visitors', 'tracked_visitors', 'spend', 'link_clicks', 'ts_conversions', 'impressions', 'pb_conversions', 'pb_uniq_conversions', 'pb_searches', 'pb_impressions']
+const hourlyKeys = ['revenue', 'searches', 'conversions', 'uniq_conversions', 'visitors', 'tracked_visitors',
+'spend', 'link_clicks', 'ts_conversions', 'impressions', 'pb_conversions', 'pb_uniq_conversions', 'pb_searches', 'pb_impressions']
 function reduceHourlyData(rows) {
   return rows.reduce((acc, row) => {
     hourlyKeys.forEach((key) => {

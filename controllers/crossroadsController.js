@@ -1,20 +1,19 @@
 const db = require('../data/dbConfig');
 
 const {
-  hourlyMediaBuyerFacebookCrossroads,
   hourlyMediaBuyerGoogleCrossroads,
-  facebookCrossroadsByDate,
   googleCrossroadsByDate,
-  campaignsFacebookCrossroads,
   campaignsGoogleCrossroads,
-  campaignsTiktokCrossroads,
-  hourlyMediaBuyerTiktokCrossroads,
-  tiktokCrossroadsByDate,
   crossroadsTotalsByMediaBuyer,
   crossroadsTotals
 } = require('../common/aggregations');
 const { yesterdayYMD, dayYMD } = require('../common/day');
 const { processDateHoles, processHourlyData } = require('../common/helpers');
+const {
+  dateAggregation,
+  hourAggregation,
+  campaignsAggregation
+}                                 = require('../insightQueries');
 
 /**
  * @name getFacebookHourlyData
@@ -27,11 +26,11 @@ async function getFacebookHourlyData(options) {
   } = options;
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await hourlyMediaBuyerFacebookCrossroads(
+  const { rows } = await hourAggregation(
     startDate,
     endDate,
+    'facebook',
     media_buyer,
-    null,
     account_id,
     q,
   );
@@ -46,11 +45,11 @@ async function getTiktokHourlyData(options) {
   } = options;
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await hourlyMediaBuyerTiktokCrossroads(
+  const { rows } = await hourAggregation(
     startDate,
     endDate,
+    'tiktok',
     media_buyer,
-    null,
     account_id,
     q,
   );
@@ -82,9 +81,16 @@ async function getGoogleHourlyData(options) {
 async function getFacebookCrossroadByDates({ start_date, end_date }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await facebookCrossroadsByDate(startDate, endDate);
+  const { rows } = await dateAggregation(startDate, endDate, 'facebook');
   return processDateHoles(rows, startDate, endDate);
 }
+
+async function getTiktokCrossroadsByDates({ start_date, end_date }) {
+  const startDate = yesterdayYMD(start_date);
+  const endDate = dayYMD(end_date);
+  const { rows } = await dateAggregation(startDate, endDate, 'tiktok');
+  return processDateHoles(rows, startDate, endDate);
+};
 
 async function getGoogleCrossroadByDates({ start_date, end_date }) {
   const startDate = yesterdayYMD(start_date);
@@ -93,24 +99,17 @@ async function getGoogleCrossroadByDates({ start_date, end_date }) {
   return processDateHoles(rows, startDate, endDate);
 }
 
-async function getTiktokCrossroadsByDates({ start_date, end_date }) {
-  const startDate = yesterdayYMD(start_date);
-  const endDate = dayYMD(end_date);
-  const { rows } = await tiktokCrossroadsByDate(startDate, endDate);
-  return processDateHoles(rows, startDate, endDate);
-};
-
 async function getCampaignsFacebookCrossroads({ start_date, end_date, media_buyer, ad_account, q }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await campaignsFacebookCrossroads(startDate, endDate, media_buyer, ad_account, q);
+  const { rows } = await campaignsAggregation(startDate, endDate, 'facebook', media_buyer, ad_account, q);
   return rows;
 }
 
 async function getCampaignsTiktokCrossroads({ start_date, end_date, media_buyer, ad_account, q }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await campaignsTiktokCrossroads(startDate, endDate, media_buyer, ad_account, q);
+  const { rows } = await campaignsAggregation(startDate, endDate, 'tiktok', media_buyer, ad_account, q);
   return rows;
 }
 

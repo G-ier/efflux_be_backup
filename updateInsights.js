@@ -134,7 +134,8 @@ function RETURN_FIELDS(network, traffic_source) {
       network.visitors as visitors,
       0 as link_clicks,
       network.tracked_visitors as tracked_visitors,
-      traffic_source.impressions as impressions
+      traffic_source.impressions as impressions,
+      ${spendPlusFee(traffic_source)}
     `
   }
 }
@@ -203,6 +204,7 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
   const result = db.raw(query)
   return result
 }
+
 // -------------------------------------------------------------------------------------------------------
 // ----------------------------------------- DATABASE INSERTION ------------------------------------------
 
@@ -262,8 +264,8 @@ async function updateInsightsJob(day = "today") {
 
   let startDate, endDate;
   if (day === "today") {
-    startDate       = '2023-05-27'
-    endDate         = '2023-07-27'
+    startDate       = calendar.yesterdayYMD(null, 'UTC');
+    endDate         = calendar.todayYMD('UTC');
   } else if (day === "yesterday") {
     startDate       = calendar.dayBeforeYesterdayYMD(null, 'UTC');
     endDate         = calendar.yesterdayYMD(null, 'UTC');
@@ -271,7 +273,7 @@ async function updateInsightsJob(day = "today") {
 
   console.log("Updating insights for", startDate, endDate)
   const network         = 'crossroads'
-  const trafficSource   = 'tiktok'
+  const trafficSource   = 'facebook'
   const { rows } = await ruleThemAllQuery(network, trafficSource, startDate, endDate)
   await updateInsightsOnDatabase(rows, trafficSource)
 }

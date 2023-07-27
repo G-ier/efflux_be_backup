@@ -132,7 +132,8 @@ function RETURN_FIELDS(network, traffic_source) {
       network.visitors as visitors,
       0 as link_clicks,
       network.tracked_visitors as tracked_visitors,
-      traffic_source.impressions as impressions
+      traffic_source.impressions as impressions,
+      ${spendPlusFee(traffic_source)}
     `
   }
 }

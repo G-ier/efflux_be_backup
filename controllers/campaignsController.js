@@ -4,6 +4,12 @@ const { processDateHoles, processHourlyData } = require('../common/helpers');
 const { yesterdayYMD, dayYMD } = require("../common/day");
 const {get, deleteById} = require('../services/campaignsService');
 
+const {
+  campaignsAggregationByAdset,
+  campaignsAggregationByDate,
+  campaignsAggregationByHour,
+}                                 = require('../insightQueries');
+
 const aggregations = {
   crossroads_facebook: {
     data: agg.facebookCrossroadsByCampaignId,
@@ -65,30 +71,21 @@ async function getCampaignAgg(id, media_buyer, network) {
 async function getCampaignData(id, start_date, end_date, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { data: getCampaignData } = await getCampaignAgg(id, media_buyer, network);
-  const { rows } = await getCampaignData(id, startDate, endDate);
+  const { rows } = await campaignsAggregationByAdset(startDate, endDate, id)
   return rows;
 }
 
 async function getCampaignDates(id, start_date, endDate, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
-  const { dates: getCampaignDatesData } = await getCampaignAgg(id, media_buyer, network);
-  const { rows } = await getCampaignDatesData(id, startDate, endDate);
+  const { rows } = await campaignsAggregationByDate(startDate, endDate, id)
   return processDateHoles(rows, startDate, endDate);
 }
 
 async function getCampaignHours(id, start_date, end_date, media_buyer, network) {
-  const { hours: getCampaignHoursData } = await getCampaignAgg(id, media_buyer, network);
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await getCampaignHoursData(
-    startDate,
-    endDate,
-    media_buyer,
-    id
-  );
+  const { rows } = await campaignsAggregationByHour(startDate, endDate, id);
   return rows
-  return processHourlyData(rows);
 }
 
 async function getCampaigns(query) {

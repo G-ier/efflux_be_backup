@@ -14,7 +14,9 @@ const {
   getCrossroadsTotals,
   getCrossroadsTotalsByMediaBuyer
 } = require('../../controllers/crossroadsController');
-const { updateCrossroadsData } = require('../../services/crossroadsService');
+const { updateCrossroadsData }    = require('../../services/crossroadsService');
+
+
 const { CROSSROADS_ACCOUNTS } = require('../../constants/crossroads');
 
 // @route     /api/crossroads/totals
