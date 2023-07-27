@@ -24,6 +24,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         INNER JOIN campaigns c ON c.id = fb.campaign_id AND c.traffic_source = 'facebook'
         INNER JOIN ad_accounts ad ON ad.id = c.ad_account_id
         WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
+        AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
         GROUP BY fb.date, fb.hour, fb.adset_id
       )
     `
@@ -42,6 +43,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         FROM tiktok tt
         INNER JOIN campaigns c ON c.id = tt.campaign_id AND c.traffic_source = 'tiktok'
         WHERE tt.date > '${startDate}' AND tt.date <= '${endDate}'
+        AND tt.campaign_id IN (SELECT campaign_id FROM restriction)
         GROUP BY tt.date, tt.hour, tt.adset_id
       )
     `
@@ -143,7 +145,13 @@ function RETURN_FIELDS(network, traffic_source) {
 function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
 
   const query = `
-    WITH inpulse AS (
+    WITH restriction AS (
+      SELECT DISTINCT campaign_id, adset_id
+        FROM crossroads_partitioned
+      WHERE
+        request_date > '${startDate}' AND request_date <= '${endDate}'
+      AND traffic_source = '${trafficSource}'
+    ), inpulse AS (
       SELECT
         fb.date as coefficient_date,
         CASE
@@ -186,11 +194,11 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
       GROUP BY pb.date, pb.hour, pb.adset_id
     )
     SELECT
-      traffic_source.date as date,
-      traffic_source.hour as hour,
+      COALESCE(traffic_source.date, network.date, inp.coefficient_date) as date,
+      COALESCE(traffic_source.hour, network.hour) as hour,
       agg_adsets_data.campaign_id as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
-      agg_adsets_data.adset_id as adset_id,
+      COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id, postback_events.adset_id) as adset_id,
       agg_adsets_data.adset_name as adset_name,
       agg_adsets_data.user_id as user_id,
       agg_adsets_data.ad_account_id as ad_account_id,
@@ -199,7 +207,7 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
     FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND traffic_source.hour = network.hour
     FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
     FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
-    JOIN inpulse inp ON inp.coefficient_date = traffic_source.date;
+    JOIN inpulse inp ON inp.coefficient_date = ${trafficSource === 'facebook' ? 'network' : 'traffic_source'}.date;
   `
   const result = db.raw(query)
   return result
@@ -248,6 +256,8 @@ async function updateInsightsOnDatabase(data, trafficSource) {
   // Add each chunk to the database
   for (const chunk of dataChunks) {
     await upsert('insights', chunk, 'unique_identifier')
+    // await db('insights').insert(chunk)
+    console.log("Inserted chunk")
   }
 
   console.log("Done inserting insights")
@@ -264,8 +274,8 @@ async function updateInsightsJob(day = "today") {
 
   let startDate, endDate;
   if (day === "today") {
-    startDate       = calendar.yesterdayYMD(null, 'UTC');
-    endDate         = calendar.todayYMD('UTC');
+    startDate       = '2023-05-27';
+    endDate         = '2023-07-27';
   } else if (day === "yesterday") {
     startDate       = calendar.dayBeforeYesterdayYMD(null, 'UTC');
     endDate         = calendar.yesterdayYMD(null, 'UTC');
@@ -273,7 +283,7 @@ async function updateInsightsJob(day = "today") {
 
   console.log("Updating insights for", startDate, endDate)
   const network         = 'crossroads'
-  const trafficSource   = 'facebook'
+  const trafficSource   = 'tiktok'
   const { rows } = await ruleThemAllQuery(network, trafficSource, startDate, endDate)
   await updateInsightsOnDatabase(rows, trafficSource)
 }

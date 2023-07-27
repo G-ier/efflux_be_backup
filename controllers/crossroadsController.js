@@ -78,10 +78,11 @@ async function getGoogleHourlyData(options) {
   return processHourlyData(rows);
 }
 
-async function getFacebookCrossroadByDates({ start_date, end_date }) {
+async function getFacebookCrossroadByDates({ start_date, end_date, media_buyer}) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await dateAggregation(startDate, endDate, 'facebook');
+  if (media_buyer === 'admin') media_buyer = null;
+  const { rows } = await dateAggregation(startDate, endDate, 'facebook', media_buyer);
   return processDateHoles(rows, startDate, endDate);
 }
 

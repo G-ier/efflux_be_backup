@@ -128,10 +128,10 @@ route.get('/tiktok/campaign/hours', async (req, res) => {
 // @desc     GET crossroads/facebook data
 // @Access   Private
 route.get('/facebook/campaigns/dates', async (req, res) => {
-  const { start_date, end_date } = req.query;
+  const { start_date, end_date, media_buyer } = req.query;
   console.log("Request Query", req.query)
   try {
-    const facebookCrossroads = await getFacebookCrossroadByDates({ start_date, end_date });
+    const facebookCrossroads = await getFacebookCrossroadByDates({ start_date, end_date, media_buyer });
     res.status(200).json(facebookCrossroads);
   } catch (err) {
     console.log(err);
