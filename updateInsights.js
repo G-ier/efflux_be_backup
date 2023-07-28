@@ -130,7 +130,15 @@ function RETURN_FIELDS(network, traffic_source) {
       `
     }
     else if (trafficSource === 'tiktok') {
-      return `traffic_source.spend as spend_plus_fee`
+      return `
+      CASE WHEN network.date IS NULL THEN
+      traffic_source.spend
+      ELSE 0 END as unallocated_spend_plus_fee,
+
+      CASE WHEN network.date IS NOT NULL THEN
+      traffic_source.spend
+      ELSE 0 END as spend_plus_fee
+      `
     }
     else {
       throw new Error('Invalid traffic source')
@@ -276,8 +284,8 @@ async function updateInsightsJob(day = "today") {
 
   let startDate, endDate;
   if (day === "today") {
-    startDate       = '2023-07-25';
-    endDate         = '2023-07-26';
+    startDate       = '2023-05-27';
+    endDate         = '2023-07-28';
   } else if (day === "yesterday") {
     startDate       = calendar.dayBeforeYesterdayYMD(null, 'UTC');
     endDate         = calendar.yesterdayYMD(null, 'UTC');

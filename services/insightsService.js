@@ -127,7 +127,15 @@ function RETURN_FIELDS(network, traffic_source) {
       `
     }
     else if (trafficSource === 'tiktok') {
-      return `traffic_source.spend as spend_plus_fee`
+      return `
+      CASE WHEN network.date IS NULL THEN
+      traffic_source.spend
+      ELSE 0 END as unallocated_spend_plus_fee,
+
+      CASE WHEN network.date IS NOT NULL THEN
+      traffic_source.spend
+      ELSE 0 END as spend_plus_fee
+      `
     }
     else {
       throw new Error('Invalid traffic source')
@@ -156,7 +164,6 @@ function RETURN_FIELDS(network, traffic_source) {
     ${spendPlusFee(traffic_source)}
   `
 }
-
 function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
 
   const query = `
