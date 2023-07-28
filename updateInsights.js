@@ -9,11 +9,28 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
 
   if (trafficSource === 'facebook') {
     return `
-      traffic_source AS (
+      inpulse AS (
+        SELECT
+          fb.date as coefficient_date,
+          CASE
+            WHEN SUM(fb.total_spent) >= 0 AND SUM(fb.total_spent) < 1500 THEN 1.1
+            WHEN SUM(fb.total_spent) >= 1500 AND SUM(fb.total_spent) < 3000 THEN 1.08
+            WHEN SUM(fb.total_spent) >= 3000 AND SUM(fb.total_spent) < 6000 THEN 1.06
+            WHEN SUM(fb.total_spent) >= 6000 AND SUM(fb.total_spent) < 10000 THEN 1.04
+            ELSE 1.04
+          END as coefficient
+        FROM facebook_partitioned fb
+        INNER JOIN ad_accounts ad ON ad.fb_account_id = fb.ad_account_id
+        WHERE  fb.date >  '${startDate}'
+        AND  fb.date <= '${endDate}'
+        AND (ad.name LIKE '%INPULSE%' OR ad.name LIKE '%CSUY%')
+        GROUP BY fb.date
+      ), traffic_source AS (
         SELECT
           fb.date as date,
           fb.hour as hour,
           fb.adset_id,
+          MAX(inp.coefficient) as coefficient,
           MAX(ad.name) as ad_account_name,
           MAX(fb.updated_at) as last_updated,
           CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend,
@@ -23,6 +40,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         FROM facebook_partitioned fb
         INNER JOIN campaigns c ON c.id = fb.campaign_id AND c.traffic_source = 'facebook'
         INNER JOIN ad_accounts ad ON ad.id = c.ad_account_id
+        INNER JOIN inpulse inp ON inp.coefficient_date = fb.date
         WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
         AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
         GROUP BY fb.date, fb.hour, fb.adset_id
@@ -84,18 +102,31 @@ function NETWORK(network, trafficSource, startDate, endDate) {
 function RETURN_FIELDS(network, traffic_source) {
 
   const spendPlusFee = (trafficSource) => {
+
+    const spend_plus_fee = `
+      CAST (
+        ROUND(
+            CASE
+                  WHEN traffic_source.ad_account_name LIKE '%Nitido%' THEN traffic_source.spend * 1.02
+                  WHEN traffic_source.ad_account_name LIKE '%Rebate%' THEN traffic_source.spend * 1.03
+                  WHEN traffic_source.ad_account_name LIKE '%INPULSE%' OR traffic_source.ad_account_name LIKE '%CSUY%' THEN traffic_source.spend * traffic_source.coefficient
+                  ELSE traffic_source.spend
+            END::decimal, 2
+            ) AS FLOAT
+      )
+    `
+
     if (trafficSource === 'facebook') {
       return `
-        CAST (
-          ROUND(
-               CASE
-                    WHEN traffic_source.ad_account_name LIKE '%Nitido%' THEN traffic_source.spend * 1.02
-                    WHEN traffic_source.ad_account_name LIKE '%Rebate%' THEN traffic_source.spend * 1.03
-                    WHEN traffic_source.ad_account_name LIKE '%INPULSE%' OR traffic_source.ad_account_name LIKE '%CSUY%' THEN traffic_source.spend * inp.coefficient
-                    ELSE traffic_source.spend
-               END::decimal, 2
-              ) AS FLOAT
-        ) as spend_plus_fee
+
+        CASE WHEN network.date IS NULL THEN
+        ${spend_plus_fee}
+        ELSE 0 END as unallocated_spend_plus_fee,
+
+        CASE WHEN network.date IS NOT NULL THEN
+        ${spend_plus_fee}
+        ELSE 0 END as spend_plus_fee
+
       `
     }
     else if (trafficSource === 'tiktok') {
@@ -106,40 +137,27 @@ function RETURN_FIELDS(network, traffic_source) {
     }
   }
 
-  if (traffic_source === 'facebook') {
-    return `
-      network.revenue as revenue,
-      traffic_source.spend as spend,
-      traffic_source.fb_conversions as fb_conversions,
-      network.cr_conversions as cr_conversions,
-      network.uniq_conversions as cr_uniq_conversions,
-      postback_events.pb_conversions as pb_conversions,
-      network.searches as searches,
-      network.lander_visits as lander_visits,
-      network.visitors as visitors,
-      network.tracked_visitors as tracked_visitors,
-      traffic_source.link_clicks as link_clicks,
-      traffic_source.impressions as impressions,
-      traffic_source.ad_account_name as ad_account_name,
-      ${spendPlusFee(traffic_source)}
-    `
-  } else if (traffic_source === 'tiktok') {
-    return `
-      network.revenue as revenue,
-      traffic_source.spend as spend,
-      traffic_source.conversions as fb_conversions,
-      network.cr_conversions as cr_conversions,
-      network.uniq_conversions as cr_uniq_conversions,
-      postback_events.pb_conversions as pb_conversions,
-      network.searches as searches,
-      network.lander_visits as lander_visits,
-      network.visitors as visitors,
-      0 as link_clicks,
-      network.tracked_visitors as tracked_visitors,
-      traffic_source.impressions as impressions,
-      ${spendPlusFee(traffic_source)}
-    `
-  }
+  return `
+
+    CASE WHEN network.date IS NULL THEN traffic_source.spend ELSE 0 END as unallocated_spend,
+    CASE WHEN network.date IS NOT NULL THEN traffic_source.spend ELSE 0 END as spend,
+
+    CASE WHEN traffic_source.date IS NULL THEN network.revenue ELSE 0 END as unallocated_revenue,
+    CASE WHEN traffic_source.date IS NOT NULL THEN network.revenue ELSE 0 END as revenue,
+
+    traffic_source.${traffic_source === 'facebook' ? 'fb_conversions' : 'conversions'} as fb_conversions,
+    network.cr_conversions as cr_conversions,
+    network.uniq_conversions as cr_uniq_conversions,
+    postback_events.pb_conversions as pb_conversions,
+    network.searches as searches,
+    network.lander_visits as lander_visits,
+    network.visitors as visitors,
+    network.tracked_visitors as tracked_visitors,
+    ${traffic_source === 'facebook' ? 'traffic_source.link_clicks' : '0'} as link_clicks,
+    traffic_source.impressions as impressions,
+    ${traffic_source === 'facebook' ? 'traffic_source.ad_account_name as ad_account_name,' : ''}
+    ${spendPlusFee(traffic_source)}
+  `
 }
 
 function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
@@ -151,22 +169,6 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
       WHERE
         request_date > '${startDate}' AND request_date <= '${endDate}'
       AND traffic_source = '${trafficSource}'
-    ), inpulse AS (
-      SELECT
-        fb.date as coefficient_date,
-        CASE
-          WHEN SUM(fb.total_spent) >= 0 AND SUM(fb.total_spent) < 1500 THEN 1.1
-          WHEN SUM(fb.total_spent) >= 1500 AND SUM(fb.total_spent) < 3000 THEN 1.08
-          WHEN SUM(fb.total_spent) >= 3000 AND SUM(fb.total_spent) < 6000 THEN 1.06
-          WHEN SUM(fb.total_spent) >= 6000 AND SUM(fb.total_spent) < 10000 THEN 1.04
-          ELSE 1.04
-        END as coefficient
-      FROM facebook_partitioned fb
-      INNER JOIN ad_accounts ad ON ad.fb_account_id = fb.ad_account_id
-      WHERE  fb.date >  '${startDate}'
-      AND  fb.date <= '${endDate}'
-      AND (ad.name LIKE '%INPULSE%' OR ad.name LIKE '%CSUY%')
-      GROUP BY fb.date
     ), agg_adsets_data AS (
       SELECT
         c.id as campaign_id,
@@ -194,7 +196,7 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
       GROUP BY pb.date, pb.hour, pb.adset_id
     )
     SELECT
-      COALESCE(traffic_source.date, network.date, inp.coefficient_date) as date,
+      COALESCE(traffic_source.date, network.date) as date,
       COALESCE(traffic_source.hour, network.hour) as hour,
       agg_adsets_data.campaign_id as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
@@ -207,7 +209,7 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
     FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND traffic_source.hour = network.hour
     FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
     FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
-    JOIN inpulse inp ON inp.coefficient_date = ${trafficSource === 'facebook' ? 'network' : 'traffic_source'}.date;
+    WHERE COALESCE(traffic_source.date, network.date) > '${startDate}' AND COALESCE(traffic_source.date, network.date) <= '${endDate}';
   `
   const result = db.raw(query)
   return result
@@ -274,8 +276,8 @@ async function updateInsightsJob(day = "today") {
 
   let startDate, endDate;
   if (day === "today") {
-    startDate       = '2023-05-27';
-    endDate         = '2023-07-27';
+    startDate       = '2023-07-25';
+    endDate         = '2023-07-26';
   } else if (day === "yesterday") {
     startDate       = calendar.dayBeforeYesterdayYMD(null, 'UTC');
     endDate         = calendar.yesterdayYMD(null, 'UTC');

@@ -1,7 +1,7 @@
 const db              = require('./data/dbConfig');
 
 const trafficSource = 'facebook'
-const startDate       = '2023-07-19'
+const startDate       = '2023-07-25'
 const endDate         = '2023-07-26'
 const mediaBuyer      =  null
 const adAccountId     =  null
@@ -25,9 +25,9 @@ async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
   const query = `
     SELECT
       date,
-      CAST(SUM(spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) AS FLOAT) as revenue,
+      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
       CAST(SUM(searches) AS INTEGER) as searches,
       CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
       CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
@@ -45,9 +45,10 @@ async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
     ORDER BY date;
   `
   const data = await db.raw(query)
+  console.log(data.rows)
   return data
 }
-// dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
+dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
 
 // DONE
 async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
@@ -67,9 +68,9 @@ async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
   const query = `
     SELECT
       hour,
-      CAST(SUM(spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) AS FLOAT) as revenue,
+      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
       CAST(SUM(searches) AS INTEGER) as searches,
       CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
       CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
@@ -111,9 +112,9 @@ async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuye
     SELECT
       campaign_id,
       campaign_name,
-      CAST(SUM(spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) AS FLOAT) as revenue,
+      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
       CAST(SUM(searches) AS INTEGER) as searches,
       CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
       CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
@@ -143,9 +144,9 @@ async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
     SELECT
       adset_id,
       adset_name,
-      CAST(SUM(spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) AS FLOAT) as revenue,
+      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
       CAST(SUM(searches) AS INTEGER) as searches,
       CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
       CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
@@ -170,9 +171,9 @@ async function campaignsAggregationByDate(startDate, endDate, campaignId) {
   const query = `
     SELECT
       date,
-      CAST(SUM(spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) AS FLOAT) as revenue,
+      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
       CAST(SUM(searches) AS INTEGER) as searches,
       CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
       CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
@@ -197,9 +198,9 @@ async function campaignsAggregationByHour(startDate, endDate, campaignId) {
   const query = `
     SELECT
       hour,
-      CAST(SUM(spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) AS FLOAT) as revenue,
+      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
       CAST(SUM(searches) AS INTEGER) as searches,
       CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
       CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
