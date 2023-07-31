@@ -284,8 +284,8 @@ async function updateInsightsJob(day = "today") {
 
   let startDate, endDate;
   if (day === "today") {
-    startDate       = '2023-05-27';
-    endDate         = '2023-07-28';
+    startDate       = '2023-07-27';
+    endDate         = '2023-07-29';
   } else if (day === "yesterday") {
     startDate       = calendar.dayBeforeYesterdayYMD(null, 'UTC');
     endDate         = calendar.yesterdayYMD(null, 'UTC');

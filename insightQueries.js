@@ -48,7 +48,7 @@ async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
   console.log(data.rows)
   return data
 }
-dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
+// dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
 
 // DONE
 async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
