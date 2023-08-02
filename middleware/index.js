@@ -23,6 +23,7 @@ const develop = require('../routes/develop');
 const userAccounts = require("../routes/userAccounts");
 const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
+const columnPresets = require("../routes/columnPresets");
 
 // Tracking requests from postback servers are allowed without authentication.
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
@@ -43,6 +44,7 @@ function configureMiddleware(server) {
   server.use(AuthUser);
   server.use("/api/auth", auth);
   server.use("/api/media-buyers", mediaBuyers);
+  server.use('/api/column-presets', columnPresets)
   server.use("/api/users", users);
   server.use("/api/crossroads", crossroads);
   server.use("/api/medianet", medianet);

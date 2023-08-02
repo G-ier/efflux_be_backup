@@ -24,3 +24,20 @@ CREATE TABLE insights (
     traffic_source VARCHAR(30)
     unique_identifier VARCHAR(60)
 );
+
+CREATE TABLE finders (
+    id SERIAL PRIMARY KEY,
+    accounts JSON,
+    profilename TEXT,
+    status account_status,
+    proxy_id INTEGER,
+    FOREIGN KEY(proxy_id) REFERENCES proxies(id) ON DELETE SET NULL
+);
+
+CREATE TABLE column_presets (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    presets TEXT[] NOT NULL,
+    user_id INTEGER,
+    FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE SET NULL
+);
