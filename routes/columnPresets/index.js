@@ -61,10 +61,14 @@ route.delete('/',
       return res.status(400).json(err.message);
     }
 
-    const response = await db('column_presets').where('id', presetId).del();
-    console.log("Response", response)
+    try {
+      await db('column_presets').where('id', presetId).del();
+    } catch (err) {
+      return res.status(400).json("Preset record not found");
+    }
 
-    return res.status(200).json('Preset deleted successfully');
+    return res.status(200).json("Preset deleted");
+
   })
 );
 
