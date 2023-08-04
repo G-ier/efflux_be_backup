@@ -137,6 +137,68 @@ async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuye
 }
 // campaignsAggregation(startDate, endDate, trafficSource, null, null, null)
 
+async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
+
+  const mediaBuyerCondition = (mediaBuyer !== 'admin' && mediaBuyer)
+  ? `AND user_id = ${mediaBuyer}`
+  : '';
+
+  const adAccountCondition = adAccountId
+  ? `AND ad_account_id = ${adAccountId}`
+  : '';
+
+  const queryCondition = q
+  ? `AND campaign_name LIKE '%${q}%'`
+  : '';
+
+  const query = `
+    WITH adset_data AS (
+      SELECT
+        campaign_id,
+        MAX(campaign_name) as campaign_name,
+        adset_id,
+        MAX(adset_name) as adset_name,
+        CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+        CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+        CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
+        CAST(SUM(searches) AS INTEGER) as searches,
+        CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
+        CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
+        CAST(SUM(visitors) AS INTEGER) as visitors,
+        CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
+        CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
+        CAST(SUM(impressions) AS INTEGER) as impressions,
+        CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      FROM insights
+      WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
+        ${mediaBuyerCondition}
+        ${adAccountCondition}
+        ${queryCondition}
+      GROUP BY campaign_id, adset_id
+    )
+    SELECT
+      ad.campaign_id,
+      MAX(ad.campaign_name) as campaign_name,
+      SUM(ad.spend) as spend,
+      SUM(ad.spend_plus_fee) as spend_plus_fee,
+      SUM(ad.revenue) as revenue,
+      SUM(ad.searches) as searches,
+      SUM(ad.cr_conversions) as cr_conversions,
+      SUM(ad.uniq_conversions) as uniq_conversions,
+      SUM(ad.visitors) as visitors,
+      SUM(ad.tracked_visitors) as tracked_visitors,
+      SUM(ad.link_clicks) as link_clicks,
+      SUM(ad.impressions) as impressions,
+      SUM(ad.pb_conversions) as pb_conversions,
+      json_agg(ad.*) as adsets
+    FROM adset_data ad
+    GROUP BY ad.campaign_id, ad.campaign_name
+  `
+  const data = await db.raw(query)
+  return data
+}
+
+
 const campaignId = '23855155642170044'
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
 
@@ -224,6 +286,7 @@ module.exports = {
   dateAggregation,
   hourAggregation,
   campaignsAggregation,
+  campaignsAggregationWithAdsets,
   campaignsAggregationByAdset,
   campaignsAggregationByDate,
   campaignsAggregationByHour,
