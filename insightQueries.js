@@ -135,8 +135,8 @@ async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuye
   return data
 
 }
-// campaignsAggregation(startDate, endDate, trafficSource, null, null, null)
 
+// campaignsAggregation(startDate, endDate, trafficSource, null, null, null)
 async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
 
   const mediaBuyerCondition = (mediaBuyer !== 'admin' && mediaBuyer)
@@ -154,10 +154,12 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
   const query = `
     WITH adset_data AS (
       SELECT
-        campaign_id,
+        insights.campaign_id,
         MAX(campaign_name) as campaign_name,
-        adset_id,
-        MAX(adset_name) as adset_name,
+        insights.adset_id,
+        MAX(adsets.status) as status,
+        CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as adset_daily_budget,
+        MAX(insights.adset_name) as adset_name,
         CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
         CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
         CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
@@ -170,15 +172,17 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
         CAST(SUM(impressions) AS INTEGER) as impressions,
         CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
       FROM insights
-      WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
+      JOIN adsets ON insights.adset_id = adsets.provider_id
+      WHERE date > '${startDate}' AND date <= '${endDate}' AND insights.traffic_source = '${trafficSource}'
         ${mediaBuyerCondition}
         ${adAccountCondition}
         ${queryCondition}
-      GROUP BY campaign_id, adset_id
+      GROUP BY insights.campaign_id, insights.adset_id
     )
     SELECT
       ad.campaign_id,
       MAX(ad.campaign_name) as campaign_name,
+      MAX(c.status) as status,
       SUM(ad.spend) as spend,
       SUM(ad.spend_plus_fee) as spend_plus_fee,
       SUM(ad.revenue) as revenue,
@@ -190,13 +194,20 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
       CAST(SUM(ad.link_clicks) AS INTEGER) as link_clicks,
       CAST(SUM(ad.impressions) AS INTEGER) as impressions,
       CAST(SUM(ad.pb_conversions) AS INTEGER) as pb_conversions,
+      CASE
+        WHEN SUM(ad.adset_daily_budget) > 0 THEN SUM(ad.adset_daily_budget)
+        ELSE CAST(MAX(c.daily_budget) AS FLOAT)
+      END AS daily_budget,
       json_agg(ad.*) as adsets
     FROM adset_data ad
+    JOIN campaigns c ON ad.campaign_id = c.id
     GROUP BY ad.campaign_id, ad.campaign_name
   `
   const data = await db.raw(query)
   return data
 }
+
+// campaignsAggregationWithAdsets(startDate, endDate, trafficSource, null, null, null).then(data => console.log(data.rows))
 
 const campaignId = '23855155642170044'
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
