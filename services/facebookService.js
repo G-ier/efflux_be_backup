@@ -1,14 +1,14 @@
 const _ = require("lodash");
 const axios = require("axios");
 const async = require("async");
-const {ServiceUnavailable} = require('http-errors');
+const { ServiceUnavailable } = require("http-errors");
 const db = require("../data/dbConfig");
-const {FB_API_URL, fieldsFilter, delay} = require("../constants/facebook");
-const {add} = require("../common/models");
-const { sendSlackNotification } = require('./slackNotificationService');
+const { FB_API_URL, fieldsFilter, delay, avilableStatuses } = require("../constants/facebook");
+const { add } = require("../common/models");
+const { sendSlackNotification } = require("./slackNotificationService");
 
-let sent        = 0;
-const max_sent  = 1;
+let sent = 0;
+const max_sent = 1;
 
 async function debugToken(admin_token, access_token) {
   const url = `${FB_API_URL}debug_token?access_token=${admin_token}&input_token=${access_token}`;
@@ -18,7 +18,7 @@ async function debugToken(admin_token, access_token) {
     res = response.data.data;
   } catch (err) {
     console.info("ERROR GETTING OWNED AD ACCOUNTS", err.response?.data.error || err);
-    return ['', false];
+    return ["", false];
   }
 
   if (res.is_valid) {
@@ -29,22 +29,23 @@ async function debugToken(admin_token, access_token) {
     const provider_id = res.user_id;
     let username = await db.raw(`
       SELECT name FROM user_accounts WHERE provider_id = '${provider_id}';
-    `)
+    `);
 
     username = username.rows[0].name;
 
     if (diffDays < 4) {
       if (sent < max_sent) {
-        await sendSlackNotification(`Facebook API Token of user ${username} is about to expire in ${diffDays} days, please refresh it.`);
+        await sendSlackNotification(
+          `Facebook API Token of user ${username} is about to expire in ${diffDays} days, please refresh it.`
+        );
         sent++;
       }
     }
     return [username, res.is_valid];
   } else {
     console.log("Token is not valid");
-    return ['', false];
+    return ["", false];
   }
-
 }
 
 async function getAdAccount(adAccountId, token) {
@@ -70,38 +71,38 @@ async function getAdAccounts(userId, token) {
 
 async function getAdAccountsTodaySpent(access_token, Ids, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-  const dateParam = isPreset
-    ? {date_preset: date}
-    : {time_range: {since: date, until: date}};
+  const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
   const fields = "spend,account_id";
 
   const allSpent = await async.mapLimit(Ids, 100, async (adSetId) => {
-    console.log('ad_account_ID', adSetId)
-    let paging = {}
-    const spent = []
-    let url = `${FB_API_URL}${adSetId}/insights`
+    console.log("ad_account_ID", adSetId);
+    let paging = {};
+    const spent = [];
+    let url = `${FB_API_URL}${adSetId}/insights`;
     let params = {
       fields,
       ...dateParam,
       access_token,
       limit: 5000,
-    }
+    };
     do {
       if (paging?.next) {
-        url = paging.next
-        params = {}
+        url = paging.next;
+        params = {};
       }
-      const {data = []} = await axios.get(url, {
-        params
-      }).catch((err) => {
-        console.warn(`facebook get today spent failure for ad_account ${adSetId}`, err.response?.data ?? err);
-        return {}
-      })
-      paging = {...data?.paging}
-      if (data?.data?.length) spent.push(...data?.data)
-    } while(paging?.next)
-    return spent
+      const { data = [] } = await axios
+        .get(url, {
+          params,
+        })
+        .catch((err) => {
+          console.warn(`facebook get today spent failure for ad_account ${adSetId}`, err.response?.data ?? err);
+          return {};
+        });
+      paging = { ...data?.paging };
+      if (data?.data?.length) spent.push(...data?.data);
+    } while (paging?.next);
+    return spent;
   });
 
   return _.flatten(allSpent);
@@ -109,16 +110,15 @@ async function getAdAccountsTodaySpent(access_token, Ids, date) {
 
 async function getAdInsights(access_token, adArray, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-  const dateParam = isPreset
-    ? {date_preset: date}
-    : {time_range: {since: date, until: date}};
+  const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
-  const fields = "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,clicks,reach,frequency,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
+  const fields =
+    "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,clicks,reach,frequency,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
 
   const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {
-    let paging = {}
-    const insights = []
-    let url = `${FB_API_URL}${adSetId}/insights`
+    let paging = {};
+    const insights = [];
+    let url = `${FB_API_URL}${adSetId}/insights`;
     let params = {
       fields,
       level: "ad",
@@ -126,22 +126,24 @@ async function getAdInsights(access_token, adArray, date) {
       ...dateParam,
       access_token,
       limit: 500,
-    }
+    };
     do {
       if (paging?.next) {
-        url = paging.next
-        params = {}
+        url = paging.next;
+        params = {};
       }
-      const {data = []} = await axios.get(url, {
-        params
-      }).catch((err) => {
-        console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
-        return {}
-      })
-      paging = {...data?.paging}
-      if (data?.data?.length) insights.push(...data?.data)
+      const { data = [] } = await axios
+        .get(url, {
+          params,
+        })
+        .catch((err) => {
+          console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+          return {};
+        });
+      paging = { ...data?.paging };
+      if (data?.data?.length) insights.push(...data?.data);
       await delay(1000);
-    } while(paging?.next)
+    } while (paging?.next);
 
     // Debug & Development Logs
     // if (insights[0]) console.log('insights1', insights[0]);
@@ -156,38 +158,38 @@ async function getAdInsights(access_token, adArray, date) {
 
 async function getAdInsightsByDay(access_token, adArray, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-  const dateParam = isPreset
-    ? {date_preset: date}
-    : {time_range: {since: date, until: date}};
+  const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
   const fields = "ad_id,adset_id,campaign_id,date_start,actions,cost_per_action_type";
 
   const allInsights = await async.mapLimit(adArray, 100, async (adSetId) => {
-    let paging = {}
-    const insights = []
-    let url = `${FB_API_URL}${adSetId}/insights`
+    let paging = {};
+    const insights = [];
+    let url = `${FB_API_URL}${adSetId}/insights`;
     let params = {
       fields,
       level: "ad",
       ...dateParam,
       access_token,
       limit: 500,
-    }
+    };
     do {
       if (paging?.next) {
-        url = paging.next
-        params = {}
+        url = paging.next;
+        params = {};
       }
-      const {data = []} = await axios.get(url, {
-        params
-      }).catch((err) => {
-        // console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
-        return {}
-      })
-      paging = {...data?.paging}
-      if (data?.data?.length) insights.push(...data?.data)
+      const { data = [] } = await axios
+        .get(url, {
+          params,
+        })
+        .catch((err) => {
+          // console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+          return {};
+        });
+      paging = { ...data?.paging };
+      if (data?.data?.length) insights.push(...data?.data);
       await delay(1000);
-    } while(paging?.next)
+    } while (paging?.next);
     // console.log('insights.length', insights.length)
     return insights.length ? cleanInsightsData(insights) : [];
   });
@@ -204,7 +206,7 @@ const defaultInsightsStats = {
   spend: 0,
   inline_link_clicks: 0,
   cpc: 0,
-  conversions: [{action_type: "default", value: "0"}],
+  conversions: [{ action_type: "default", value: "0" }],
   ctr: 0,
   impressions: 0,
   clciks: 0,
@@ -225,13 +227,13 @@ async function addFacebookData(data, date) {
   const removeIds = _.map(data, "campaign_id");
 
   if (removeIds.length) {
-      const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({date}).del();
-      const removed_2 = await db("facebook_partitioned").whereIn("campaign_id", removeIds).andWhere({date}).del();
+    const removed = await db("facebook").whereIn("campaign_id", removeIds).andWhere({ date }).del();
+    const removed_2 = await db("facebook_partitioned").whereIn("campaign_id", removeIds).andWhere({ date }).del();
     console.info(`DELETED ${removed} rows on date ${date}`);
     console.info(`DELETED ${removed_2} rows on date ${date}`);
   }
   // console.log('data', data)
-  data = [... new Map(data.map(item => [item['campaign_id'] + item['ad_id'] + item['hour'], item])).values()]
+  data = [...new Map(data.map((item) => [item["campaign_id"] + item["ad_id"] + item["hour"], item])).values()];
 
   const dataChunks = _.chunk(data, 500);
   for (const chunk of dataChunks) {
@@ -241,17 +243,16 @@ async function addFacebookData(data, date) {
 
   // await add("facebook", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
-
 }
 
 async function addFacebookDataByDay(data, date) {
   const removeIds = _.map(data, "campaign_id");
 
   if (removeIds.length) {
-      const removed = await db("facebook_conversion").whereIn("campaign_id", removeIds).andWhere({date}).del();
+    const removed = await db("facebook_conversion").whereIn("campaign_id", removeIds).andWhere({ date }).del();
     console.info(`DELETED ${removed} rows on date ${date}`);
   }
-  data = [... new Map(data.map(item => [item['campaign_id'], item])).values()]
+  data = [...new Map(data.map((item) => [item["campaign_id"], item])).values()];
 
   const dataChunks = _.chunk(data, 500);
   for (const chunk of dataChunks) {
@@ -260,30 +261,28 @@ async function addFacebookDataByDay(data, date) {
 
   // await add("facebook_conversion", data);
   console.info(`DONE ADDING FACEBOOK DATA 🎉 for ${date}`);
-
 }
 
 async function getAdCampaigns(access_token, adAccountIds, date = "today") {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-  const dateParam = isPreset
-    ? {date_preset: date}
-    : {time_range: {since: date, until: date}};
+  const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
-  const fields = "id,account_id,budget_remaining,created_time, daily_budget, status,name,lifetime_budget,start_time,stop_time,updated_time";
+  const fields =
+    "id,account_id,budget_remaining,created_time, daily_budget, status,name,lifetime_budget,start_time,stop_time,updated_time";
   const effective_status = ["ACTIVE", "PAUSED"];
 
   const allCampaigns = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
     const url = `${FB_API_URL}${adAccountId}/campaigns`;
-    const response = await axios.get(url, {
-      params: {
-        fields,
-        ...dateParam,
-        access_token,
-        effective_status
-      }
-    }).catch((err) =>
-      console.warn(err.response?.data ?? err)
-    );
+    const response = await axios
+      .get(url, {
+        params: {
+          fields,
+          ...dateParam,
+          access_token,
+          effective_status,
+        },
+      })
+      .catch((err) => console.warn(err.response?.data ?? err));
     return response?.data?.data || [];
   });
 
@@ -291,19 +290,22 @@ async function getAdCampaigns(access_token, adAccountIds, date = "today") {
 }
 
 async function getFacebookPixels(access_token, adAccountIds) {
-  const fields = 'id,name,account_id,owner_business,is_unavailable,last_fired_time,creation_time,data_use_setting,ad_'
+  const fields = "id,name,account_id,owner_business,is_unavailable,last_fired_time,creation_time,data_use_setting,ad_";
   const allPixels = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
     const url = `${FB_API_URL}${adAccountId}/adspixels`;
-    const response = await axios.get(url, {
-      params: {
-        fields,
-        access_token,
-        limit: 5000,
-      }
-    })
-      .catch((err) => console.warn('ad_account_id:', adAccountId, "facebook pixels failure", err.response?.data ?? err));
+    const response = await axios
+      .get(url, {
+        params: {
+          fields,
+          access_token,
+          limit: 5000,
+        },
+      })
+      .catch((err) =>
+        console.warn("ad_account_id:", adAccountId, "facebook pixels failure", err.response?.data ?? err)
+      );
 
-    return response?.data?.data.map(item => ({...item, ad_account_id: adAccountId.replace('act_', '')})) || [];
+    return response?.data?.data.map((item) => ({ ...item, ad_account_id: adAccountId.replace("act_", "") })) || [];
   });
 
   return _.flatten(allPixels);
@@ -318,28 +320,58 @@ async function getAdCampaignIds(adsetIds) {
 
 async function getAdsets(access_token, adAccountIds, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-  const dateParam = isPreset
-    ? {date_preset: date}
-    : {time_range: {since: date, until: date}};
+  const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
-  const fields = "id,account_id,campaign_id,status,name,daily_budget,lifetime_budget,created_time,start_time,stop_time,budget_remaining,updated_time";
+  const fields =
+    "id,account_id,campaign_id,status,name,daily_budget,lifetime_budget,created_time,start_time,stop_time,budget_remaining,updated_time";
 
   const allAdsets = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
     const url = `${FB_API_URL}${adAccountId}/adsets`;
-    const response = await axios.get(url, {
-      params: {
-        fields,
-        ...dateParam,
-        access_token,
-        limit: 5000,
-      }
-    })
-      .catch((err) => console.warn(`facebook adsets failure on ad_account_id ${adAccountId}`, err.response?.data ?? err));
+    const response = await axios
+      .get(url, {
+        params: {
+          fields,
+          ...dateParam,
+          access_token,
+          limit: 5000,
+        },
+      })
+      .catch((err) =>
+        console.warn(`facebook adsets failure on ad_account_id ${adAccountId}`, err.response?.data ?? err)
+      );
 
-    return response?.data?.data || []
-  })
+    return response?.data?.data || [];
+  });
 
   return _.flatten(allAdsets);
+}
+
+async function updateEntity({ token, entityId, dailyBudget, status }) {
+  const url = `${FB_API_URL}${entityId}`;
+  if (!token) {
+    throw Error("Token is required.");
+  }
+  if (!avilableStatuses.includes(status)) {
+    throw Error("Status is not valid.");
+  }
+  try {
+    const params = { status: status, access_token: token };
+    if (dailyBudget) {
+      params.daily_budget = dailyBudget;
+    }
+    const response = await axios.post(url, params);
+    if (response.data?.success ?? false) {
+      await db.raw(
+        `UPDATE adsets SET status='${status}' ${
+          dailyBudget ? `,daily_budget=${dailyBudget}` : ""
+        } WHERE provider_id = '${entityId}';`
+      );
+    }
+    return response.data?.success ?? false;
+  } catch ({ response }) {
+    console.log(response.data);
+  }
+  return false;
 }
 
 module.exports = {
@@ -354,5 +386,6 @@ module.exports = {
   getAdCampaignIds,
   getFacebookPixels,
   getAdAccountsTodaySpent,
-  debugToken
+  debugToken,
+  updateEntity,
 };

@@ -13,13 +13,13 @@ const jwtCheck = require("./jwtCheck");
 const jwtPermissions = require("./jwtPermissions");
 const ErrorHandler = require("./error");
 const AuthUser = require("./authUser");
-const isBot = require('./isBot');
+const isBot = require("./isBot");
 const pixel = require("../routes/pixel");
-const campaigns = require('../routes/campaigns');
-const proper = require('../routes/proper');
-const system1 = require('../routes/system1');
-const knexLogger = require('./knexLogger');
-const develop = require('../routes/develop');
+const campaigns = require("../routes/campaigns");
+const proper = require("../routes/proper");
+const system1 = require("../routes/system1");
+const knexLogger = require("./knexLogger");
+const develop = require("../routes/develop");
 const userAccounts = require("../routes/userAccounts");
 const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
@@ -36,23 +36,24 @@ function configureMiddleware(server) {
   server.use("/trk", isBot, pixel);
   server.use(morgan("dev"));
   server.use("/api/auth0", auth0);
-  server.use('/api/develop', develop);
+  server.use("/api/develop", develop);
+
   server.use(paginate.middleware(10, 50));
-  server.use('/api/proper', proper);
+  server.use("/api/proper", proper);
   server.use(jwtCheck);
   server.use(jwtPermissions);
   server.use(AuthUser);
   server.use("/api/auth", auth);
   server.use("/api/media-buyers", mediaBuyers);
-  server.use('/api/column-presets', columnPresets)
+  server.use("/api/column-presets", columnPresets);
   server.use("/api/users", users);
   server.use("/api/crossroads", crossroads);
   server.use("/api/medianet", medianet);
   server.use("/api/amg", amg);
   server.use("/api/system1", system1);
   server.use("/api/facebook", facebook);
-  server.use('/api/campaigns', campaigns);
-  server.use('/api/users/user_accounts', userAccounts);
+  server.use("/api/campaigns", campaigns);
+  server.use("/api/users/user_accounts", userAccounts);
   server.use(ErrorHandler);
 }
 

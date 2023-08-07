@@ -1,13 +1,14 @@
 const route = require("express").Router();
 
 const bodyParser = require("body-parser");
-const {
-  longTokenController,
-} = require("../../controllers/longTokenController");
+const { longTokenController } = require("../../controllers/longTokenController");
 const { updateFacebookData, updateFacebookInsights } = require("../../controllers/facebookController");
 const { getAndPrepareDataByAdId } = require("../../common/helpers");
-const {todayYMD, todayHH} = require("../../common/day");
+const { todayYMD, todayHH } = require("../../common/day");
 const urlencodedParser = bodyParser.urlencoded({ extended: false });
+const management = require("./management");
+
+route.use("/management", management);
 
 // @route     /api/facebook/report
 // @desc     GET crossroads data
