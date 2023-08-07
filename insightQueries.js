@@ -182,14 +182,14 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
       SUM(ad.spend) as spend,
       SUM(ad.spend_plus_fee) as spend_plus_fee,
       SUM(ad.revenue) as revenue,
-      SUM(ad.searches) as searches,
-      SUM(ad.cr_conversions) as cr_conversions,
-      SUM(ad.uniq_conversions) as uniq_conversions,
-      SUM(ad.visitors) as visitors,
-      SUM(ad.tracked_visitors) as tracked_visitors,
-      SUM(ad.link_clicks) as link_clicks,
-      SUM(ad.impressions) as impressions,
-      SUM(ad.pb_conversions) as pb_conversions,
+      CAST(SUM(ad.searches) AS INTEGER) as searches,
+      CAST(SUM(ad.cr_conversions) AS INTEGER) as cr_conversions,
+      CAST(SUM(ad.uniq_conversions) AS INTEGER) as uniq_conversions,
+      CAST(SUM(ad.visitors) AS INTEGER) as visitors,
+      CAST(SUM(ad.tracked_visitors) AS INTEGER) as tracked_visitors,
+      CAST(SUM(ad.link_clicks) AS INTEGER) as link_clicks,
+      CAST(SUM(ad.impressions) AS INTEGER) as impressions,
+      CAST(SUM(ad.pb_conversions) AS INTEGER) as pb_conversions,
       json_agg(ad.*) as adsets
     FROM adset_data ad
     GROUP BY ad.campaign_id, ad.campaign_name
@@ -197,7 +197,6 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
   const data = await db.raw(query)
   return data
 }
-
 
 const campaignId = '23855155642170044'
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
