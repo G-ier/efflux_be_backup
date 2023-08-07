@@ -346,7 +346,10 @@ async function getAdsets(access_token, adAccountIds, date) {
   return _.flatten(allAdsets);
 }
 
-async function updateEntity({ token, entityId, dailyBudget, status }) {
+async function updateEntity({ type, token, entityId, dailyBudget, status }) {
+  if (!type || (type !== "adset" && type !== "campaign")) {
+    throw Error("Type must be either 'adset' or 'campaign'.");
+  }
   const url = `${FB_API_URL}${entityId}`;
   if (!token) {
     throw Error("Token is required.");
@@ -360,12 +363,21 @@ async function updateEntity({ token, entityId, dailyBudget, status }) {
       params.daily_budget = dailyBudget;
     }
     const response = await axios.post(url, params);
+    console.log("asdasd", response.data);
     if (response.data?.success ?? false) {
-      await db.raw(
-        `UPDATE adsets SET status='${status}' ${
-          dailyBudget ? `,daily_budget=${dailyBudget}` : ""
-        } WHERE provider_id = '${entityId}';`
-      );
+      if (type === "adset")
+        await db.raw(
+          `UPDATE adsets SET status='${status}' ${
+            dailyBudget ? `,daily_budget=${dailyBudget}` : ""
+          } WHERE provider_id = '${entityId}';`
+        );
+      else {
+        await db.raw(
+          `UPDATE campaigns SET status='${status}' ${
+            dailyBudget ? `,daily_budget=${dailyBudget}` : ""
+          } WHERE id = '${entityId}';`
+        );
+      }
     }
     return response.data?.success ?? false;
   } catch ({ response }) {

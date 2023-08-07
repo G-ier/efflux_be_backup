@@ -298,12 +298,13 @@ async function pickFetchingAccount() {
   return account;
 }
 
-async function updateEntityController({ entityId, dailyBudget, status }) {
+async function updateEntityController({ type, entityId, dailyBudget, status }) {
   const fetchedAccounts = await pickFetchingAccount();
   const token = fetchedAccounts.token;
   const pausedStatus = await updateEntity({
     token,
     entityId,
+    type,
     status,
     dailyBudget,
   });
