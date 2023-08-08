@@ -7,8 +7,6 @@ const mediaBuyer      =  null
 const adAccountId     =  null
 const query           =  null
 
-// Trigger build
-
 // DONE
 async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
 
