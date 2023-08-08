@@ -158,7 +158,7 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
         MAX(campaign_name) as campaign_name,
         insights.adset_id,
         MAX(adsets.status) as status,
-        CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as adset_daily_budget,
+        CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
         MAX(insights.adset_name) as adset_name,
         CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
         CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
@@ -195,7 +195,9 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
       CAST(SUM(ad.impressions) AS INTEGER) as impressions,
       CAST(SUM(ad.pb_conversions) AS INTEGER) as pb_conversions,
       CASE
-        WHEN SUM(ad.adset_daily_budget) > 0 THEN SUM(ad.adset_daily_budget)
+        WHEN SUM(ad.daily_budget) > 0 THEN SUM(
+         CASE WHEN ad.status = 'ACTIVE' THEN ad.daily_budget ELSE 0 END
+        )
         ELSE CAST(MAX(c.daily_budget) AS FLOAT)
       END AS daily_budget,
       json_agg(ad.*) as adsets
