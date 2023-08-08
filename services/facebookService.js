@@ -377,6 +377,9 @@ async function updateEntity({ type, token, entityId, dailyBudget, status }) {
             dailyBudget ? `,daily_budget=${dailyBudget}` : ""
           } WHERE id = '${entityId}';`
         );
+        await db.raw(
+          `UPDATE adsets SET status='${status}' WHERE campaign_id = '${entityId}';`
+        );
       }
     }
     return response.data?.success ?? false;
