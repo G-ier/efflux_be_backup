@@ -213,7 +213,7 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
   return data
 }
 
-campaignsAggregationWithAdsets(startDate, endDate, trafficSource, null, null, null).then(data => console.log(data.rows))
+// campaignsAggregationWithAdsets(startDate, endDate, trafficSource, null, null, null).then(data => console.log(data.rows))
 
 const campaignId = '23855155642170044'
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
