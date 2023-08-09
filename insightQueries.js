@@ -195,6 +195,10 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
       CAST(SUM(ad.impressions) AS INTEGER) as impressions,
       CAST(SUM(ad.pb_conversions) AS INTEGER) as pb_conversions,
       CASE
+        WHEN SUM(ad.daily_budget) > 0 THEN 'adset'
+        ELSE 'campaign'
+      END AS budget_level,
+      CASE
         WHEN SUM(ad.daily_budget) > 0 THEN SUM(
          CASE WHEN ad.status = 'ACTIVE' THEN ad.daily_budget ELSE 0 END
         )
@@ -209,7 +213,7 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
   return data
 }
 
-// campaignsAggregationWithAdsets(startDate, endDate, trafficSource, null, null, null).then(data => console.log(data.rows))
+campaignsAggregationWithAdsets(startDate, endDate, trafficSource, null, null, null).then(data => console.log(data.rows))
 
 const campaignId = '23855155642170044'
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
