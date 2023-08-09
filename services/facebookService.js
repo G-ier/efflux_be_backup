@@ -346,47 +346,50 @@ async function getAdsets(access_token, adAccountIds, date) {
   return _.flatten(allAdsets);
 }
 
-async function updateEntity({ type, token, entityId, dailyBudget, status }) {
+function validateInput({ type, token, status }) {
   if (!type || (type !== "adset" && type !== "campaign")) {
     throw Error("Type must be either 'adset' or 'campaign'.");
   }
-  const url = `${FB_API_URL}${entityId}`;
   if (!token) {
     throw Error("Token is required.");
   }
-  if (!avilableStatuses.includes(status)) {
+  if (status && !availableStatuses.includes(status)) {
     throw Error("Status is not valid.");
   }
-  try {
-    const params = { status: status, access_token: token };
-    if (dailyBudget) {
-      params.daily_budget = dailyBudget;
-    }
-    const response = await axios.post(url, params);
-    console.log("asdasd", response.data);
-    if (response.data?.success ?? false) {
-      if (type === "adset")
-        await db.raw(
-          `UPDATE adsets SET status='${status}' ${
-            dailyBudget ? `,daily_budget=${dailyBudget}` : ""
-          } WHERE provider_id = '${entityId}';`
-        );
-      else {
-        await db.raw(
-          `UPDATE campaigns SET status='${status}' ${
-            dailyBudget ? `,daily_budget=${dailyBudget}` : ""
-          } WHERE id = '${entityId}';`
-        );
-        await db.raw(
-          `UPDATE adsets SET status='${status}' WHERE campaign_id = '${entityId}';`
-        );
+}
+
+async function updateEntity({ type, token, entityId, dailyBudget, status }) {
+  async function updateDatabase(type, entityId, dailyBudget, status) {
+    const updateData = {
+      ...(status && { status }),
+      ...(dailyBudget && { daily_budget: dailyBudget }),
+    };
+
+    if (type === "adset") {
+      await db("adsets").where("provider_id", entityId).update(updateData);
+    } else {
+      await db("campaigns").where("id", entityId).update(updateData);
+      if (status) {
+        await db("adsets").where("campaign_id", entityId).update({ status });
       }
+    }
+  }
+
+  validateInput({ type, token, status });
+
+  const url = `${FB_API_URL}${entityId}`;
+  const params = { access_token: token, ...(status && { status }), ...(dailyBudget && { daily_budget: dailyBudget }) };
+
+  try {
+    const response = await axios.post(url, params);
+    if (response.data?.success) {
+      await updateDatabase(type, entityId, dailyBudget, status);
     }
     return response.data?.success ?? false;
   } catch ({ response }) {
     console.log(response.data);
+    return false;
   }
-  return false;
 }
 
 module.exports = {
