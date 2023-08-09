@@ -25,10 +25,21 @@ const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
 const columnPresets = require("../routes/columnPresets");
 
+var livereload = require("livereload");
+var connectLiveReload = require("connect-livereload");
+
+const liveReloadServer = livereload.createServer();
+liveReloadServer.server.once("connection", () => {
+  setTimeout(() => {
+    liveReloadServer.refresh("/");
+  }, 100);
+});
+
 // Tracking requests from postback servers are allowed without authentication.
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
 // basically populate the dashboard with data.
 function configureMiddleware(server) {
+  server.use(connectLiveReload());
   server.use(helmet());
   server.use(cors());
   server.use(json);
