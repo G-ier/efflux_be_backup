@@ -3,7 +3,7 @@ const axios = require("axios");
 const async = require("async");
 const { ServiceUnavailable } = require("http-errors");
 const db = require("../data/dbConfig");
-const { FB_API_URL, fieldsFilter, delay, avilableStatuses } = require("../constants/facebook");
+const { FB_API_URL, fieldsFilter, delay, availableStatuses } = require("../constants/facebook");
 const { add } = require("../common/models");
 const { sendSlackNotification } = require("./slackNotificationService");
 

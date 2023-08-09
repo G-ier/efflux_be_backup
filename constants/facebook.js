@@ -11,7 +11,7 @@ const adAccountFields = [
   "timezone_offset_hours_utc",
 ];
 
-const avilableStatuses = ["ACTIVE", "PAUSED", "DELETED", "ARCHIVED"];
+const availableStatuses = ["ACTIVE", "PAUSED", "DELETED", "ARCHIVED"];
 
 const adAccountFieldsForTodaySpent = ["spent"];
 
@@ -25,5 +25,5 @@ module.exports = {
   fieldsFilter,
   fieldsForTodaySpent,
   delay,
-  avilableStatuses,
+  availableStatuses,
 };
