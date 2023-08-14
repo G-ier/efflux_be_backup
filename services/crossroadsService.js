@@ -1,8 +1,9 @@
 const _ = require('lodash');
+const fs = require("fs");
 const axios = require('axios');
 const db = require('../data/dbConfig');
 const { CROSSROADS_URL } = require('../constants/crossroads');
-const { todayHH, someDaysAgoYMD } = require('../common/day');
+const { todayHH, someDaysAgoYMD, todayM } = require('../common/day');
 const PROVIDERS = require("../constants/providers");
 const cr_conversionsFields = [
   'traffic_source',
@@ -103,23 +104,65 @@ async function getFinalInfo(key, date) {
  * @returns {Promise<string>} file_url
  */
 
+// This here accumulate on every call, and get reset every 30 minutes
 function waitForBulkData(key, requestId) {
+
+  const retryLogUrl = "./apiRetries.json";
+  const maxRetryCallsIn30Minuts = 5;
+  const data = fs.readFileSync(retryLogUrl);
+  const { retryCallsIn30Minutes } = JSON.parse(data);
+  const currentMinute = todayM();
+  const isFinalAttempt = (currentMinute >= 20 && currentMinute < 30) || (currentMinute >= 50 && currentMinute < 60)
+
+  let maxRetryCalls;
+
+  if (isFinalAttempt) {
+    // Calculate the retry calls
+    maxRetryCalls = maxRetryCallsIn30Minuts - retryCallsIn30Minutes
+  } else {
+    // Set the retry calls
+    maxRetryCalls = 2
+  }
+
+  console.log("retryCallsIn30Minutes", retryCallsIn30Minutes, typeof retryCallsIn30Minutes);
+  console.log("currentMinute", currentMinute, typeof currentMinute);
+  console.log("isFinalAttempt", isFinalAttempt, typeof isFinalAttempt);
+  console.log("maxRetryCalls", maxRetryCalls, typeof maxRetryCalls);
+
   return new Promise((resolve, reject) => {
 
-    let count = 1;
+    let count = 0;
 
     const interval = setInterval(async () => {
+
       const { status_code, file_url } = await getRequestState(key, requestId);
-      if (status_code !== 200) {
+
+      if (status_code !== 200 && count <= maxRetryCalls) {
+        console.log("retrying", count);
         count++;
         return;
       }
-      clearInterval(interval);
-      // Call the slack api here to send a message to the channel
-      resolve(file_url);
-    }, 12000);
-  });
 
+      clearInterval(interval);
+
+      if (isFinalAttempt) {
+        // Reset the retry calls
+        fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: 0 }));
+      } else {
+        // Increment the retry calls
+        const increment = count > maxRetryCalls ? count - 1 : count ;
+        fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: retryCallsIn30Minutes + increment}));
+      }
+
+      // Call the slack api here to send a message to the channel
+      if (status_code === 200 ) resolve(file_url);
+      else reject(status_code);
+
+    }, 60000);
+
+    fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: retryCallsIn30Minutes + count }));
+
+  });
 }
 
 /**
@@ -474,9 +517,14 @@ async function updateCrossroadsData(account, request_date) {
     const { request_id } = await prepareBulkData(account.key, request_date, fields);
 
     // 4) CROSSROADS API CALL : waitForBulkData
-    const file_url = await waitForBulkData(account.key, request_id);
-    // const file_url = 'https://s3-us-west-2.amazonaws.com/cr-api-v2-bulk-data/233afddf-2503-41a6-8d50-5031eb417d1e.json'
-
+    let file_url;
+    try {
+      file_url = await waitForBulkData(account.key, request_id);
+    } catch (error) {
+      console.log('error', error);
+      await sendSlackNotification(`Crossroads Data Update\nError: \n${error.toString()}`);
+      return;
+    }
     console.log('file_url', file_url);
 
     // 5) CROSSROADS API CALL : getBulkData
