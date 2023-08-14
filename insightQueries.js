@@ -167,9 +167,9 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
         MAX(adsets.status) as status,
         CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
         MAX(insights.adset_name) as adset_name,
-        ${castSum("spend + unallocated_spend", "FLOAT")} as spend,
-        ${castSum("spend_plus_fee + unallocated_spend_plus_fee", "FLOAT")} as spend_plus_fee,
-        ${castSum("revenue + unallocated_revenue", "FLOAT")} as revenue,
+        CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
+        CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
+        CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
         ${castSum("cr_uniq_conversions")} as uniq_conversions,
         ${buildSelectionColumns()}
         FROM insights
@@ -183,23 +183,25 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
     yesterday_data AS (
       SELECT
         insights.campaign_id,
-        ${castSum("spend + unallocated_spend", "FLOAT")} as yesterday_spend
+        insights.adset_id,
+        CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as yesterday_spend
         FROM insights
       WHERE date > '${yesterdayDate}' AND date <= '${startDate}'
         AND insights.traffic_source = '${trafficSource}'
         ${mediaBuyerCondition}
         ${adAccountCondition}
-        GROUP BY insights.campaign_id
+        GROUP BY insights.campaign_id, insights.adset_id
     ),
     last_3_days_data AS (
       SELECT
         insights.campaign_id,
-        ${castSum("spend + unallocated_spend", "FLOAT")} as last_3_days_spend
+        insights.adset_id,
+        CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as last_3_days_spend
       FROM insights
       WHERE date > '${threeDaysAgo}' AND date <= '${endDate}'
       ${mediaBuyerCondition}
       ${adAccountCondition}
-      GROUP BY insights.campaign_id
+      GROUP BY insights.campaign_id, insights.adset_id
     )
 SELECT
   ad.campaign_id,
@@ -229,6 +231,7 @@ SELECT
   JOIN campaigns c ON ad.campaign_id = c.id
   GROUP BY ad.campaign_id, ad.campaign_name;
   `;
+  console.log(query);
   const data = await db.raw(query);
   return data;
 }
