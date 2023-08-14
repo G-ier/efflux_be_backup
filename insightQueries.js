@@ -159,49 +159,51 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
   const { yesterdayDate, threeDaysAgo } = getDateRanges(startDate);
 
   const query = `
-    WITH adset_data AS (
-      SELECT
-        insights.campaign_id,
-        MAX(campaign_name) as campaign_name,
-        insights.adset_id,
-        MAX(adsets.status) as status,
-        CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
-        MAX(insights.adset_name) as adset_name,
-        CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-        CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-        CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-        ${castSum("cr_uniq_conversions")} as uniq_conversions,
-        ${buildSelectionColumns()}
-        FROM insights
-        JOIN adsets ON insights.adset_id = adsets.provider_id
-        WHERE date > '${startDate}' AND date <= '${endDate}' AND insights.traffic_source = '${trafficSource}'
-          ${mediaBuyerCondition}
-          ${adAccountCondition}
-          ${queryCondition}
-      GROUP BY insights.campaign_id, insights.adset_id
-    ),
+  WITH adset_data AS (
+    SELECT
+      insights.campaign_id,
+      insights.adset_id,
+      MAX(campaign_name) as campaign_name,
+      MAX(adsets.status) as status,
+      CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
+      MAX(insights.adset_name) as adset_name,
+      CAST(SUM(CASE WHEN date > '${startDate}' AND date <= '${endDate}' THEN spend + unallocated_spend ELSE 0 END) AS FLOAT) as spend,
+      CAST(SUM(CASE WHEN date > '${startDate}' AND date <= '${endDate}' THEN spend_plus_fee + unallocated_spend_plus_fee ELSE 0 END) AS FLOAT) as spend_plus_fee,
+      CAST(SUM(CASE WHEN date > '${startDate}' AND date <= '${endDate}' THEN revenue + unallocated_revenue ELSE 0 END) AS FLOAT) as revenue,
+      CAST(SUM(CASE WHEN date > '${yesterdayDate}' AND date <= '${startDate}' THEN spend + unallocated_spend ELSE 0 END) AS FLOAT) as yesterday_spend,
+      CAST(SUM(CASE WHEN date > '${threeDaysAgo}' AND date <= '${endDate}' THEN spend + unallocated_spend ELSE 0 END) AS FLOAT) as last_3_days_spend,
+      ${castSum("cr_uniq_conversions")} as uniq_conversions,
+      ${buildSelectionColumns()}
+    FROM insights
+    JOIN adsets ON insights.adset_id = adsets.provider_id
+    WHERE date > '${threeDaysAgo}' AND date <= '${endDate}' AND insights.traffic_source = '${trafficSource}'
+      ${mediaBuyerCondition}
+      ${adAccountCondition}
+      ${queryCondition}
+    GROUP BY insights.campaign_id, insights.adset_id
+  ),
     yesterday_data AS (
       SELECT
         insights.campaign_id,
-        insights.adset_id,
+        insights.campaign_name,
         CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as yesterday_spend
         FROM insights
       WHERE date > '${yesterdayDate}' AND date <= '${startDate}'
         AND insights.traffic_source = '${trafficSource}'
         ${mediaBuyerCondition}
         ${adAccountCondition}
-        GROUP BY insights.campaign_id, insights.adset_id
+        GROUP BY insights.campaign_id,insights.campaign_name
     ),
     last_3_days_data AS (
       SELECT
         insights.campaign_id,
-        insights.adset_id,
+        insights.campaign_name,
         CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as last_3_days_spend
       FROM insights
       WHERE date > '${threeDaysAgo}' AND date <= '${endDate}'
       ${mediaBuyerCondition}
       ${adAccountCondition}
-      GROUP BY insights.campaign_id, insights.adset_id
+      GROUP BY insights.campaign_id,insights.campaign_name
     )
 SELECT
   ad.campaign_id,
@@ -231,14 +233,10 @@ SELECT
   JOIN campaigns c ON ad.campaign_id = c.id
   GROUP BY ad.campaign_id, ad.campaign_name;
   `;
-  console.log(query);
+
   const data = await db.raw(query);
   return data;
 }
-
-// campaignsAggregationWithAdsets(startDate, endDate, trafficSource, null, null, null).then((data) =>
-//   console.log(data.rows)
-// );
 
 const campaignId = "23855155642170044";
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
