@@ -37,6 +37,10 @@ function todayHH(diff = 0, timeZone = 'America/Los_Angeles') {
   return moment().add(diff, 'hours').tz(timeZone).format('H');
 }
 
+function todayM(diff = 0, timeZone = 'America/Los_Angeles') {
+  return moment().add(diff, 'minutes').tz(timeZone).format('mm');
+}
+
 function dayHH(date) {
   return moment(date).tz('America/Los_Angeles').format('H');
 }
@@ -90,6 +94,7 @@ module.exports = {
   dayAfterTomorrowYMD,
   todayYMDHM,
   todayHH,
+  todayM,
   dayYMD,
   yesterdayYMDHM,
   dayYMDHM,

@@ -9,18 +9,6 @@ const { updateTablePartitions } = require('./helpers');
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 
-const updateCR_Sheet = async () => {
-  sheetsArr.forEach(async (sheet) => {
-    await updateCR_DaySpreadsheet(sheet)
-  })
-  todaySheetsArr.forEach(async (sheet) => {
-    await updateCR_TodaySpreadsheet(sheet);
-  })
-  hourlySheetArr.forEach(async (sheet) => {
-    await updateCR_HourlySpreadsheet(sheet);
-  })
-}
-
 const crossroadsFinalDataCron = new CronJob(
   Rules.CR_DAILY,
   (async () => {
@@ -29,7 +17,6 @@ const crossroadsFinalDataCron = new CronJob(
       const isFinal = getFinalInfo(account.key, dayBeforeYesterdayYMD())
       if(isFinal) return updateCrossroadsData(account, dayBeforeYesterdayYMD());
     }));
-    updateCR_Sheet();
   }),
 );
 
@@ -40,7 +27,6 @@ const crossroadsAfterMidnight = new CronJob(
     await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
         return updateCrossroadsData(account, yesterdayYMD());
     }));
-    updateCR_Sheet();
   }),
 );
 
@@ -51,20 +37,9 @@ const crossroadsFinalYesterday = new CronJob(
     await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
         return updateCrossroadsData(account, yesterdayYMD());
     }));
-    updateCR_Sheet();
   }),
 );
 
-const crossroadsHourlyCron = new CronJob(
-  Rules.CR_HOURLY,
-  (async () => {
-    console.log(`Getting Crossroads data...`);
-    await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
-      return updateCrossroadsData(account, todayYMD());
-    }))
-    updateCR_Sheet();
-  }),
-);
 
 const crossroadsSixMinCron = new CronJob(
   Rules.CR_REGULAR,
@@ -73,7 +48,6 @@ const crossroadsSixMinCron = new CronJob(
     await Promise.all(CROSSROADS_ACCOUNTS.map((account) => {
       return updateCrossroadsData(account, todayYMD());
     }))
-    updateCR_Sheet();
   }),
 );
 
@@ -93,7 +67,6 @@ const initializeCRCron = () => {
     crossroadsSixMinCron.start();
     crossroadsAfterMidnight.start();
     crossroadsFinalYesterday.start();
-    // crossroadsHourlyCron.start();
   }
 };
 
