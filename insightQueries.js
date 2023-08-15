@@ -13,28 +13,51 @@ const mediaBuyer = null;
 const adAccountId = null;
 const query = null;
 
+function castSum(column, type = "INTEGER") {
+  return `CAST(SUM(${column}) AS ${type})`;
+}
+
+function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
+  return `
+  ${
+    calculateSpendRevenue ? `
+      ${castSum("spend", type = "FLOAT")} + ${castSum("unallocated_spend", type = "FLOAT")} as spend,
+      ${castSum("spend_plus_fee", type = "FLOAT")} + ${castSum("unallocated_spend_plus_fee", type = "FLOAT")} as spend_plus_fee,
+      ${castSum("revenue", type = "FLOAT")} + ${castSum("unallocated_revenue", type = "FLOAT")} as revenue,
+    ` : ``
+  }
+  ${castSum(`${prefix}searches`)} as searches,
+  ${castSum(`${prefix}cr_conversions`)} as cr_conversions,
+  ${castSum(`${prefix}visitors`)} as visitors,
+  ${castSum(`${prefix}tracked_visitors`)} as tracked_visitors,
+  ${castSum(`${prefix}link_clicks`)} as link_clicks,
+  ${castSum(`${prefix}impressions`)} as impressions,
+  ${castSum(`${prefix}pb_conversions`)} as pb_conversions,
+  ${castSum(`${prefix}cr_uniq_conversions`)} as uniq_conversions,
+  0 as cost_per_purchase,
+  0 as cost_per_lead,
+  0 as cost_per_complete_payment,
+  0 as traffic_source_cost_per_result
+  `;
+}
+
+function buildConditions(mediaBuyer, adAccountId, q) {
+  return {
+    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND user_id = ${mediaBuyer}` : "",
+    adAccountCondition: adAccountId ? `AND ad_account_id = ${adAccountId}` : "",
+    queryCondition: q ? `AND campaign_name LIKE '%${q}%'` : "",
+  };
+}
+
 // DONE
 async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-  const mediaBuyerCondition = mediaBuyer !== "admin" && mediaBuyer ? `AND user_id = ${mediaBuyer}` : "";
 
-  const adAccountCondition = adAccountId ? `AND ad_account_id = ${adAccountId}` : "";
-
-  const queryCondition = q ? `AND campaign_name LIKE '%${q}%'` : "";
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
 
   const query = `
     SELECT
       date,
-      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-      CAST(SUM(searches) AS INTEGER) as searches,
-      CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
-      CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
-      CAST(SUM(visitors) AS INTEGER) as visitors,
-      CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
-      CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
-      CAST(SUM(impressions) AS INTEGER) as impressions,
-      CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
       ${mediaBuyerCondition}
@@ -44,33 +67,19 @@ async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
     ORDER BY date;
   `;
   const data = await db.raw(query);
-  console.log(data.rows);
   return data;
 }
 // dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
 
 // DONE
 async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-  const mediaBuyerCondition = mediaBuyer !== "admin" && mediaBuyer ? `AND user_id = ${mediaBuyer}` : "";
 
-  const adAccountCondition = adAccountId ? `AND ad_account_id = ${adAccountId}` : "";
-
-  const queryCondition = q ? `AND campaign_name LIKE '%${q}%'` : "";
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
 
   const query = `
     SELECT
       hour,
-      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-      CAST(SUM(searches) AS INTEGER) as searches,
-      CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
-      CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
-      CAST(SUM(visitors) AS INTEGER) as visitors,
-      CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
-      CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
-      CAST(SUM(impressions) AS INTEGER) as impressions,
-      CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
       ${mediaBuyerCondition}
@@ -86,27 +95,14 @@ async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
 
 // DONE
 async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-  const mediaBuyerCondition = mediaBuyer !== "admin" && mediaBuyer ? `AND user_id = ${mediaBuyer}` : "";
 
-  const adAccountCondition = adAccountId ? `AND ad_account_id = ${adAccountId}` : "";
-
-  const queryCondition = q ? `AND campaign_name LIKE '%${q}%'` : "";
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
 
   const query = `
     SELECT
       campaign_id,
       campaign_name,
-      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-      CAST(SUM(searches) AS INTEGER) as searches,
-      CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
-      CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
-      CAST(SUM(visitors) AS INTEGER) as visitors,
-      CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
-      CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
-      CAST(SUM(impressions) AS INTEGER) as impressions,
-      CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
       ${mediaBuyerCondition}
@@ -118,14 +114,7 @@ async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuye
   const data = await db.raw(query);
   return data;
 }
-
-function buildConditions(mediaBuyer, adAccountId, q) {
-  return {
-    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND user_id = ${mediaBuyer}` : "",
-    adAccountCondition: adAccountId ? `AND ad_account_id = ${adAccountId}` : "",
-    queryCondition: q ? `AND campaign_name LIKE '%${q}%'` : "",
-  };
-}
+// campaignsAggregation(startDate, endDate, trafficSource, null, null, null)
 
 function getDateRanges(startDate) {
   const yesterdayDate = yesterdayYMD(startDate);
@@ -133,27 +122,6 @@ function getDateRanges(startDate) {
   return { yesterdayDate, threeDaysAgo };
 }
 
-function castSum(column, type = "INTEGER") {
-  return `CAST(SUM(${column}) AS ${type})`;
-}
-
-function buildSelectionColumns(prefix = "") {
-  return `
-  ${castSum(`${prefix}searches`)} as searches,
-  ${castSum(`${prefix}cr_conversions`)} as cr_conversions,
-  ${castSum(`${prefix}visitors`)} as visitors,
-  ${castSum(`${prefix}tracked_visitors`)} as tracked_visitors,
-  ${castSum(`${prefix}link_clicks`)} as link_clicks,
-  ${castSum(`${prefix}impressions`)} as impressions,
-  ${castSum(`${prefix}pb_conversions`)} as pb_conversions,
-  0 as cost_per_purchase,
-  0 as cost_per_lead,
-  0 as cost_per_complete_payment,
-  0 as traffic_source_cost_per_result
-  `;
-}
-
-// campaignsAggregation(startDate, endDate, trafficSource, null, null, null)
 async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
   const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
   const { yesterdayDate, threeDaysAgo } = getDateRanges(startDate);
@@ -172,7 +140,7 @@ async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource,
       CAST(SUM(CASE WHEN date > '${startDate}' AND date <= '${endDate}' THEN revenue + unallocated_revenue ELSE 0 END) AS FLOAT) as revenue,
       CAST(SUM(CASE WHEN date > '${yesterdayDate}' AND date <= '${startDate}' THEN spend + unallocated_spend ELSE 0 END) AS FLOAT) as yesterday_spend,
       CAST(SUM(CASE WHEN date > '${threeDaysAgo}' AND date <= '${endDate}' THEN spend + unallocated_spend ELSE 0 END) AS FLOAT) as last_3_days_spend,
-      ${castSum("cr_uniq_conversions")} as uniq_conversions,
+      ${castSum(`cr_uniq_conversions`)} as cr_uniq_conversions,
       ${buildSelectionColumns()}
     FROM insights
     JOIN adsets ON insights.adset_id = adsets.provider_id
@@ -214,8 +182,7 @@ SELECT
   ${castSum("ad.spend", "FLOAT")} as spend,
   ${castSum("ad.spend_plus_fee", "FLOAT")} as spend_plus_fee,
   ${castSum("ad.revenue", "FLOAT")} as revenue,
-  ${castSum("ad.uniq_conversions")} as uniq_conversions,
-  ${buildSelectionColumns("ad.")},
+  ${buildSelectionColumns("ad.", calculateSpendRevenue=false)},
   CASE
     WHEN SUM(ad.daily_budget) > 0 THEN 'adset'
     ELSE 'campaign'
@@ -237,6 +204,7 @@ SELECT
   const data = await db.raw(query);
   return data;
 }
+// campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
 
 const campaignId = "23855155642170044";
 async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
@@ -244,17 +212,7 @@ async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
     SELECT
       adset_id,
       adset_name,
-      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-      CAST(SUM(searches) AS INTEGER) as searches,
-      CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
-      CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
-      CAST(SUM(visitors) AS INTEGER) as visitors,
-      CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
-      CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
-      CAST(SUM(impressions) AS INTEGER) as impressions,
-      CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
@@ -270,17 +228,7 @@ async function campaignsAggregationByDate(startDate, endDate, campaignId) {
   const query = `
     SELECT
       date,
-      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-      CAST(SUM(searches) AS INTEGER) as searches,
-      CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
-      CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
-      CAST(SUM(visitors) AS INTEGER) as visitors,
-      CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
-      CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
-      CAST(SUM(impressions) AS INTEGER) as impressions,
-      CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
@@ -296,17 +244,7 @@ async function campaignsAggregationByHour(startDate, endDate, campaignId) {
   const query = `
     SELECT
       hour,
-      CAST(SUM(spend) + SUM(unallocated_spend) AS FLOAT) as spend,
-      CAST(SUM(spend_plus_fee)+ SUM(unallocated_spend_plus_fee) AS FLOAT) as spend_plus_fee,
-      CAST(SUM(revenue) + SUM(unallocated_revenue) AS FLOAT) as revenue,
-      CAST(SUM(searches) AS INTEGER) as searches,
-      CAST(SUM(cr_conversions) AS INTEGER) as cr_conversions,
-      CAST(SUM(cr_uniq_conversions) AS INTEGER) as uniq_conversions,
-      CAST(SUM(visitors) AS INTEGER) as visitors,
-      CAST(SUM(tracked_visitors) AS INTEGER) as tracked_visitors,
-      CAST(SUM(link_clicks) AS INTEGER) as link_clicks,
-      CAST(SUM(impressions) AS INTEGER) as impressions,
-      CAST(SUM(pb_conversions) AS INTEGER) as pb_conversions
+      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
