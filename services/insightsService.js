@@ -26,7 +26,6 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         SELECT
           fb.date as date,
           fb.hour as hour,
-          MAX(fb.campaign_id) as campaign_id,
           fb.adset_id,
           MAX(inp.coefficient) as coefficient,
           MAX(ad.name) as ad_account_name,
@@ -52,7 +51,6 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
           tt.date as date,
           tt.hour as hour,
           tt.adset_id,
-          MAX(tt.campaign_id) as campaign_id,
           MAX(tt.updated_at) as ts_last_updated,
           CAST(ROUND(SUM(tt.total_spent)::decimal, 2) AS FLOAT) as spend,
           CAST(ROUND(SUM(tt.impressions)::decimal, 2) AS FLOAT) as impressions,
@@ -68,6 +66,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
   } else {
     throw new Error('Invalid traffic source')
   }
+
 }
 
 function NETWORK(network, trafficSource, startDate, endDate) {
@@ -211,7 +210,7 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
     SELECT
       COALESCE(traffic_source.date, network.date) as date,
       COALESCE(traffic_source.hour, network.hour) as hour,
-      COALESCE(agg_adsets_data.campaign_id, traffic_source.campaign_id, network.campaign_id, 'Unkown') as campaign_id,
+      agg_adsets_data.campaign_id as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
       COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id, postback_events.adset_id) as adset_id,
       agg_adsets_data.adset_name as adset_name,
