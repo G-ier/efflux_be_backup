@@ -3,14 +3,27 @@ const _ = require("lodash");
 
 async function updateAdsets(adsets, provider) {
   const fields = ["id", "provider_id", "status", "daily_budget", "budget_remaining", "lifetime_budget", "name"];
+
   const existedAdsets = await db.select(fields)
     .from("adsets")
     .where({traffic_source: provider});
   const existedAdsetsMap = _.keyBy(existedAdsets, "provider_id");
 
+  const existingCampaigns = await db.select("id").from("campaigns").where({traffic_source: provider});
+  const existingCampaignsMap = _.keyBy(existingCampaigns, "id");
+
   const {skipArr = [], updateArr = [], createArr = []} = _.groupBy(adsets, adset => {
+
     const existedAdset = existedAdsetsMap[adset.provider_id];
-    if (!existedAdset) return "createArr";
+
+    if (!existedAdset) {
+      if (!existingCampaignsMap[adset.campaign_id]) {
+        console.log("Skipping adset, campaign not found", adset.campaign_id)
+        return "skipArr";
+      }
+      return "createArr";
+    }
+
     if (existedAdset) {
       if (existedAdset.status !== adset.status ||
         existedAdset.daily_budget !== adset.daily_budget ||
@@ -20,6 +33,7 @@ async function updateAdsets(adsets, provider) {
       ) return "updateArr";
       return "skipArr";
     }
+
   });
 
   let result = [];
