@@ -26,11 +26,13 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         SELECT
           fb.date as date,
           fb.hour as hour,
+          MAX(fb.campaign_id) as campaign_id,
           fb.adset_id,
           MAX(inp.coefficient) as coefficient,
           MAX(ad.name) as ad_account_name,
-          MAX(fb.updated_at) as last_updated,
+          MAX(fb.updated_at) as ts_last_updated,
           CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend,
+          CAST(SUM(fb.clicks) AS INTEGER) as clicks,
           CAST(SUM(fb.link_clicks) AS INTEGER) as link_clicks,
           CAST(SUM(fb.conversions) AS INTEGER) as fb_conversions,
           CAST(SUM(fb.impressions) AS INTEGER) as impressions
@@ -50,7 +52,8 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
           tt.date as date,
           tt.hour as hour,
           tt.adset_id,
-          MAX(tt.updated_at) as last_updated,
+          MAX(tt.campaign_id) as campaign_id,
+          MAX(tt.updated_at) as ts_last_updated,
           CAST(ROUND(SUM(tt.total_spent)::decimal, 2) AS FLOAT) as spend,
           CAST(ROUND(SUM(tt.impressions)::decimal, 2) AS FLOAT) as impressions,
           CAST(ROUND(SUM(tt.clicks)::decimal, 2) AS FLOAT) as clicks,
@@ -65,7 +68,6 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
   } else {
     throw new Error('Invalid traffic source')
   }
-
 }
 
 function NETWORK(network, trafficSource, startDate, endDate) {
@@ -76,11 +78,12 @@ function NETWORK(network, trafficSource, startDate, endDate) {
           cr.hour as hour,
           cr.request_date as date,
           cr.adset_id,
+          MAX(cr.campaign_id) as campaign_id,
           CAST(ROUND(SUM(cr.total_revenue)::decimal, 2) AS FLOAT) as revenue,
           CAST(SUM(cr.total_searches) AS INTEGER) as searches,
           CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
           CAST(SUM(cr.total_revenue_clicks) AS INTEGER) as cr_conversions,
-          MAX(cr.updated_at) as last_updated,
+          MAX(cr.updated_at) as network_updated_at,
           CAST(SUM(cr.total_visitors) AS INTEGER) as visitors,
           0 as uniq_conversions,
           CAST(SUM(cr.total_tracked_visitors) AS INTEGER) as tracked_visitors
@@ -151,8 +154,13 @@ function RETURN_FIELDS(network, traffic_source) {
     CASE WHEN traffic_source.date IS NOT NULL THEN network.revenue ELSE 0 END as revenue,
 
     traffic_source.${traffic_source === 'facebook' ? 'fb_conversions' : 'conversions'} as fb_conversions,
+    traffic_source.clicks as ts_clicks,
+    traffic_source.ts_last_updated as ts_updated_at,
+    network.network_updated_at as network_updated_at,
     network.cr_conversions as cr_conversions,
     network.uniq_conversions as cr_uniq_conversions,
+    postback_events.pb_lander_conversions as pb_lander_conversions,
+    postback_events.pb_serp_conversions as pb_serp_conversions,
     postback_events.pb_conversions as pb_conversions,
     network.searches as searches,
     network.lander_visits as lander_visits,
@@ -164,6 +172,7 @@ function RETURN_FIELDS(network, traffic_source) {
     ${spendPlusFee(traffic_source)}
   `
 }
+
 function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
 
   const query = `
@@ -182,7 +191,7 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
         adsets.user_id as user_id,
         adsets.ad_account_id as ad_account_id
       FROM adsets
-        JOIN campaigns c ON c.id = adsets.campaign_id
+        JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
       GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
     )
     , ${TRAFFIC_SOURCE(trafficSource, startDate, endDate)}
@@ -196,13 +205,13 @@ function ruleThemAllQuery(network, trafficSource, startDate, endDate) {
         CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
       FROM postback_events_partitioned pb
-      WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}'
+      WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}' AND pb.traffic_source = '${trafficSource}'
       GROUP BY pb.date, pb.hour, pb.adset_id
     )
     SELECT
       COALESCE(traffic_source.date, network.date) as date,
       COALESCE(traffic_source.hour, network.hour) as hour,
-      agg_adsets_data.campaign_id as campaign_id,
+      COALESCE(agg_adsets_data.campaign_id, traffic_source.campaign_id, network.campaign_id, 'Unkown') as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
       COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id, postback_events.adset_id) as adset_id,
       agg_adsets_data.adset_name as adset_name,

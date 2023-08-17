@@ -6,30 +6,24 @@ const {
   tikTokSheetsArr
 } = require('../constants/templateSheet');
 const { yesterdayYMD, someDaysAgoYMD, todayYMD } = require("../common/day");
-const { templateSheetFetcher } = require("../common/aggregations/template_sheet");
+const { templateSheetFetcher, replacer } = require("../common/aggregations/template_sheet");
 const { tikTokTemplateSheetFetcher } = require("../common/aggregations/template_sheet_tiktok");
 const { updateTemplateSheet } = require("../controllers/spreadsheetController");
 const { sendSlackNotification } = require("../services/slackNotificationService");
-const { getSheetValues, updateSpreadsheet } = require("../services/spreadsheetService");
 
 const disableCron = process.env.DISABLE_CRON === 'true'
 const everyFifteenMinutes = '14-59/15 * * * *';
 const everyXminutes = '58 * * * *';
 
-
-
 const updateAggregatedSheet = async () => {
 
   try {
-
 
       for (i=0; i < sheetsArr.length; i ++ ) {
 
           // Calculating start-date, end-date for each tab in the sheetsArr[i]
           let min_date = someDaysAgoYMD(sheetsArr[i].day - 1, null);
           let endDay = sheetsArr[i].day == 1 ? todayYMD('UTC') : yesterdayYMD(null);
-          min_date = min_date + ' 00:00:00';
-          endDay = endDay + ' 23:59:59';
 
           console.log("Start Date", min_date)
           console.log("End Date", endDay)
@@ -44,14 +38,14 @@ const updateAggregatedSheet = async () => {
               console.log("Updating Facebook sheet: ", sheetName, "Aggregation: ", aggregation)
 
               // Fetching the aggregated data from the database
-              const data = await templateSheetFetcher(min_date, endDay, telemetry=false, sheetDropdown=aggregation)
+              const data = await replacer(min_date, endDay, sheetDropdown=aggregation, trafficSource="facebook")
 
               // Updating the sheet with the fetched data
               await updateTemplateSheet(data, columnsOrder, aggregation, sheetsArr[i].spreadsheetId, sheetName)
           }
-
       }
   }
+
   catch (err) {
       await sendSlackNotification(`Fb Revealbot Sheets.\nError on update: \n${err.toString()}`)
       console.log(err)
@@ -67,8 +61,6 @@ const updateAggregatedSheetTikTok = async () => {
           // Calculating start-date, end-date for each tab in the sheetsArr[i]
           let min_date = someDaysAgoYMD(sheetsArr[i].day - 1, null);
           let endDay = sheetsArr[i].day == 1 ? todayYMD('UTC') : yesterdayYMD(null);
-          min_date = min_date + ' 00:00:00';
-          endDay = endDay + ' 23:59:59';
 
           console.log("Start Date", min_date)
           console.log("End Date", endDay)
@@ -83,22 +75,22 @@ const updateAggregatedSheetTikTok = async () => {
             console.log("Updating Tik tok sheet: ", sheetName, "Aggregation: ", aggregation)
 
             // Fetching the aggregated data from the database
-            const data = await tikTokTemplateSheetFetcher(min_date, endDay, telemetry=false, sheetDropdown=aggregation)
+            const data = await replacer(min_date, endDay, sheetDropdown=aggregation, trafficSource="tiktok")
 
             // Updating the sheet with the fetched data
             await updateTemplateSheet(data, columnsOrder, aggregation, tikTokSheetsArr[i].spreadsheetId, sheetName)
           }
       }
 
-  } catch {
+  } catch (err) {
     await sendSlackNotification(`Tik Tok Revealbot Sheets.\nError on update: \n${err.toString()}`)
+    console.log(err)
   }
 };
 
 const aggregatedSheetFacebookRegularCron = new CronJob(
   everyFifteenMinutes,
   (async () => {
-    console.log('start aggregated sheet data downloading')
     updateAggregatedSheet();
   }),
 );
@@ -110,8 +102,6 @@ const aggregatedSheetTikTokRegularCron = new CronJob(
     updateAggregatedSheetTikTok();
   }),
 );
-
-
 
 const initializeAggregCron = () => {
 
