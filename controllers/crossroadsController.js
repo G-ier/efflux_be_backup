@@ -23,7 +23,7 @@ const {
  */
 async function getFacebookHourlyData(options) {
   const {
-    start_date, end_date, media_buyer, account_id, q
+    start_date, end_date, media_buyer, account_ids, q
   } = options;
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
@@ -32,7 +32,7 @@ async function getFacebookHourlyData(options) {
     endDate,
     'facebook',
     media_buyer,
-    account_id,
+    account_ids,
     q,
   );
   return rows;
@@ -42,7 +42,7 @@ async function getFacebookHourlyData(options) {
 
 async function getTiktokHourlyData(options) {
   const {
-    start_date, end_date, media_buyer, account_id, q
+    start_date, end_date, media_buyer, account_ids, q
   } = options;
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
@@ -51,7 +51,7 @@ async function getTiktokHourlyData(options) {
     endDate,
     'tiktok',
     media_buyer,
-    account_id,
+    account_ids,
     q,
   );
   return rows;
@@ -79,11 +79,11 @@ async function getGoogleHourlyData(options) {
   return processHourlyData(rows);
 }
 
-async function getFacebookCrossroadByDates({ start_date, end_date, media_buyer}) {
+async function getFacebookCrossroadByDates({ start_date, end_date, media_buyer, account_ids}) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
   if (media_buyer === 'admin') media_buyer = null;
-  const { rows } = await dateAggregation(startDate, endDate, 'facebook', media_buyer);
+  const { rows } = await dateAggregation(startDate, endDate, 'facebook', media_buyer, account_ids);
   return processDateHoles(rows, startDate, endDate);
 }
 

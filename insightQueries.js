@@ -41,18 +41,28 @@ function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
   `;
 }
 
-function buildConditions(mediaBuyer, adAccountId, q) {
+function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
+  let adAccountCondition;
+
+  if (Array.isArray(adAccountIds)) {
+    adAccountCondition = `AND insights.ad_account_id IN (${adAccountIds.join(",")})`;
+  } else if (adAccountIds) {
+    adAccountCondition = `AND insights.ad_account_id = ${adAccountIds}`
+  } else {
+    adAccountCondition = "";
+  }
+
   return {
-    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND user_id = ${mediaBuyer}` : "",
-    adAccountCondition: adAccountId ? `AND ad_account_id = ${adAccountId}` : "",
-    queryCondition: q ? `AND campaign_name LIKE '%${q}%'` : "",
+    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND insights.user_id = ${mediaBuyer}` : "",
+    adAccountCondition: adAccountCondition,
+    queryCondition: q ? `AND insights.campaign_name LIKE '%${q}%'` : "",
   };
 }
 
 // DONE
 async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
 
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
 
   const query = `
     SELECT
@@ -72,9 +82,9 @@ async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
 // dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, query)
 
 // DONE
-async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
+async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountIds, q) {
 
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountIds, q);
 
   const query = `
     SELECT
@@ -96,7 +106,7 @@ async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
 // DONE
 async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
 
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
 
   const query = `
     SELECT
@@ -123,7 +133,7 @@ function getDateRanges(startDate) {
 }
 
 async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditions(mediaBuyer, adAccountId, q);
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
   const { yesterdayDate, threeDaysAgo } = getDateRanges(startDate);
 
   const query = `
@@ -264,4 +274,4 @@ module.exports = {
   campaignsAggregationByAdset,
   campaignsAggregationByDate,
   campaignsAggregationByHour,
-};
+}
