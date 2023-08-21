@@ -391,6 +391,162 @@ async function updateEntity({ type, token, entityId, dailyBudget, status }) {
     return false;
   }
 }
+async function duplicateCampaign({ deep_copy, status_option, rename_options, entity_id, access_token }) {
+  const url = `${FB_API_URL}${entity_id}/copies`;
+
+  const duplicateShallowCampaignOnDb = async (newCampaignId) => {
+    // Assuming `db` is your database connection
+    const existingCampaign = await db("campaigns").where("id", entity_id).first();
+    if (!existingCampaign) {
+      throw new Error("Campaign not found");
+    }
+    let newName = existingCampaign.name;
+    if (
+      rename_options?.rename_strategy === "DEEP_RENAME" ||
+      rename_options?.rename_strategy === "ONLY_TOP_LEVEL_RENAME"
+    ) {
+      if (rename_options.rename_prefix) {
+        newName = `${rename_options.rename_prefix} ${newName}`;
+      }
+      if (rename_options.rename_suffix) {
+        newName = `${newName} ${rename_options.rename_suffix}`;
+      }
+    }
+    // Create a copy of the existing campaign, with some changes
+    const newCampaign = {
+      ...existingCampaign,
+      id: newCampaignId, // Set the new ID
+      name: newName,
+    };
+
+    // Insert the new campaign into the database
+    // const db_response =
+    await db("campaigns").insert(newCampaign);
+    // console.log(db_response);
+    console.log(`succesfully copied campaign on db with id: ${newCampaignId}`);
+  };
+
+  const duplicateDeepCopy = async (newCampaignId) => {
+    const existingCampaign = await db("campaigns").where("id", newCampaignId).first();
+    if (!existingCampaign) {
+      throw new Error("Campaign not found");
+    }
+
+    // Query the existing adsets with the provided ID
+    let existingAdsets;
+    try {
+      existingAdsets = await db.raw(`
+        SELECT
+          c.id as campaign_id,
+          c.name as campaign_name,
+          adsets.provider_id as adset_id,
+          adsets.status as adset_status
+        FROM adsets
+        JOIN campaigns c ON c.id = adsets.campaign_id AND adsets.campaign_id = '${entity_id}';
+    `);
+      console.log(existingAdsets.rows);
+    } catch {
+      console.log("ERROR");
+    }
+    console.log("ASD", existingAdsets);
+    // Iterate through the adsets and make necessary changes
+    const newAdsets = existingAdsets.rows.map((adset) => {
+      console.log(adset);
+      duplicateAdset({
+        deep_copy: false,
+        status_option,
+        rename_options: {
+          ...rename_options,
+          rename_strategy: rename_options?.deep_copy === "DEEP_COPY" ? "DEEP_COPY" : "NONE",
+        },
+        entity_id: adset.adset_id,
+        access_token,
+        campaign_id: newCampaignId,
+      });
+    });
+  };
+
+  console.log(url);
+  data = {
+    deep_copy: false,
+    status_option,
+    rename_options,
+    access_token,
+  };
+
+  try {
+    const response = await axios.post(url, data);
+    console.log(response.data);
+
+    // Normal copy of only the campaign and not of its children
+    duplicateShallowCampaignOnDb(response.data?.ad_object_ids?.[0].copied_id);
+
+    //From our side just calling deep_copy is not possible will have to
+    //manually get the adsets and call the endpoint for each of them
+    if (deep_copy) await duplicateDeepCopy(response.data?.ad_object_ids?.[0].copied_id);
+    return { successful: true };
+  } catch ({ response }) {
+    console.log("here", response);
+    return false;
+  }
+}
+
+async function duplicateAdset({ status_option, rename_options, entity_id, access_token, campaign_id = null }) {
+  const url = `${FB_API_URL}${entity_id}/copies`;
+
+  const duplicateShallowAdsetOnDb = async (newAdsetId) => {
+    // Assuming `db` is your database connection
+    const existingAdset = await db("adsets").where("provider_id", entity_id).first();
+    if (!existingAdset) {
+      throw new Error("AdSet not found");
+    }
+    let newName = existingAdset.name;
+    if (
+      rename_options?.rename_strategy === "DEEP_RENAME" ||
+      rename_options?.rename_strategy === "ONLY_TOP_LEVEL_RENAME"
+    ) {
+      if (rename_options.rename_prefix) {
+        newName = `${rename_options.rename_prefix} ${newName}`;
+      }
+      if (rename_options.rename_suffix) {
+        newName = `${newName} ${rename_options.rename_suffix}`;
+      }
+    }
+    // Create a copy of the existing adset, with some changes
+    const newAdset = {
+      ...existingAdset,
+      provider_id: newAdsetId, // Set the new ID
+      name: newName,
+    };
+    delete newAdset.id;
+    if (campaign_id) {
+      newAdset.campaign_id = campaign_id;
+    }
+
+    // Insert the new adset into the database
+    await db("adsets").insert(newAdset);
+    console.log(`succesfully copied adset on db with id: ${newAdsetId}`);
+  };
+
+  console.log(url);
+  const data = {
+    deep_copy: false,
+    status_option,
+    rename_options,
+    access_token,
+  };
+
+  try {
+    const response = await axios.post(url, data);
+    console.log(response.data);
+
+    duplicateShallowAdsetOnDb(response.data?.ad_object_ids?.[0].copied_id);
+    return { successful: true };
+  } catch ({ response }) {
+    console.log("here", response.data);
+    return false;
+  }
+}
 
 module.exports = {
   getAdAccount,
@@ -406,4 +562,6 @@ module.exports = {
   getAdAccountsTodaySpent,
   debugToken,
   updateEntity,
+  duplicateCampaign,
+  duplicateAdset,
 };

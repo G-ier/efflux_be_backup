@@ -21,6 +21,8 @@ const {
   getAdAccountsTodaySpent,
   debugToken,
   updateEntity,
+  duplicateCampaign,
+  duplicateAdset,
 } = require("../services/facebookService");
 const { updatePixels } = require("../services/pixelsService.js");
 const { sendSlackNotification } = require("../services/slackNotificationService");
@@ -283,6 +285,7 @@ async function pickFetchingAccount() {
   // 2 Check if the accounts are valid
   for (const account of accounts) {
     let [username, isValid] = await debugToken(account.token, account.token);
+
     accountValidity[account.id] = isValid;
   }
 
@@ -309,6 +312,32 @@ async function updateEntityController({ type, entityId, dailyBudget, status }) {
     dailyBudget,
   });
   return pausedStatus;
+}
+
+async function duplicateEntityController({ type, deep_copy, status_option, rename_options, entity_id }) {
+  const fetchedAccounts = await pickFetchingAccount();
+  const token = fetchedAccounts.token;
+  if (type === "campaign") {
+    const duplicated = await duplicateCampaign({
+      deep_copy,
+      status_option,
+      rename_options,
+      entity_id,
+      access_token: token,
+    });
+    return duplicated;
+  }
+  if (type === "adset") {
+    const duplicated = await duplicateAdset({
+      deep_copy,
+      status_option,
+      rename_options,
+      entity_id,
+      access_token: token,
+      campaign_id: null,
+    });
+    return duplicated;
+  }
 }
 
 function processFacebookCampaigns(accountId, campaigns, adAccountsMap) {
@@ -354,4 +383,5 @@ module.exports = {
   updateFacebookAdAccountsTodaySpent,
   processFacebookInsights,
   updateEntityController,
+  duplicateEntityController,
 };
