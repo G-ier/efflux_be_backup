@@ -20,11 +20,16 @@ function castSum(column, type = "INTEGER") {
 function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
   return `
   ${
-    calculateSpendRevenue ? `
-      ${castSum("spend", type = "FLOAT")} + ${castSum("unallocated_spend", type = "FLOAT")} as spend,
-      ${castSum("spend_plus_fee", type = "FLOAT")} + ${castSum("unallocated_spend_plus_fee", type = "FLOAT")} as spend_plus_fee,
-      ${castSum("revenue", type = "FLOAT")} + ${castSum("unallocated_revenue", type = "FLOAT")} as revenue,
-    ` : ``
+    calculateSpendRevenue
+      ? `
+      ${castSum("spend", (type = "FLOAT"))} + ${castSum("unallocated_spend", (type = "FLOAT"))} as spend,
+      ${castSum("spend_plus_fee", (type = "FLOAT"))} + ${castSum(
+          "unallocated_spend_plus_fee",
+          (type = "FLOAT")
+        )} as spend_plus_fee,
+      ${castSum("revenue", (type = "FLOAT"))} + ${castSum("unallocated_revenue", (type = "FLOAT"))} as revenue,
+    `
+      : ``
   }
   ${castSum(`${prefix}searches`)} as searches,
   ${castSum(`${prefix}cr_conversions`)} as cr_conversions,
@@ -61,13 +66,11 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
 
 // DONE
 async function dateAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-
   const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
-
   const query = `
     SELECT
       date,
-      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+      ${buildSelectionColumns((prefix = ""), (calculateSpendRevenue = true))}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
       ${mediaBuyerCondition}
@@ -89,7 +92,7 @@ async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
   const query = `
     SELECT
       hour,
-      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+      ${buildSelectionColumns((prefix = ""), (calculateSpendRevenue = true))}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
       ${mediaBuyerCondition}
@@ -105,14 +108,13 @@ async function hourAggregation(startDate, endDate, trafficSource, mediaBuyer, ad
 
 // DONE
 async function campaignsAggregation(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-
   const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
 
   const query = `
     SELECT
       campaign_id,
       campaign_name,
-      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+      ${buildSelectionColumns((prefix = ""), (calculateSpendRevenue = true))}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}' AND traffic_source = '${trafficSource}'
       ${mediaBuyerCondition}
@@ -192,7 +194,7 @@ SELECT
   ${castSum("ad.spend", "FLOAT")} as spend,
   ${castSum("ad.spend_plus_fee", "FLOAT")} as spend_plus_fee,
   ${castSum("ad.revenue", "FLOAT")} as revenue,
-  ${buildSelectionColumns("ad.", calculateSpendRevenue=false)},
+  ${buildSelectionColumns("ad.", (calculateSpendRevenue = false))},
   CASE
     WHEN SUM(ad.daily_budget) > 0 THEN 'adset'
     ELSE 'campaign'
@@ -222,7 +224,7 @@ async function campaignsAggregationByAdset(startDate, endDate, campaignId) {
     SELECT
       adset_id,
       adset_name,
-      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+      ${buildSelectionColumns((prefix = ""), (calculateSpendRevenue = true))}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
@@ -238,7 +240,7 @@ async function campaignsAggregationByDate(startDate, endDate, campaignId) {
   const query = `
     SELECT
       date,
-      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+      ${buildSelectionColumns((prefix = ""), (calculateSpendRevenue = true))}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
@@ -254,7 +256,7 @@ async function campaignsAggregationByHour(startDate, endDate, campaignId) {
   const query = `
     SELECT
       hour,
-      ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+      ${buildSelectionColumns((prefix = ""), (calculateSpendRevenue = true))}
     FROM insights
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
