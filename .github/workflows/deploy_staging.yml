@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     name: 'Build and deploy to staging'
-    runs-on: self-hosted
+    runs-on: [self-hosted, staging-runner]  # This specifies that the workflow should use the self-hosted runner with the "staging-runner" label.
 
     if: contains('refs/heads/staging', github.ref)
     steps:
