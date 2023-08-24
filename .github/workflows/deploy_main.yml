@@ -1,0 +1,31 @@
+name: Master Build and Deploy
+
+on:
+  push:
+    branches:
+      - master
+
+jobs:
+  build-and-deploy:
+    name: 'Build and deploy to Master'
+    runs-on: self-hosted
+
+    if: contains('refs/heads/master', github.ref)
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v2
+
+      - name: Build and Deploy using Docker Compose
+        run: |
+          cd /home/ubuntu/goerge-efflux-platform
+          git checkout ${GITHUB_REF#refs/heads/}
+          git pull origin ${GITHUB_REF#refs/heads/}
+          
+          # Stopping and removing all containers
+          docker-compose down
+
+          # Building and starting services in detached mode
+          docker-compose up --build -d 
+
+          # Cleaning up unused resources
+          docker system prune -f --volumes
