@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     name: 'Build and deploy to Master'
-    runs-on: self-hosted
+    runs-on: [self-hosted, master-runner]  # This specifies that the workflow should use the self-hosted runner with the "master-runner" label.
 
     if: contains('refs/heads/master', github.ref)
     steps:

@@ -8,7 +8,7 @@ on:
 jobs:
   build-and-deploy:
     name: 'Build and deploy to staging'
-    runs-on: self-hosted
+    runs-on: [self-hosted, staging-runner]  # This specifies that the workflow should use the self-hosted runner with the "staging-runner" label.
 
     if: contains('refs/heads/staging', github.ref)
     steps:
@@ -17,10 +17,15 @@ jobs:
 
       - name: Build and Deploy using Docker Compose
         run: |
-          cd goerge-efflux-platform
+          cd /home/ubuntu/goerge-efflux-platform
           git checkout ${GITHUB_REF#refs/heads/}
           git pull origin ${GITHUB_REF#refs/heads/}
-          docker-compose down # Stop and remove all containers defined in docker-compose.yml
-          docker-compose build # Build services defined in docker-compose.yml
-          docker-compose up -d # Start services in detached mode
+          
+          # Stopping and removing all containers
+          docker-compose down
+
+          # Building and starting services in detached mode
+          docker-compose up --build -d 
+
+          # Cleaning up unused resources
           docker system prune -f --volumes
