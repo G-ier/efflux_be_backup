@@ -119,6 +119,10 @@ async function updateSpreadsheet(data, options, predifeniedRange="", include_col
   // get spreadsheet meta
   const doc = await getSheet(spreadsheetId);
 
+  if (!doc) {
+    return
+  }
+
   // find target sheet
   let sheet;
   if (sheetName) {

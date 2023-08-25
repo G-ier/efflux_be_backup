@@ -132,8 +132,8 @@ function getDateRanges(startDate) {
   return { yesterdayDate, threeDaysAgo };
 }
 
-async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, adAccountId, q) {
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
+async function campaignsAggregationWithAdsets(startDate, endDate, trafficSource, mediaBuyer, ad_accounts, q) {
+  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, ad_accounts, q);
   const { yesterdayDate, threeDaysAgo } = getDateRanges(startDate);
 
   const query = `
