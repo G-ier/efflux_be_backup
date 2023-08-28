@@ -1,0 +1,6 @@
+UP
+  ALTER TABLE facebook ADD COLUMN unique_identifier VARCHAR(40);
+  ALTER TABLE facebook ADD CONSTRAINT row_unique_identifier UNIQUE(unique_identifier);
+
+DOWN
+  ALTER TABLE facebook DROP COLUMN unique_identifier;

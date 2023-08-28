@@ -1,11 +1,11 @@
-const db = require("./data/dbConfig");
+const db = require("../data/dbConfig");
 const {
   yesterdayRange,
   threeDaysAgoRange,
   threeDaysAgoYMD,
   yesterdayYMD,
   dayBeforeYesterdayYMD,
-} = require("./common/day");
+} = require("./day");
 const trafficSource = "facebook";
 const startDate = "2023-07-25";
 const endDate = "2023-07-26";

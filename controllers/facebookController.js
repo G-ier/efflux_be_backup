@@ -26,6 +26,7 @@ const {
 } = require("../services/facebookService");
 const { updatePixels } = require("../services/pixelsService.js");
 const { sendSlackNotification } = require("../services/slackNotificationService");
+
 async function updateFacebookData(date) {
   try {
     console.log("START UPDATING FACEBOOK DATA");
@@ -160,7 +161,7 @@ async function updateFacebookInsights(date) {
     console.log(e);
   }
 }
-
+// DEAD FUNCTIONS
 async function updateFacebookAdAccountsTodaySpent(date) {
   try {
     console.log("START UPDATING FACEBOOK AD ACCOUNTS TODAY SPENT");

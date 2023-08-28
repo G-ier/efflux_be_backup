@@ -14,7 +14,7 @@ const {
   hourAggregation,
   campaignsAggregation,
   campaignsAggregationWithAdsets
-}                                 = require('../insightQueries');
+}                                 = require('../common/insightQueries');
 
 /**
  * @name getFacebookHourlyData

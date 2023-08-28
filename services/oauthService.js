@@ -4,6 +4,7 @@ const { google } = require("googleapis");
 
 const oauthProviders = ['facebook', 'google'];
 
+//NOTE TOKEN SERVICE: Part of Facebook Token Service
 async function getFacebookLongToken(accessToken) {
   const { data } =  await axios.get(`${FB_API_URL}oauth/access_token`, {
     params: {
@@ -125,6 +126,7 @@ async function revokeGoogleToken(token) {
   await auth.revokeToken(token)
 }
 
+//NOTE TOKEN SERVICE: Part of Facebook Token Service
 async function revokeFacebookToken(token, userId) {
   try {
     await axios.delete(`${FB_API_URL}${userId}/permissions`, {
