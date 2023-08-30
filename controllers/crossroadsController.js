@@ -87,10 +87,10 @@ async function getFacebookCrossroadByDates({ start_date, end_date, media_buyer, 
   return processDateHoles(rows, startDate, endDate);
 }
 
-async function getTiktokCrossroadsByDates({ start_date, end_date }) {
+async function getTiktokCrossroadsByDates({start_date, end_date, media_buyer, account_ids }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
-  const { rows } = await dateAggregation(startDate, endDate, 'tiktok');
+  const { rows } = await dateAggregation(startDate, endDate, 'tiktok', media_buyer, account_ids);
   return processDateHoles(rows, startDate, endDate);
 };
 

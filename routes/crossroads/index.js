@@ -150,9 +150,10 @@ route.get('/google/campaigns/dates', async (req, res) => {
 });
 
 route.get('/tiktok/campaigns/dates', async (req, res) => {
-  const { start_date, end_date } = req.query;
+  const { start_date, end_date, media_buyer, account_ids } = req.query;
+  console.log("Request Query", req.query)
   try {
-    const tiktokCrossroads = await getTiktokCrossroadsByDates({ start_date, end_date });
+    const tiktokCrossroads = await getTiktokCrossroadsByDates({ start_date, end_date, media_buyer, account_ids  });
     res.status(200).json(tiktokCrossroads);
   } catch (err) {
     res.status(500).json(err.message);
