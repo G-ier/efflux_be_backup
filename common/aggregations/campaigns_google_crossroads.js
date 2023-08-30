@@ -1,14 +1,20 @@
 const db = require('../../data/dbConfig');
 const selects = require("./selects");
 
-function campaignsGoogleCrossroads(startDate, endDate, mediaBuyer, adAccount) {
+function campaignsGoogleCrossroads(startDate, endDate, mediaBuyer, adAccountIds) {
   const mediaBuyerCondition = (mediaBuyer !== 'admin' && mediaBuyer)
     ? `AND user_id = ${mediaBuyer}`
     : '';
 
-  const adAccountCondition = adAccount
-    ? `AND ad_account_id = ${adAccount}`
-    : '';
+  let adAccountCondition;
+
+  if (Array.isArray(adAccountIds)) {
+    adAccountCondition = `AND insights.ad_account_id IN (${adAccountIds.join(",")})`;
+  } else if (adAccountIds) {
+    adAccountCondition = `AND insights.ad_account_id = ${adAccountIds}`
+  } else {
+    adAccountCondition = "";
+  }
 
   return db.raw(`
       WITH agg_cr AS (

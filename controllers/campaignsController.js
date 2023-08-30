@@ -8,7 +8,7 @@ const {
   campaignsAggregationByAdset,
   campaignsAggregationByDate,
   campaignsAggregationByHour,
-}                                 = require('../insightQueries');
+}                                 = require('../common/insightQueries');
 
 const aggregations = {
   crossroads_facebook: {

@@ -438,18 +438,6 @@ async function updateTemplateSheet(data, columnsOrder, aggregation, updateSpread
     // Formating the spreadsheet data and sorting it.
     let aggregatedData = calculateValuesForAggSpreadsheet(data, columnsOrder, aggregation=aggregation)
 
-    // // Sort the list of dictionaries by putting those which we find in the database first
-    // aggregatedData.rows.sort(function(a, b) {
-    //   // compare the "missing" attributes
-    //   if (a.entity_name === 'N/A' && b.entity_name !== 'N/A') {
-    //       return 1; // move 'a' to the end of the list
-    //   } else if (a.entity_name !== 'N/A' && b.entity_name === 'N/A') {
-    //       return -1; // move 'b' to the end of the list
-    //   } else {
-    //       return 0; // leave the order unchanged
-    //   }
-    // });
-
     // Updating the spreadsheet with the sorted list.
     await updateSpreadsheet(
       aggregatedData,

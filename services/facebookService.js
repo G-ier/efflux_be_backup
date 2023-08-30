@@ -69,6 +69,7 @@ async function getAdAccounts(userId, token) {
   return accountsResponse.data.data;
 }
 
+// DEAD FUNCTIONS
 async function getAdAccountsTodaySpent(access_token, Ids, date) {
   const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
   const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
@@ -223,6 +224,7 @@ function cleanInsightsData(result) {
   return result.map((item) => _.defaults(item, defaultInsightsStats));
 }
 
+// This should be part of the repository
 async function addFacebookData(data, date) {
   const removeIds = _.map(data, "campaign_id");
 

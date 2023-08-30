@@ -1,6 +1,6 @@
 const _               = require('lodash');
-const db              = require('./data/dbConfig');
-const calendar        = require('./common/day');
+const db              = require('../data/dbConfig');
+const calendar        = require('./day');
 const CronJob         = require("cron").CronJob;
 
 // -------------------------------------------- QUERY ENGINE --------------------------------------------

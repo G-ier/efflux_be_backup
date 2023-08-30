@@ -22,8 +22,7 @@ services:
       dockerfile: Dockerfile
     container_name: "digittopia_express"
     ports:
-      - "5000:4999"
-      - "5011:5011"
+      - "5000:5000"
     environment:
       - REDIS_HOST=redis
       - DATABASE_HOST=postgres

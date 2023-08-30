@@ -2,21 +2,9 @@ const { configureMiddleware } = require("../middleware");
 const { initializeCronJobs } = require("../cron");
 
 const express = require("express");
-const fs = require('fs');
-const https = require('https');
-const http = require('http');
-
-const httpsOptions = {
-  key: fs.readFileSync('./ssl/pvt-key.key'),
-  cert: fs.readFileSync('./ssl/efflux-backend_com.crt'),
-  ca: fs.readFileSync('./ssl/efflux-backend_com.ca-bundle')
-}
 
 // init express
 const server = express();
-const app_htttps = https.createServer(httpsOptions, server);
-const app_htttp = http.createServer(server);
-
 // index route displays name
 server.get("/", (req, res) => {
   res.send(
@@ -31,7 +19,5 @@ configureMiddleware(server);
 initializeCronJobs();
 
 module.exports = {
-  server,
-  app_htttps,
-  app_htttp
+  server
 };

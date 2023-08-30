@@ -3,7 +3,7 @@ const CronJob                         = require('cron').CronJob;
 const { ruleThemAllQuery }            = require('../services/insightsService');
 const { updateInsightsOnDatabase }    = require('../controllers/insightsController');
 
-const regularInsightsUpdateRule = "*/4 * * * *"
+const regularInsightsUpdateRule = "* * * * *"
 const yesterdayInsightsUpdateRule = "20 11,17 * * *"
 
 async function updateInsightsJob(day = "today", network, trafficSource) {

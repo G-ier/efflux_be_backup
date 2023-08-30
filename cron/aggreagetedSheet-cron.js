@@ -6,8 +6,7 @@ const {
   tikTokSheetsArr
 } = require('../constants/templateSheet');
 const { yesterdayYMD, someDaysAgoYMD, todayYMD } = require("../common/day");
-const { templateSheetFetcher, replacer } = require("../common/aggregations/template_sheet");
-const { tikTokTemplateSheetFetcher } = require("../common/aggregations/template_sheet_tiktok");
+const { aggregatesGeneralized } = require("../common/aggregations/aggregatesGeneralized");
 const { updateTemplateSheet } = require("../controllers/spreadsheetController");
 const { sendSlackNotification } = require("../services/slackNotificationService");
 
@@ -38,7 +37,7 @@ const updateAggregatedSheet = async () => {
               console.log("Updating Facebook sheet: ", sheetName, "Aggregation: ", aggregation)
 
               // Fetching the aggregated data from the database
-              const data = await replacer(min_date, endDay, sheetDropdown=aggregation, trafficSource="facebook")
+              const data = await aggregatesGeneralized(min_date, endDay, sheetDropdown=aggregation, trafficSource="facebook")
 
               // Updating the sheet with the fetched data
               await updateTemplateSheet(data, columnsOrder, aggregation, sheetsArr[i].spreadsheetId, sheetName)
@@ -75,7 +74,7 @@ const updateAggregatedSheetTikTok = async () => {
             console.log("Updating Tik tok sheet: ", sheetName, "Aggregation: ", aggregation)
 
             // Fetching the aggregated data from the database
-            const data = await replacer(min_date, endDay, sheetDropdown=aggregation, trafficSource="tiktok")
+            const data = await aggregatesGeneralized(min_date, endDay, sheetDropdown=aggregation, trafficSource="tiktok")
 
             // Updating the sheet with the fetched data
             await updateTemplateSheet(data, columnsOrder, aggregation, tikTokSheetsArr[i].spreadsheetId, sheetName)
