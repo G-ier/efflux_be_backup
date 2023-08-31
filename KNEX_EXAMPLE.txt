@@ -20,8 +20,8 @@ UP
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       -- Removed the foreign key constraints for campaign_id and adset_id for now
   );
+
 DOWN
   ALTER TABLE facebook DROP COLUMN unique_identifier;
   ALTER TABLE tiktok DROP COLUMN unique_identifier;
   DROP TABLE AdCreatives;
-UP

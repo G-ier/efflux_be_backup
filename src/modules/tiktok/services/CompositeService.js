@@ -21,9 +21,7 @@ class CompositeService {
 
   async updateTikTokData(date) {
     try {
-      const userAccounts = await this.userAccountsService.getUserAccounts("tiktok");
-      if (userAccounts.length === 0) throw new Error("No accounts found for tik-tok")
-      const { id, user_id, token } = userAccounts[0];
+      const { id, user_id, token } = await this.userAccountsService.getFetchingAccounts();
 
       const updatedAdAccounts = await this.adAccountService.syncAdAccounts(token, id, user_id);
       console.log("updatedAdAccounts: ", updatedAdAccounts.length);
