@@ -4,16 +4,15 @@ const async = require("async");
 const _ = require("lodash");
 
 // Local application imports
-const CampaignRepository = require('../repositories/CampaignRepository');
-const { FB_API_URL } = require('../constants');
+const CampaignRepository = require("../repositories/CampaignRepository");
+const { FB_API_URL } = require("../constants");
 
 class CampaignsService {
-
   constructor() {
     this.campaignRepository = new CampaignRepository();
   }
 
-  async getCampaignsFromApi(access_token, adAccountIds,  date = "today") {
+  async getCampaignsFromApi(access_token, adAccountIds, date = "today") {
     const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
     const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
@@ -45,11 +44,10 @@ class CampaignsService {
     return campaigns.map((campaign) => campaign.id);
   }
 
-  async fetchCampaignsFromDatabase(fields = ['*'], filters = {}, limit) {
+  async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit) {
     const results = await this.campaignRepository.fetchCampaigns(fields, filters, limit);
     return results;
   }
-
 }
 
 module.exports = CampaignsService;

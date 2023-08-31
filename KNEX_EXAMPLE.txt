@@ -2,23 +2,26 @@ UP
   ALTER TABLE facebook ADD COLUMN unique_identifier VARCHAR(40);
   ALTER TABLE facebook ADD CONSTRAINT row_unique_identifier UNIQUE(unique_identifier);
 
+  ALTER TABLE tiktok ADD COLUMN unique_identifier VARCHAR(40);
+  ALTER TABLE tiktok ADD CONSTRAINT tiktok_insight_unique_identifier UNIQUE(unique_identifier);
+
+  CREATE TABLE AdCreatives (
+      id BIGINT PRIMARY KEY, -- Change from SERIAL to BIGINT
+      adAccountId BIGINT NOT NULL, -- Added this column
+      name VARCHAR(255) NOT NULL,
+      description TEXT,
+      media_type VARCHAR(255) NOT NULL DEFAULT 'link', -- Defaulting to 'link' based on your data
+      media_url TEXT NOT NULL,
+      call_to_action VARCHAR(255),
+      page_id VARCHAR(255), -- Added this column
+      campaign_id VARCHAR(255),
+      adset_id VARCHAR(255),
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+      -- Removed the foreign key constraints for campaign_id and adset_id for now
+  );
 DOWN
   ALTER TABLE facebook DROP COLUMN unique_identifier;
-
+  ALTER TABLE tiktok DROP COLUMN unique_identifier;
+  DROP TABLE AdCreatives;
 UP
-CREATE TABLE AdCreatives (
-    id BIGINT PRIMARY KEY, -- Change from SERIAL to BIGINT
-    adAccountId BIGINT NOT NULL, -- Added this column
-    name VARCHAR(255) NOT NULL,
-    description TEXT,
-    media_type VARCHAR(255) NOT NULL DEFAULT 'link', -- Defaulting to 'link' based on your data
-    media_url TEXT NOT NULL,
-    call_to_action VARCHAR(255),
-    page_id VARCHAR(255), -- Added this column
-    campaign_id VARCHAR(255),
-    adset_id VARCHAR(255),
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    -- Removed the foreign key constraints for campaign_id and adset_id for now
-);
-DOWN

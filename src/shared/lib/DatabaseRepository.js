@@ -48,16 +48,25 @@ class DatabaseRepository {
     }
   }
 
-  async upsert(tableName, data, conflictTarget, excludeFields = []) {
+  async upsert(tableName, data, conflictTarget = null, excludeFields = []) {
     try {
       const insert = this.connection(tableName).insert(data).toString();
+
+      // If conflictTarget is not provided, simply execute the insert query
+      if (!conflictTarget) {
+        await this.connection.raw(insert);
+        return;
+      }
+
       const conflictKeys = Object.keys(data[0])
         .filter((key) => !excludeFields.includes(key))
         .map((key) => `${key} = EXCLUDED.${key}`)
         .join(", ");
+
       if (!conflictKeys) {
         throw new Error("No fields left to update after excluding.");
       }
+
       const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
       await this.connection.raw(query);
     } catch (error) {
