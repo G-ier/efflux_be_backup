@@ -11,6 +11,19 @@ const adAccountFields = [
   "timezone_offset_hours_utc",
 ];
 
+const adCreativeFields = [
+  "id",
+  "name",
+  "description",
+  "media_type",
+  "media_url",
+  "call_to_action",
+  "campaign_id",
+  "adset_id",
+  "created_at",
+  "updated_at",
+];
+
 const availableStatuses = ["ACTIVE", "PAUSED", "DELETED", "ARCHIVED"];
 
 const adAccountFieldsForTodaySpent = ["spent"];
@@ -18,6 +31,7 @@ const adAccountFieldsForTodaySpent = ["spent"];
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const fieldsFilter = adAccountFields.join(",");
+const fieldsFilterAdCreative = adCreativeFields.join(",");
 const fieldsForTodaySpent = adAccountFieldsForTodaySpent.join(",");
 
 module.exports = {
@@ -26,4 +40,5 @@ module.exports = {
   fieldsForTodaySpent,
   delay,
   availableStatuses,
+  fieldsFilterAdCreative,
 };
