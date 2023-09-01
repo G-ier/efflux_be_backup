@@ -48,7 +48,6 @@ function configureMiddleware(server) {
   server.use(morgan("dev"));
   server.use("/api/auth0", auth0);
   server.use("/api/develop", develop);
-
   server.use(paginate.middleware(10, 50));
   server.use("/api/proper", proper);
   server.use(jwtCheck);

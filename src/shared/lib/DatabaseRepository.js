@@ -101,6 +101,23 @@ class DatabaseRepository {
       throw error;
     }
   }
+
+  async queryOne(tableName, fields = ["*"], filters = {}) {
+
+    let queryBuilder = this.connection(tableName).select(fields);
+
+    for (const [key, value] of Object.entries(filters)) {
+      if (Array.isArray(value)) {
+        queryBuilder = queryBuilder.whereIn(key, value);
+      } else {
+        queryBuilder = queryBuilder.where(key, value);
+      }
+    }
+
+    const result = await queryBuilder.first();
+    return result;
+  }
+
 }
 
 module.exports = DatabaseRepository;
