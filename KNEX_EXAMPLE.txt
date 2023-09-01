@@ -21,7 +21,73 @@ UP
       -- Removed the foreign key constraints for campaign_id and adset_id for now
   );
 
+  ALTER TABLE fb_pixels DROP CONSTRAINT fb_pixels_account_id_foreign;
+  ALTER TABLE fb_pixels 
+  ADD CONSTRAINT foreign_user_account_id 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id) 
+  ON DELETE CASCADE;
+
+  ALTER TABLE facebook_ads DROP CONSTRAINT facebook_ads_account_id_fkey;
+  ALTER TABLE facebook_ads 
+  ADD CONSTRAINT foreign_user_account_id 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id) 
+  ON DELETE CASCADE;
+
+  ALTER TABLE adsets DROP CONSTRAINT adsets_account_id_foreign;
+  ALTER TABLE adsets 
+  ADD CONSTRAINT foreign_user_account_id 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id) 
+  ON DELETE CASCADE;
+
+  ALTER TABLE campaigns DROP CONSTRAINT campaigns_account_id_foreign;
+  ALTER TABLE campaigns 
+  ADD CONSTRAINT foreign_user_account_id 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id) 
+  ON DELETE CASCADE;
+
+  ALTER TABLE ad_accounts DROP CONSTRAINT ad_accounts_account_id_foreign;
+  ALTER TABLE ad_accounts 
+  ADD CONSTRAINT foreign_user_account_id 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id) 
+  ON DELETE CASCADE;
+
 DOWN
+
   ALTER TABLE facebook DROP COLUMN unique_identifier;
   ALTER TABLE tiktok DROP COLUMN unique_identifier;
   DROP TABLE AdCreatives;
+
+  ALTER TABLE fb_pixels DROP CONSTRAINT foreign_user_account_id;
+  ALTER TABLE fb_pixels 
+  ADD CONSTRAINT fb_pixels_account_id_foreign 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id);
+
+  ALTER TABLE facebook_ads DROP CONSTRAINT foreign_user_account_id;
+  ALTER TABLE facebook_ads 
+  ADD CONSTRAINT facebook_ads_account_id_fkey 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id);
+
+  ALTER TABLE adsets DROP CONSTRAINT foreign_user_account_id;
+  ALTER TABLE adsets 
+  ADD CONSTRAINT adsets_account_id_foreign 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id);
+
+  ALTER TABLE campaigns DROP CONSTRAINT foreign_user_account_id;
+  ALTER TABLE campaigns 
+  ADD CONSTRAINT campaigns_account_id_foreign 
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id);
+
+  ALTER TABLE ad_accounts DROP CONSTRAINT foreign_user_account_id;
+  ALTER TABLE ad_accounts 
+  ADD CONSTRAINT ad_accounts_account_id_foreign
+  FOREIGN KEY (account_id) 
+  REFERENCES user_accounts(id);

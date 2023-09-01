@@ -33,6 +33,7 @@ const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const fieldsFilter = adAccountFields.join(",");
 const fieldsFilterAdCreative = adCreativeFields.join(",");
 const fieldsForTodaySpent = adAccountFieldsForTodaySpent.join(",");
+const FETCHING_ACCOUNTS_IDS = [20, 28]
 
 module.exports = {
   FB_API_URL,
@@ -41,4 +42,5 @@ module.exports = {
   delay,
   availableStatuses,
   fieldsFilterAdCreative,
+  FETCHING_ACCOUNTS_IDS
 };

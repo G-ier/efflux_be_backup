@@ -2,41 +2,17 @@
 const _ = require('lodash');
 
 // Local application imports
-const { getUserAccounts } = require('./services/userAccountsService');
-const TokenService = require('./src/modules/facebook/services/TokenService');
+const UserAccountService = require('./src/modules/facebook/services/UserAccountService');
 const AdAccountService = require('./src/modules/facebook/services/AdAccountService');
 const PixelsService = require('./src/modules/facebook/services/PixelsService');
 const CampaignsService = require('./src/modules/facebook/services/CampaignsService');
 const AdsetsService = require('./src/modules/facebook/services/AdsetsService');
 const AdInsightsService = require('./src/modules/facebook/services/AdInsightsService');
 
-const pickFetchingAccount = async () => {
-
-  // Get fetching accounts from the database
-  const accounts = await getUserAccounts('facebook');
-
-  let accountValidity = {};
-
-  // Here we need the TokenService to get the token for each account
-  for (const account of accounts) {
-    let [username, isValid] = await TokenService.debug(account.token, account.token);
-    accountValidity[account.id] = isValid;
-  }
-
-  // 3 If no accounts are valid, return
-  if (Object.values(accountValidity).every((val) => val !== true)) {
-    return;
-  }
-
-  const account = accounts.filter((account) => accountValidity[account.id] === true)[0];
-
-  return account;
-}
-
 const updateFacebookData = async () => {
 
   // Get fetching accounts from the database
-  const account = await pickFetchingAccount();
+  const account = await new UserAccountService().getFetchingAccount();
   const { token, user_id, id, provider_id } = account;
 
   // Construct the ad account service
@@ -90,19 +66,4 @@ const updateFacebookData = async () => {
 
 }
 
-const updateFacebookInsights = async () => {
-
-  // Get fetching accounts from the database
-  const account = await pickFetchingAccount();
-  const { token, id } = account;
-  const adAccounts = await new AdAccountService().fetchAdAccountsFromDatabase(
-    ["id", "name", "status", "provider", "provider_id", "network", "tz_name", "tz_offset"],
-    {account_id: id}
-  );
-  const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
-  const insights = await new AdInsightsService().syncAdInsights(token, adAccountsIds, "2023-08-26");
-  console.log("Done with updating insights", insights.length)
-  console.log("Done with updating all facebook insights")
-}
-
-updateFacebookInsights()
+updateFacebookData()

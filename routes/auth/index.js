@@ -1,26 +1,25 @@
 const route = require("express").Router();
 const authController = require("../../controllers/authController");
+const UserAccountController = require("../../src/modules/facebook/controllers/UserAccountController");
 
-// @route /api/auth/add_oauth_account
-route.post("/add_facebook_account", async (req, res) => {
-  try {
-    console.log("Req user", req.user)
-    console.log("Req body", req.body)
-    const { account, created } = await authController.addFacebookAccount(req.user, req.body);
-    if (created) {
-      res.status(200).json({
-        message: `Successfully added account for ${account.name} | ${process.env.FACEBOOK_APP_ID}`
-      });
-    } else {
-      res.status(200).json({
-        message: `Account already exists for ${account.name} |  ${process.env.FACEBOOK_APP_ID}`
-      });
-    }
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: error.message +  process.env.FACEBOOK_APP_ID, error });
-  }
-});
+const userAccountController = new UserAccountController();
+
+// @route     /api/auth/add_facebook_account
+// @desc      POST Integrates a facebook account into our application
+// @Access    Public
+route.post("/add_facebook_account", async (req, res) => await userAccountController.addFacebookUserAccount(req, res));
+
+// @route     /api/auth/reauthorize_facebook
+// @desc      POST Reauthorizes a facebook account into our application
+// @Access    Public
+route.post("/reauthorize_facebook", async (req, res) => await userAccountController.reauthorizeFacebookUserAccount(req, res));
+
+// @route     /api/auth/
+// @desc      DELETE Deletes a facebook account from our faccebook application and database
+// @Access    Public
+route.delete("/", async (req, res) => await userAccountController.deleteFacebookUserAccount(req, res));
+
+
 
 route.post("/add_google_account", async (req, res) => {
   try {
@@ -74,20 +73,6 @@ route.post("/login", (req, res) => {
   });
 });
 
-// @route    /api/auth/reauthorize_facebook
-// @desc     POST signing up user
-// @Access   Public
-route.post("/reauthorize_facebook", async (req, res) => {
-  try {
-    const { name } = await authController.reauthorizeFacebook(req.user, req.body.accountId, req.body.user);
-    res.status(200).json({
-      message: `Successfully reauthorized for ${name}`,
-    });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: error.message, error });
-  }
-});
 
 // @route    /api/auth/reauthorize_google
 // @desc     POST signing up user
@@ -104,21 +89,5 @@ route.post("/reauthorize_google", async (req, res) => {
   }
 });
 
-route.delete("/", async (req, res) => {
-  try {
-    const count = await authController.deleteAccount(req.body.accountId);
-    if(count) {
-      return res.status(200).json({
-        message: `Successfully deleted`,
-      });
-    }
-    return res.status(404).json({
-      message: `Account not found`
-    });
-  } catch (error) {
-    console.log(error.message);
-    res.status(500).json({ message: error.message, error });
-  }
-});
 
 module.exports = route;
