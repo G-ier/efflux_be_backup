@@ -6,6 +6,7 @@ const _ = require("lodash");
 // Local application imports
 const AdInsightRepository = require("../repositories/AdInsightsRepository");
 const { FB_API_URL, delay } = require('../constants');
+const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 
 class AdInsightsService {
 
@@ -118,7 +119,13 @@ class AdInsightsService {
 
   async syncAdInsights(access_token, adAccountIds, date, development=false) {
     const insights = await this.getAdInsightsFromAPI(access_token, adAccountIds, date, development);
-    await this.adInsightRepository.upsert(insights, date);
+    try {
+      await this.adInsightRepository.upsert(insights, date);
+    } catch (e) {
+      console.log("ERROR UPDATING AD INSIGHTS", e);
+      await sendSlackNotification("ERROR UPDATING AD INSIGHTS. Inspect software if this is a error", e);
+      return [];
+    }
     return insights
   }
 

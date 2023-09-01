@@ -1,12 +1,17 @@
+// Third party imports
 const axios = require("axios");
 
+// Local application imports
 const { FB_API_URL, FETCHING_ACCOUNTS_IDS } = require('../constants');
 const UserAccountRepository = require("../repositories/UserAccountRepository");
+const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 
 class UserAccountService {
 
   constructor () {
     this.userAccountRepository = new UserAccountRepository();
+    this.tokenExpireNotificationSent = 0;
+    this.tokenExpireNotificationMax = 1;
   }
 
   async fetchUserAccounts(fields = ['*'], filters = {}, limit) {
@@ -35,9 +40,21 @@ class UserAccountService {
       const diffTime = Math.abs(new Date() - new Date(res.expires_at * 1000));
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
       console.log("Token expires in", diffDays, "days");
-      // ADD A NOTIFICATION SYSTEM
-      return ["", res.is_valid];
 
+      const providerId = res.user_id;
+      const account = await this.fetchUserAccounts(["name"], { provider_id: providerId });
+      const { name } = account[0];
+
+      if (diffDays < 4) {
+        if (this.tokenExpireNotificationSent < this.tokenExpireNotificationMax) {
+          await sendSlackNotification(
+            `TEST MESSAGE: Facebook API Token of user ${name} is about to expire in ${diffDays} days, please refresh it.`
+          );
+          this.tokenExpireNotificationSent++;
+        }
+      }
+
+      return [name, res.is_valid];
     } else {
       console.log("Token is not valid");
       return ["", false];

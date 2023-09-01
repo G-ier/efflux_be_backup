@@ -5,7 +5,7 @@ const axios = require("axios");
 // Local application imports
 const AdAccountRepository = require('../repositories/AdAccountRepository');
 const { FB_API_URL, fieldsFilter } = require('../constants');
-
+const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 class AdAccountService {
 
   constructor() {
@@ -22,9 +22,10 @@ class AdAccountService {
 
   async getAdAccountsFromApi(userId, token) {
     const url = `${FB_API_URL}${userId}/adaccounts?fields=${fieldsFilter}&access_token=${token}&limit=10000`;
-    const accountsResponse = await axios.get(url).catch((err) => {
+    const accountsResponse = await axios.get(url).catch(async (err) => {
       console.info("ERROR GETTING FACEBOOK AD ACCOUNTS", err.response?.data.error || err);
-      return null;
+      await sendSlackNotification("ERROR FETCHING FACEBOOK AD ACCOUNTS FROM API", err.response?.data.error || err);
+      return [];
     });
 
     if (!accountsResponse) return [];
@@ -34,7 +35,13 @@ class AdAccountService {
 
   async syncAdAccounts(providerId, userId, accountId, token) {
     const apiAdAccounts = await this.getAdAccountsFromApi(providerId, token);
-    await this.adAccountRepository.upsert(apiAdAccounts, userId, accountId, 500);
+    try {
+      await this.adAccountRepository.upsert(apiAdAccounts, userId, accountId, 500);
+    } catch (e) {
+      console.log("ERROR UPDATING AD ACCOUNTS", e);
+      await sendSlackNotification("ERROR UPDATING AD ACCOUNTS. Inspect software if this is a error", e)
+      return [];
+    }
     return apiAdAccounts.map((account) => account.id);
   }
 

@@ -6,6 +6,7 @@ const _ = require("lodash");
 // Local application imports
 const AdsetsRepository = require('../repositories/AdsetsRepository');
 const { FB_API_URL } = require('../constants');
+const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 
 class AdsetsService {
 
@@ -44,7 +45,13 @@ class AdsetsService {
   async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, date = "today") {
     let adsets = await this.getAdsetsFromApi(access_token, adAccountIds, date);
     adsets = adsets.filter((adset) => campaignIds.includes(adset.campaign_id));
-    await this.adsetsRepository.upsert(adsets, adAccountsMap);
+    try {
+      await this.adsetsRepository.upsert(adsets, adAccountsMap);
+    } catch (e) {
+      console.log("ERROR UPDATING ADSETS", e);
+      await sendSlackNotification("ERROR UPDATING ADSETS. Inspect software if this is a error", e);
+      return [];
+    }
     return adsets.map((adset) => adset.id);
   }
 

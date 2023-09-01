@@ -6,6 +6,7 @@ const _ = require("lodash");
 // Local application imports
 const CampaignRepository = require("../repositories/CampaignRepository");
 const { FB_API_URL } = require("../constants");
+const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 
 class CampaignsService {
   constructor() {
@@ -40,7 +41,13 @@ class CampaignsService {
 
   async syncCampaigns(access_token, adAccountIds, adAccountsMap, date = "today") {
     const campaigns = await this.getCampaignsFromApi(access_token, adAccountIds, date);
-    await this.campaignRepository.upsert(campaigns, adAccountsMap, 500);
+    try {
+      await this.campaignRepository.upsert(campaigns, adAccountsMap, 500);
+    } catch (e) {
+      console.log("ERROR upserting CAMPAIGNS", e);
+      await sendSlackNotification("ERROR UPDATING CAMPAIGNS. Inspect software if this is a error", e);
+      return [];
+    }
     return campaigns.map((campaign) => campaign.id);
   }
 
