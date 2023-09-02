@@ -5,43 +5,11 @@ class DatabaseRepository {
     this.connection = connection || new DatabaseConnection().getConnection();
   }
 
-  async delete(tableName, criteria) {
+  async insert(table, dbObject, trx = null) {
     try {
-      let queryBuilder = this.connection(tableName).delete();
-
-      for (const [key, value] of Object.entries(criteria)) {
-        queryBuilder = queryBuilder.where(key, value);
-      }
-
-      const result = await queryBuilder;
-      return result;
-    } catch (error) {
-      console.error(`Error deleting from table ${tableName}`, error);
-      throw error;
-    }
-  }
-
-  async update(tableName, data, criteria) {
-    try {
-      // Start with a basic update on the provided data
-      let queryBuilder = this.connection(tableName).update(data);
-
-      // Apply criteria to the query to determine which rows to update
-      for (const [key, value] of Object.entries(criteria)) {
-        queryBuilder = queryBuilder.where(key, value);
-      }
-
-      const result = await queryBuilder;
-      return result; // This will return the number of rows updated
-    } catch (error) {
-      console.error(`Error updating table ${tableName}`, error);
-      throw error;
-    }
-  }
-
-  async insert(table, dbObject) {
-    try {
-      return await this.connection(table).insert(dbObject).returning("id");
+      const connection = trx || this.connection;
+      const insertValue =  await connection(table).insert(dbObject).returning("id");
+      return insertValue;
     } catch (error) {
       console.error(`Failed to insert into table ${table}`, error);
       throw error;
@@ -102,6 +70,56 @@ class DatabaseRepository {
     }
   }
 
+  async delete(tableName, filters, trx = null) {
+    try {
+      const connection = trx || this.connection;
+      let queryBuilder = connection(tableName);
+
+      // Apply filters to the query
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          // If the filter value is an array, use "whereIn" for the filter
+          queryBuilder = queryBuilder.whereIn(key, value);
+        } else {
+          // If not, use the standard "where" method
+          queryBuilder = queryBuilder.where(key, value);
+        }
+      }
+      const deletedRowCount = await queryBuilder.del();
+
+      return deletedRowCount; // Return number of deleted rows
+    } catch (error) {
+      console.error(`Failed to delete from table ${tableName}`, error);
+      throw error;
+    }
+  }
+
+  async update(tableName, updatedFields, filters) {
+    try {
+      let queryBuilder = this.connection(tableName);
+
+      // Update the fields
+      queryBuilder = queryBuilder.update(updatedFields);
+
+      // Apply filters to the query
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          // If the filter value is an array, use "whereIn" for the filter
+          queryBuilder = queryBuilder.whereIn(key, value);
+        } else {
+          // If not, use the standard "where" method
+          queryBuilder = queryBuilder.where(key, value);
+        }
+      }
+
+      const updatedRowCount = await queryBuilder;
+
+      return updatedRowCount;
+    } catch (error) {
+      console.error(`Failed to update table ${tableName}`, error);
+      throw error;
+    }
+    
   async queryOne(tableName, fields = ["*"], filters = {}) {
 
     let queryBuilder = this.connection(tableName).select(fields);

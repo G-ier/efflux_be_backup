@@ -24,6 +24,7 @@ const userAccounts = require("../routes/userAccounts");
 const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
 const columnPresets = require("../routes/columnPresets");
+const scrappedAds = require("../src/modules/scrappedAds/routes");
 
 var livereload = require("livereload");
 var connectLiveReload = require("connect-livereload");
@@ -64,6 +65,7 @@ function configureMiddleware(server) {
   server.use("/api/facebook", facebook);
   server.use("/api/campaigns", campaigns);
   server.use("/api/users/user_accounts", userAccounts);
+  server.use("/api/composite-ad", scrappedAds);
   server.use(ErrorHandler);
 }
 
