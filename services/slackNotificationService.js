@@ -17,7 +17,7 @@ async function getPublicIP() {
 const sendSlackNotification = async (message) => {
   const publicIp = await getPublicIP();
   const payload = {
-    text: publicIp + message
+    text: 'master' + publicIp + message
   }
   const data = await axios.post(
     SLACK_API_URL,
