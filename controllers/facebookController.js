@@ -7,7 +7,7 @@ const {
   getAccountAdAccounts,
   updateUserAdAccountsTodaySpent,
 } = require("../services/adAccountsService");
-const { updateCampaigns } = require("../services/campaignsService");
+const { updateCampaigns, upsertCampaigns } = require("../services/campaignsService");
 const { updateAdsets } = require("../services/adsetsService");
 const {
   getAdAccounts,
@@ -78,7 +78,7 @@ async function updateFacebookData(date) {
     const processedAdCampaigns = processFacebookCampaigns(account.id, adCampaigns, adAccountsMap);
     const campaignChunks = _.chunk(processedAdCampaigns, 100);
     for (const chunk of campaignChunks) {
-      await updateCampaigns(chunk, PROVIDERS.FACEBOOK);
+      await upsertCampaigns(chunk, "id");
     }
 
     // Retrieve facebook adsets related to ad account ids from facebook

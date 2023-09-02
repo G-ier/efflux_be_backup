@@ -563,15 +563,16 @@ async function updateCrossroadsData(account, request_date) {
     }
     console.log('Crossroads data inserted: ', insrt_total);
 
-    const clickChunks = _.chunk(clicks, 500);
-    for (const chunk of clickChunks) {
-      await db('cr_conversions').insert(chunk);
-    }
+    // const clickChunks = _.chunk(clicks, 500);
+    // for (const chunk of clickChunks) {
+    //   await db('cr_conversions').insert(chunk);
+    // }
 
-    const processedChunks = _.chunk(processedCrossroadsData, 500);
-    for (const chunk of processedChunks) {
-      await db('crossroads_stats').insert(chunk);
-    }
+    // const processedChunks = _.chunk(processedCrossroadsData, 500);
+    // for (const chunk of processedChunks) {
+    //   await db('crossroads_stats').insert(chunk);
+    // }
+
   } catch(err) {
     console.log(err)
     if (!err.status_code === 429 ) {
