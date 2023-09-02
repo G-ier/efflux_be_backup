@@ -3,6 +3,34 @@ const db = require("../data/dbConfig");
 
 const LIMIT = 30;
 
+async function upsertCampaigns(data, conflictTarget = null, excludeFields = []) {
+  try {
+    const insert = db('campaigns').insert(data).toString();
+
+    // If conflictTarget is not provided, simply execute the insert query
+    if (!conflictTarget) {
+      await db.raw(insert);
+      return;
+    }
+
+    const conflictKeys = Object.keys(data[0])
+      .filter((key) => !excludeFields.includes(key))
+      .map((key) => `${key} = EXCLUDED.${key}`)
+      .join(", ");
+
+    if (!conflictKeys) {
+      throw new Error("No fields left to update after excluding.");
+    }
+
+    const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
+    await db.raw(query);
+  } catch (error) {
+    console.error("Error upserting row/s: ", error);
+    throw error;
+  }
+}
+
+
 async function updateCampaigns(campaigns, provider) {
   const fields = ["id", "status", "daily_budget", "budget_remaining", "lifetime_budget", "name"];
   const existedCampaigns = await db.select(fields)
@@ -95,6 +123,7 @@ module.exports = {
   deleteById,
   get,
   update,
+  upsertCampaigns,
   getCampaignNames,
   getCampaignData
 };
