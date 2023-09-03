@@ -50,16 +50,18 @@ const updateInsights = async (trafficSource, startDate, endDate) => {
 
 };
 
-const main = async (date, tsUpdate="both") => {
+const main = async (date, tsUpdate="both", updateNetwork=true) => {
   let start = Date.now();
   if (tsUpdate === "both" || tsUpdate === "facebook") await updateFacebook(date)
   if (tsUpdate === "both" || tsUpdate === "tiktok")   await updateTiktok(date)
-  await updateCrossroads(date)
+  if (updateNetwork) await updateCrossroads(date)
   if (tsUpdate === "both" || tsUpdate === "tiktok")   await updateInsights('tiktok', yesterdayYMD(date), date)
   if (tsUpdate === "both" || tsUpdate === "facebook") await updateInsights('facebook', yesterdayYMD(date), date)
   let timeTaken = Date.now() - start;
   console.log("Total time taken : " + (timeTaken / 1000) + " seconds");
 }
 
+const tsUpdate = "tiktok"
+const updateNetwork = false
 const date = '2023-09-02'
-main(date)
+main(date, tsUpdate, updateNetwork)
