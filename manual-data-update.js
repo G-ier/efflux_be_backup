@@ -15,6 +15,18 @@ const updateCrossroads = async (date) => {
   console.log("Done")
 }
 
+const updateTiktok = async (date) => {
+
+    const { updateTikTokData, updateTikTokInsights } = require('./controllers/tikTokController');
+    console.log("Updating tiktok data")
+    await updateTikTokData(date)
+    console.log("Done")
+    console.log("Updating tiktok insights")
+    await updateTikTokInsights(date)
+    console.log("Done")
+
+}
+
 const updateFacebook = async (date) => {
 
   const { updateFacebookData, updateFacebookInsights } = require('./controllers/facebookController');
@@ -38,15 +50,16 @@ const updateInsights = async (trafficSource, startDate, endDate) => {
 
 };
 
-const main = async (date) => {
+const main = async (date, tsUpdate="both") => {
   let start = Date.now();
+  if (tsUpdate === "both" || tsUpdate === "facebook") await updateFacebook(date)
+  if (tsUpdate === "both" || tsUpdate === "tiktok")   await updateTiktok(date)
   await updateCrossroads(date)
-  await updateFacebook(date)
-  await updateInsights('tiktok', yesterdayYMD(date), date)
-  await updateInsights('facebook', yesterdayYMD(date), date)
+  if (tsUpdate === "both" || tsUpdate === "tiktok")   await updateInsights('tiktok', yesterdayYMD(date), date)
+  if (tsUpdate === "both" || tsUpdate === "facebook") await updateInsights('facebook', yesterdayYMD(date), date)
   let timeTaken = Date.now() - start;
   console.log("Total time taken : " + (timeTaken / 1000) + " seconds");
 }
 
-const date = '2023-09-01'
+const date = '2023-09-02'
 main(date)

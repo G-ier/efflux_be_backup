@@ -119,7 +119,8 @@ class DatabaseRepository {
       console.error(`Failed to update table ${tableName}`, error);
       throw error;
     }
-    
+  }
+
   async queryOne(tableName, fields = ["*"], filters = {}) {
 
     let queryBuilder = this.connection(tableName).select(fields);
