@@ -26,6 +26,8 @@ const mediaBuyers = require("../routes/mediaBuyers");
 const columnPresets = require("../routes/columnPresets");
 const scrappedAds = require("../src/modules/scrappedAds/routes");
 
+const crossroadsRoutes = require("../src/modules/crossroads/routes");
+
 var livereload = require("livereload");
 var connectLiveReload = require("connect-livereload");
 
@@ -58,7 +60,7 @@ function configureMiddleware(server) {
   server.use("/api/media-buyers", mediaBuyers);
   server.use("/api/column-presets", columnPresets);
   server.use("/api/users", users);
-  server.use("/api/crossroads", crossroads);
+  server.use("/api/crossroads", crossroadsRoutes);
   server.use("/api/medianet", medianet);
   server.use("/api/amg", amg);
   server.use("/api/system1", system1);
