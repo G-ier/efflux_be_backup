@@ -6,7 +6,7 @@ const _ = require("lodash");
 // Local application imports
 const CampaignRepository = require("../repositories/CampaignRepository");
 const { FB_API_URL } = require("../constants");
-const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
+const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
 class CampaignsService {
   constructor() {
@@ -49,6 +49,16 @@ class CampaignsService {
       return [];
     }
     return campaigns.map((campaign) => campaign.id);
+  }
+
+  async updateCampaign(campaign, criteria) {
+    try {
+      return await this.campaignRepository.updateOne(campaign, criteria);
+    } catch (error) {
+      console.error("ERROR UPDATING campaign", error);
+      await sendSlackNotification("ERROR UPDATING campaign. Inspect software if this is a error", error);
+      throw error;
+    }
   }
 
   async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit) {
