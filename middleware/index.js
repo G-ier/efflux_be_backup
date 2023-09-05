@@ -25,13 +25,9 @@ const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
 const columnPresets = require("../routes/columnPresets");
 const scrappedAds = require("../src/modules/scrappedAds/routes");
-
-const crossroadsRoutes = require("../src/modules/crossroads/routes");
-
 const crossroadsRoutes = require("../src/modules/crossroads/routes");
 const crossroads = require("../routes/crossroads");
 const crossroadRouter = express.Router();
-
 crossroadRouter.use(crossroadsRoutes);
 crossroadRouter.use(crossroads);
 
