@@ -25,6 +25,7 @@ const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
 const columnPresets = require("../routes/columnPresets");
 const scrappedAds = require("../src/modules/scrappedAds/routes");
+const aggregations = require("../src/modules/aggregates/routes");
 const crossroadsRoutes = require("../src/modules/crossroads/routes");
 const crossroads = require("../routes/crossroads");
 const crossroadRouter = express.Router();
@@ -71,6 +72,7 @@ function configureMiddleware(server) {
   server.use("/api/campaigns", campaigns);
   server.use("/api/users/user_accounts", userAccounts);
   server.use("/api/composite-ad", scrappedAds);
+  server.use("/api/aggregations", aggregations);
   server.use(ErrorHandler);
 }
 

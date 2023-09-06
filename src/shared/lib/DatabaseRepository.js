@@ -137,6 +137,16 @@ class DatabaseRepository {
     return result;
   }
 
+  async raw(query) {
+    try {
+      const result = await this.connection.raw(query);
+      return result;
+    } catch (error) {
+      console.error("Error executing raw query: ", error);
+      throw error;
+    }
+  }
+
 }
 
 module.exports = DatabaseRepository;

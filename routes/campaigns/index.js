@@ -10,6 +10,7 @@ router.get('/', async (req, res) => {
   }
 });
 
+// generateCampaignAdsetsReport
 router.get('/:id', async (req, res) => {
   try {
     const { start_date, network, end_date, media_buyer } = req.query;
@@ -29,6 +30,7 @@ router.delete('/', async (req, res) => {
   }
 });
 
+// generateCampaignDailyReport
 router.get('/:id/dates', async (req, res) => {
   try {
     const { start_date, network, end_date, media_buyer } = req.query;
@@ -45,6 +47,7 @@ router.get('/:id/dates', async (req, res) => {
   }
 });
 
+// generateCampaignHourlyReport
 router.get('/:id/hours', async (req, res) => {
   try {
     const { start_date, network, end_date, media_buyer } = req.query;

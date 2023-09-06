@@ -58,7 +58,8 @@ route.get("/totals-by-media-buyer", async (req, res) => {
 // @route     /api/crossroads/facebook
 // @desc     GET crossroads/facebook data
 // @Access   Private
-route.get("/facebook/campaigns", async (req, res) => {
+// generateTrafficSourceNetworkCampaignsAdsetsStatsReport
+route.get('/facebook/campaigns', async (req, res) => {
   try {
     console.log("Request Query", req.query);
     const facebookCrossroads = await getCampaignsFacebookCrossroads(req.query);
@@ -78,7 +79,8 @@ route.get("/google/campaigns", async (req, res) => {
   }
 });
 
-route.get("/tiktok/campaigns", async (req, res) => {
+// generateTrafficSourceNetworkCampaignsAdsetsStatsReport
+route.get('/tiktok/campaigns', async (req, res) => {
   try {
     const tiktokCrossroads = await getCampaignsTiktokCrossroads(req.query);
     res.status(200).send(tiktokCrossroads);
@@ -87,6 +89,7 @@ route.get("/tiktok/campaigns", async (req, res) => {
   }
 });
 
+// generateTrafficSourceNetworkHourlyReport
 /**
  * @route /api/crossroads/facebook/hourly
  * @desc returns crossroads/facebook data grouped by hour
@@ -120,7 +123,8 @@ route.get("/google/campaign/hours", async (req, res) => {
   }
 });
 
-route.get("/tiktok/campaign/hours", async (req, res) => {
+// generateTrafficSourceNetworkHourlyReport
+route.get('/tiktok/campaign/hours', async (req, res) => {
   try {
     const data = await getTiktokHourlyData(req.query);
     res.status(200).json(data);
@@ -132,7 +136,8 @@ route.get("/tiktok/campaign/hours", async (req, res) => {
 // @route     /api/crossroads/facebook
 // @desc     GET crossroads/facebook data
 // @Access   Private
-route.get("/facebook/campaigns/dates", async (req, res) => {
+// generateTrafficSourceNetworkDailyReport
+route.get('/facebook/campaigns/dates', async (req, res) => {
   const { start_date, end_date, media_buyer, account_ids } = req.query;
   console.log("Request Query", req.query);
   try {
@@ -154,7 +159,8 @@ route.get("/google/campaigns/dates", async (req, res) => {
   }
 });
 
-route.get("/tiktok/campaigns/dates", async (req, res) => {
+// generateTrafficSourceNetworkDailyReport
+route.get('/tiktok/campaigns/dates', async (req, res) => {
   const { start_date, end_date } = req.query;
   try {
     const tiktokCrossroads = await getTiktokCrossroadsByDates({ start_date, end_date });

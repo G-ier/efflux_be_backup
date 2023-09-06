@@ -21,6 +21,7 @@ const {
  * Returns facebook/crossroads hourly data
  * @param options
  */
+// generateTrafficSourceNetworkHourlyReport
 async function getFacebookHourlyData(options) {
   const {
     start_date, end_date, media_buyer, account_ids, q
@@ -40,6 +41,7 @@ async function getFacebookHourlyData(options) {
   return processHourlyData(rows);
 }
 
+// generateTrafficSourceNetworkHourlyReport
 async function getTiktokHourlyData(options) {
   const {
     start_date, end_date, media_buyer, account_ids, q
@@ -79,6 +81,7 @@ async function getGoogleHourlyData(options) {
   return processHourlyData(rows);
 }
 
+// generateTrafficSourceNetworkDailyReport
 async function getFacebookCrossroadByDates({ start_date, end_date, media_buyer, account_ids}) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
@@ -87,6 +90,7 @@ async function getFacebookCrossroadByDates({ start_date, end_date, media_buyer, 
   return processDateHoles(rows, startDate, endDate);
 }
 
+// generateTrafficSourceNetworkDailyReport
 async function getTiktokCrossroadsByDates({ start_date, end_date }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
@@ -101,6 +105,7 @@ async function getGoogleCrossroadByDates({ start_date, end_date }) {
   return processDateHoles(rows, startDate, endDate);
 }
 
+// generateTrafficSourceNetworkCampaignsAdsetsStatsReport
 async function getCampaignsFacebookCrossroads({ start_date, end_date, media_buyer, ad_accounts, q }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
@@ -108,6 +113,7 @@ async function getCampaignsFacebookCrossroads({ start_date, end_date, media_buye
   return rows;
 }
 
+// generateTrafficSourceNetworkCampaignsAdsetsStatsReport
 async function getCampaignsTiktokCrossroads({ start_date, end_date, media_buyer, ad_accounts, q }) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
