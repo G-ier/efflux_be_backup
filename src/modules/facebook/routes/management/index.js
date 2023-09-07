@@ -1,9 +1,9 @@
 const route = require("express").Router();
 
-const { updateEntityController, duplicateEntityController } = require("../../../controllers/facebookController");
-const AdCreativesController = require("../../../src/modules/facebook/controllers/AdCreativeController");
+const AdCreativesController = require("../../controllers/AdCreativeController");
+const CompositeController = require("../../controllers/CompositeController");
+
 const adCreativesController = new AdCreativesController();
-const CompositeController = require("../../../src/modules/facebook/controllers/CompositeController");
 const compositeController = new CompositeController();
 
 // @route     /api/facebook/management/update-entity

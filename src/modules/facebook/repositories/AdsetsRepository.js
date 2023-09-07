@@ -48,6 +48,50 @@ class AdsetsRepository {
     }, {});
   }
 
+
+  async duplicateShallowAdsetOnDb(newAdsetId, entity_id, rename_options, campaign_id) {
+    // Fetch the existing adset using the fetchAdsets method
+    const existingAdsets = await this.fetchAdsets(["*"], { provider_id: entity_id });
+    const existingAdset = existingAdsets[0];
+
+    if (!existingAdset) {
+      throw new Error("AdSet not found");
+    }
+
+    let newName = existingAdset.name;
+    if (
+      rename_options?.rename_strategy === "DEEP_RENAME" ||
+      rename_options?.rename_strategy === "ONLY_TOP_LEVEL_RENAME"
+    ) {
+      if (rename_options.rename_prefix) {
+        newName = `${rename_options.rename_prefix} ${newName}`;
+      }
+      if (rename_options.rename_suffix) {
+        newName = `${newName} ${rename_options.rename_suffix}`;
+      }
+    }
+
+    // Create a copy of the existing adset, with some changes
+    const newAdset = {
+      ...existingAdset,
+      provider_id: newAdsetId, // Set the new ID
+      name: newName,
+    };
+    delete newAdset.id;
+    if (campaign_id) {
+      newAdset.campaign_id = campaign_id;
+    }
+
+    // Convert the new adset entity to a database DTO
+    const newAdsetDbObject = this.toDatabaseDTO(newAdset, {}); // Passing an empty object as the second argument, adjust if necessary
+
+    // Insert the new adset into the database using the saveOne method
+    await this.saveOne(newAdsetDbObject);
+
+    console.log(`successfully copied adset on db with id: ${newAdsetId}`);
+  }
+
+
   toDatabaseDTO(adset, adAccountsMap) {
     const adAccountInfo = adAccountsMap?.[adset.account_id] || {};
 
@@ -61,6 +105,9 @@ class AdsetsRepository {
       "daily_budget",
       "lifetime_budget",
       "budget_remaining",
+      "user_id",
+      "account_id",
+      "ad_account_id",
     ]);
 
     dbObject.traffic_source = "facebook";
@@ -69,11 +116,13 @@ class AdsetsRepository {
 
     if (adAccountInfo.user_id !== undefined) {
       dbObject.user_id = adAccountInfo.user_id;
+
     }
 
     if (adAccountInfo.account_id !== undefined) {
       dbObject.account_id = adAccountInfo.account_id;
     }
+
 
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;

@@ -9,7 +9,8 @@ const CampaignsService = require("./CampaignsService");
 const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
-const { pickFetchingAccount, validateInput } = require("../helpers");
+
+const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
 const axios = require("axios");
 class CompositeService {
@@ -81,10 +82,21 @@ class CompositeService {
     console.log("Done with updating all facebook data");
     return true;
   }
+
   async updateEntity({ type, entityId, dailyBudget, status }) {
-    const fetchedAccounts = await pickFetchingAccount();
-    const token = fetchedAccounts.token;
+
+    let account;
+    try {
+      account = await this.userAccountService.getFetchingAccount();
+    } catch (e) {
+      console.log("No account to fetch data from facebook", e);
+      await sendSlackNotification("No account to get token from to update entity. Inspect software if this is a error");
+      return false;
+    }
+    const { token } = account;
+
     async function updateDatabase(type, entityId, dailyBudget, status) {
+
       const updateData = {
         ...(status && { status }),
         ...(dailyBudget && { daily_budget: dailyBudget }),
@@ -105,7 +117,7 @@ class CompositeService {
     const params = {
       access_token: token,
       ...(status && { status }),
-      ...(dailyBudget && { daily_budget: dailyBudget }),
+      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget)}),
     };
 
     try {
@@ -119,6 +131,42 @@ class CompositeService {
       return false;
     }
   }
+
+
+  async duplicateEntity({ type, deep_copy, status_option, rename_options, entity_id }) {
+    let account;
+    try {
+      account = await this.userAccountService.getFetchingAccount();
+    } catch (e) {
+      console.log("No account to fetch data from facebook", e);
+      await sendSlackNotification("No account to fetch data from facebook. Inspect software if this is a error");
+      return false;
+    }
+    const { token } = account;
+
+    if (type === "campaign") {
+      const duplicated = await this.campaignsService.duplicateCampaign({
+        deep_copy,
+        status_option,
+        rename_options,
+        entity_id,
+        access_token: token,
+      });
+      return duplicated;
+    }
+    if (type === "adset") {
+      const duplicated = await this.adsetsService.duplicateAdset({
+        deep_copy,
+        status_option,
+        rename_options,
+        entity_id,
+        access_token: token,
+        campaign_id: null,
+      });
+      return duplicated;
+    }
+  }
+
 }
 
 module.exports = CompositeService;

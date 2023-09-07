@@ -3,7 +3,7 @@ const knexConfig = require("../../../knexfile");
 
 class DatabaseConnection {
 
-  constructor(config = knexConfig.development) {
+  constructor(config = knexConfig.production) {
     if (!DatabaseConnection.instance) {
       this.connection = knex(config);
       DatabaseConnection.instance = this;

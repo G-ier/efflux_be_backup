@@ -48,7 +48,7 @@ class UserAccountService {
       if (diffDays < 4) {
         if (this.tokenExpireNotificationSent < this.tokenExpireNotificationMax) {
           await sendSlackNotification(
-            `TEST MESSAGE: Facebook API Token of user ${name} is about to expire in ${diffDays} days, please refresh it.`
+            `URGENT: Facebook API Token of user ${name} is about to expire in ${diffDays} days, please refresh it.`
           );
           this.tokenExpireNotificationSent++;
         }

@@ -65,6 +65,43 @@ class CampaignsService {
     const results = await this.campaignRepository.fetchCampaigns(fields, filters, limit);
     return results;
   }
+
+  async duplicateCampaign({ deep_copy, status_option, rename_options, entity_id, access_token }) {
+    const url = `${FB_API_URL}${entity_id}/copies`;
+
+    const data = {
+      deep_copy: false,
+      status_option,
+      rename_options,
+      access_token,
+    };
+
+    try {
+      const response = await axios.post(url, data);
+
+      // Normal copy of only the campaign and not of its children
+      await this.campaignRepository.duplicateShallowCampaignOnDb(
+        response.data?.ad_object_ids?.[0].copied_id,
+        entity_id,
+        rename_options,
+      );
+
+      //From our side just calling deep_copy is not possible will have to
+      //manually get the adsets and call the endpoint for each of them
+      if (deep_copy)
+        await this.campaignRepository.duplicateDeepCopy(
+          response.data?.ad_object_ids?.[0].copied_id,
+          entity_id,
+          rename_options,
+          status_option,
+          access_token,
+        );
+      return { successful: true };
+    } catch ({ response }) {
+      console.log("here", response);
+      return false;
+    }
+  }
 }
 
 module.exports = CampaignsService;

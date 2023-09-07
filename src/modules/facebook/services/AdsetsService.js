@@ -63,6 +63,35 @@ class AdsetsService {
       throw error;
     }
   }
+
+
+  async duplicateAdset({ status_option, rename_options, entity_id, access_token, campaign_id = null }) {
+    const url = `${FB_API_URL}${entity_id}/copies`;
+
+    const data = {
+      deep_copy: false,
+      status_option,
+      rename_options,
+      access_token,
+    };
+
+    try {
+      const response = await axios.post(url, data);
+
+      await this.adsetsRepository.duplicateShallowAdsetOnDb(
+        response.data?.ad_object_ids?.[0].copied_id,
+        entity_id,
+        rename_options,
+        campaign_id,
+      );
+      return { successful: true };
+    } catch ({ response }) {
+      console.log("here", response.data);
+      return false;
+    }
+  }
+
+
   async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit) {
     const results = await this.adsetsRepository.fetchAdsets(fields, filters, limit);
     return results;
