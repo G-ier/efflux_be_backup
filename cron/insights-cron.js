@@ -14,11 +14,11 @@ async function updateInsightsJob(day = "today", network, trafficSource) {
 
   let startDate, endDate;
   if (day === "today") {
-    startDate       = calendar.yesterdayYMD(null, 'UTC');
-    endDate         = calendar.todayYMD('UTC');
+    startDate       = calendar.yesterdayYMD();
+    endDate         = calendar.todayYMD();
   } else if (day === "yesterday") {
-    startDate       = calendar.dayBeforeYesterdayYMD(null, 'UTC');
-    endDate         = calendar.yesterdayYMD(null, 'UTC');
+    startDate       = calendar.dayBeforeYesterdayYMD();
+    endDate         = calendar.yesterdayYMD();
   }
 
   console.log("Updating insights for", endDate)
