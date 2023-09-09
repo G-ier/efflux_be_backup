@@ -33,6 +33,20 @@ module.exports = {
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
+  oldproduction: {
+    client: "pg",
+    connection: process.env.OLD_PRODUCTION_DATABASE_URL,
+    pool: {
+      min: 2,
+      max: 20,
+    },
+    migrations: {
+      tableName: "knex_migrations",
+      directory: "./data/migrations",
+    },
+    useNullAsDefault: true,
+    ssl: { rejectUnauthorized: false },
+  },
   onUpdateTrigger: table => `
     CREATE TRIGGER updated_at
     BEFORE UPDATE ON ${table}
