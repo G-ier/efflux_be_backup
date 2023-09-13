@@ -18,6 +18,7 @@ configureMiddleware(server);
 // initialize Cron jobs
 initializeCronJobs();
 
+// Trigger Build
 module.exports = {
   server
 };
