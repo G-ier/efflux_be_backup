@@ -25,7 +25,7 @@ server.use(function (err, req, res, next) {
 });
 
 const port = process.env.PORT || 5000;
-// Trigger Build
+
 server.listen(port, () => {
   console.log(`🔥 -------- Server started ---------- 🔥`)
 
