@@ -1,23 +1,30 @@
 const _ = require("lodash");
-const Campaign = require('../entities/Campaign');
+const Campaign = require("../entities/Campaign");
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-
+const AdsetService = require("../services/AdsetsService");
+const AdsetRepository = require("./AdsetsRepository");
 class CampaignRepository {
   constructor(database) {
     this.tableName = "campaigns";
     this.database = database || new DatabaseRepository();
+    this.adsetService = new AdsetService();
+    this.adsetRepository = new AdsetRepository();
   }
 
   async saveOne(campaign) {
     const dbObject = this.toDatabaseDTO(campaign);
     return await this.database.insert(this.tableName, dbObject);
   }
+  async updateOne(adset, criteria) {
+    const dbObject = this.toDatabaseDTO(adset);
+    return await this.database.update(this.tableName, dbObject, criteria);
+  }
 
   async saveInBulk(campaigns, chunkSize = 500) {
-    let data = campaigns.map((campaign) => toDatabaseDTO(campaign))
-    let dataChunks = _.chunk(data, chunkSize)
+    let data = campaigns.map((campaign) => toDatabaseDTO(campaign));
+    let dataChunks = _.chunk(data, chunkSize);
     for (let chunk of dataChunks) {
-      await this.database.insert(this.tableName, chunk)
+      await this.database.insert(this.tableName, chunk);
     }
   }
 
@@ -29,26 +36,120 @@ class CampaignRepository {
     }
   }
 
-  async fetchCampaigns(fields = ['*'], filters = {}, limit) {
+  async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
   }
 
-  toDatabaseDTO(campaign, adAccountsMap) {
-    return {
-      name: campaign.name,
-      created_time: campaign.created_time,
-      updated_time: campaign.updated_time,
-      id: campaign.id,
-      status: campaign.status,
-      user_id: adAccountsMap[campaign.account_id].user_id,
-      account_id: adAccountsMap[campaign.account_id].account_id,
-      ad_account_id: adAccountsMap[campaign.account_id].id,
-      daily_budget: campaign.daily_budget,
-      lifetime_budget: campaign.lifetime_budget,
-      budget_remaining: campaign.budget_remaining,
-      network: 'unknown'
+  async duplicateShallowCampaignOnDb(newCampaignId, entity_id, rename_options) {
+    console.log(entity_id);
+    // Fetch the existing campaign using the fetchCampaigns method
+    const existingCampaigns = await this.fetchCampaigns(["*"], { id: entity_id });
+    const existingCampaign = existingCampaigns[0];
+
+    if (!existingCampaign) {
+      throw new Error("Campaign not found");
     }
+
+    let newName = existingCampaign.name;
+    if (
+      rename_options?.rename_strategy === "DEEP_RENAME" ||
+      rename_options?.rename_strategy === "ONLY_TOP_LEVEL_RENAME"
+    ) {
+      if (rename_options.rename_prefix) {
+        newName = `${rename_options.rename_prefix} ${newName}`;
+      }
+      if (rename_options.rename_suffix) {
+        newName = `${newName} ${rename_options.rename_suffix}`;
+      }
+    }
+
+    // Create a copy of the existing campaign, with some changes
+    const newCampaign = {
+      ...existingCampaign,
+      id: newCampaignId, // Set the new ID
+      name: newName,
+    };
+
+    // Convert the new campaign entity to a database DTO
+    const newCampaignDbObject = this.toDatabaseDTO(newCampaign);
+
+    // Insert the new campaign into the database using the saveOne method
+    await this.saveOne(newCampaignDbObject);
+
+    console.log(`successfully copied campaign on db with id: ${newCampaignId}`);
+  }
+
+  async duplicateDeepCopy(newCampaignId, entity_id, rename_options, status_option, access_token) {
+    // Fetch the existing campaign using the fetchCampaigns method
+    const existingCampaigns = await this.fetchCampaigns(["*"], { id: entity_id });
+    const existingCampaign = existingCampaigns[0];
+
+    if (!existingCampaign) {
+      throw new Error("Campaign not found");
+    }
+
+    // Query the existing adsets with the provided ID
+    // Assuming adsets is another table and its corresponding repository has a fetchAdsets method
+    let existingAdsets = await this.adsetRepository.fetchAdsets(["*"], { campaign_id: entity_id });
+
+    // Iterate through the adsets and make necessary changes
+    const newAdsets = existingAdsets.map(async (adset) => {
+      console.log(adset);
+
+      await this.adsetService.duplicateAdset({
+        deep_copy: false,
+        status_option,
+        rename_options: {
+          ...rename_options,
+          rename_strategy: rename_options?.deep_copy === "DEEP_RENAME" ? "DEEP_RENAME" : "NO_RENAME",
+        },
+        entity_id: adset.provider_id,
+        access_token,
+        campaign_id: newCampaignId,
+      });
+    });
+
+    await Promise.all(newAdsets);
+  }
+
+  pickDefinedProperties(obj, keys) {
+    return keys.reduce((acc, key) => {
+      if (obj[key] !== undefined) {
+        acc[key] = obj[key];
+      }
+      return acc;
+    }, {});
+  }
+
+  toDatabaseDTO(campaign, adAccountsMap) {
+    const adAccountInfo = adAccountsMap?.[campaign.account_id] || {};
+
+    const dbObject = this.pickDefinedProperties(campaign, [
+      "id",
+      "name",
+      "status",
+      "daily_budget",
+      "lifetime_budget",
+      "created_time",
+      "budget_remaining",
+      "updated_time",
+      "user_id",
+      "account_id",
+      "ad_account_id",
+    ]);
+
+    dbObject.network = "unknown";
+
+    if (adAccountInfo.user_id !== undefined) {
+      dbObject.user_id = adAccountInfo.user_id;
+    }
+
+    if (adAccountInfo.account_id !== undefined) {
+      dbObject.account_id = adAccountInfo.account_id;
+    }
+
+    return dbObject;
   }
 
   toDomainEntity(dbObject) {
@@ -64,7 +165,7 @@ class CampaignRepository {
       dbObject.daily_budget,
       dbObject.lifetime_budget,
       dbObject.budget_remaining,
-    )
+    );
   }
 }
 

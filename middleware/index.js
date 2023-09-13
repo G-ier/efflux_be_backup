@@ -1,4 +1,5 @@
 const json = require("express").json({ limit: "50mb" });
+const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
 const cors = require("cors");
@@ -6,7 +7,6 @@ const paginate = require("express-paginate");
 const auth = require("../routes/auth");
 const auth0 = require("../routes/auth0");
 const users = require("../routes/users");
-const crossroads = require("../routes/crossroads");
 const amg = require("../routes/amg");
 const facebook = require("../routes/facebook");
 const jwtCheck = require("./jwtCheck");
@@ -24,6 +24,13 @@ const userAccounts = require("../routes/userAccounts");
 const medianet = require("../routes/medianet");
 const mediaBuyers = require("../routes/mediaBuyers");
 const columnPresets = require("../routes/columnPresets");
+const scrappedAds = require("../src/modules/scrappedAds/routes");
+const aggregations = require("../src/modules/aggregates/routes");
+const crossroadsRoutes = require("../src/modules/crossroads/routes");
+const crossroads = require("../routes/crossroads");
+const crossroadRouter = express.Router();
+crossroadRouter.use(crossroadsRoutes);
+crossroadRouter.use(crossroads);
 
 var livereload = require("livereload");
 var connectLiveReload = require("connect-livereload");
@@ -57,13 +64,15 @@ function configureMiddleware(server) {
   server.use("/api/media-buyers", mediaBuyers);
   server.use("/api/column-presets", columnPresets);
   server.use("/api/users", users);
-  server.use("/api/crossroads", crossroads);
+  server.use("/api/crossroads", crossroadRouter);
   server.use("/api/medianet", medianet);
   server.use("/api/amg", amg);
   server.use("/api/system1", system1);
   server.use("/api/facebook", facebook);
   server.use("/api/campaigns", campaigns);
   server.use("/api/users/user_accounts", userAccounts);
+  server.use("/api/composite-ad", scrappedAds);
+  server.use("/api/aggregations", aggregations);
   server.use(ErrorHandler);
 }
 

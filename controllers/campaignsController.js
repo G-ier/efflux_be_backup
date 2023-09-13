@@ -68,6 +68,7 @@ async function getCampaignAgg(id, media_buyer, network) {
   return aggregations[agg_key];
 }
 
+// generateCampaignAdsetsReport
 async function getCampaignData(id, start_date, end_date, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);
@@ -75,12 +76,14 @@ async function getCampaignData(id, start_date, end_date, media_buyer, network) {
   return rows;
 }
 
+// generateCampaignDailyReport
 async function getCampaignDates(id, start_date, endDate, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
   const { rows } = await campaignsAggregationByDate(startDate, endDate, id)
   return processDateHoles(rows, startDate, endDate);
 }
 
+// generateCampaignHourlyReport
 async function getCampaignHours(id, start_date, end_date, media_buyer, network) {
   const startDate = yesterdayYMD(start_date);
   const endDate = dayYMD(end_date);

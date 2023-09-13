@@ -30,7 +30,6 @@ async function upsertCampaigns(data, conflictTarget = null, excludeFields = []) 
   }
 }
 
-
 async function updateCampaigns(campaigns, provider) {
   const fields = ["id", "status", "daily_budget", "budget_remaining", "lifetime_budget", "name"];
   const existedCampaigns = await db.select(fields)
@@ -118,6 +117,7 @@ async function getCampaignData(filters = {}, selectColumns = ["id", "name"]) {
 
   return data;
 }
+
 module.exports = {
   updateCampaigns,
   deleteById,

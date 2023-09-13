@@ -572,6 +572,7 @@ async function updateCrossroadsData(account, request_date) {
     // for (const chunk of processedChunks) {
     //   await db('crossroads_stats').insert(chunk);
     // }
+
   } catch(err) {
     console.log(err)
     if (!err.status_code === 429 ) {

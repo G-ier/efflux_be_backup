@@ -4,16 +4,16 @@ const async = require("async");
 const _ = require("lodash");
 
 // Local application imports
-const CampaignRepository = require('../repositories/CampaignRepository');
-const { FB_API_URL } = require('../constants');
+const CampaignRepository = require("../repositories/CampaignRepository");
+const { FB_API_URL } = require("../constants");
+const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
 class CampaignsService {
-
   constructor() {
     this.campaignRepository = new CampaignRepository();
   }
 
-  async getCampaignsFromApi(access_token, adAccountIds,  date = "today") {
+  async getCampaignsFromApi(access_token, adAccountIds, date = "today") {
     const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
     const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
@@ -41,15 +41,67 @@ class CampaignsService {
 
   async syncCampaigns(access_token, adAccountIds, adAccountsMap, date = "today") {
     const campaigns = await this.getCampaignsFromApi(access_token, adAccountIds, date);
-    await this.campaignRepository.upsert(campaigns, adAccountsMap, 500);
+    try {
+      await this.campaignRepository.upsert(campaigns, adAccountsMap, 500);
+    } catch (e) {
+      console.log("ERROR upserting CAMPAIGNS", e);
+      await sendSlackNotification("ERROR UPDATING CAMPAIGNS. Inspect software if this is a error", e);
+      return [];
+    }
     return campaigns.map((campaign) => campaign.id);
   }
 
-  async fetchCampaignsFromDatabase(fields = ['*'], filters = {}, limit) {
+  async updateCampaign(campaign, criteria) {
+    try {
+      return await this.campaignRepository.updateOne(campaign, criteria);
+    } catch (error) {
+      console.error("ERROR UPDATING campaign", error);
+      await sendSlackNotification("ERROR UPDATING campaign. Inspect software if this is a error", error);
+      throw error;
+    }
+  }
+
+  async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit) {
     const results = await this.campaignRepository.fetchCampaigns(fields, filters, limit);
     return results;
   }
 
+  async duplicateCampaign({ deep_copy, status_option, rename_options, entity_id, access_token }) {
+    const url = `${FB_API_URL}${entity_id}/copies`;
+
+    const data = {
+      deep_copy: false,
+      status_option,
+      rename_options,
+      access_token,
+    };
+
+    try {
+      const response = await axios.post(url, data);
+
+      // Normal copy of only the campaign and not of its children
+      await this.campaignRepository.duplicateShallowCampaignOnDb(
+        response.data?.ad_object_ids?.[0].copied_id,
+        entity_id,
+        rename_options,
+      );
+
+      //From our side just calling deep_copy is not possible will have to
+      //manually get the adsets and call the endpoint for each of them
+      if (deep_copy)
+        await this.campaignRepository.duplicateDeepCopy(
+          response.data?.ad_object_ids?.[0].copied_id,
+          entity_id,
+          rename_options,
+          status_option,
+          access_token,
+        );
+      return { successful: true };
+    } catch ({ response }) {
+      console.log("here", response);
+      return false;
+    }
+  }
 }
 
 module.exports = CampaignsService;

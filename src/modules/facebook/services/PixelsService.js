@@ -6,7 +6,7 @@ const _ = require("lodash");
 // Local application imports
 const PixelRepository = require('../repositories/PixelsRepository');
 const { FB_API_URL } = require('../constants');
-
+const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 class PixelsService {
 
   constructor() {
@@ -41,7 +41,13 @@ class PixelsService {
 
   async syncPixels(access_token, adAccountIds, adAccountsMap, date = "today") {
     const pixels = await this.getPixelsFromApi(access_token, adAccountIds, date);
-    await this.pixelRepository.upsert(pixels, adAccountsMap, 500);
+    try{
+      await this.pixelRepository.upsert(pixels, adAccountsMap, 500);
+    } catch (e) {
+      console.log("ERROR UPDATING PIXELS", e);
+      await sendSlackNotification("ERROR UPDATING PIXELS. Inspect software if this is a error", e)
+      return [];
+    }
     return pixels.map((pixel) => pixel.id);
   }
 

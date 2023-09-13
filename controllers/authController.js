@@ -20,6 +20,8 @@ const outbrainService = require("../services/outbrainService");
  * @param {Object} account_details
  * @returns {Promise<Object>}
  */
+
+// REPLACED
 async function addFacebookAccount(auth0user, account_details) {
 
   // Retrieve auth0 and provider id from user making the request.
@@ -175,6 +177,7 @@ async function addOutbrainAccount(auth0user, userObj) {
  * @param {Object} account_details
  * @returns {Promise<String>}
  */
+// REPLACED
 async function reauthorizeFacebook(auth0user, accountId, account_details) {
   const { name, accessToken, providerId: provider_id, imageUrl: image_url } = account_details;
   const foundAccount = await db("user_accounts").where("id", accountId).first();

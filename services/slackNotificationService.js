@@ -15,9 +15,16 @@ async function getPublicIP() {
 
 
 const sendSlackNotification = async (message) => {
+  const disableSlackNotification = process.env.DISABLE_SLACK_NOTIFICATION === "true";
+
+  if (disableSlackNotification) {
+    console.log("Slack notification disabled");
+    return;
+  }
+
   const publicIp = await getPublicIP();
   const payload = {
-    text: 'master' + publicIp + message
+    text: 'staging' + publicIp + message
   }
   const data = await axios.post(
     SLACK_API_URL,

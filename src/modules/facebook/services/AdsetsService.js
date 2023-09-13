@@ -4,11 +4,11 @@ const async = require("async");
 const _ = require("lodash");
 
 // Local application imports
-const AdsetsRepository = require('../repositories/AdsetsRepository');
-const { FB_API_URL } = require('../constants');
+const AdsetsRepository = require("../repositories/AdsetsRepository");
+const { FB_API_URL } = require("../constants");
+const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
 class AdsetsService {
-
   constructor() {
     this.adsetsRepository = new AdsetsRepository();
   }
@@ -32,7 +32,7 @@ class AdsetsService {
           },
         })
         .catch((err) =>
-          console.warn(`facebook adsets failure on ad_account_id ${adAccountId}`, err.response?.data ?? err)
+          console.warn(`facebook adsets failure on ad_account_id ${adAccountId}`, err.response?.data ?? err),
         );
 
       return response?.data?.data || [];
@@ -44,15 +44,58 @@ class AdsetsService {
   async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, date = "today") {
     let adsets = await this.getAdsetsFromApi(access_token, adAccountIds, date);
     adsets = adsets.filter((adset) => campaignIds.includes(adset.campaign_id));
-    await this.adsetsRepository.upsert(adsets, adAccountsMap);
+    try {
+      await this.adsetsRepository.upsert(adsets, adAccountsMap);
+    } catch (e) {
+      console.log("ERROR UPDATING ADSETS", e);
+      await sendSlackNotification("ERROR UPDATING ADSETS. Inspect software if this is a error", e);
+      return [];
+    }
     return adsets.map((adset) => adset.id);
   }
 
-  async fetchAdsetsFromDatabase(fields = ['*'], filters = {}, limit) {
+  async updateAdset(adset, criteria) {
+    try {
+      return await this.adsetsRepository.updateOne(adset, criteria);
+    } catch (error) {
+      console.error("ERROR UPDATING ADSET", error);
+      await sendSlackNotification("ERROR UPDATING ADSET. Inspect software if this is a error", error);
+      throw error;
+    }
+  }
+
+
+  async duplicateAdset({ status_option, rename_options, entity_id, access_token, campaign_id = null }) {
+    const url = `${FB_API_URL}${entity_id}/copies`;
+
+    const data = {
+      deep_copy: false,
+      status_option,
+      rename_options,
+      access_token,
+    };
+
+    try {
+      const response = await axios.post(url, data);
+
+      await this.adsetsRepository.duplicateShallowAdsetOnDb(
+        response.data?.ad_object_ids?.[0].copied_id,
+        entity_id,
+        rename_options,
+        campaign_id,
+      );
+      return { successful: true };
+    } catch ({ response }) {
+      console.log("here", response.data);
+      return false;
+    }
+  }
+
+
+  async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit) {
     const results = await this.adsetsRepository.fetchAdsets(fields, filters, limit);
     return results;
   }
-
 }
 
-module.exports = AdsetsService
+module.exports = AdsetsService;
