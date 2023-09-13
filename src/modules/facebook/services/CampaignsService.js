@@ -5,49 +5,71 @@ const _ = require("lodash");
 
 // Local application imports
 const CampaignRepository = require("../repositories/CampaignRepository");
+const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
+const BaseService = require("../../../shared/services/BaseService");
 const { FB_API_URL } = require("../constants");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
-class CampaignsService {
+class CampaignsService extends BaseService{
   constructor() {
+    super(FacebookLogger);
     this.campaignRepository = new CampaignRepository();
   }
 
   async getCampaignsFromApi(access_token, adAccountIds, date = "today") {
+    this.logger.info(`Fetching Campaigns from API`);
     const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
     const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
-
     const fields =
       "id,account_id,budget_remaining,created_time, daily_budget, status,name,lifetime_budget,start_time,stop_time,updated_time";
     const effective_status = ["ACTIVE", "PAUSED"];
+    const results = { sucess: [], error: [] };
 
     const allCampaigns = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
-      const url = `${FB_API_URL}${adAccountId}/campaigns`;
-      const response = await axios
+      let paging = {};
+      const campaigns = [];
+      let url = `${FB_API_URL}${adAccountId}/campaigns`;
+      let params = {
+        fields,
+        ...dateParam,
+        access_token,
+        effective_status,
+      }
+
+      do {
+        if (paging?.next) {
+          url = paging.next;
+          params = {};
+        }
+
+        const { data = [] } = await axios
         .get(url, {
-          params: {
-            fields,
-            ...dateParam,
-            access_token,
-            effective_status,
-          },
+          params
         })
-        .catch((err) => console.warn(err.response?.data ?? err));
-      return response?.data?.data || [];
+        .catch((err) => {
+          results.error.push(adAccountId);
+          return {};
+        });
+        results.sucess.push(adAccountId);
+        paging = { ...data?.paging };
+        if (data?.data.length) campaigns.push(...data.data);
+      } while (paging?.next);
+      return campaigns;
     });
 
+    if (results.sucess.length === 0) throw new Error("All ad accounts failed to fetch campaigns");
+    this.logger.info(`Ad Accounts Campaign Fetching Telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.error.length})`);
     return _.flatten(allCampaigns);
   }
 
   async syncCampaigns(access_token, adAccountIds, adAccountsMap, date = "today") {
     const campaigns = await this.getCampaignsFromApi(access_token, adAccountIds, date);
-    try {
-      await this.campaignRepository.upsert(campaigns, adAccountsMap, 500);
-    } catch (e) {
-      console.log("ERROR upserting CAMPAIGNS", e);
-      await sendSlackNotification("ERROR UPDATING CAMPAIGNS. Inspect software if this is a error", e);
-      return [];
-    }
+    this.logger.info(`Upserting ${campaigns.length} Campaigns`)
+    await this.executeWithLogging(
+      () => this.campaignRepository.upsert(campaigns, adAccountsMap, 500),
+      "Error Upserting Campaigns"
+    )
+    this.logger.info(`Done upserting campaigns`);
     return campaigns.map((campaign) => campaign.id);
   }
 

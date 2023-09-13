@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const { sendSlackNotification } = require("../../../../services/slackNotificationService");
 
 const CampaignService = require("./CampaignsService");
 const AdsetService = require("./AdsetsService");
@@ -7,6 +6,7 @@ const AdsService = require("./AdsService");
 const AdAccountService = require("./AdAccountsService");
 const UserAccountService = require("./UserAccountService");
 const AdInsightsService = require("./AdInsightsService");
+const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 
 class CompositeService {
 
@@ -20,39 +20,33 @@ class CompositeService {
   }
 
   async updateTikTokData(date) {
-    try {
-      const { id, user_id, token } = await this.userAccountsService.getFetchingAccounts();
 
-      const updatedAdAccounts = await this.adAccountService.syncAdAccounts(token, id, user_id);
-      console.log("updatedAdAccounts: ", updatedAdAccounts.length);
+    TiktokLogger.info(`Starting to sync TikTok data for date ${date}`);
 
-      // After we update the ad accounts, we need to fetch all the ad accounts from
-      // the database to create a map of ad accounts which will be use
-      const adAccountsMap = _(await this.adAccountService.fetchAdAccountsFromDatabase(
-        ["id", "provider_id", "user_id", "account_id"],
-        {provider: "tiktok"}
-        )).keyBy("provider_id").value();
-      const adAccountIds = Object.keys(adAccountsMap);
+    // Retrieving account we will use for fetching data
+    const { id, user_id, token } = await this.userAccountsService.getFetchingAccounts();
 
-      const updatedCampaignIds = await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date);
-      console.log("updatedCampaignIds: ", updatedCampaignIds.length);
+    // Sync ad accounts
+    await this.adAccountService.syncAdAccounts(token, id, user_id);
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {provider: "tiktok"});
+    const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
+    const adAccountIds = Object.keys(adAccountsMap);
 
-      const updatedAdsetsId = await this.adsetService.syncAdsets(token,adAccountIds,adAccountsMap, date);
-      console.log("updatedAdsetsId: ", updatedAdsetsId.length);
+    // Sync campaigns
+    await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date);
 
-      const updatedAdsId = await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date);
-      console.log("updatedAdsId: ", updatedAdsId.length);
+    // Sync adsets
+    const campaignIdsObjects = await this.campaignService.fetchCampaignsFromDatabase(["id"]);
+    const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
+    await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date);
 
-      const updatedAdInsights = await this.adInsightsService.syncAdInsights(token,adAccountIds,adAccountsMap,date);
-      console.log("updatedAdInsights: ", updatedAdInsights.length);
+    // Sync ads
+    await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date);
 
-      console.log("DONE")
-    }
-    catch (error) {
-      console.error("Error updating tik-tok data in service: ", error);
-      await sendSlackNotification("Error updating tik-tok insights: ", error);
-      throw error; // propagate the error to be caught in the controller
-    }
+    // Sync ad insights
+    await this.adInsightsService.syncAdInsights(token, adAccountIds, adAccountsMap, date);
+
+    TiktokLogger.info(`Done syncing TikTok data for date ${date}`);
   }
 
 }

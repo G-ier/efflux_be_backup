@@ -1,10 +1,11 @@
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 const Insights = require("../entities/Insights");
-const { todayHH, someDaysAgoYMD } = require("../helpers");
+const { todayHH } = require("../helpers");
 const _ = require("lodash");
-const PROVIDERS = require("../../../../constants/providers");
+const PROVIDERS = require("../../../shared/constants/providers");
 
 class InsightsRepository {
+
   constructor(database) {
     this.tableName = "crossroads";
     this.partitionedTableName = "crossroads_partitioned";
@@ -36,20 +37,15 @@ class InsightsRepository {
   }
 
   async upsert(insights, id, request_date, chunkSize = 500) {
-    console.log("HERE");
-    console.log(insights[0]);
     const dbObjects = this.toDatabaseDTO(insights, id, request_date);
     const dataChunks = _.chunk(dbObjects, chunkSize);
     let insrt_total = { cr: 0, cr_p: 0 };
 
     for (const chunk of dataChunks) {
       // Upsert into the main table
-      await this.database.upsert(this.tableName, chunk, "id");
-      console.log("updated");
+      await this.database.upsert(this.tableName, chunk, "unique_identifier");
       insrt_total["cr"] += chunk.length;
     }
-
-    console.log("Upsert data summary: ", insrt_total);
   }
 
   async fetchInsights(fields = ["*"], filters = {}, limit) {
@@ -83,6 +79,7 @@ class InsightsRepository {
       hour_fetched: todayHH(),
       request_date: element.request_date,
       account: element.account,
+      unique_identifier: element.unique_identifier,
       ...adsetStatDefaults,
     };
 
@@ -97,6 +94,7 @@ class InsightsRepository {
 
     return adset;
   }
+
   processHourlyData(adsets) {
     return _(adsets).groupBy("hour").map(this.aggregateAdsetList).value();
   }
@@ -233,13 +231,13 @@ class InsightsRepository {
         keyword: click.lander_keyword || null,
         account: account,
         request_date: request_date,
+        unique_identifier: `${click.campaign_id}-${click.adset_id}-${click.ad_id}-${request_date}-${click.hour}`
       };
     });
     return this.aggregateCrossroadsData(proccesedData);
   }
 
   toDomainEntity(dbObject) {
-    console.log(dbObject);
     return new Insights(
       dbObject.id,
       dbObject.date,
@@ -264,8 +262,10 @@ class InsightsRepository {
       dbObject.adset_name,
       dbObject.traffic_source,
       dbObject.cr_camp_name,
+      dbObject.unique_identifier
     );
   }
+
 }
 
 module.exports = InsightsRepository;

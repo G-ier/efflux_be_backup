@@ -5,9 +5,12 @@ const axios = require("axios");
 // Local application imports
 const AdAccountRepository = require("../repositories/AdAccountRepository");
 const { FB_API_URL, fieldsFilter } = require("../constants");
-const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
-class AdAccountService {
+const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
+const BaseService = require("../../../shared/services/BaseService");
+class AdAccountService extends BaseService {
+
   constructor() {
+    super(FacebookLogger);
     this.adAccountRepository = new AdAccountRepository();
   }
 
@@ -20,27 +23,25 @@ class AdAccountService {
   }
 
   async getAdAccountsFromApi(userId, token) {
-    const url = `${FB_API_URL}${userId}/adaccounts?fields=${fieldsFilter}&access_token=${token}&limit=10000`;
-    const accountsResponse = await axios.get(url).catch(async (err) => {
-      console.info("ERROR GETTING FACEBOOK AD ACCOUNTS", err.response?.data.error || err);
-      await sendSlackNotification("ERROR FETCHING FACEBOOK AD ACCOUNTS FROM API", err.response?.data.error || err);
-      return [];
-    });
+    this.logger.info("Fetching Ad Accounts from API");
 
-    if (!accountsResponse) return [];
-
-    return accountsResponse.data?.data;
+    const data = await this.fetchFromApi(
+      `${FB_API_URL}${userId}/adaccounts`,
+        {fields: fieldsFilter, access_token: token, limit: 10000 },
+      "Error fetching Ad Accounts from API"
+    );
+    this.logger.info(`Fetched ${data?.data?.length} Ad Accounts from API`)
+    return data?.data;
   }
 
   async syncAdAccounts(providerId, userId, accountId, token) {
     const apiAdAccounts = await this.getAdAccountsFromApi(providerId, token);
-    try {
-      await this.adAccountRepository.upsert(apiAdAccounts, userId, accountId, 500);
-    } catch (e) {
-      console.log("ERROR UPDATING AD ACCOUNTS", e);
-      await sendSlackNotification("ERROR UPDATING AD ACCOUNTS. Inspect software if this is a error", e);
-      return [];
-    }
+    this.logger.info(`Upserting ${apiAdAccounts.length} Ad Accounts`);
+    await this.executeWithLogging(
+      () => this.adAccountRepository.upsert(apiAdAccounts, userId, accountId, 500),
+      "Error Upserting Ad Account"
+    )
+    this.logger.info(`Done upserting ad accounts`);
     return apiAdAccounts.map((account) => account.id);
   }
 
@@ -48,6 +49,12 @@ class AdAccountService {
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
     return results;
   }
+
+  async updateAdAccountInDatabase(updateData, id) {
+    const updateCount = await this.adAccountRepository.update(updateData, id);
+    return updateCount
+  }
+
 }
 
 module.exports = AdAccountService;

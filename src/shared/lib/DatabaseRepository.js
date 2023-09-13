@@ -1,6 +1,7 @@
 const DatabaseConnection = require("./DatabaseConnection");
 
 class DatabaseRepository {
+
   constructor(connection) {
     this.connection = connection || new DatabaseConnection().getConnection();
   }
@@ -122,19 +123,23 @@ class DatabaseRepository {
   }
 
   async queryOne(tableName, fields = ["*"], filters = {}) {
+    try {
+      let queryBuilder = this.connection(tableName).select(fields);
 
-    let queryBuilder = this.connection(tableName).select(fields);
-
-    for (const [key, value] of Object.entries(filters)) {
-      if (Array.isArray(value)) {
-        queryBuilder = queryBuilder.whereIn(key, value);
-      } else {
-        queryBuilder = queryBuilder.where(key, value);
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          queryBuilder = queryBuilder.whereIn(key, value);
+        } else {
+          queryBuilder = queryBuilder.where(key, value);
+        }
       }
-    }
 
-    const result = await queryBuilder.first();
-    return result;
+      const result = await queryBuilder.first();
+      return result;
+    } catch (error) {
+      console.error(`Error querying table ${tableName}`, error);
+      throw error;
+    }
   }
 
   async raw(query) {

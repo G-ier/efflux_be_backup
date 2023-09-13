@@ -10,7 +10,7 @@ const {
 }                                     = require('../../../../common/insightQueries');
 const { ruleThemAllQuery }            = require('../../../../services/insightsService');
 const { aggregatesGeneralized }       = require('../../../../common/aggregations/aggregatesGeneralized');
-const { yesterdayYMD, dayYMD }        = require('../../../../common/day');
+const { yesterdayYMD, dayYMD }        = require('../../../shared/helpers/calendar');
 const AggregatesController            = require('../controllers/AggregatesController');
 const AggregatesRepository            = require('../repositories/AggregatesRepository');
 const AggregatesService               = require('../services/AggregatesService');
@@ -26,8 +26,8 @@ describe('AggregatesController', () => {
     query : {
       trafficSource : "facebook",
       network : "crossroads",
-      startDate : "2023-09-01",
-      endDate  : "2023-09-03",
+      startDate : "2023-09-05",
+      endDate  : "2023-09-08",
       campaignId : "23853094782330131"
     }
   }
@@ -37,10 +37,17 @@ describe('AggregatesController', () => {
   }
 
   const matchAccumulate = (rows, fields=['spend', 'revenue']) => {
+
     const result = rows.reduce((acc, row) => {
 
       fields.forEach(field => {
         acc[field] = acc[field] || 0;
+
+        if (row[field] === null || row[field] === undefined || isNaN(row[field])) row[field] = 0;
+        else {
+          row[field] = parseFloat(row[field]);
+        }
+
         acc[field] += row[field];
       });
 
@@ -48,7 +55,7 @@ describe('AggregatesController', () => {
     }, {});
 
     Object.keys(result).forEach(key => {
-      result[key] = parseFloat(result[key].toFixed(2));
+      result[key] = result[key].toFixed(2);
     });
 
     return result;
@@ -85,16 +92,14 @@ describe('AggregatesController', () => {
   it('should generate a aggregatesGeneralized that matches', async () => {
 
     const microserviceData            = await aggregatesRepository.revealBotSheets(
-      req.query.startDate, req.query.endDate
+      req.query.startDate, req.query.endDate, 'adsets', 'tiktok'
     );
-    const newResults                  = matchAccumulate(microserviceData, ['pb_conversions', 'pb_serp_conversions']);
-    console.log("Revealbot sheet test", newResults);
+    const newResults                  = matchAccumulate(microserviceData, ['amount_spent', 'publisher_revenue']);
 
     const oldData                     = await aggregatesGeneralized(
-      req.query.startDate, req.query.endDate,
+      req.query.startDate, req.query.endDate, 'adsets', 'tiktok'
     );
-    const oldResults                  = matchAccumulate(oldData, ['pb_conversions', 'pb_serp_conversions']);
-    console.log("Revealbot sheet test", oldResults);
+    const oldResults                  = matchAccumulate(oldData, ['amount_spent', 'publisher_revenue']);
 
     expect(newResults).toStrictEqual(oldResults);
 

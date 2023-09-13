@@ -1,5 +1,6 @@
 const axios = require("axios");
 const { TIKTOK_API_URL } = require("./constants");
+const { TiktokLogger } = require("../../shared/lib/WinstonLogger");
 
 const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, additionalParams = {}) => {
   const url = `${TIKTOK_API_URL}/${endpoint}/get/?`;
@@ -20,20 +21,26 @@ const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, add
   });
 
   const allData = [];
+  const results = {sucess: [], failure: []}
   await Promise.all(
     requests.map(async ({ ad_account_id, promise }) => {
       try {
         const res = await promise;
         if (res.data.code === 0) {
           allData.push(...res.data.data.list);
+          results.sucess.push(ad_account_id);
         } else {
-          console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}`);
+          results.failure.push(ad_account_id);
         }
-      } catch ({ response }) {
-        console.log(`Error in fetching ${endpoint} data for account id ${ad_account_id}:`, response);
+      } catch {
+        results.failure.push(ad_account_id);
       }
     })
   );
+
+  if (results.sucess.length === 0) throw new Error(`All ad accounts failed to fetch from ${endpoint}`);
+  TiktokLogger.info(`Fetched ${allData.length} ${endpoint} from API`);
+  TiktokLogger.info(`Ad Accounts ${endpoint} fetching telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.failure.length})`);
   return allData;
 };
 

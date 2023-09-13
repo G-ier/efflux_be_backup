@@ -2,7 +2,7 @@
 require("dotenv").config();
 const pg = require("pg");
 pg.defaults.ssl = { rejectUnauthorized: false };
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+// process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 module.exports = {
   development: {

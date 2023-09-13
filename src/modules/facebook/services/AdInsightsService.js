@@ -5,12 +5,14 @@ const _ = require("lodash");
 
 // Local application imports
 const AdInsightRepository = require("../repositories/AdInsightsRepository");
+const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
+const BaseService = require("../../../shared/services/BaseService");
 const { FB_API_URL, delay } = require('../constants');
-const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 
-class AdInsightsService {
+class AdInsightsService extends BaseService{
 
   constructor() {
+    super(FacebookLogger);
     this.adInsightRepository = new AdInsightRepository();
     this.defaultInsightsStats = {
       campaign_name: "No name",
@@ -24,17 +26,17 @@ class AdInsightsService {
     };;
   }
 
-  async getAdInsightsFromAPI(access_token, adAccountIds, date, development=false) {
+  async getAdInsightsFromAPI(access_token, adAccountIds, date) {
+    this.logger.info(`Fetching Insights from API`);
     const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
     const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
-
     const fields =
       "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,clicks,reach,frequency,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
-
-    const allInsights = await async.mapLimit(adAccountIds, 100, async (adSetId) => {
+    const results = { sucess: [], error: [] };
+    const allInsights = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
       let paging = {};
       const insights = [];
-      let url = `${FB_API_URL}${adSetId}/insights`;
+      let url = `${FB_API_URL}${adAccountId}/insights`;
       let params = {
         fields,
         level: "ad",
@@ -48,30 +50,26 @@ class AdInsightsService {
           url = paging.next;
           params = {};
         }
+
         const { data = [] } = await axios
           .get(url, {
             params,
           })
           .catch((err) => {
-            console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+            results.error.push(adAccountId);
             return {};
           });
+
+        results.sucess.push(adAccountId);
         paging = { ...data?.paging };
         if (data?.data?.length) insights.push(...data?.data);
         await delay(1000);
       } while (paging?.next);
 
-      if (development) {
-        if (insights[0]) console.log('insights1', insights[0]);
-        if (insights[1]) console.log('insights2', insights[1]);
-        if (insights[2]) console.log('insights3', insights[2]);
-        console.log("Inside getAdInsightsFromAPI logs: ", insights)
-      }
-
       return insights.length ? insights.map((item) => _.defaults(item, this.defaultInsightsStats)) : [];
-
     });
-
+    if (results.sucess.length === 0) throw new Error("All ad accounts failed to fetch insights");
+    this.logger.info(`Ad Accounts Insights Fetching Telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.error.length})`);
     return _.flatten(allInsights);
   }
 
@@ -81,10 +79,10 @@ class AdInsightsService {
 
     const fields = "ad_id,adset_id,campaign_id,date_start,actions,cost_per_action_type";
 
-    const allInsights = await async.mapLimit(adAccountIds, 100, async (adSetId) => {
+    const allInsights = await async.mapLimit(adAccountIds, 100, async (adAccountId) => {
       let paging = {};
       const insights = [];
-      let url = `${FB_API_URL}${adSetId}/insights`;
+      let url = `${FB_API_URL}${adAccountId}/insights`;
       let params = {
         fields,
         level: "ad",
@@ -102,7 +100,7 @@ class AdInsightsService {
             params,
           })
           .catch((err) => {
-            // console.warn(`facebook insights failure for ad_account ${adSetId}`, err.response?.data ?? err);
+            // console.warn(`facebook insights failure for ad_account ${adAccountId}`, err.response?.data ?? err);
             return {};
           });
         paging = { ...data?.paging };
@@ -119,13 +117,12 @@ class AdInsightsService {
 
   async syncAdInsights(access_token, adAccountIds, date, development=false) {
     const insights = await this.getAdInsightsFromAPI(access_token, adAccountIds, date, development);
-    try {
-      await this.adInsightRepository.upsert(insights, date);
-    } catch (e) {
-      console.log("ERROR UPDATING AD INSIGHTS", e);
-      await sendSlackNotification("ERROR UPDATING AD INSIGHTS. Inspect software if this is a error", e);
-      return [];
-    }
+    this.logger.info(`Upserting ${insights.length} insights`);
+    await this.executeWithLogging(
+      () => this.adInsightRepository.upsert(insights, date),
+      "Error upserting insights"
+    )
+    this.logger.info(`Done upserting insights`);
     return insights
   }
 

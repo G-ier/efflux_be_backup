@@ -3,6 +3,7 @@ const Pixel = require('../entities/Pixel');
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 
 class PixelRepository {
+
   constructor(database) {
     this.tableName = "fb_pixels";
     this.database = database || new DatabaseRepository();
@@ -21,6 +22,11 @@ class PixelRepository {
     }
   }
 
+  async fetchPixels(fields = ['*'], filters = {}, limit) {
+    const results = await this.database.query(this.tableName, fields, filters, limit);
+    return results;
+  }
+
   async upsert(pixels, adAccountsMap, chunkSize = 500) {
     const dbObjects = pixels.map((pixel) => this.toDatabaseDTO(pixel, adAccountsMap));
     const dataChunks = _.chunk(dbObjects, chunkSize);
@@ -29,24 +35,30 @@ class PixelRepository {
     }
   }
 
-  async fetchPixels(fields = ['*'], filters = {}, limit) {
-    const results = await this.database.query(this.tableName, fields, filters, limit);
-    return results;
+  async update(updateFields, criterion) {
+    return await this.database.update(this.tableName, updateFields, criterion);
+  }
+
+  async delete(criterion) {
+    return await this.database.delete(this.tableName, criterion);
   }
 
   toDatabaseDTO(pixel, adAccountsMap) {
     return {
-      pixel_id: pixel.id,
-      user_id: adAccountsMap[pixel.ad_account_id].user_id,
-      account_id: adAccountsMap[pixel.ad_account_id].account_id,
+      pixel_id: pixel.id || pixel.pixel_id,
+      domain: pixel.domain || "",
+      token: pixel.token || "",
+      bm: pixel.bm || "",
       name: pixel.name,
-      business_id: pixel?.owner_business.id || null,
-      business_name: pixel?.owner_business.name || null,
+      user_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id]?.user_id : null,
+      account_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id].account_id : null,
+      business_id: pixel?.owner_business?.id || null,
+      business_name: pixel?.owner_business?.name || null,
       is_unavailable: pixel.is_unavailable,
       last_fired_time: pixel.last_fired_time,
       creation_time: pixel.creation_time,
       data_use_setting: pixel.data_use_setting,
-      pixel_id_ad_account_id: pixel.id + "_" + pixel.ad_account_id
+      pixel_id_ad_account_id: (pixel.id || pixel.pixel_id) + "_" + pixel.ad_account_id
     }
   }
 

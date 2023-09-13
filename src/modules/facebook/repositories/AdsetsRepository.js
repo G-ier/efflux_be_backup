@@ -3,6 +3,7 @@ const Adset = require("../entities/Adset");
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 
 class AdsetsRepository {
+
   constructor(database) {
     this.tableName = "adsets";
     this.database = database || new DatabaseRepository();
@@ -32,6 +33,10 @@ class AdsetsRepository {
     for (const chunk of dataChunks) {
       await this.database.upsert(this.tableName, chunk, "provider_id");
     }
+  }
+
+  async update(updateFields, criterion) {
+    return await this.database.update(this.tableName, updateFields, criterion);
   }
 
   async fetchAdsets(fields = ["*"], filters = {}, limit) {

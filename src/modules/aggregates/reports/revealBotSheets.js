@@ -69,7 +69,7 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
         CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions
-        FROM postback_events_partitioned as pb
+        FROM postback_events as pb
         WHERE pb.date >= '${startDate}' AND pb.date <= '${endDate}'
         AND pb.traffic_source = '${trafficSource}'
         GROUP BY pb.${entityGrouping}

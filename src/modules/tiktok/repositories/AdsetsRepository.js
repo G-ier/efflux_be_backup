@@ -37,6 +37,7 @@ class AdsetsRepository {
 
   toDatabaseDTO(adset, adAccountsMap) {
     return {
+      id: adset.adgroup_id,
       name: adset.adgroup_name,
       created_time: adset.create_time,
       updated_time: adset.modify_time,

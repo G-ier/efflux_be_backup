@@ -13,7 +13,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
             ELSE 1.04
           END as coefficient
         FROM facebook fb
-        INNER JOIN ad_accounts ad ON ad.fb_account_id = fb.ad_account_id
+        INNER JOIN ad_accounts ad ON ad.fb_account_id::text = fb.ad_account_id
         WHERE  fb.date >  '${startDate}'
         AND  fb.date <= '${endDate}'
         AND (ad.name LIKE '%INPULSE%' OR ad.name LIKE '%CSUY%')
@@ -199,7 +199,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
-      FROM postback_events_partitioned pb
+      FROM postback_events pb
       WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}' AND pb.traffic_source = '${trafficSource}'
       GROUP BY pb.date, pb.hour, pb.adset_id
     )

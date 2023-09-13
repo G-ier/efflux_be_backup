@@ -25,7 +25,7 @@ class AdAccountsRepository {
     const dbObjects = adAccounts.map((adAccount) => this.toDatabaseDTO(adAccount, account_id, user_id));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "account_id, provider, provider_id", ["user_id", "account_id"]);
+      await this.database.upsert(this.tableName, chunk, "provider, provider_id, account_id", ["user_id", "account_id"]);
     }
     return dbObjects;
   }
