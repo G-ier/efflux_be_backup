@@ -31,7 +31,7 @@ const initializeCronJobs = () => {
   initializeAggregCron();
   initializePostbackPartitionsCron();
   // initializeMediaNetCron();
-  initializeReportsCron();
+  // initializeReportsCron();
   initializeInsightsCron();
 };
 
