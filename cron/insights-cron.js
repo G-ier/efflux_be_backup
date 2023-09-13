@@ -2,6 +2,7 @@ const calendar                        = require('../common/day');
 const CronJob                         = require('cron').CronJob;
 const { ruleThemAllQuery }            = require('../services/insightsService');
 const { updateInsightsOnDatabase }    = require('../controllers/insightsController');
+const { sendSlackNotification }       = require('../services/slackNotificationService');
 
 const regularInsightsUpdateRule = "* * * * *"
 const yesterdayInsightsUpdateRule = "20 11,17 * * *"
@@ -22,9 +23,13 @@ async function updateInsightsJob(day = "today", network, trafficSource) {
   }
 
   console.log("Updating insights for", endDate)
-
-  const { rows } = await ruleThemAllQuery(network, trafficSource, startDate, endDate)
-  await updateInsightsOnDatabase(rows, trafficSource)
+  try {
+    const { rows } = await ruleThemAllQuery(network, trafficSource, startDate, endDate)
+    await updateInsightsOnDatabase(rows, trafficSource)
+  } catch (error) {
+    console.log("Error updating insights", error)
+    await sendSlackNotification(`Error updating insights: ${error.message}`)
+  }
 
 }
 
