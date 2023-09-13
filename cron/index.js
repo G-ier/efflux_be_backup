@@ -15,7 +15,7 @@ const { initializeTTCron } = require("./tiktok-cron");
 const { initializeReportsCron } = require("./reports-cron");
 const { initializeInsightsCron } = require("./insights-cron");
 
-
+// Trigger Build
 const initializeCronJobs = () => {
   initializeTTCron();
   initializeFBCron();
