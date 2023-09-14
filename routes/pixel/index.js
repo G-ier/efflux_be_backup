@@ -45,7 +45,7 @@ route.get('/', async (req, res) => {
     const client_user_agent = req.headers['user-agent'];
     const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
 
-    console.log('POSTBACK CROSSROADS query', req.query)
+    // console.log('POSTBACK CROSSROADS query', req.query)
     const {
       tg1,
       tg2, // campaign_id
@@ -108,12 +108,10 @@ route.get('/', async (req, res) => {
       event_id
     }
     if(!isEvent){
-      console.log('add postback_events')
       await models.add('postback_events', pb_conversion )
       await models.add('postback_events_partitioned', pb_conversion )
     }
     else {
-      console.log('update postback_events')
       await models.update('postback_events',isEvent.id,  pb_conversion)
       await models.update('postback_events_partitioned',isEvent.id,  pb_conversion)
     }
