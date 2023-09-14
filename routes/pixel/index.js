@@ -38,6 +38,8 @@ route.get('/sedo', (req, res, next) => {
 // @desc     GET track
 // @Access   Private
 route.get('/', async (req, res) => {
+
+
   try {
     const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const client_user_agent = req.headers['user-agent'];
@@ -123,66 +125,65 @@ route.get('/', async (req, res) => {
     res.status(500).json(err.message);
   }
 
+  // const isConversion = eventType === 'Purchase'
 
-  const isConversion = eventType === 'Purchase'
+  // try {
+  //   let campaign_id;
+  //   let ad_id;
+  //   let adset_id;
+  //   let website;
 
-  try {
-    let campaign_id;
-    let ad_id;
-    let adset_id;
-    let website;
+  //   if (tg2 && tg2.includes('_')) {
+  //     const split = tg2.split('_');
+  //     traffic_source = split[0];
+  //     campaign_id = split[1];
+  //     ad_id = split[2];
+  //     website = split[3];
+  //   } else {
+  //     campaign_id = tg2;
+  //     ad_id = tg6;
+  //     adset_id = tg5;
+  //   }
+  //   const generateFbc = `fb.1.${moment()
+  //     .tz('America/Los_Angeles')
+  //     .unix()}.${fbclid}`;
 
-    if (tg2 && tg2.includes('_')) {
-      const split = tg2.split('_');
-      traffic_source = split[0];
-      campaign_id = split[1];
-      ad_id = split[2];
-      website = split[3];
-    } else {
-      campaign_id = tg2;
-      ad_id = tg6;
-      adset_id = tg5;
-    }
-    const generateFbc = `fb.1.${moment()
-      .tz('America/Los_Angeles')
-      .unix()}.${fbclid}`;
+  //   if (isConversion)
+  //   {
+  //     const conversion = {
+  //       date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
+  //       fbclid,
+  //       event_id,
+  //       fbc: generateFbc,
+  //       device: ua.device.name,
+  //       os: `${ua.os.name} - ${ua.os.version}`,
+  //       browser: ua.browser.name,
+  //       ip: client_ip_address,
+  //       dt_value: value,
+  //       event_time: moment().tz('America/Los_Angeles').unix(),
+  //       event_name: eventType,
+  //       posted_to_fb: false,
+  //       traffic_source,
+  //       campaign_id,
+  //       ad_id,
+  //       adset_id,
+  //       website,
+  //       referrer_url: `https://${req.get('host')}${req.originalUrl}`,
+  //       hour: todayHH(),
+  //       kwp
+  //     };
 
-    if (isConversion)
-    {
-      const conversion = {
-        date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
-        fbclid,
-        event_id,
-        fbc: generateFbc,
-        device: ua.device.name,
-        os: `${ua.os.name} - ${ua.os.version}`,
-        browser: ua.browser.name,
-        ip: client_ip_address,
-        dt_value: value,
-        event_time: moment().tz('America/Los_Angeles').unix(),
-        event_name: eventType,
-        posted_to_fb: false,
-        traffic_source,
-        campaign_id,
-        ad_id,
-        adset_id,
-        website,
-        referrer_url: `https://${req.get('host')}${req.originalUrl}`,
-        hour: todayHH(),
-        kwp
-      };
+  //     await models.add('fb_conversions', conversion);
 
-      await models.add('fb_conversions', conversion);
+  //   }
+  //   res.status(200).json({});
 
-    }
-    res.status(200).json({});
-
-  } catch (err) {
-    console.log(err);
-    sendSlackNotification(`Postback Update Error: ${err.message}`)
-    Sentry.captureException(err);
-    res.status(500).json(err.message);
-  }
+  // } catch (err) {
+  //   console.log(err);
+  //   sendSlackNotification(`Postback Update Error: ${err.message}`)
+  //   Sentry.captureException(err);
+  //   res.status(500).json(err.message);
+  // }
 });
 
 module.exports = route;
