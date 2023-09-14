@@ -26,6 +26,8 @@ services:
     environment:
       - REDIS_HOST=redis
       - DATABASE_HOST=postgres
+    volumes:
+      - ./logs:/logs
     depends_on:
       - redis
       - postgres
