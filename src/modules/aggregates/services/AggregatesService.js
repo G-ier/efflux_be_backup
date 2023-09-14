@@ -42,7 +42,6 @@ class AggregatesService {
       adAccountId,
       q
     };
-    console.log(finalParams)
     try {
       return await callback(finalParams);
     } catch (e) {

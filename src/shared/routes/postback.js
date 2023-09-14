@@ -1,15 +1,14 @@
 // Third party imports
 const route = require('express').Router();
-const moment = require('moment-timezone');
 const parser = require('ua-parser-js');
 const md5 = require('md5');
-const Sentry = require('@sentry/node');
 
 // Local imports
 const {todayHH, todayYMD} = require("../../shared/helpers/calendar");
 const PROVIDERS = require('../constants/providers');
 const DatabaseConnection = require('../lib/DatabaseConnection');
 const { sendSlackNotification } = require("../lib/SlackNotificationService")
+const { PostbackLogger } = require('../../shared/lib/WinstonLogger');
 
 const db = new DatabaseConnection().getConnection()
 
@@ -23,7 +22,7 @@ route.get('/', async (req, res) => {
     const client_user_agent = req.headers['user-agent'];
     const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
 
-    console.log('POSTBACK CROSSROADS query', req.query)
+    PostbackLogger.info(`PBQP: ${JSON.stringify(req.query)}`)
     const {
       tg1,
       tg2, // campaign_id
@@ -85,81 +84,19 @@ route.get('/', async (req, res) => {
       kwp,
       event_id
     }
+    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`)
     if(!isEvent){
-      console.log('add postback_events')
       await db('postback_events', pb_conversion )
-      await db('postback_events_partitioned', pb_conversion )
     }
     else {
-      console.log('update postback_events')
       await db('postback_events', isEvent.id,  pb_conversion)
-      await db('postback_events_partitioned', isEvent.id,  pb_conversion)
     }
+    res.status(200).json({message: 'success'});
+    PostbackLogger.info(`SUCCESS`)
   }
   catch (err) {
-    console.log('POSTBACK CROSSROADS ERROR', err)
+    PostbackLogger.error(`POSTBACK CROSSROADS ERROR ${err}`)
     sendSlackNotification(`Postback Update Error: ${err.message}`)
-    Sentry.captureException(err);
-    res.status(500).json(err.message);
-  }
-
-  const isConversion = eventType === 'Purchase'
-
-  try {
-    let campaign_id;
-    let ad_id;
-    let adset_id;
-    let website;
-
-    if (tg2 && tg2.includes('_')) {
-      const split = tg2.split('_');
-      traffic_source = split[0];
-      campaign_id = split[1];
-      ad_id = split[2];
-      website = split[3];
-    } else {
-      campaign_id = tg2;
-      ad_id = tg6;
-      adset_id = tg5;
-    }
-    const generateFbc = `fb.1.${moment()
-      .tz('America/Los_Angeles')
-      .unix()}.${fbclid}`;
-
-    if (isConversion)
-    {
-      const conversion = {
-        date: moment().tz('America/Los_Angeles').format('YYYY-MM-DD'),
-        fbclid,
-        event_id,
-        fbc: generateFbc,
-        device: ua.device.name,
-        os: `${ua.os.name} - ${ua.os.version}`,
-        browser: ua.browser.name,
-        ip: client_ip_address,
-        dt_value: value,
-        event_time: moment().tz('America/Los_Angeles').unix(),
-        event_name: eventType,
-        posted_to_fb: false,
-        traffic_source,
-        campaign_id,
-        ad_id,
-        adset_id,
-        website,
-        referrer_url: `https://${req.get('host')}${req.originalUrl}`,
-        hour: todayHH(),
-        kwp
-      };
-
-      await db('fb_conversions', conversion);
-
-    }
-    res.status(200).json({});
-
-  } catch (err) {
-    console.log(err);
-    sendSlackNotification(`Postback Update Error: ${err.message}`)
-    Sentry.captureException(err);
     res.status(500).json(err.message);
   }
 });

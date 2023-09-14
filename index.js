@@ -35,11 +35,29 @@ server.listen(port, () => {
   const disableFacebookCron         = process.env.DISABLE_FACEBOOK_CRON === 'true' || process.env.DISABLE_FACEBOOK_CRON !== 'false';
   const disableAggregatesUpdateCron = process.env.DISABLE_AGGREGATES_UPDATE_CRON === 'true' || process.env.DISABLE_AGGREGATES_UPDATE_CRON !== 'false';
   const disableRevealBotSheetCron   = process.env.DISABLE_REVEALBOT_SHEET_CRON === 'true' || process.env.DISABLE_REVEALBOT_SHEET_CRON !== 'false';
+  const disableSlackNotification    = process.env.DISABLE_SLACK_NOTIFICATION === 'true' || process.env.DISABLE_SLACK_NOTIFICATION !== 'false';
+  const rulesEnvironment            = process.env.ENVIRONMENT || 'staging';
+  const loggingEnvironment          = process.env.LOGGING_ENVIRONMENT || 'development';
+  const logLevel                    = process.env.LOG_LEVEL || 'info';
+
+  const databaseEnvironment         = process.env.DATABASE_ENVIRONMENT || 'development';
+  const databaseUrl                 = databaseEnvironment === 'production' ? process.env.DATABASE_URL : process.env.DATABASE_URL_STAGING;
 
   console.log(`
-    Port: ${port}
-    Cron Jobs:
-      General    : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
+    Server Info:
+      Port: ${port}
+      Slack Notifications: ${disableSlackNotification ? 'Disabled' : 'Enabled'}
+
+    Logging:
+      Environment: ${loggingEnvironment|| 'development'}
+      Log Level: ${logLevel || 'info'}
+
+    Database:
+      Environment: ${databaseEnvironment || 'development'}
+      URL: ${databaseUrl || 'development'}
+
+    Cron Jobs [${rulesEnvironment}]:
+      Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
       Crossroads : ${disableCrossroadsCron ? 'Disabled' : 'Enabled'}
       TikTok     : ${disableTikTokCron ? 'Disabled' : 'Enabled'}
       Facebook   : ${disableFacebookCron ? 'Disabled' : 'Enabled'}
