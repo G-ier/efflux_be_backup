@@ -13,16 +13,7 @@
     "migrate": "knex migrate:latest",
     "migrate:down": "knex migrate:down",
     "migrate:make": "knex migrate:make",
-    "knex": "knex --help",
-    "update:facebook": "node scripts/updateFacebook.js",
-    "fix:facebook": "node scripts/fixedFacebookTimeZone.js",
-    "update:crossroads": "node scripts/updateCrossroads.js",
-    "update:fbConversions": "node scripts/updateFbConversions.js",
-    "update:amg": "node scripts/updateAmg.js",
-    "update:outbrain": "node scripts/updateOutbrain.js",
-    "convertS1ConversionsToUTC": "node scripts/convertS1ConversionsToUTC.js",
-    "update:spreadsheets": "node scripts/updateSpreadsheets.js",
-    "update:system1": "node scripts/updateSystem1.js"
+    "knex": "knex --help"
   },
   "dependencies": {
     "@sentry/node": "^6.12.0",
