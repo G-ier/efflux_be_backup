@@ -14,7 +14,7 @@ module.exports = {
     },
     migrations: {
       tableName: "knex_migrations",
-      directory: "./data/migrations",
+      directory: "./migrations/staging",
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
@@ -28,7 +28,7 @@ module.exports = {
     },
     migrations: {
       tableName: "knex_migrations",
-      directory: "./data/migrations",
+      directory: "./migrations/production",
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },

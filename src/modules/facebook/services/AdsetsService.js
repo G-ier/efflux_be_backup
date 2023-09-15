@@ -48,7 +48,7 @@ class AdsetsService extends BaseService {
           });
         results.sucess.push(adAccountId);
         paging = { ...data?.paging };
-        if (data?.data.length) adsets.push(...data.data);
+        if (data?.data?.length) adsets.push(...data.data);
       } while (paging?.next);
       return adsets;
     });
