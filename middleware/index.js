@@ -26,6 +26,9 @@ const auth = require("../src/modules/auth/routes");
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
 
+// Routes Logger
+const routesLogger = require("./routeLoggers");
+
 var livereload = require("livereload");
 var connectLiveReload = require("connect-livereload");
 
@@ -40,6 +43,9 @@ liveReloadServer.server.once("connection", () => {
 // The other routes are meant to be accessed from the dashboard with authenticated users and they
 // basically populate the dashboard with data.
 function configureMiddleware(server) {
+
+  // Routes Logger
+  server.use(routesLogger);
 
   // Utility middleware
   server.use(connectLiveReload());

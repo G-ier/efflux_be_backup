@@ -120,6 +120,13 @@ const PostbackLogger = new CustomLogger({
   pattern: '[{timestamp}]:[{level}] - {message}'
 });
 
+const RequestsLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('requests'),
+  pattern: '[{timestamp}]:[{level}]:{message}'
+});
+
 // CRON data update Logger
 const dataUpdatesLogger = new CustomLogger({
   destination: 'file',
@@ -133,5 +140,6 @@ module.exports = {
   TiktokLogger,
   AggregatesLogger,
   PostbackLogger,
+  RequestsLogger,
   dataUpdatesLogger
 };
