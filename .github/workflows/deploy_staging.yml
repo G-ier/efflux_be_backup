@@ -17,7 +17,7 @@ jobs:
 
       - name: Build and Deploy using Docker Compose
         run: |
-          cd /home/ubuntu/goerge-efflux-platform
+          cd ~/goerge-efflux-platform
           git checkout ${GITHUB_REF#refs/heads/}
           git pull origin ${GITHUB_REF#refs/heads/}
           
