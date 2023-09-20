@@ -26,9 +26,13 @@ class AdAccountsRepository {
       const dbObjects = adAccounts.map((adAccount) => this.toDatabaseDTO(adAccount, userId, accountId));
       const dataChunks = _.chunk(dbObjects, chunkSize);
       for (const chunk of dataChunks) {
-          await this.database.upsert(this.tableName, chunk, "provider_id", ['user_id', 'account_id']);
+          await this.database.upsert(this.tableName, chunk, "provider, provider_id, account_id", ['user_id', 'account_id']);
       }
       return dbObjects;
+    }
+
+    async update(updateFields, criterion) {
+      return await this.database.update(this.tableName, updateFields, criterion);
     }
 
     async fetchAdAccounts(fields = ['*'], filters = {}, limit) {

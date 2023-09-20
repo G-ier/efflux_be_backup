@@ -1,4 +1,4 @@
-const CompositeService = require("../services/ConpositeService");
+const CompositeService = require("../services/CompositeService");
 const { CROSSROADS_ACCOUNTS } = require("../constants");
 class CompositeController {
   constructor() {

@@ -1,6 +1,7 @@
+// Third party imports
 const _ = require("lodash");
 
-const db = require("../../../../data/dbConfig");
+// Local application imports
 const UserAccount = require("../entities/UserAccount");
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 

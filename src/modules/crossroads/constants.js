@@ -7,7 +7,8 @@ const CROSSROADS_ACCOUNTS = [
   },
 ];
 
+
 module.exports = {
   CROSSROADS_URL,
-  CROSSROADS_ACCOUNTS,
+  CROSSROADS_ACCOUNTS
 };

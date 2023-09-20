@@ -36,6 +36,10 @@ class CampaignRepository {
     }
   }
 
+  async update(updateFields, criterion) {
+    return await this.database.update(this.tableName, updateFields, criterion);
+  }
+
   async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
@@ -140,6 +144,10 @@ class CampaignRepository {
     ]);
 
     dbObject.network = "unknown";
+
+    if (adAccountInfo.id !== undefined) {
+      dbObject.ad_account_id = adAccountInfo.id;
+    }
 
     if (adAccountInfo.user_id !== undefined) {
       dbObject.user_id = adAccountInfo.user_id;

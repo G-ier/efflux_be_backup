@@ -39,7 +39,6 @@ class UserAccountService {
     if (res.is_valid) {
       const diffTime = Math.abs(new Date() - new Date(res.expires_at * 1000));
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-      console.log("Token expires in", diffDays, "days");
 
       const providerId = res.user_id;
       const account = await this.fetchUserAccounts(["name"], { provider_id: providerId });

@@ -1,5 +1,5 @@
 const { configureMiddleware } = require("../middleware");
-const { initializeCronJobs } = require("../cron");
+const { initializeCronJobs } = require("../src/crons");
 
 const express = require("express");
 

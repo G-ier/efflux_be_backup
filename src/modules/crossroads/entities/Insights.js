@@ -22,7 +22,8 @@ class Insights {
     campaign_name,
     adset_name,
     traffic_source,
-    cr_camp_name
+    cr_camp_name,
+    unique_identifier
   ) {
     this.id = id;
     this.date = date;
@@ -47,6 +48,7 @@ class Insights {
     this.adset_name = adset_name;
     this.traffic_source = traffic_source;
     this.cr_camp_name = cr_camp_name;
+    this.unique_identifier = unique_identifier;
   }
 }
 

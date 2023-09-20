@@ -1,20 +1,18 @@
 // Local application imports
 const AggregatesRepository              = require('../repositories/AggregatesRepository');
 const GoogleSheetsService               = require('../../../shared/lib/GoogleSheetsService');
-const { sendSlackNotification }         = require("../../../shared/lib/SlackNotificationService");
 const { preferredOrder }                = require("../utils");
 const {
   yesterdayYMD,
   someDaysAgoYMD,
   todayYMD
-}                                       = require("../../../../common/day");
+}                                       = require("../../../shared/helpers/calendar");
 const {
   facebookRevealBotSheets,
   tiktokRevealBotSheets,
   revealBotCampaignSheetColumn,
   revealBotAdsetSheetColumn
 }                                       = require('../revealBotSheetConstants');
-
 class RevealBotSheetService {
 
   constructor() {
@@ -38,28 +36,25 @@ class RevealBotSheetService {
           await this.googleSheetsService.updateSpreadsheet(
             mappedData,
             { spreadsheetId: sheets[i].spreadsheetId, sheetName: sheetName},
-            predifeniedRange=`!A3:AK5000`,
-            include_columns = false,
-            add_last_update = false
+            `!A3:AK5000`,
+            false,
+            false
           )
         }
       }
     } catch (err) {
       const errorLog = `${trafficSource} Revealbot Sheets.\nError on update: \n${err.toString()}`
-      await sendSlackNotification(errorLog)
       throw new Error(errorLog);
     }
   }
 
-  async updateFacebookRevealBotSheet(
-  ) {
+  async updateFacebookRevealBotSheet() {
     const trafficSource = 'facebook';
     const sheets = facebookRevealBotSheets;
     await this.updateRevealBotSheet(sheets, trafficSource);
   }
 
-  async updateTiktokRevealBotSheet(
-    ) {
+  async updateTiktokRevealBotSheet() {
       const trafficSource = 'tiktok';
       const sheets = tiktokRevealBotSheets;
       await this.updateRevealBotSheet(sheets, trafficSource);

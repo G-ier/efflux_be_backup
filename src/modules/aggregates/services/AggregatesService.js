@@ -1,6 +1,8 @@
 const AggregatesRepository = require('../repositories/AggregatesRepository');
 const { AVAILABLE_NETWORKS, AVAILABLE_TRAFFIC_SOURCES } = require('../constants');
-const { yesterdayYMD, dayYMD } = require('../../../../common/day');
+const { AggregatesLogger } = require("../../../shared/lib/WinstonLogger");
+
+const { yesterdayYMD, dayYMD } = require('../../../shared/helpers/calendar');
 
 class AggregatesService {
 
@@ -11,8 +13,6 @@ class AggregatesService {
   async paramConvertWrapper(callback, params) {
 
     const { startDate, endDate, campaignId, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    console.log(params)
-
     if (!startDate || !endDate || startDate === ":startDate" || endDate === ":endDate") {
       throw new Error('Missing date parameters, please provide startDate and endDate in url pattern');
     }
@@ -32,17 +32,18 @@ class AggregatesService {
 
     const convertedStartDate = yesterdayYMD(startDate);
     const convertedEndDate = dayYMD(endDate);
+    const finalParams = {
+      startDate : convertedStartDate,
+      endDate   : convertedEndDate,
+      campaignId,
+      network,
+      trafficSource,
+      mediaBuyer,
+      adAccountId,
+      q
+    };
     try {
-      return await callback({
-        startDate : convertedStartDate,
-        endDate   :convertedEndDate,
-        campaignId,
-        network,
-        trafficSource,
-        mediaBuyer,
-        adAccountId,
-        q
-      });
+      return await callback(finalParams);
     } catch (e) {
       console.log(e);
       throw new Error(e);
@@ -112,10 +113,14 @@ class AggregatesService {
   }
 
   async updateAggregates(network, trafficSource, startDate, endDate) {
+    AggregatesLogger.info(`Updating aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`);
     const compiledAggregatedData = await this.aggregatesRepository.compileAggregates(
       network, trafficSource, startDate, endDate
     );
+    AggregatesLogger.info(`Compiled aggregates successfully`);
+    AggregatesLogger.info(`Upserting ${compiledAggregatedData.length} aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`);
     await this.aggregatesRepository.upsert(compiledAggregatedData, trafficSource)
+    AggregatesLogger.info(`Done upserting aggregates`);
     return true;
   }
 

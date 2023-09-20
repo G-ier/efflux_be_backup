@@ -1,6 +1,6 @@
 const { google } = require('googleapis');
 const fs = require('fs');
-const {todayYMDHM} = require('../../../common/day');
+const {todayYMDHM} = require('../../shared/helpers/calendar');
 const path = require('path');
 
 class GoogleSheetsService {
@@ -115,11 +115,11 @@ class GoogleSheetsService {
     if (add_last_update) {
       const now = todayYMDHM();
       rows = data.rows.map((row) => {
-        return columns.map((column) => row[column] || DefaultValues[column] || 0).concat(now)
+        return columns.map((column) => row[column] || this.DefaultValues[column] || 0).concat(now)
       });
       columns.push('last_update');
     } else {
-      rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0));
+      rows = data.rows.map((row) => columns.map((column) => row[column] || this.DefaultValues[column] || 0));
     }
 
     let values;
@@ -175,7 +175,7 @@ class GoogleSheetsService {
     const columns = data.fields.map((field) => field.name)
       .filter((col) => this.IgnoredColumns.concat(excludedFields).indexOf(col) === -1);
     // get rows as array of values
-    const rows = data.rows.map((row) => columns.map((column) => row[column] || DefaultValues[column] || 0).concat(now));
+    const rows = data.rows.map((row) => columns.map((column) => row[column] || this.DefaultValues[column] || 0).concat(now));
 
     // get spreadsheet meta
     const doc = await this.getSheet(spreadsheetId);

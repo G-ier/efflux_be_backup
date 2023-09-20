@@ -42,5 +42,5 @@ module.exports = {
   delay,
   availableStatuses,
   fieldsFilterAdCreative,
-  FETCHING_ACCOUNTS_IDS,
+  FETCHING_ACCOUNTS_IDS
 };

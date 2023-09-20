@@ -8,12 +8,14 @@ const PixelsService = require("./PixelsService");
 const CampaignsService = require("./CampaignsService");
 const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
+const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
 const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
 const axios = require("axios");
 class CompositeService {
+
   constructor() {
     this.userAccountService = new UserAccountService();
     this.adAccountService = new AdAccountService();
@@ -23,63 +25,56 @@ class CompositeService {
     this.adInsightsService = new AdInsightsService();
   }
 
-  async updateFacebookData(date) {
-    // Function stops as is if there is no account to fetch data from fb if we don't have a token
-    let account;
-    try {
-      account = await this.userAccountService.getFetchingAccount();
-    } catch (e) {
-      console.log("No account to fetch data from facebook", e);
-      await sendSlackNotification("No account to fetch data from facebook. Inspect software if this is a error");
-      return false;
-    }
+  async updateFacebookData(date, {
+    updatePixels = true,
+    updateCampaigns = true,
+    updateAdsets = true,
+    updateInsights = true,
+  }) {
+
+    FacebookLogger.info(`Starting to sync Facebook data for date ${date}`);
+
+    if (!updatePixels && !updateCampaigns && !updateAdsets && !updateInsights)
+      throw new Error("No data to update. Please select at least one option");
+
+    // Retrieving account we will use for fetching data
+    const account = await this.userAccountService.getFetchingAccount();
     const { token, user_id, id, provider_id } = account;
 
-    // Even if we fail to retrieve the account, we wont fetch pixels, campaigns, adsets and insights
+    // Sync Ad Accounts
     const updatedAdAccountIds = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
-    if (!updatedAdAccountIds.length) {
-      console.log("No ad accounts to update");
-      await sendSlackNotification("No ad accounts to update in facebook. Inspect if this is a error");
-      return false;
+    if (!updatedAdAccountIds.length) throw new Error("No ad accounts to update");
+    const adAccountIds = updatedAdAccountIds.map((id) => id.replace("act_", ""));
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], { provider_id: adAccountIds });
+    const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
+
+    // Sync Pixels
+    if (updatePixels)
+      try { await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap)}
+      catch {}
+
+    // Sync Campaigns
+    if (updateCampaigns)
+      try { await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, date)}
+      catch {}
+
+    // Sync Adsets
+    if (updateAdsets) {
+      const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
+      const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
+      try {await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, date)}
+      catch (e) {console.log(e)}
     }
-    const updatedAdAccountsDataMap = _(
-      await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {
-        provider_id: updatedAdAccountIds.map((id) => id.replace("act_", "")),
-      }),
-    )
-      .keyBy("provider_id")
-      .value();
-    console.log("Done with updating ad accounts", updatedAdAccountIds.length);
 
-    const updatedPixelIds = await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
-    console.log("Done with updating pixels", updatedPixelIds.length);
+    // Sync Insights
+    if (updateInsights) {
+      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
+      const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
+      try {await this.adInsightsService.syncAdInsights(token, adAccountsIds, date)}
+      catch (e) {console.log(e)}
+    }
 
-    const updatedCampaignIds = await this.campaignsService.syncCampaigns(
-      token,
-      updatedAdAccountIds,
-      updatedAdAccountsDataMap,
-    );
-    console.log("Done with updating campaigns", updatedCampaignIds.length);
-
-    const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
-    const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-    const updatedAdsetIds = await this.adsetsService.syncAdsets(
-      token,
-      updatedAdAccountIds,
-      updatedAdAccountsDataMap,
-      campaignIds,
-    );
-    console.log("Done with updating adsets", updatedAdsetIds.length);
-
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ["id", "name", "status", "provider", "provider_id", "network", "tz_name", "tz_offset"],
-      { account_id: id },
-    );
-    const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
-    const insights = await this.adInsightsService.syncAdInsights(token, adAccountsIds, date);
-    console.log("Done with updating insights", insights.length);
-
-    console.log("Done with updating all facebook data");
+    FacebookLogger.info(`Done syncing Facebook data for date ${date}`);
     return true;
   }
 
@@ -131,7 +126,6 @@ class CompositeService {
       return false;
     }
   }
-
 
   async duplicateEntity({ type, deep_copy, status_option, rename_options, entity_id }) {
     let account;

@@ -5,64 +5,70 @@ const {
   TIKTOK_APP_SECRET,
   TIKTOK_AD_ACCOUNT_AVAILABLE_FIELDS,
 } = require("../constants");
+const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
+const BaseService = require("../../../shared/services/BaseService");
 const _ = require("lodash");
 const AdAccountsRepository = require("../repositories/AdAccountRepository");
 
-class AdAccountService {
+class AdAccountService extends BaseService {
 
   constructor() {
+    super(TiktokLogger);
     this.adAccountsRepository = new AdAccountsRepository();
   }
 
   async getAdAccountDataFromApi(access_token, adAccountIds) {
+    this.logger.info("Fetching Ad Accounts Data from API");
     const availableFields = TIKTOK_AD_ACCOUNT_AVAILABLE_FIELDS; // You'd need to import TIKTOK_AD_ACCOUNT_AVAILABLE_FIELDS at the top.
     const endpoint = "advertiser/info";
-    const url = `${TIKTOK_API_URL}/${endpoint}?`;
+    const url = `${TIKTOK_API_URL}/${endpoint}`;
+    const params = { advertiser_ids: JSON.stringify(adAccountIds), fields: JSON.stringify(availableFields)}
+    const headers = { "Access-Token": access_token };
 
-    const headers = {
-      "Access-Token": access_token,
-    };
-    const params = new URLSearchParams({
-      advertiser_ids: JSON.stringify(adAccountIds),
-      fields: JSON.stringify(availableFields),
-    });
-
-    const response = await axios.get(url + params.toString(), { headers });
-
-    if (response.data.code !== 0) {
+    const data = await this.fetchFromApi(
+      url,
+      params,
+      "Error fetching ad acccounts from API",
+      headers
+    )
+    if (data.code !== 0) {
       throw new Error("Error getting ad accounts info");
     }
 
-    return response.data.data.list;
+    return data.data.list;
   }
 
   async getAdAccountsFromApi(access_token) {
+    this.logger.info("Fetching Ad Accounts from API");
     const endpoint = "oauth2/advertiser/get";
-    const url = `${TIKTOK_API_URL}/${endpoint}?`;
-    const headers = {
-      "Access-Token": access_token,
-    };
-    const params = new URLSearchParams({
-      app_id: TIKTOK_APP_ID,
-      secret: TIKTOK_APP_SECRET,
-    });
+    const url = `${TIKTOK_API_URL}/${endpoint}`;
+    const headers = { "Access-Token": access_token};
+    const params = { app_id: TIKTOK_APP_ID, secret: TIKTOK_APP_SECRET}
 
-    const response = await axios.get(url + params.toString(), { headers });
-    if (response.data.code !== 0) {
-      throw new Error("Error getting ad accounts");
-    }
+    const data = await this.fetchFromApi(
+      url,
+      params,
+      "Error fetching ad acccounts from API",
+      headers
+    )
 
-    const adAccountsIds = response.data.data.list.map(({ advertiser_id }) => advertiser_id);
+    if (data.code !== 0) throw new Error("Error getting ad accounts");
+
+    this.logger.info(`Fetched ${data.data.list.length} Ad Accounts from API`)
+    const adAccountsIds = data.data.list.map(({ advertiser_id }) => advertiser_id);
     const adAccountsData = await this.getAdAccountDataFromApi(access_token, adAccountsIds);
-
     return adAccountsData;
   }
 
   async syncAdAccounts(access_token, account_id, user_id) {
-    // 1. Fetch the ad accounts from TikTok
     const adAccountsData = await this.getAdAccountsFromApi(access_token);
-    // 2. Upsert these ad accounts to the database
-    return await this.adAccountsRepository.upsert(adAccountsData, account_id, user_id);
+    this.logger.info(`Upserting ${adAccountsData.length} Ad Accounts`);
+    const results = await this.executeWithLogging(
+      () => this.adAccountsRepository.upsert(adAccountsData, account_id, user_id),
+      "Error Upserting Ad Account"
+    )
+    this.logger.info(`Done upserting ad accounts`);
+    return results
   }
 
   async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit) {

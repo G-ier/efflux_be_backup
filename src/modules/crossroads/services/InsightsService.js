@@ -4,136 +4,114 @@ const { CROSSROADS_URL } = require("../constants");
 const { todayM } = require("../helpers");
 const fs = require("fs");
 const _ = require("lodash");
-const { sendSlackNotification } = require("../../../../services/slackNotificationService");
 const CampaignService = require("./CampaignService");
+const { CrossroadsLogger } = require("../../../shared/lib/WinstonLogger");
+const BaseService = require("../../../shared/services/BaseService");
 
-class InsightsService {
+class InsightsService extends BaseService {
+
   constructor() {
+    super(CrossroadsLogger);
     this.repository = new InsightsRepository();
     this.campaignService = new CampaignService();
   }
 
   async getAvailableFields(key) {
-    const { data } = await axios.get(`${CROSSROADS_URL}get-available-fields?key=${key}`);
+    CrossroadsLogger.info("Getting available fields from crossroads")
+    const data = await this.fetchFromApi(`${CROSSROADS_URL}get-available-fields`, { key }, "Error getting available fields");
     return data.available_fields;
   }
 
   async prepareBulkData(key, date, fields) {
-    const url = `${CROSSROADS_URL}prepare-bulk-data?key=${key}&date=${date}&format=json&extra-fields=${fields}`;
-    const { data } = await axios.get(url).catch((err) => {
-      console.error("prepare request error", err.response);
-      throw err;
-    });
-    return data;
+    CrossroadsLogger.info("Requesting Crossroads to Prepare Bulk data")
+    return await this.fetchFromApi(`${CROSSROADS_URL}prepare-bulk-data`, { key, date, format: 'json', 'extra-fields': fields }, "Error requesting crossroads to prepare bulk data");
   }
 
-  async prepareBulkData(key, date, fields) {
-    const url = `${CROSSROADS_URL}prepare-bulk-data?key=${key}&date=${date}&format=json&extra-fields=${fields}`;
-    const { data } = await axios.get(url).catch((err) => {
-      console.error("prepare request error", err.response);
-      throw err;
-    });
-    return data;
-  }
-
-  async getBulkData(url) {
-    const { data } = await axios.get(url);
-    return data;
-  }
-  async getRequestState(key, requestId) {
-    const url = `${CROSSROADS_URL}get-request-state?key=${key}&request-id=${requestId}`;
-    const { data } = await axios.get(url);
-    return data;
+  async getRequestState(key, requestId, attempt) {
+    if (attempt > 0) CrossroadsLogger.info(`Retrying to get request state. Retry Attempt: ${attempt}`)
+    return await this.fetchFromApi(`${CROSSROADS_URL}get-request-state`, { key, 'request-id': requestId }, "Error getting request state");
   }
 
   waitForBulkData(key, requestId) {
-    const retryLogUrl = "./apiRetries.json";
-    const maxRetryCallsIn30Minuts = 5;
-    const data = fs.readFileSync(retryLogUrl);
-    const { retryCallsIn30Minutes } = JSON.parse(data);
-    const currentMinute = todayM();
-    const isFinalAttempt = (currentMinute >= 20 && currentMinute < 30) || (currentMinute >= 50 && currentMinute < 60);
 
-    let maxRetryCalls;
+    const periodicStateRequest = async (key, requestId) => {
+      const retryLogUrl = "./apiRetries.json";
+      const maxRetryCallsIn30Minuts = 5;
+      const data = fs.readFileSync(retryLogUrl);
+      const { retryCallsIn30Minutes } = JSON.parse(data);
+      const currentMinute = todayM();
+      const isFinalAttempt = (currentMinute >= 20 && currentMinute < 30) || (currentMinute >= 50 && currentMinute < 60);
 
-    if (isFinalAttempt) {
-      // Calculate the retry calls
-      maxRetryCalls = maxRetryCallsIn30Minuts - retryCallsIn30Minutes;
-    } else {
-      // Set the retry calls
-      maxRetryCalls = 2;
-    }
+      let maxRetryCalls;
 
-    console.log("retryCallsIn30Minutes", retryCallsIn30Minutes, typeof retryCallsIn30Minutes);
-    console.log("currentMinute", currentMinute, typeof currentMinute);
-    console.log("isFinalAttempt", isFinalAttempt, typeof isFinalAttempt);
-    console.log("maxRetryCalls", maxRetryCalls, typeof maxRetryCalls);
+      if (isFinalAttempt) {
+        // Calculate the retry calls
+        maxRetryCalls = maxRetryCallsIn30Minuts - retryCallsIn30Minutes;
+      } else {
+        // Set the retry calls
+        maxRetryCalls = 2;
+      }
 
-    return new Promise((resolve, reject) => {
-      let count = 0;
+      return new Promise((resolve, reject) => {
 
-      const interval = setInterval(async () => {
-        const { status_code, file_url } = await this.getRequestState(key, requestId);
-        console.log(status_code);
-        if (status_code !== 200 && count <= maxRetryCalls) {
-          console.log("retrying", count);
-          count++;
-          return;
-        }
+        let count = 0;
 
-        clearInterval(interval);
+        const interval = setInterval(async () => {
 
-        if (isFinalAttempt) {
-          // Reset the retry calls
-          fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: 0 }));
-        } else {
-          // Increment the retry calls
-          const increment = count > maxRetryCalls ? count - 1 : count;
-          fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: retryCallsIn30Minutes + increment }));
-        }
+          const { status_code, file_url } = await this.getRequestState(key, requestId, count);
 
-        // Call the slack api here to send a message to the channel
-        if (status_code === 200) resolve(file_url);
-        else reject(status_code);
-      }, 60000);
+          if (status_code !== 200 && count <= maxRetryCalls) {
+            count++;
+            return;
+          }
 
-      fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: retryCallsIn30Minutes + count }));
-    });
+          clearInterval(interval);
+
+          if (isFinalAttempt) {
+            // Reset the retry calls
+            fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: 0 }));
+          } else {
+            // Increment the retry calls
+            const increment = count > maxRetryCalls ? count - 1 : count;
+            fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: retryCallsIn30Minutes + increment }));
+          }
+
+          // Call the slack api here to send a message to the channel
+          if (status_code === 200) resolve(file_url);
+          else reject(status_code);
+        }, 60000);
+
+        fs.writeFileSync(retryLogUrl, JSON.stringify({ retryCallsIn30Minutes: retryCallsIn30Minutes + count }));
+      });
+    };
+
+    CrossroadsLogger.info("Periodically checking if the bulk data is ready")
+    return this.executeWithLogging(
+      () => periodicStateRequest(key, requestId),
+      "Error waiting for bulk data from crossroads"
+    );
+
+  }
+
+  async getBulkData(url) {
+    CrossroadsLogger.info("Fetching bulk data from crossroads")
+    const { data } = await axios.get(url);
+    return data;
   }
 
   async updateCrossroadsData(account, request_date) {
-    try {
-      // 1) CROSSROADS API CALL : getAvailableFields
-      const available_fields = await this.getAvailableFields(account.key);
-      const fields = available_fields.join(",");
 
-      // 2) CROSSROADS API CALL : prepareBulkData
-      const { request_id } = await this.prepareBulkData(account.key, request_date, fields);
-
-      // 3) CROSSROADS API CALL : waitForBulkData
-      let file_url;
-      try {
-        file_url = await this.waitForBulkData(account.key, request_id);
-      } catch (error) {
-        console.log("error", error);
-        await sendSlackNotification(`Crossroads Data Update\nError: \n${error.toString()}`);
-        return;
-      }
-
-      // 4) CROSSROADS API CALL : getBulkData
-      const crossroadsData = await this.getBulkData(file_url);
-      await this.repository.upsert(crossroadsData, account.id, request_date);
-    } catch (err) {
-      console.log(err);
-      if (!err.status_code === 429) {
-        await sendSlackNotification(`Crossroads Data Update\nError: \n${err.toString()}`);
-      }
-    }
-  }
-
-  async fetchDataFromAPI(apiKey, date) {
-    const { data } = await axios.get(`${CROSSROADS_URL}some-endpoint?key=${apiKey}&date=${date}`);
-    return data;
+    const available_fields = await this.getAvailableFields(account.key)
+    const fields = available_fields.join(",");
+    const { request_id } = await this.prepareBulkData(account.key, request_date, fields)
+    const file_url = await this.waitForBulkData(account.key, request_id)
+    const crossroadsData = await this.getBulkData(file_url)
+    CrossroadsLogger.info("Upserting crossroads data to the database")
+    await this.executeWithLogging(
+      () => this.repository.upsert(crossroadsData, account.id, request_date),
+      "Error processing and upserting bulk data"
+    );
+    CrossroadsLogger.info("Finished crossroads data update")
   }
 
   async getCrossroadsById(id) {
@@ -145,9 +123,11 @@ class InsightsService {
   async getAllCrossroads() {
     return this.repository.fetchInsights(); // Fetch all records without any filters or limits
   }
+
   async deleteCrossroadsById(id) {
     return this.repository.delete({ id });
   }
+
 }
 
 module.exports = InsightsService;

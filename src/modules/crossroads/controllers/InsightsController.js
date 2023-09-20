@@ -1,6 +1,7 @@
 const InsightsService = require("../services/InsightsService");
 
 class InsightsController {
+
   constructor() {
     this.insightsService = new InsightsService();
   }
@@ -13,6 +14,7 @@ class InsightsController {
       res.status(500).json({ error: error.message });
     }
   }
+
   async getCrossroadsById(req, res) {
     try {
       const crossroads = await this.insightsService.getCrossroadsById(req.params.id);

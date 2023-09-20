@@ -14,7 +14,6 @@ class UserAccountService {
       { provider: "tiktok", id: FETCHING_USER_ACCOUNT_ID }
     );
     if (userAccounts.length === 0) throw new Error("No fetching accounts found for tik-tok")
-    console.log("userAccounts: ", userAccounts[0]);
     return userAccounts[0];
   }
 

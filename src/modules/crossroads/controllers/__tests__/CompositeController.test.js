@@ -1,7 +1,7 @@
-const CompositeService = require("../../services/ConpositeService"); // adjust the path as necessary
+const CompositeService = require("../../services/CompositeService"); // adjust the path as necessary
 const CompositeController = require("../CompositeController"); // adjust the path as necessary
 
-jest.mock("../../services/ConpositeService");
+jest.mock("../../services/CompositeService");
 
 describe("CompositeController", () => {
   let req;

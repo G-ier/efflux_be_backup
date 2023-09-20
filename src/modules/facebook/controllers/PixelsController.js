@@ -10,13 +10,65 @@ class PixelsController {
   async syncPixels(req, res) {
     const { token, adAccountIds, adAccountMap, date } = req.body;
     const updatedAdAccountIds = await this.pixelService.syncPixels(token, adAccountIds, adAccountMap, date);
-    res.json(updatedAdAccountIds);
+    res.status(200).json(updatedAdAccountIds);
   }
 
   async fetchPixels(req, res) {
-    const { fields, filters, limit } = req.body;
-    const pixels = await this.pixelService.fetchPixelsFromDatabase(fields, filters, limit);
-    res.json(pixels);
+    try {
+      let { fields, filters, limit } = req.query;
+      if (fields) fields = JSON.parse(fields);
+      if (filters) filters = JSON.parse(filters);
+      const pixels = await this.pixelService.fetchPixelsFromDatabase(fields, filters, limit);
+      res.status(200).status(200).json(pixels);
+    } catch (error) {
+      console.log('error', error);
+      res.status(404).json(error);
+    }
+  }
+
+  async fetchPixelById(req, res) {
+    try {
+      const { id } = req.params;
+      const pixel = await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: id }); // maybe it should be id.
+      res.status(200).json(pixel);
+    } catch (error) {
+      console.log('error', error);
+      res.status(404).json(error);
+    }
+  }
+
+  async addPixel(req, res) {
+    try {
+      const { data } = req.body;
+      const pixelId = await this.pixelService.savePixelInDatabase(data);
+      res.status(200).json(pixelId);
+    } catch (error) {
+      console.log('error', error);
+      res.status(404).json(error);
+    }
+  }
+
+  async updatePixel(req, res) {
+    try {
+      const { id } = req.params;
+      const { data } = req.body;
+      const pixelId = await this.pixelService.updatePixelInDatabase(data, id);
+      res.status(200).json(pixelId);
+    } catch (error) {
+      console.log('error', error);
+      res.status(404).json(error);
+    }
+  }
+
+  async deletePixel(req, res) {
+    try {
+      const { id } = req.params;
+      const deleted = await this.pixelService.deletePixelInDatabase(id);
+      res.status(200).json(deleted);
+    } catch (error) {
+      console.log('error', error);
+      res.status(404).json(error);
+    }
   }
 
 }

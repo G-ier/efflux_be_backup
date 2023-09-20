@@ -43,7 +43,8 @@ class UserRepository {
 
   async fetchOne(fields = ["*"], filters = {}) {
     const result = await this.database.queryOne(this.tableName, fields, filters);
-    return this.toDomainEntity(result);
+    if (!fields.includes("*")) return result;
+    return result;
   }
 
   toDatabaseDTO(user) {
@@ -83,6 +84,7 @@ class UserRepository {
       dbObject.providerId
     );
   }
+
 }
 
 module.exports = UserRepository;

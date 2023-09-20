@@ -2,7 +2,7 @@
 require("dotenv").config();
 const pg = require("pg");
 pg.defaults.ssl = { rejectUnauthorized: false };
-process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
+// process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 module.exports = {
   development: {
@@ -14,7 +14,7 @@ module.exports = {
     },
     migrations: {
       tableName: "knex_migrations",
-      directory: "./data/migrations",
+      directory: "./migrations/staging",
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
@@ -28,7 +28,7 @@ module.exports = {
     },
     migrations: {
       tableName: "knex_migrations",
-      directory: "./data/migrations",
+      directory: "./migrations/production",
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },

@@ -1,4 +1,4 @@
-const { yesterdayYMD, dayBeforeYesterdayYMD } = require("../../../../common/day");
+const { yesterdayYMD, dayBeforeYesterdayYMD } = require("../../../shared/helpers/calendar");
 
 function castSum(column, type = "INTEGER") {
   return `CAST(SUM(${column}) AS ${type})`;
