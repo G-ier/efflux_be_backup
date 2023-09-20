@@ -1,11 +1,10 @@
 class Queue {
-  constructor(maxSize = 3) {
+  constructor(maxSize = 90) {
     this.queue = [];
     this.maxSize = maxSize;
   }
 
   push(item) {
-    console.log(`Queue: ${this.queue.length}`);
     if (this.queue.length < this.maxSize) {
       this.queue.push(item);
       return true;
