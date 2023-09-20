@@ -55,7 +55,7 @@ function configureMiddleware(server) {
   server.use(morgan("dev"));
 
   // Postback route
-  server.use("/trk", isBot, postback);
+  // server.use("/trk", isBot, postback);
 
   // Pagination middleware
   server.use(paginate.middleware(10, 50));
