@@ -129,7 +129,7 @@ route.get('/', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
-    processQueue();
+    await processQueue();
 
     res.status(200).json({message: 'success'});
     PostbackLogger.info(`SUCCESS`)
