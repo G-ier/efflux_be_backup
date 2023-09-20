@@ -6,11 +6,11 @@ const md5 = require('md5');
 // Local imports
 const {todayHH, todayYMD} = require("../../shared/helpers/calendar");
 const PROVIDERS = require('../constants/providers');
-const DatabaseConnection = require('../lib/DatabaseConnection');
+const DatabaseRepository = require('../lib/DatabaseRepository');
 const { sendSlackNotification } = require("../lib/SlackNotificationService")
 const { PostbackLogger } = require('../../shared/lib/WinstonLogger');
 
-const db = new DatabaseConnection().getConnection()
+const db = new DatabaseRepository()
 
 // @route     /trk
 // @desc     GET track
@@ -56,7 +56,6 @@ route.get('/', async (req, res) => {
     };
     // check event_timestamp exist
     let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
-    const isEvent = false && await db('postback_events').where('event_id', '=', event_id).returning('id').first();
     const pb_conversion = {
       fbclid,
       city,
@@ -85,12 +84,10 @@ route.get('/', async (req, res) => {
       event_id
     }
     PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`)
-    if(!isEvent){
-      await db('postback_events', pb_conversion )
-    }
-    else {
-      await db('postback_events', isEvent.id,  pb_conversion)
-    }
+
+    // Upsert into database
+    await db.upsert('postback_events', [pb_conversion], 'event_id')
+
     res.status(200).json({message: 'success'});
     PostbackLogger.info(`SUCCESS`)
   }

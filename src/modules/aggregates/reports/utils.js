@@ -46,16 +46,9 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
   };
 }
 
-function getDateRanges(startDate) {
-  const yesterdayDate = yesterdayYMD(startDate);
-  const threeDaysAgo = dayBeforeYesterdayYMD(startDate);
-  return { yesterdayDate, threeDaysAgo };
-}
-
 
 module.exports = {
   castSum,
   buildSelectionColumns,
-  buildConditionsInsights,
-  getDateRanges
+  buildConditionsInsights
 };
