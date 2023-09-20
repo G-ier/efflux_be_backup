@@ -9,8 +9,50 @@ const PROVIDERS = require('../constants/providers');
 const DatabaseRepository = require('../lib/DatabaseRepository');
 const { sendSlackNotification } = require("../lib/SlackNotificationService")
 const { PostbackLogger } = require('../../shared/lib/WinstonLogger');
+const Queue = require('../helpers/Queue');
 
 const db = new DatabaseRepository()
+const postbackQueue = new Queue();
+
+async function processQueue() {
+
+  if (postbackQueue.size() === postbackQueue.maxSize) {
+    try {
+      const batch = [];
+      const seenEventIds = new Set();
+
+      // Build the batch, while filtering out duplicates based on event_id
+      while(batch.length < postbackQueue.maxSize && postbackQueue.size() > 0) {
+        const item = postbackQueue.pop();
+        if(!seenEventIds.has(item.event_id)) {
+          seenEventIds.add(item.event_id);
+          batch.push(item);
+        }
+      }
+
+      // Perform the upsert
+      await db.upsert('postback_events', batch, 'event_id');
+      PostbackLogger.info(`Bulk Upserted: ${batch.length} items`);
+
+    } catch (error) {
+
+      PostbackLogger.error(`Error processing queue batch: ${error.message}`);
+
+      // When encountering an error, remove duplicates and re-upsert.
+      if (error.message.includes("ON CONFLICT DO UPDATE command cannot affect row a second time")) {
+        // Filter batch to remove duplicates based on event_id
+        const uniqueBatch = batch.filter((item, index, self) =>
+          index === self.findIndex((i) => i.event_id === item.event_id)
+        );
+
+        // Re-attempt the upsert with the filtered batch
+        await db.upsert('postback_events', uniqueBatch, 'event_id');
+        PostbackLogger.info(`Re-upserted after removing duplicates: ${uniqueBatch.length} items`);
+      }
+    }
+  }
+}
+
 
 // @route     /trk
 // @desc     GET track
@@ -86,7 +128,8 @@ route.get('/', async (req, res) => {
     PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`)
 
     // Upsert into database
-    await db.upsert('postback_events', [pb_conversion], 'event_id')
+    postbackQueue.push(pb_conversion);
+    processQueue();
 
     res.status(200).json({message: 'success'});
     PostbackLogger.info(`SUCCESS`)
