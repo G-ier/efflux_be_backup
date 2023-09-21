@@ -1,24 +1,13 @@
 // Update with your config settings.
 require("dotenv").config();
 const pg = require("pg");
-pg.defaults.ssl = { rejectUnauthorized: false };
+
+if (process.env.DATABASE_ENVIRONMENT !== "development") {
+  pg.defaults.ssl = { rejectUnauthorized: false };
+}
 // process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 module.exports = {
-  development: {
-    client: "pg",
-    connection: process.env.DATABASE_URL_STAGING,
-    pool: {
-      min: 2,
-      max: 20,
-    },
-    migrations: {
-      tableName: "knex_migrations",
-      directory: "./migrations/staging",
-    },
-    useNullAsDefault: true,
-    ssl: { rejectUnauthorized: false },
-  },
   production: {
     client: "pg",
     connection: process.env.DATABASE_URL,
@@ -33,6 +22,34 @@ module.exports = {
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
+  },
+  staging: {
+    client: "pg",
+    connection: process.env.DATABASE_URL_STAGING,
+    pool: {
+      min: 2,
+      max: 20,
+    },
+    migrations: {
+      tableName: "knex_migrations",
+      directory: "./migrations/staging",
+    },
+    useNullAsDefault: true,
+    ssl: { rejectUnauthorized: false },
+  },
+  development: {
+    client: "pg",
+    connection: process.env.DATABASE_URL_LOCAL,
+    pool: {
+      min: 2,
+      max: 20,
+    },
+    migrations: {
+      tableName: "knex_migrations",
+      directory: "./migrations/staging",
+    },
+    useNullAsDefault: true,
+    ssl: false
   },
   oldproduction: {
     client: "pg",
