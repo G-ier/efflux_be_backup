@@ -143,7 +143,8 @@ class CampaignRepository {
       "ad_account_id",
     ]);
 
-    dbObject.network = "unknown";
+    dbObject.network = "unkown";
+    dbObject.traffic_source = "facebook";
 
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;

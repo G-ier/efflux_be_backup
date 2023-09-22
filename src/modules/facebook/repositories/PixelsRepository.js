@@ -50,7 +50,7 @@ class PixelRepository {
       token: pixel.token || "",
       bm: pixel.bm || "",
       name: pixel.name,
-      user_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id]?.user_id : null,
+      user_id: pixel.user_id ? pixel.user_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id]?.user_id : null,
       account_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id].account_id : null,
       business_id: pixel?.owner_business?.id || null,
       business_name: pixel?.owner_business?.name || null,

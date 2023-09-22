@@ -42,11 +42,11 @@ class CompositeService {
     const { token, user_id, id, provider_id } = account;
 
     // Sync Ad Accounts
-    const updatedAdAccountIds = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
-    if (!updatedAdAccountIds.length) throw new Error("No ad accounts to update");
-    const adAccountIds = updatedAdAccountIds.map((id) => id.replace("act_", ""));
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], { provider_id: adAccountIds });
+    const updatedResults = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
+    if (!updatedResults.length) throw new Error("No ad accounts to update");
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], { account_id: id });
     const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
+    const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
 
     // Sync Pixels
     if (updatePixels)

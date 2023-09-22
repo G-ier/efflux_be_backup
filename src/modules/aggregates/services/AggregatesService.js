@@ -13,7 +13,7 @@ class AggregatesService {
   async paramConvertWrapper(callback, params) {
 
     const { startDate, endDate, campaignId, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    if (!startDate || !endDate || startDate === ":startDate" || endDate === ":endDate") {
+    if (!startDate || !endDate) {
       throw new Error('Missing date parameters, please provide startDate and endDate in url pattern');
     }
 

@@ -42,7 +42,9 @@ server.listen(port, () => {
   const logLevel                    = process.env.LOG_LEVEL || 'info';
 
   const databaseEnvironment         = process.env.DATABASE_ENVIRONMENT || 'development';
-  const databaseUrl                 = databaseEnvironment === 'production' ? process.env.DATABASE_URL : process.env.DATABASE_URL_STAGING;
+  const databaseUrl                 = databaseEnvironment === 'production' ? process.env.DATABASE_URL
+                                    : databaseEnvironment === 'staging' ? process.env.DATABASE_URL_STAGING
+                                    : process.env.DATABASE_URL_LOCAL;
 
   console.log(`
     Server Info:
