@@ -27,11 +27,13 @@ server.use(function (err, req, res, next) {
 const port = process.env.PORT || 5000;
 
 server.listen(port, () => {
+
   console.log(`🔥 -------- Server started ---------- 🔥`)
 
   const rulesEnvironment            = process.env.ENVIRONMENT || 'staging';
   const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
   const disableCrossroadsCron       = process.env.DISABLE_CROSSROADS_CRON === 'true' || process.env.DISABLE_CROSSROADS_CRON !== 'false';
+  const disableSedoCron             = process.env.DISABLE_SEDO_CRON === 'true' || process.env.DISABLE_SEDO_CRON !== 'false';
   const disableTikTokCron           = process.env.DISABLE_TIKTOK_CRON === 'true' || process.env.DISABLE_TIKTOK_CRON !== 'false';
   const disableFacebookCron         = process.env.DISABLE_FACEBOOK_CRON === 'true' || process.env.DISABLE_FACEBOOK_CRON !== 'false';
   const disableAggregatesUpdateCron = process.env.DISABLE_AGGREGATES_UPDATE_CRON === 'true' || process.env.DISABLE_AGGREGATES_UPDATE_CRON !== 'false';
@@ -67,6 +69,7 @@ server.listen(port, () => {
     Cron Jobs [${rulesEnvironment}]:
       Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
       Crossroads : ${disableCrossroadsCron ? 'Disabled' : 'Enabled'}
+      Sedo       : ${disableSedoCron ? 'Disabled' : 'Enabled'}
       TikTok     : ${disableTikTokCron ? 'Disabled' : 'Enabled'}
       Facebook   : ${disableFacebookCron ? 'Disabled' : 'Enabled'}
       Aggregates : ${disableAggregatesUpdateCron ? 'Disabled' : 'Enabled'}

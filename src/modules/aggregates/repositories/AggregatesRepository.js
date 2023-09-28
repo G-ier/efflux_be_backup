@@ -80,8 +80,8 @@ class AggregatesRepository {
     return await compileAggregates(this.database, network, trafficSource, startDate, endDate);
   }
 
-  async upsert(data, trafficSource, chunkSize = 500) {
-    const mappedData = data.map(row => this.toDatabaseDTO(row, trafficSource))
+  async upsert(data, trafficSource, network, chunkSize = 500) {
+    const mappedData = data.map(row => this.toDatabaseDTO(row, trafficSource, network))
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
         await this.database.upsert(this.tableName, chunk, "unique_identifier");
@@ -89,7 +89,8 @@ class AggregatesRepository {
     return dataChunks;
   }
 
-  toDatabaseDTO(row, trafficSource) {
+  toDatabaseDTO(row, trafficSource, network) {
+    row.network = network
     row.traffic_source = trafficSource
     row.unique_identifier = `${row.adset_id}-${row.date}-${row.hour}`
     delete row.ad_account_name;

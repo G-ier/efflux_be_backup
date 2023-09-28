@@ -1,5 +1,4 @@
-function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
-
+function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate) {
   if (trafficSource === 'facebook') {
     return `
       inpulse AS (
@@ -21,7 +20,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
       ), traffic_source AS (
         SELECT
           fb.date as date,
-          fb.hour as hour,
+          ${network === 'sedo'? "--" : ''}fb.hour as hour,
           fb.adset_id,
           MAX(fb.campaign_id) as campaign_id,
           MAX(inp.coefficient) as coefficient,
@@ -38,7 +37,10 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         INNER JOIN inpulse inp ON inp.coefficient_date = fb.date
         WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
         AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
-        GROUP BY fb.date, fb.hour, fb.adset_id
+        ${
+          network === 'crossroads' ? 'GROUP BY fb.date, fb.hour, fb.adset_id' :
+          network === 'sedo' ? 'GROUP BY fb.date, fb.adset_id' : ''
+        }
       )
     `
   } else if (trafficSource === 'tiktok') {
@@ -46,7 +48,7 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
       traffic_source AS (
         SELECT
           tt.date as date,
-          tt.hour as hour,
+          ${network === 'sedo'? "--" : ''}tt.hour as hour,
           tt.adset_id,
           MAX(tt.campaign_id) as campaign_id,
           MAX(tt.updated_at) as ts_last_updated,
@@ -58,7 +60,10 @@ function TRAFFIC_SOURCE(trafficSource ,startDate, endDate) {
         INNER JOIN campaigns c ON c.id = tt.campaign_id AND c.traffic_source = 'tiktok'
         WHERE tt.date > '${startDate}' AND tt.date <= '${endDate}'
         AND tt.campaign_id IN (SELECT campaign_id FROM restriction)
-        GROUP BY tt.date, tt.hour, tt.adset_id
+        ${
+          network === 'crossroads' ? 'GROUP BY tt.date, tt.hour, tt.adset_id' :
+          network === 'sedo' ? 'GROUP BY tt.date, tt.adset_id' : ''
+        }
       )
     `
   } else {
@@ -89,6 +94,28 @@ function NETWORK(network, trafficSource, startDate, endDate) {
         AND   cr.request_date <= '${endDate}'
         AND   cr.traffic_source = '${trafficSource}'
         GROUP BY cr.request_date, cr.hour, cr.adset_id
+      )
+    `
+  } else if (network === 'sedo') {
+    return `
+      network AS (
+        SELECT
+          sedo.date as date,
+          sedo.adset_id,
+          MAX(sedo.campaign_id) as campaign_id,
+          CAST(ROUND(SUM(sedo.revenue)::decimal, 2) AS FLOAT) as revenue,
+          0 as searches,
+          CAST(SUM(sedo.visitors) AS INTEGER) as lander_visits,
+          CAST(SUM(sedo.clicks) AS INTEGER) as cr_conversions,
+          MAX(sedo.updated_at) as network_updated_at,
+          CAST(SUM(sedo.visitors) AS INTEGER) as visitors,
+          0 as uniq_conversions,
+          CAST(SUM(sedo.visitors) AS INTEGER) as tracked_visitors
+        FROM sedo sedo
+              WHERE sedo.date > '${startDate}'
+              AND   sedo.date <= '${endDate}'
+              AND   sedo.traffic_source = '${trafficSource}'
+        GROUP BY sedo.date, sedo.adset_id
       )
     `
   } else {
@@ -175,9 +202,9 @@ async function compileAggregates(database, network, trafficSource, startDate, en
   const query = `
     WITH restriction AS (
       SELECT DISTINCT campaign_id, adset_id
-        FROM crossroads
+        FROM ${network}
       WHERE
-        request_date > '${startDate}' AND request_date <= '${endDate}'
+        date > '${startDate}' AND date <= '${endDate}'
       AND traffic_source = '${trafficSource}'
     ), agg_adsets_data AS (
       SELECT
@@ -191,23 +218,26 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
       GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
     )
-    , ${TRAFFIC_SOURCE(trafficSource, startDate, endDate)}
+    , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate)}
     , ${NETWORK(network, trafficSource, startDate, endDate)}
     , postback_events AS (
       SELECT
         pb.date as date,
-        pb.hour as hour,
+        ${network === 'sedo'? "--" : ''}pb.hour as hour,
         pb.adset_id,
         CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
       FROM postback_events pb
       WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}' AND pb.traffic_source = '${trafficSource}'
-      GROUP BY pb.date, pb.hour, pb.adset_id
+      ${
+        network === 'crossroads' ? 'GROUP BY pb.date, pb.hour, pb.adset_id' :
+        network === 'sedo' ? 'GROUP BY pb.date, pb.adset_id' : ''
+      }
     )
     SELECT
       COALESCE(traffic_source.date, network.date) as date,
-      COALESCE(traffic_source.hour, network.hour) as hour,
+      ${network === 'sedo'? "--" : ''}COALESCE(traffic_source.hour, network.hour) as hour,
       COALESCE(agg_adsets_data.campaign_id, traffic_source.campaign_id, network.campaign_id) as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
       COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id, postback_events.adset_id) as adset_id,
@@ -216,13 +246,22 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       agg_adsets_data.ad_account_id as ad_account_id,
       ${RETURN_FIELDS(network, trafficSource)}
     FROM network
-    FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND traffic_source.hour = network.hour
+    FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date ${
+      network === 'crossroads' ? 'AND network.hour = traffic_source.hour' :
+      network === 'sedo' ? '' :
+      ''
+    }
     FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
-    FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
+    FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date ${
+      network === 'crossroads' ? 'AND network.hour = postback_events.hour' :
+      network === 'sedo' ? '' :
+      ''
+    }
     WHERE COALESCE(traffic_source.date, network.date) > '${startDate}' AND COALESCE(traffic_source.date, network.date) <= '${endDate}';
   `
   const { rows } = await database.raw(query)
   return rows
 }
+
 
 module.exports = compileAggregates;

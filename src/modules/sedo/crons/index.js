@@ -1,0 +1,52 @@
+// Third party imports
+const { CronJob }                                                = require('cron');
+
+// Local application imports
+const { todayYMD, yesterdayYMD }                                 = require('../../../shared/helpers/calendar');
+const { sendSlackNotification }                                  = require("../../../shared/lib/SlackNotificationService");
+const InsightsService                                            = require('../services/InsightsService');
+const {
+  SEDO_UPDATE_YESTERDAY,
+  SEDO_UPDATE_TODAY_REGULAR_CRON
+}                                                                = require('./rules');
+const { SEDO_TZ }                                                = require('../constants');
+const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
+
+const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
+const disableSedoCron             = process.env.DISABLE_SEDO_CRON === 'true' || process.env.DISABLE_SEDO_CRON !== 'false';
+const insightsService             = new InsightsService();
+
+const updateSedo = async (date) => {
+  try {
+    dataUpdatesLogger.info(`STARTED | SEDO | ${date}`)
+    await insightsService.syncSedoInsights(date);
+    dataUpdatesLogger.info(`COMPLETED | SEDO | ${date}`)
+  } catch (error) {
+    dataUpdatesLogger.warn(`FAILED | SEDO | ${date} | ${error}`)
+    await sendSlackNotification(`FAILED | SEDO | ${date}`)
+    console.log(error);
+  }
+}
+
+const updateSedoYesterdayData = new CronJob(
+  SEDO_UPDATE_YESTERDAY,
+  (async () => {
+    await updateSedo(yesterdayYMD(null, SEDO_TZ));
+  }
+));
+
+const updateSedoTodayDataRegular = new CronJob(
+  SEDO_UPDATE_TODAY_REGULAR_CRON,
+  (async () => {
+    await updateSedo(todayYMD(SEDO_TZ));
+  }
+));
+
+const initializeSedoCron = () => {
+  if (disableGeneralCron && disableSedoCron) return;
+
+  updateSedoYesterdayData.start();
+  updateSedoTodayDataRegular.start();
+}
+
+module.exports = initializeSedoCron;

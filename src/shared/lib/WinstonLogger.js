@@ -120,11 +120,19 @@ const PostbackLogger = new CustomLogger({
   pattern: '[{timestamp}]:[{level}] - {message}'
 });
 
+// Requests Logger
 const RequestsLogger = new CustomLogger({
   destination:streamDestination,
   level: 'info',
   filePath: filePath('requests'),
   pattern: '[{timestamp}]:[{level}]:{message}'
+});
+
+// Sedo Logger
+const SedoLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('sedo')
 });
 
 // CRON data update Logger
@@ -141,5 +149,6 @@ module.exports = {
   AggregatesLogger,
   PostbackLogger,
   RequestsLogger,
-  dataUpdatesLogger
+  dataUpdatesLogger,
+  SedoLogger
 };

@@ -13,6 +13,7 @@
     "migrate": "knex migrate:latest",
     "migrate:down": "knex migrate:down",
     "migrate:make": "knex migrate:make",
+    "test-sedo": "node src/modules/sedo/services/InsightsService.js",
     "knex": "knex --help"
   },
   "dependencies": {

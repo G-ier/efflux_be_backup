@@ -119,7 +119,7 @@ class AggregatesService {
     );
     AggregatesLogger.info(`Compiled aggregates successfully`);
     AggregatesLogger.info(`Upserting ${compiledAggregatedData.length} aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`);
-    await this.aggregatesRepository.upsert(compiledAggregatedData, trafficSource)
+    await this.aggregatesRepository.upsert(compiledAggregatedData, trafficSource, network)
     AggregatesLogger.info(`Done upserting aggregates`);
     return true;
   }
