@@ -5,7 +5,6 @@ const _ = require("lodash");
 const PROVIDERS = require("../../../shared/constants/providers");
 
 class InsightsRepository {
-
   constructor(database) {
     this.tableName = "crossroads";
     this.partitionedTableName = "crossroads_partitioned";
@@ -231,7 +230,7 @@ class InsightsRepository {
         keyword: click.lander_keyword || null,
         account: account,
         request_date: request_date,
-        unique_identifier: `${click.campaign_id}-${click.adset_id}-${click.ad_id}-${request_date}-${click.hour}`
+        unique_identifier: `${click.campaign_id}-${click.adset_id}-${click.ad_id}-${request_date}-${click.hour}`,
       };
     });
     return this.aggregateCrossroadsData(proccesedData);
@@ -262,10 +261,9 @@ class InsightsRepository {
       dbObject.adset_name,
       dbObject.traffic_source,
       dbObject.cr_camp_name,
-      dbObject.unique_identifier
+      dbObject.unique_identifier,
     );
   }
-
 }
 
 module.exports = InsightsRepository;

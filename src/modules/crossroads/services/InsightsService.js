@@ -4,12 +4,12 @@ const { CROSSROADS_URL } = require("../constants");
 const { todayM } = require("../helpers");
 const fs = require("fs");
 const _ = require("lodash");
+const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 const CampaignService = require("./CampaignService");
 const { CrossroadsLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
 
 class InsightsService extends BaseService {
-
   constructor() {
     super(CrossroadsLogger);
     this.repository = new InsightsRepository();
@@ -17,23 +17,34 @@ class InsightsService extends BaseService {
   }
 
   async getAvailableFields(key) {
-    CrossroadsLogger.info("Getting available fields from crossroads")
-    const data = await this.fetchFromApi(`${CROSSROADS_URL}get-available-fields`, { key }, "Error getting available fields");
+    CrossroadsLogger.info("Getting available fields from crossroads");
+    const data = await this.fetchFromApi(
+      `${CROSSROADS_URL}get-available-fields`,
+      { key },
+      "Error getting available fields",
+    );
     return data.available_fields;
   }
 
   async prepareBulkData(key, date, fields) {
-    CrossroadsLogger.info("Requesting Crossroads to Prepare Bulk data")
-    return await this.fetchFromApi(`${CROSSROADS_URL}prepare-bulk-data`, { key, date, format: 'json', 'extra-fields': fields }, "Error requesting crossroads to prepare bulk data");
+    CrossroadsLogger.info("Requesting Crossroads to Prepare Bulk data");
+    return await this.fetchFromApi(
+      `${CROSSROADS_URL}prepare-bulk-data`,
+      { key, date, format: "json", "extra-fields": fields },
+      "Error requesting crossroads to prepare bulk data",
+    );
   }
 
   async getRequestState(key, requestId, attempt) {
-    if (attempt > 0) CrossroadsLogger.info(`Retrying to get request state. Retry Attempt: ${attempt}`)
-    return await this.fetchFromApi(`${CROSSROADS_URL}get-request-state`, { key, 'request-id': requestId }, "Error getting request state");
+    if (attempt > 0) CrossroadsLogger.info(`Retrying to get request state. Retry Attempt: ${attempt}`);
+    return await this.fetchFromApi(
+      `${CROSSROADS_URL}get-request-state`,
+      { key, "request-id": requestId },
+      "Error getting request state",
+    );
   }
 
   waitForBulkData(key, requestId) {
-
     const periodicStateRequest = async (key, requestId) => {
       const retryLogUrl = "./apiRetries.json";
       const maxRetryCallsIn30Minuts = 5;
@@ -53,11 +64,9 @@ class InsightsService extends BaseService {
       }
 
       return new Promise((resolve, reject) => {
-
         let count = 0;
 
         const interval = setInterval(async () => {
-
           const { status_code, file_url } = await this.getRequestState(key, requestId, count);
 
           if (status_code !== 200 && count <= maxRetryCalls) {
@@ -85,33 +94,31 @@ class InsightsService extends BaseService {
       });
     };
 
-    CrossroadsLogger.info("Periodically checking if the bulk data is ready")
+    CrossroadsLogger.info("Periodically checking if the bulk data is ready");
     return this.executeWithLogging(
       () => periodicStateRequest(key, requestId),
-      "Error waiting for bulk data from crossroads"
+      "Error waiting for bulk data from crossroads",
     );
-
   }
 
   async getBulkData(url) {
-    CrossroadsLogger.info("Fetching bulk data from crossroads")
+    CrossroadsLogger.info("Fetching bulk data from crossroads");
     const { data } = await axios.get(url);
     return data;
   }
 
   async updateCrossroadsData(account, request_date) {
-
-    const available_fields = await this.getAvailableFields(account.key)
+    const available_fields = await this.getAvailableFields(account.key);
     const fields = available_fields.join(",");
-    const { request_id } = await this.prepareBulkData(account.key, request_date, fields)
-    const file_url = await this.waitForBulkData(account.key, request_id)
-    const crossroadsData = await this.getBulkData(file_url)
-    CrossroadsLogger.info("Upserting crossroads data to the database")
+    const { request_id } = await this.prepareBulkData(account.key, request_date, fields);
+    const file_url = await this.waitForBulkData(account.key, request_id);
+    const crossroadsData = await this.getBulkData(file_url);
+    CrossroadsLogger.info("Upserting crossroads data to the database");
     await this.executeWithLogging(
       () => this.repository.upsert(crossroadsData, account.id, request_date),
-      "Error processing and upserting bulk data"
+      "Error processing and upserting bulk data",
     );
-    CrossroadsLogger.info("Finished crossroads data update")
+    CrossroadsLogger.info("Finished crossroads data update");
   }
 
   async getCrossroadsById(id) {
@@ -127,7 +134,6 @@ class InsightsService extends BaseService {
   async deleteCrossroadsById(id) {
     return this.repository.delete({ id });
   }
-
 }
 
 module.exports = InsightsService;

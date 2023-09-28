@@ -15,7 +15,6 @@ const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
 const axios = require("axios");
 class CompositeService {
-
   constructor() {
     this.userAccountService = new UserAccountService();
     this.adAccountService = new AdAccountService();
@@ -25,13 +24,10 @@ class CompositeService {
     this.adInsightsService = new AdInsightsService();
   }
 
-  async updateFacebookData(date, {
-    updatePixels = true,
-    updateCampaigns = true,
-    updateAdsets = true,
-    updateInsights = true,
-  }) {
-
+  async updateFacebookData(
+    date,
+    { updatePixels = true, updateCampaigns = true, updateAdsets = true, updateInsights = true },
+  ) {
     FacebookLogger.info(`Starting to sync Facebook data for date ${date}`);
 
     if (!updatePixels && !updateCampaigns && !updateAdsets && !updateInsights)
@@ -50,28 +46,36 @@ class CompositeService {
 
     // Sync Pixels
     if (updatePixels)
-      try { await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap)}
-      catch {}
+      try {
+        await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
+      } catch {}
 
     // Sync Campaigns
     if (updateCampaigns)
-      try { await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, date)}
-      catch {}
+      try {
+        await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, date);
+      } catch {}
 
     // Sync Adsets
     if (updateAdsets) {
       const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
       const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-      try {await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, date)}
-      catch (e) {console.log(e)}
+      try {
+        await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, date);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     // Sync Insights
     if (updateInsights) {
       const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
       const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
-      try {await this.adInsightsService.syncAdInsights(token, adAccountsIds, date)}
-      catch (e) {console.log(e)}
+      try {
+        await this.adInsightsService.syncAdInsights(token, adAccountsIds, date);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     FacebookLogger.info(`Done syncing Facebook data for date ${date}`);
@@ -79,7 +83,6 @@ class CompositeService {
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
-
     let account;
     try {
       account = await this.userAccountService.getFetchingAccount();
@@ -91,7 +94,6 @@ class CompositeService {
     const { token } = account;
 
     async function updateDatabase(type, entityId, dailyBudget, status) {
-
       const updateData = {
         ...(status && { status }),
         ...(dailyBudget && { daily_budget: dailyBudget }),
@@ -112,7 +114,7 @@ class CompositeService {
     const params = {
       access_token: token,
       ...(status && { status }),
-      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget)}),
+      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget) }),
     };
 
     try {
@@ -160,7 +162,6 @@ class CompositeService {
       return duplicated;
     }
   }
-
 }
 
 module.exports = CompositeService;

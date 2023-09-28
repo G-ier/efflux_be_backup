@@ -1,9 +1,10 @@
 // Local application imports
 const UserRepository = require("../repositories/UserRepository");
-
+const DatabaseConnection = require("../../../shared/lib/DatabaseConnection");
 class UserService {
   constructor() {
     this.userRepository = new UserRepository();
+    this.db = new DatabaseConnection().getConnection();
   }
 
   // Save a single user to the database
@@ -40,6 +41,30 @@ class UserService {
     return await this.userRepository.fetchOne(fields, filters);
   }
 
+  async getQueriedUsers(isAdmin) {
+    let accountsFields = {
+      ad_account_id: "ad_accounts.id",
+      ad_account_name: "ad_accounts.name",
+      ad_account_provider: "ad_accounts.provider",
+    };
+    const withAccountsData = (queryBuilder, isAdmin) => {
+      if (isAdmin) queryBuilder.leftJoin("ad_accounts", "users.id", "ad_accounts.user_id");
+    };
+
+    const users = await this.db
+      .select({
+        id: "users.id",
+        name: "users.name",
+        nickname: "users.nickname",
+        accountType: "users.acct_type",
+        ...(isAdmin ? accountsFields : {}),
+      })
+      .where("users.token", null)
+      .table("users")
+      .modify(withAccountsData, isAdmin);
+
+    return users;
+  }
 }
 
 module.exports = UserService;
