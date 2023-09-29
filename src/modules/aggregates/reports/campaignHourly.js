@@ -1,6 +1,14 @@
 const { buildSelectionColumns } = require('./utils');
 
 async function campaignHourly(database, startDate, endDate, campaignId) {
+
+  const network = await database.raw(`SELECT DISTINCT network FROM insights WHERE campaign_id = '${campaignId}'`);
+
+  if (network.rows[0].network === 'sedo') {
+    console.log('Sedo does not support hourly reports');
+    return [];
+  }
+
   const query = `
     SELECT
       hour,

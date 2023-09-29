@@ -76,7 +76,6 @@ class Auth0Service {
     const account = data.account;
     const { name, email, image_url, nickname, sub } = account;
     const acct_type = reqUser.permissions.includes("admin") ? "admin" : "media_buyer";
-    console.log("SUB", account);
     const userFromAuth0 = await this.getAuth0User(sub);
     const identity = this.getUserIdentity(userFromAuth0);
     const user = await this.userService.fetchOne(["*"], identity);
