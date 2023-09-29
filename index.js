@@ -28,7 +28,7 @@ const port = process.env.PORT || 5000;
 
 server.listen(port, () => {
 
-  console.log(`🔥 ---------- Server started ------------ 🔥`)
+  console.log(`🔥 -------- Server started ---------- 🔥`)
 
   const rulesEnvironment            = process.env.ENVIRONMENT || 'staging';
   const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
