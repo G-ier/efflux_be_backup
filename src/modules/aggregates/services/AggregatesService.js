@@ -106,6 +106,9 @@ class AggregatesService {
     network="crossroads", trafficSource,
     mediaBuyer, adAccountId, q
   ) {
+
+    if (network === 'sedo') return res.json(['Sedo does not support hourly reports']);
+
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args),
       { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
