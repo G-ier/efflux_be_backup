@@ -62,15 +62,6 @@ class InsightsRepository {
     const clicks = insight.clicks[0]._ ? parseInt(insight.clicks[0]._) : 0;
     const earnings = insight.earnings[0]._ ? parseFloat(insight.earnings[0]._) : 0;
 
-    // In case the following data don't pass from the traffic_source that means that the click
-    // isn't organic. So we discard it.
-    // if (traffic_source === 'facebook' && (
-    //   campaign_id === '{{campaign.id}}' && adset_id === '{{adset.id}}' && ad_id === '{{ad.id}}'
-    // )) return null;
-    // else if (traffic_source === 'tiktok' && (
-    //   campaign_id === '__CAMPAIGN_ID__' && adset_id === '__AID__' && ad_id === '__CID__'
-    // )) return null;
-
     return {
       date,
       domain,

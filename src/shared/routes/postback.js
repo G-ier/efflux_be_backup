@@ -53,7 +53,6 @@ async function processQueue() {
   }
 }
 
-
 // @route     /trk
 // @desc     GET track
 // @Access   Private
@@ -64,7 +63,7 @@ route.get('/', async (req, res) => {
     const client_user_agent = req.headers['user-agent'];
     const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
 
-    PostbackLogger.info(`PBQP: ${JSON.stringify(req.query)}`)
+    PostbackLogger.info(`DA PBQP: ${JSON.stringify(req.query)}`)
     const {
       tg1,
       tg2, // campaign_id
@@ -140,5 +139,72 @@ route.get('/', async (req, res) => {
     res.status(500).json(err.message);
   }
 });
+
+
+route.get('/sedo', async (req, res) => {
+  try {
+    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const client_user_agent = req.headers['user-agent'];
+    const referrer_url =  `https://${req.get('host')}${req.originalUrl}`;
+
+    PostbackLogger.info(`SEDO PBQP: ${JSON.stringify(req.query)}`)
+    const {
+      sub1,
+      sub2,
+      sub3,
+      amount,
+      relatedlink,
+      kw,
+      position,
+      url,
+      uniqueTransactionId,
+      clickTimestamp
+    } = req.query;
+
+    const domain = url;
+    const funnel_id = sub1;
+    const [campaign_id, adset_id, ad_id, traffic_source] = sub2 ? sub2.replace(" ", "").split('|'): ['', '', '', ''];
+    const hit_id = sub3;
+    const ua = parser(client_user_agent);
+    const value = isNaN(parseFloat(amount)) ? 0 : parseFloat(amount);
+
+    // We don't know for sure how parameters come, but we need to compose a unique event_id
+    const event_id = md5(clickTimestamp + uniqueTransactionId + campaign_id + adset_id + sub3);
+    const pb_conversion = {
+      fbclid: uniqueTransactionId, // ?
+      event_timestamp: clickTimestamp,
+      referrer_url,
+      pb_value: value,
+      event_type: 'Purchase',
+      date: todayYMD(),
+      hour: todayHH(),
+      ip: client_ip_address,
+      device: ua.device.name,
+      os: `${ua.os.name} - ${ua.os.version}`,
+      browser: ua.browser.name,
+      campaign_id: campaign_id,
+      adset_id: adset_id,
+      ad_id: ad_id,
+      network: 'sedo',
+      traffic_source,
+      kwp: kw,
+      event_id,
+    }
+    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`)
+
+    // Upsert into database
+    postbackQueue.push(pb_conversion);
+    await processQueue();
+
+    res.status(200).json({message: 'success'});
+    PostbackLogger.info(`SUCCESS`)
+  } catch (err) {
+    PostbackLogger.error(`POSTBACK SEDO ERROR ${err}`)
+    // sendSlackNotification(`Postback Update Error: ${err.message}`)
+    res.status(500).json(err.message);
+  }
+
+});
+
 
 module.exports = route;
