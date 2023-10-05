@@ -104,6 +104,8 @@ class UserAccountService {
     if (Object.values(accountValidity).every((val) => val !== true)) {
       throw new Error("No valid accounts to fetch data from");
     }
+
+    return accounts.filter((account) => accountValidity[account.id] === true);
   }
 
   async getFetchingAccount(admins_only=false, clients_only=false) {
@@ -155,7 +157,7 @@ class UserAccountService {
     if (clients_only) return validClientAccounts;
     return [adminAccount, ...validClientAccounts];
   }
-  
+
   async saveUserAccountToDB(accountDetails) {
     return await this.userAccountRepository.saveOne(accountDetails);
   }
