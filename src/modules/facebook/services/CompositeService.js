@@ -87,7 +87,8 @@ class CompositeService {
 
     let account;
     try {
-      account = await this.userAccountService.getFetchingAccount();
+      const admins_only = true;
+      account = await this.userAccountService.getFetchingAccount(admins_only);
     } catch (e) {
       console.log("No account to fetch data from facebook", e);
       await sendSlackNotification("No account to get token from to update entity. Inspect software if this is a error");
@@ -135,7 +136,8 @@ class CompositeService {
   async duplicateEntity({ type, deep_copy, status_option, rename_options, entity_id }) {
     let account;
     try {
-      account = await this.userAccountService.getFetchingAccount();
+      const admins_only = true;
+      account = await this.userAccountService.getFetchingAccount(admins_only);
     } catch (e) {
       console.log("No account to fetch data from facebook", e);
       await sendSlackNotification("No account to fetch data from facebook. Inspect software if this is a error");
