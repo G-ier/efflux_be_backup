@@ -38,42 +38,47 @@ class CompositeService {
       throw new Error("No data to update. Please select at least one option");
 
     // Retrieving account we will use for fetching data
-    const account = await this.userAccountService.getFetchingAccount();
-    const { token, user_id, id, provider_id } = account;
+    const accounts = await this.userAccountService.getFetchingAccount();
 
-    // Sync Ad Accounts
-    const updatedResults = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
-    if (!updatedResults.length) throw new Error("No ad accounts to update");
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], { account_id: id });
-    const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
-    const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
+    for (const account of accounts) {
 
-    // Sync Pixels
-    if (updatePixels)
-      try { await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap)}
-      catch {}
+      const { token, name, user_id, id, provider_id } = account;
 
-    // Sync Campaigns
-    if (updateCampaigns)
-      try { await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, date)}
-      catch {}
+      FacebookLogger.info(`Syncing data for account ${name}`);
 
-    // Sync Adsets
-    if (updateAdsets) {
-      const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
-      const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-      try {await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, date)}
-      catch (e) {console.log(e)}
+      // Sync Ad Accounts
+      const updatedResults = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
+      if (!updatedResults.length) throw new Error("No ad accounts to update");
+      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], { account_id: id });
+      const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
+      const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
+
+      // Sync Pixels
+      if (updatePixels)
+        try { await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap)}
+        catch {}
+
+      // Sync Campaigns
+      if (updateCampaigns)
+        try { await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, date)}
+        catch {}
+
+      // Sync Adsets
+      if (updateAdsets) {
+        const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
+        const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
+        try {await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, date)}
+        catch (e) {console.log(e)}
+      }
+
+      // Sync Insights
+      if (updateInsights) {
+        const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
+        const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
+        try {await this.adInsightsService.syncAdInsights(token, adAccountsIds, date)}
+        catch (e) {console.log(e)}
+      }
     }
-
-    // Sync Insights
-    if (updateInsights) {
-      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
-      const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
-      try {await this.adInsightsService.syncAdInsights(token, adAccountsIds, date)}
-      catch (e) {console.log(e)}
-    }
-
     FacebookLogger.info(`Done syncing Facebook data for date ${date}`);
     return true;
   }
