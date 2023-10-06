@@ -9,7 +9,7 @@ async function campaignDaily(database, startDate, endDate, campaignId) {
     WHERE date > '${startDate}' AND date <= '${endDate}'
     AND campaign_id = '${campaignId}'
     GROUP BY date
-    ORDER BY SUM(revenue) DESC;
+    ORDER BY date;
   `;
   const { rows } = await database.raw(query);
   return rows;

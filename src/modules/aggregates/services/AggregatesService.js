@@ -135,26 +135,20 @@ class AggregatesService {
     adAccountId,
     q,
   ) {
-    return await this.paramConvertWrapper((...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args), {
-      startDate,
-      endDate,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
-    });
+      
+    if (network === 'sedo') return res.json(['Sedo does not support hourly reports']);
+
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args),
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+    )
   }
 
-  async updateAggregates(network, trafficSource, startDate, endDate) {
-    AggregatesLogger.info(
-      `Updating aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`,
-    );
+  async updateAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction = null) {
+    AggregatesLogger.info(`Updating aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`);
     const compiledAggregatedData = await this.aggregatesRepository.compileAggregates(
-      network,
-      trafficSource,
-      startDate,
-      endDate,
+      network, trafficSource, startDate, endDate, campaignIdsRestriction
+
     );
     AggregatesLogger.info(`Compiled aggregates successfully`);
     AggregatesLogger.info(`Upserting ${compiledAggregatedData.length} aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`);
@@ -162,6 +156,13 @@ class AggregatesService {
     AggregatesLogger.info(`Done upserting aggregates`);
     return true;
   }
+
+  async updateFacebookUserAccountAggregates(startDate, endDate, campaignIdsRestriction) {
+    for (const network of AVAILABLE_NETWORKS) {
+      await this.updateAggregates(network, 'facebook', startDate, endDate, campaignIdsRestriction);
+    }
+  }
+
 }
 
 module.exports = AggregatesService;

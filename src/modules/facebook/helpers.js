@@ -12,5 +12,20 @@ function validateInput({ type, token, status }) {
   }
 }
 
-module.exports = { validateInput };
+function listDatesBetween(startDateStr, endDateStr) {
+  let startDate = new Date(startDateStr);
+  let endDate = new Date(endDateStr);
+
+  let dateArray = [];
+  let currentDate = startDate;
+
+  while (currentDate <= endDate) {
+      dateArray.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dateArray;
+}
+
+module.exports = { validateInput, listDatesBetween };
 

@@ -2,7 +2,8 @@
 const axios = require("axios");
 
 // Local application imports
-const { FB_API_URL, FETCHING_ACCOUNTS_IDS } = require('../constants');
+const { FB_API_URL } = require('../constants');
+const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const UserAccountRepository = require("../repositories/UserAccountRepository");
 const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 
@@ -89,14 +90,13 @@ class UserAccountService {
     }
   }
 
-  async getFetchingAccount() {
+  async validateAccounts(accounts, admin_token=null) {
 
-    const accounts = await this.fetchUserAccounts(["id", "provider_id", "user_id", "token"], { provider: "facebook", id: FETCHING_ACCOUNTS_IDS });
     let accountValidity = {};
 
     // Here we need the TokenService to get the token for each account
     for (const account of accounts) {
-      let [username, isValid] = await this.debug(account.token, account.token);
+      let [username, isValid] = await this.debug(admin_token ? admin_token : account.token, account.token);
       accountValidity[account.id] = isValid;
     }
 
@@ -105,7 +105,57 @@ class UserAccountService {
       throw new Error("No valid accounts to fetch data from");
     }
 
-    return accounts.filter((account) => accountValidity[account.id] === true)[0];
+    return accounts.filter((account) => accountValidity[account.id] === true);
+  }
+
+  async getFetchingAccount(admins_only=false, clients_only=false) {
+
+    const fetchingFields = ["id", "name", "provider_id", "user_id", "token"];
+
+    // We need to get a admin account and all the other fetching accounts here.
+    const adminAccounts = await this.fetchUserAccounts(fetchingFields,
+      { provider: "facebook", role: 'admin', fetching: true, backup: false }
+    );
+
+    // Attemp to get the admin account/try backup accounts. If none work, throw error.
+    let adminAccount;
+    try {
+      FacebookLogger.info("Retrieving primary admin account and ensuring it is valid")
+      const validAccounts = await this.validateAccounts(adminAccounts, null);
+      adminAccount = validAccounts[0];
+    } catch (err) {
+
+      FacebookLogger.info("Primary account failed, using backup account")
+
+      // We need to get a admin account and all the other fetching accounts here.
+      const backupAdminAccounts = await this.fetchUserAccounts(fetchingFields,
+        { provider: "facebook", role: 'admin', fetching: true, backup: true }
+      );
+      try {
+        const validAccounts = await this.validateAccounts(backupAdminAccounts, null);
+        adminAccount = validAccounts[0];
+      } catch (err) {
+        FacebookLogger.error("No valid admin accounts found. Terminating")
+        throw new Error("No valid admin accounts found");
+      }
+
+    }
+
+    const clientAccounts = await this.fetchUserAccounts(fetchingFields,
+      { provider: "facebook", role: 'client', fetching: true, backup: false }
+    );
+
+    let validClientAccounts = [];
+    try {
+      FacebookLogger.info("Retrieving client accounts")
+      const validAccounts = await this.validateAccounts(clientAccounts, adminAccount.token);
+      FacebookLogger.info(`Found ${validAccounts.length} valid client accounts`)
+      validClientAccounts = validAccounts;
+    } catch {}
+
+    if (admins_only) return adminAccount;
+    if (clients_only) return validClientAccounts;
+    return [adminAccount, ...validClientAccounts];
   }
 
   async saveUserAccountToDB(accountDetails) {

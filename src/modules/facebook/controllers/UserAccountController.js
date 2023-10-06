@@ -34,10 +34,11 @@ class UserAccountController {
         token
       }
       // Save the account to our database.
-      await this.userAccountService.saveUserAccountToDB(account);
+      const id = await this.userAccountService.saveUserAccountToDB(account);
 
+      // Return the response to the user.
       res.status(200).json({
-        message: `Successfully added account for ${account.name} | ${process.env.FACEBOOK_APP_ID}`
+        userId: id
       });
 
     } catch(error) {

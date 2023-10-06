@@ -99,8 +99,8 @@ class AggregatesRepository {
     );
   }
 
-  async compileAggregates(network, trafficSource, startDate, endDate) {
-    return await compileAggregates(this.database, network, trafficSource, startDate, endDate);
+  async compileAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction = null) {
+    return await compileAggregates(this.database, network, trafficSource, startDate, endDate, campaignIdsRestriction);
   }
 
   

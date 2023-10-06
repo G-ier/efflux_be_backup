@@ -22,8 +22,8 @@ class AdInsightRepository {
     }
   }
 
-  async upsert(adInsights, date, chunkSize = 500) {
-    const dbObjects = adInsights.map((adInsight) => this.toDatabaseDTO(adInsight, date));
+  async upsert(adInsights, chunkSize = 500) {
+    const dbObjects = adInsights.map((adInsight) => this.toDatabaseDTO(adInsight));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
         await this.database.upsert(this.tableName, chunk, "unique_identifier");
@@ -36,8 +36,9 @@ class AdInsightRepository {
     return results;
   }
 
-  toDatabaseDTO(adInsight, date) {
+  toDatabaseDTO(adInsight) {
 
+    const date = adInsight.date_start;
     const hour = adInsight.hourly_stats_aggregated_by_advertiser_time_zone.slice(0, 2);
     const conversions = adInsight?.actions?.find((i) => i.action_type === "offsite_conversion.fb_pixel_purchase")?.value;
     const lead = adInsight?.actions?.find((i) => i.action_type === "offsite_conversion.fb_pixel_lead")?.value;
@@ -84,6 +85,7 @@ class AdInsightRepository {
       dbObject.unique_identifier
     );
   }
+
 }
 
 module.exports = AdInsightRepository;

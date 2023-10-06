@@ -27,12 +27,12 @@ async function updateFacebookData(day) {
   };
   try {
     dataUpdatesLogger.info(`STARTED | FACEBOOK | ${day}`);
-    await compositeService.updateFacebookData(yesterdayYMD(null, "UTC"), insightsUpdate);
-    if (day === "today") await compositeService.updateFacebookData(todayYMD("UTC"), insightsUpdate);
+    await compositeService.updateFacebookData(yesterdayYMD(null, 'UTC'), yesterdayYMD(null, 'UTC'), insightsUpdate);
+    if (day === "today")
+      await compositeService.updateFacebookData(todayYMD('UTC'), todayYMD('UTC'), insightsUpdate);
     else if (day === "yesterday")
-      await compositeService.updateFacebookData(dayBeforeYesterdayYMD(null, "UTC"), insightsUpdate);
-
-    await compositeService.updateFacebookData(todayYMD(), {
+      await compositeService.updateFacebookData(dayBeforeYesterdayYMD(null, 'UTC'), dayBeforeYesterdayYMD(null, 'UTC'), insightsUpdate);
+    await compositeService.updateFacebookData(todayYMD(), todayYMD(), {
       updatePixels: true,
       updateCampaigns: true,
       updateAdsets: true,

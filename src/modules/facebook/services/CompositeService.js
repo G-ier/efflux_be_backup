@@ -24,18 +24,17 @@ class CompositeService {
     this.adInsightsService = new AdInsightsService();
   }
 
-  async updateFacebookData(
-    date,
-    { updatePixels = true, updateCampaigns = true, updateAdsets = true, updateInsights = true },
-  ) {
-    FacebookLogger.info(`Starting to sync Facebook data for date ${date}`);
 
-    if (!updatePixels && !updateCampaigns && !updateAdsets && !updateInsights)
-      throw new Error("No data to update. Please select at least one option");
+  async syncUserAccountsData(account, startDate, endDate, {
+    updatePixels = true,
+    updateCampaigns = true,
+    updateAdsets = true,
+    updateInsights = true
+    }) {
 
-    // Retrieving account we will use for fetching data
-    const account = await this.userAccountService.getFetchingAccount();
-    const { token, user_id, id, provider_id } = account;
+    const { token, name, user_id, id, provider_id } = account;
+
+    FacebookLogger.info(`Syncing data for account ${name}`);
 
     // Sync Ad Accounts
     const updatedResults = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
@@ -52,40 +51,61 @@ class CompositeService {
 
     // Sync Campaigns
     if (updateCampaigns)
-      try {
-        await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, date);
-      } catch {}
+      try { await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, startDate, endDate)}
+      catch {}
 
     // Sync Adsets
     if (updateAdsets) {
       const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
       const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-      try {
-        await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, date);
-      } catch (e) {
-        console.log(e);
-      }
+      try {await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, startDate, endDate)}
+      catch (e) {console.log(e)}
     }
 
     // Sync Insights
     if (updateInsights) {
       const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
       const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
-      try {
-        await this.adInsightsService.syncAdInsights(token, adAccountsIds, date);
-      } catch (e) {
-        console.log(e);
-      }
+      try {await this.adInsightsService.syncAdInsights(token, adAccountsIds, startDate, endDate)}
+      catch (e) {console.log(e)}
     }
 
-    FacebookLogger.info(`Done syncing Facebook data for date ${date}`);
+    return true;
+  }
+
+  async updateFacebookData(startDate, endDate, {
+    updatePixels = true,
+    updateCampaigns = true,
+    updateAdsets = true,
+    updateInsights = true,
+  }) {
+
+    FacebookLogger.info(`Starting to sync Facebook data for date range ${startDate} -> ${endDate}`);
+
+    if (!updatePixels && !updateCampaigns && !updateAdsets && !updateInsights)
+      throw new Error("No data to update. Please select at least one option");
+
+    // Retrieving account we will use for fetching data
+    const accounts = await this.userAccountService.getFetchingAccount();
+
+    for (const account of accounts) {
+      await this.syncUserAccountsData(account, startDate, endDate, {
+        updatePixels,
+        updateCampaigns,
+        updateAdsets,
+        updateInsights,
+      });
+
+    }
+    FacebookLogger.info(`Done syncing Facebook data for  date range ${startDate} -> ${endDate}`);
     return true;
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
     let account;
     try {
-      account = await this.userAccountService.getFetchingAccount();
+      const admins_only = true;
+      account = await this.userAccountService.getFetchingAccount(admins_only);
     } catch (e) {
       console.log("No account to fetch data from facebook", e);
       await sendSlackNotification("No account to get token from to update entity. Inspect software if this is a error");
@@ -132,7 +152,8 @@ class CompositeService {
   async duplicateEntity({ type, deep_copy, status_option, rename_options, entity_id }) {
     let account;
     try {
-      account = await this.userAccountService.getFetchingAccount();
+      const admins_only = true;
+      account = await this.userAccountService.getFetchingAccount(admins_only);
     } catch (e) {
       console.log("No account to fetch data from facebook", e);
       await sendSlackNotification("No account to fetch data from facebook. Inspect software if this is a error");

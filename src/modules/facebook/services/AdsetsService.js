@@ -17,10 +17,9 @@ class AdsetsService extends BaseService {
     this.adsetsRepository = new AdsetsRepository();
   }
 
-  async getAdsetsFromApi(access_token, adAccountIds, date = "today") {
+  async getAdsetsFromApi(access_token, adAccountIds, startDate, endDate, preset = null) {
     this.logger.info(`Fetching Adsets from API`);
-    const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-    const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
+    const dateParam = preset ? { date_preset: preset } : { time_range: { since: startDate, until: endDate } };
     const fields =
       "id,account_id,campaign_id,status,name,daily_budget,lifetime_budget,created_time,start_time,stop_time,budget_remaining,updated_time";
     const results = { sucess: [], error: [] };
@@ -57,8 +56,8 @@ class AdsetsService extends BaseService {
     return _.flatten(allAdsets);
   }
 
-  async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, date = "today") {
-    let adsets = await this.getAdsetsFromApi(access_token, adAccountIds, date);
+  async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, startDate, endDate, preset = null) {
+    let adsets = await this.getAdsetsFromApi(access_token, adAccountIds, startDate, endDate, preset = null);
     adsets = adsets.filter((adset) => campaignIds.includes(adset.campaign_id));
     this.logger.info(`Upserting ${adsets.length} adsets`);
     await this.executeWithLogging(
