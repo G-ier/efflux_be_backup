@@ -17,7 +17,7 @@ route.post("/refresh", async (req, res) => {
 // @route    /api/facebook/sync-account-data
 // @desc     POST facebook refresh data
 // @Access   Private
-route.post("/sync-account-data", async (req, res) => {
+route.get("/sync-account-data", async (req, res) => {
   compositeController.syncAccountData(req, res);
 });
 
