@@ -34,7 +34,6 @@ class CompositeService {
     }) {
 
     const { token, name, user_id, id, provider_id } = account;
-
     FacebookLogger.info(`Syncing data for account ${name}`);
 
     // Sync Ad Accounts

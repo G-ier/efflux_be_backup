@@ -53,7 +53,6 @@ async function processQueue() {
   }
 }
 
-
 // @route     /trk
 // @desc     GET track
 // @Access   Private
