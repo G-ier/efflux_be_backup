@@ -1,16 +1,17 @@
-const AggregatesRepository = require("../repositories/AggregatesRepository");
-const { AVAILABLE_NETWORKS, AVAILABLE_TRAFFIC_SOURCES } = require("../constants");
+const AggregatesRepository = require('../repositories/AggregatesRepository');
+const { AVAILABLE_NETWORKS, AVAILABLE_TRAFFIC_SOURCES } = require('../constants');
 const { AggregatesLogger } = require("../../../shared/lib/WinstonLogger");
 
-const { yesterdayYMD, dayYMD } = require("../../../shared/helpers/calendar");
-const { processData } = require("../entities/Aggregate");
+const { yesterdayYMD, dayYMD } = require('../../../shared/helpers/calendar');
 
 class AggregatesService {
+
   constructor() {
-    this.aggregatesRepository = new AggregatesRepository();
+    this.aggregatesRepository = new AggregatesRepository()
   }
 
   async paramConvertWrapper(callback, params) {
+
     const { startDate, endDate, campaignId, network, trafficSource, mediaBuyer, adAccountId, q } = params;
     if (!startDate || !endDate) {
       throw new Error('Missing date parameters, please provide startDate and endDate in url pattern');
@@ -18,28 +19,28 @@ class AggregatesService {
 
     const pattern = /^(?:\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)?)$/;
     if (!pattern.test(startDate) || !pattern.test(endDate)) {
-      throw new Error("Invalid date format");
+      throw new Error('Invalid date format');
     }
 
     if (network && !AVAILABLE_NETWORKS.includes(network)) {
-      throw new Error("Invalid network");
+      throw new Error('Invalid network');
     }
 
     if (trafficSource && !AVAILABLE_TRAFFIC_SOURCES.includes(trafficSource)) {
-      throw new Error("Invalid traffic source");
+      throw new Error('Invalid traffic source');
     }
 
     const convertedStartDate = yesterdayYMD(startDate);
     const convertedEndDate = dayYMD(endDate);
     const finalParams = {
-      startDate: convertedStartDate,
-      endDate: convertedEndDate,
+      startDate : convertedStartDate,
+      endDate   : convertedEndDate,
       campaignId,
       network,
       trafficSource,
       mediaBuyer,
       adAccountId,
-      q,
+      q
     };
     try {
       return await callback(finalParams);
@@ -50,92 +51,62 @@ class AggregatesService {
   }
 
   async generateCampaignAdsetsReport(startDate, endDate, campaignId) {
-    return await this.paramConvertWrapper((...args) => this.aggregatesRepository.campaignAdsets(...args), {
-      startDate,
-      endDate,
-      campaignId,
-    });
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.campaignAdsets(...args),
+      {startDate, endDate, campaignId}
+    );
   }
 
   async generateCampaignDailyReport(startDate, endDate, campaignId) {
-    return await this.paramConvertWrapper((...args) => this.aggregatesRepository.campaignDaily(...args), {
-      startDate,
-      endDate,
-      campaignId,
-    });
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.campaignDaily(...args),
+      {startDate, endDate, campaignId}
+    );
   }
 
   async generateCampaignHourlyReport(startDate, endDate, campaignId) {
-    return await this.paramConvertWrapper((...args) => this.aggregatesRepository.campaignHourly(...args), {
-      startDate,
-      endDate,
-      campaignId,
-    });
-  }
-
-  async generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
-    startDate,
-    endDate,
-    network = "crossroads",
-    trafficSource,
-    mediaBuyer,
-    adAccountId,
-    q,
-  ) {
-    let dbData = await this.paramConvertWrapper(
-      (...args) => this.aggregatesRepository.trafficSourceNetowrkCampaignsAdsetsStats(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q },
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.campaignHourly(...args),
+      {startDate, endDate, campaignId}
     );
-
-    dbData = processData(dbData);
-    return dbData;
   }
 
-  async generateTrafficSourceNetworkCampaignsStatsReport(
-    startDate,
-    endDate,
-    network = "crossroads",
-    trafficSource,
-    mediaBuyer,
-    adAccountId,
-    q,
+  async generateTrafficSourceNetworkCampaignsAdsetsStatsReport(startDate, endDate,
+    network="crossroads", trafficSource,
+    mediaBuyer, adAccountId, q
+  ) {
+
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.trafficSourceNetowrkCampaignsAdsetsStats(...args),
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+    )
+  }
+
+  async generateTrafficSourceNetworkCampaignsStatsReport(startDate, endDate,
+    network="crossroads", trafficSource,
+    mediaBuyer, adAccountId, q
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkCampaignsStats(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q },
-    );
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+    )
   }
 
-  async generateTrafficSourceNetworkDailyReport(
-    startDate,
-    endDate,
-    network = "crossroads",
-    trafficSource,
-    mediaBuyer,
-    adAccountId,
-    q,
+  async generateTrafficSourceNetworkDailyReport(startDate, endDate,
+    network="crossroads", trafficSource,
+    mediaBuyer, adAccountId, q
   ) {
-    return await this.paramConvertWrapper((...args) => this.aggregatesRepository.trafficSourceNetworkDaily(...args), {
-      startDate,
-      endDate,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
-    });
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.trafficSourceNetworkDaily(...args),
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+    )
   }
 
-  async generateTrafficSourceNetworkHourlyReport(
-    startDate,
-    endDate,
-    network = "crossroads",
-    trafficSource,
-    mediaBuyer,
-    adAccountId,
-    q,
+  async generateTrafficSourceNetworkHourlyReport(startDate, endDate,
+    network="crossroads", trafficSource,
+    mediaBuyer, adAccountId, q
   ) {
-      
+
     if (network === 'sedo') return res.json(['Sedo does not support hourly reports']);
 
     return await this.paramConvertWrapper(
@@ -164,5 +135,6 @@ class AggregatesService {
   }
 
 }
+
 
 module.exports = AggregatesService;

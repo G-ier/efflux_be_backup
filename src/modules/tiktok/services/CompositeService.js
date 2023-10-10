@@ -1,5 +1,4 @@
 const _ = require("lodash");
-const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
 const CampaignService = require("./CampaignsService");
 const AdsetService = require("./AdsetsService");
@@ -10,6 +9,7 @@ const AdInsightsService = require("./AdInsightsService");
 const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 
 class CompositeService {
+
   constructor() {
     this.userAccountsService = new UserAccountService();
     this.campaignService = new CampaignService();
@@ -20,6 +20,7 @@ class CompositeService {
   }
 
   async updateTikTokData(date) {
+
     TiktokLogger.info(`Starting to sync TikTok data for date ${date}`);
 
     // Retrieving account we will use for fetching data
@@ -27,10 +28,7 @@ class CompositeService {
 
     // Sync ad accounts
     await this.adAccountService.syncAdAccounts(token, id, user_id);
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ["id", "provider_id", "user_id", "account_id"],
-      { provider: "tiktok" },
-    );
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {provider: "tiktok"});
     const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
     const adAccountIds = Object.keys(adAccountsMap);
 
@@ -43,13 +41,14 @@ class CompositeService {
     await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date);
 
     // Sync ads
-    await this.adsService.syncAds(token, adAccountIds, adAccountsMap, date);
+    await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date);
 
     // Sync ad insights
     await this.adInsightsService.syncAdInsights(token, adAccountIds, adAccountsMap, date);
 
     TiktokLogger.info(`Done syncing TikTok data for date ${date}`);
   }
+
 }
 
 module.exports = CompositeService;

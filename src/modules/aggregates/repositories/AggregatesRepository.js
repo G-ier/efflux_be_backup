@@ -1,26 +1,26 @@
 // Third party imports
-const _ = require("lodash");
+const _                                         = require('lodash');
 
 // Local application imports
-const campaignAdsets = require("../reports/campaignAdsets");
-const campaignDaily = require("../reports/campaignDaily");
-const campaignHourly = require("../reports/campaignHourly");
-const revealBotSheets = require("../reports/revealBotSheets");
-const trafficSourceNetowrkCampaignsAdsetsStats = require("../reports/trafficSourceNetowrkCampaignsAdsetsStats");
-const trafficSourceNetworkCampaignsStats = require("../reports/trafficSourceNetworkCampaignsStats");
-const trafficSourceNetworkDaily = require("../reports/trafficSourceNetworkDaily");
-const trafficSourceNetworkHourly = require("../reports/trafficSourceNetworkHourly");
-const compileAggregates = require("../reports/compileAggregates");
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const { Aggregates } = require("../entities/Aggregate");
+const campaignAdsets                            = require('../reports/campaignAdsets');
+const campaignDaily                             = require('../reports/campaignDaily');
+const campaignHourly                            = require('../reports/campaignHourly');
+const revealBotSheets                           = require('../reports/revealBotSheets');
+const trafficSourceNetowrkCampaignsAdsetsStats  = require('../reports/trafficSourceNetowrkCampaignsAdsetsStats');
+const trafficSourceNetworkCampaignsStats        = require('../reports/trafficSourceNetworkCampaignsStats');
+const trafficSourceNetworkDaily                 = require('../reports/trafficSourceNetworkDaily');
+const trafficSourceNetworkHourly                = require('../reports/trafficSourceNetworkHourly');
+const compileAggregates                        = require('../reports/compileAggregates');
+const DatabaseRepository                        = require("../../../shared/lib/DatabaseRepository");
 
 class AggregatesRepository {
+
   constructor(database) {
     this.tableName = "insights";
     this.database = database || new DatabaseRepository();
   }
 
-  async revealBotSheets(startDate, endDate, aggregateBy = "campaigns", trafficSource = "facebook") {
+  async revealBotSheets(startDate, endDate, aggregateBy="campaigns", trafficSource="facebook") {
     return await revealBotSheets(this.database, startDate, endDate, aggregateBy, trafficSource);
   }
 
@@ -41,74 +41,49 @@ class AggregatesRepository {
 
   async trafficSourceNetowrkCampaignsAdsetsStats(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    let data = await trafficSourceNetowrkCampaignsAdsetsStats(
-      this.database,
-      startDate,
-      endDate,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
-    );
-    data = data.map((aggregate) => {
-      return this.toDomainEntity(aggregate);
-    });
-    return data;
+    return await trafficSourceNetowrkCampaignsAdsetsStats(this.database,
+      startDate, endDate,
+      network, trafficSource,
+      mediaBuyer, adAccountId, q)
+    ;
   }
 
   async trafficSourceNetworkCampaignsStats(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetworkCampaignsStats(
-      this.database,
-      startDate,
-      endDate,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
-    );
+    return await trafficSourceNetworkCampaignsStats(this.database,
+      startDate, endDate,
+      network, trafficSource,
+      mediaBuyer, adAccountId, q)
+    ;
   }
 
   async trafficSourceNetworkDaily(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetworkDaily(
-      this.database,
-      startDate,
-      endDate,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
+    return await trafficSourceNetworkDaily(this.database,
+      startDate, endDate,
+      network, trafficSource,
+      mediaBuyer, adAccountId, q
     );
   }
 
   async trafficSourceNetworkHourly(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetworkHourly(
-      this.database,
-      startDate,
-      endDate,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
+    return await trafficSourceNetworkHourly(this.database,
+      startDate, endDate,
+      network, trafficSource,
+      mediaBuyer, adAccountId, q
     );
   }
 
-  async compileAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction = null) {
-    return await compileAggregates(this.database, network, trafficSource, startDate, endDate, campaignIdsRestriction);
+  async compileAggregates(network, trafficSource, startDate, endDate) {
+    return await compileAggregates(this.database, network, trafficSource, startDate, endDate);
   }
 
-  
   async upsert(data, trafficSource, network, chunkSize = 500) {
     const mappedData = data.map(row => this.toDatabaseDTO(row, trafficSource, network))
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "unique_identifier");
+        await this.database.upsert(this.tableName, chunk, "unique_identifier");
     }
     return dataChunks;
   }
@@ -118,11 +93,9 @@ class AggregatesRepository {
     row.traffic_source = trafficSource
     row.unique_identifier = `${row.adset_id}-${row.date}-${row.hour}`
     delete row.ad_account_name;
-    return row;
+    return row
   }
-  toDomainEntity(aggregate) {
-    return new Aggregates(aggregate);
-  }
+
 }
 
 module.exports = AggregatesRepository;

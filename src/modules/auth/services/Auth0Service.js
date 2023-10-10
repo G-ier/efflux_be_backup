@@ -2,6 +2,7 @@ const axios = require("axios");
 const UserService = require("./UserService");
 
 class Auth0Service {
+
   constructor() {
     this.userService = new UserService();
   }
@@ -18,7 +19,7 @@ class Auth0Service {
         },
         {
           headers: { "content-type": "application/json" },
-        },
+        }
       )
       .catch((err) => {
         console.error("Error fetching Auth0 access token", err);
@@ -57,7 +58,7 @@ class Auth0Service {
         headers: {
           Authorization,
         },
-      },
+      }
     );
   }
 
@@ -72,13 +73,13 @@ class Auth0Service {
     };
   }
 
-  async login(reqUser, data) {
-    const account = data.account;
+  async login(reqUser, account) {
+
     const { name, email, image_url, nickname, sub } = account;
     const acct_type = reqUser.permissions.includes("admin") ? "admin" : "media_buyer";
     const userFromAuth0 = await this.getAuth0User(sub);
     const identity = this.getUserIdentity(userFromAuth0);
-    const user = await this.userService.fetchOne(["*"], identity);
+    const user = await this.userService.fetchOne(['*'], identity);
 
     // If it doesn't exist, create a use in the database
     if (!user) {
@@ -89,13 +90,15 @@ class Auth0Service {
         image_url,
         sub,
         acct_type,
-        ...identity,
+        ...identity
       });
       return { id: userId, ...userFromAuth0 };
     }
     // If the user exists but his permissions are different, update them
     else {
-      if (user.acct_type !== acct_type) await this.userService.updateUser({ acct_type }, { id: user.id });
+      if (user.acct_type !== acct_type) await this.userService.updateUser(
+        { acct_type }, { id: user.id }
+      );
       return { id: user.id, acct_type: acct_type, ...userFromAuth0 };
     }
   }

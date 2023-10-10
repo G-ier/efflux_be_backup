@@ -1,54 +1,66 @@
 // Third party imports
-const { CronJob } = require("cron");
+const { CronJob }                                                = require('cron');
 
 // Local application imports
-const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD } = require("../../../shared/helpers/calendar");
-const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
-const CompositeService = require("../services/CompositeService");
-const { CROSSROADS_ACCOUNTS } = require("../constants");
+const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD }          = require('../../../shared/helpers/calendar');
+const { sendSlackNotification }                                  = require("../../../shared/lib/SlackNotificationService");
+const CompositeService                                           = require('../services/CompositeService');
+const { CROSSROADS_ACCOUNTS }                                    = require('../constants');
 const {
   CROSSROADS_UPDATE_2_DAYS_AGO_CRON,
   CROSSROADS_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
   CROSSROADS_UPDATE_YESTERDAY_AT_NOON_CRON,
-  CROSSROADS_UPDATE_TODAY_REGULAR_CRON,
-} = require("./rules");
-const { dataUpdatesLogger } = require("../../../shared/lib/WinstonLogger");
+  CROSSROADS_UPDATE_TODAY_REGULAR_CRON
+}                                                                = require('./rules');
+const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 
-const disableGeneralCron = process.env.DISABLE_CRON === "true" || process.env.DISABLE_CRON !== "false";
-const disableCrossroadsCron =
-  process.env.DISABLE_CROSSROADS_CRON === "true" || process.env.DISABLE_CROSSROADS_CRON !== "false";
-const compositeService = new CompositeService();
+const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
+const disableCrossroadsCron       = process.env.DISABLE_CROSSROADS_CRON === 'true' || process.env.DISABLE_CROSSROADS_CRON !== 'false';
+const compositeService            = new CompositeService();
 
 const updateCrossroadsForAllAccounts = async (request_date) => {
   const account = CROSSROADS_ACCOUNTS[0];
   try {
-    dataUpdatesLogger.info(`STARTED | CROSSROADS | ${request_date}`);
+    dataUpdatesLogger.info(`STARTED | CROSSROADS | ${request_date}`)
     await compositeService.updateData(account, request_date);
-    dataUpdatesLogger.info(`COMPLETED | CROSSROADS | ${request_date}`);
+    dataUpdatesLogger.info(`COMPLETED | CROSSROADS | ${request_date}`)
   } catch (error) {
-    dataUpdatesLogger.warn(`FAILED | CROSSROADS | ${request_date} | ${error}`);
-    await sendSlackNotification(`FAILED | CROSSROADS | ${request_date}`);
+    dataUpdatesLogger.warn(`FAILED | CROSSROADS | ${request_date} | ${error}`)
+    await sendSlackNotification(`FAILED | CROSSROADS | ${request_date}`)
     console.log(error);
   }
-};
+}
 
-const update2DaysAgoData = new CronJob(CROSSROADS_UPDATE_2_DAYS_AGO_CRON, async () => {
-  await updateCrossroadsForAllAccounts(dayBeforeYesterdayYMD());
-});
+const update2DaysAgoData = new CronJob(
+  CROSSROADS_UPDATE_2_DAYS_AGO_CRON,
+  (async () => {
+    await updateCrossroadsForAllAccounts(dayBeforeYesterdayYMD());
+  }
+));
 
-const updateYesterdayDataAfterMidnightPST = new CronJob(CROSSROADS_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON, async () => {
-  await updateCrossroadsForAllAccounts(yesterdayYMD());
-});
+const updateYesterdayDataAfterMidnightPST = new CronJob(
+  CROSSROADS_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
+  (async () => {
+    await updateCrossroadsForAllAccounts(yesterdayYMD());
+  }
+));
 
-const updateYesterdayDataAtNoonPST = new CronJob(CROSSROADS_UPDATE_YESTERDAY_AT_NOON_CRON, async () => {
-  await updateCrossroadsForAllAccounts(yesterdayYMD());
-});
+const updateYesterdayDataAtNoonPST = new CronJob(
+  CROSSROADS_UPDATE_YESTERDAY_AT_NOON_CRON,
+  (async () => {
+    await updateCrossroadsForAllAccounts(yesterdayYMD());
+  }
+));
 
-const updateTodayDataRegular = new CronJob(CROSSROADS_UPDATE_TODAY_REGULAR_CRON, async () => {
-  await updateCrossroadsForAllAccounts(todayYMD());
-});
+const updateTodayDataRegular = new CronJob(
+  CROSSROADS_UPDATE_TODAY_REGULAR_CRON,
+  (async () => {
+    await updateCrossroadsForAllAccounts(todayYMD());
+  }
+));
 
 const initializeCrossroadsCron = () => {
+
   // If both are disabled, return immediately
   if (disableGeneralCron && disableCrossroadsCron) return;
 
@@ -56,6 +68,8 @@ const initializeCrossroadsCron = () => {
   updateYesterdayDataAfterMidnightPST.start();
   updateYesterdayDataAtNoonPST.start();
   updateTodayDataRegular.start();
-};
+
+}
+
 
 module.exports = initializeCrossroadsCron;

@@ -1,20 +1,21 @@
-const { google } = require("googleapis");
-const fs = require("fs");
-const { todayYMDHM } = require("../../shared/helpers/calendar");
-const path = require("path");
+const { google } = require('googleapis');
+const fs = require('fs');
+const {todayYMDHM} = require('../../shared/helpers/calendar');
+const path = require('path');
 
 class GoogleSheetsService {
+
   constructor() {
     this.serviceEnabled = false;
-    this.KEY_FILE = path.join(process.cwd(), "cert", "google.json");
+    this.KEY_FILE = path.join(process.cwd(), 'cert', 'google.json');
     this.IgnoredColumns = [];
     this.DefaultValues = {
-      campaign_id: "N/A",
-      campaign_name: "N/A",
-      adset_id: "N/A",
-      adset_name: "N/A",
-      cr_camp_name: "N/A",
-      s1_camp_name: "N/A",
+      campaign_id: 'N/A',
+      campaign_name: 'N/A',
+      adset_id: 'N/A',
+      adset_name: 'N/A',
+      cr_camp_name: 'N/A',
+      s1_camp_name: 'N/A',
     };
     this.init();
   }
@@ -32,28 +33,28 @@ class GoogleSheetsService {
     if (fs.existsSync(this.KEY_FILE)) {
       this.serviceEnabled = true;
     } else {
-      // throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
+        throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
     }
 
     const auth = new google.auth.GoogleAuth({
       keyFile: this.KEY_FILE,
       scopes: [
-        "https://www.googleapis.com/auth/drive",
-        "https://www.googleapis.com/auth/drive.file",
-        "https://www.googleapis.com/auth/drive.readonly",
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/spreadsheets.readonly",
+        'https://www.googleapis.com/auth/drive',
+        'https://www.googleapis.com/auth/drive.file',
+        'https://www.googleapis.com/auth/drive.readonly',
+        'https://www.googleapis.com/auth/spreadsheets',
+        'https://www.googleapis.com/auth/spreadsheets.readonly',
       ],
     });
 
     google.options({ auth });
-    this.drive = google.drive({ version: "v3" });
-    this.sheets = google.sheets({ version: "v4" });
+    this.drive = google.drive({ version: 'v3' });
+    this.sheets = google.sheets({ version: 'v4' });
   }
 
   async getSheet(spreadsheetId, options = {}) {
     if (!this.serviceEnabled) {
-      console.warn("Spreadsheet service is unavailable");
+      console.warn('Spreadsheet service is unavailable');
       return null;
     }
     const { data } = await this.sheets.spreadsheets.get({
@@ -65,7 +66,7 @@ class GoogleSheetsService {
 
   async clearSheet(spreadsheetId, options = {}) {
     if (!this.serviceEnabled) {
-      console.warn("Spreadsheet service is unavailable");
+      console.warn('Spreadsheet service is unavailable');
       return null;
     }
     await this.sheets.spreadsheets.values.clear({
@@ -76,7 +77,7 @@ class GoogleSheetsService {
 
   async getSheetValues(spreadsheetId, options = {}) {
     if (!this.serviceEnabled) {
-      console.warn("Spreadsheet service is unavailable");
+      console.warn('Spreadsheet service is unavailable');
       return null;
     }
     const { data } = await this.sheets.spreadsheets.values.get({
@@ -88,29 +89,35 @@ class GoogleSheetsService {
 
   async updateSheetValues(spreadsheetId, values, options) {
     if (!this.serviceEnabled) {
-      console.warn("Spreadsheet service is unavailable");
+      console.warn('Spreadsheet service is unavailable');
       return null;
     }
     const { data } = await this.sheets.spreadsheets.values.update({
       spreadsheetId,
       requestBody: values,
-      valueInputOption: "USER_ENTERED",
+      valueInputOption: 'USER_ENTERED',
       ...options,
     });
     return data;
   }
 
-  async updateSpreadsheet(data, options, predifeniedRange = "", include_columns = true, add_last_update = true) {
-    const { spreadsheetId, sheetName, excludedFields = [] } = options;
-    const columns = data.columns.filter((col) => this.IgnoredColumns.concat(excludedFields).indexOf(col) === -1);
+  async updateSpreadsheet(
+    data,
+    options,
+    predifeniedRange="",
+    include_columns=true,
+    add_last_update=true
+  ) {
+    const { spreadsheetId, sheetName, excludedFields = [] } = options
+    const columns = data.columns.filter((col) => this.IgnoredColumns.concat(excludedFields).indexOf(col) === -1)
     let rows;
 
     if (add_last_update) {
       const now = todayYMDHM();
       rows = data.rows.map((row) => {
-        return columns.map((column) => row[column] || this.DefaultValues[column] || 0).concat(now);
+        return columns.map((column) => row[column] || this.DefaultValues[column] || 0).concat(now)
       });
-      columns.push("last_update");
+      columns.push('last_update');
     } else {
       rows = data.rows.map((row) => columns.map((column) => row[column] || this.DefaultValues[column] || 0));
     }
@@ -118,19 +125,16 @@ class GoogleSheetsService {
     let values;
     if (include_columns) {
       const parsedColumns = columns.map((column) => {
-        return column
-          .split("_")
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-          .join(" ");
-      });
+        return column.split("_").map((word) => word.charAt(0).toUpperCase() + word.slice(1)).join(" ")
+      })
       values = [parsedColumns].concat(rows);
-    } else {
+    } else{
       values = rows;
     }
     // get spreadsheet meta
     const doc = await this.getSheet(spreadsheetId);
     if (!doc) {
-      return;
+      return
     }
 
     // find target sheet
@@ -154,7 +158,7 @@ class GoogleSheetsService {
     const body = {
       range,
       values,
-      majorDimension: "ROWS",
+      majorDimension: 'ROWS',
     };
 
     await this.updateSheetValues(spreadsheetId, body, {
@@ -163,17 +167,15 @@ class GoogleSheetsService {
   }
 
   async mergeSpreadsheet(data, options) {
-    const { spreadsheetId, sheetName, excludedFields = [] } = options;
+
+    const { spreadsheetId, sheetName, excludedFields = [] } = options
 
     const now = todayYMDHM();
     // Get column names
-    const columns = data.fields
-      .map((field) => field.name)
+    const columns = data.fields.map((field) => field.name)
       .filter((col) => this.IgnoredColumns.concat(excludedFields).indexOf(col) === -1);
     // get rows as array of values
-    const rows = data.rows.map((row) =>
-      columns.map((column) => row[column] || this.DefaultValues[column] || 0).concat(now),
-    );
+    const rows = data.rows.map((row) => columns.map((column) => row[column] || this.DefaultValues[column] || 0).concat(now));
 
     // get spreadsheet meta
     const doc = await this.getSheet(spreadsheetId);
@@ -193,14 +195,14 @@ class GoogleSheetsService {
     const range = sheet.properties.title;
 
     const { values: sheetValues } = await this.getSheetValues(spreadsheetId, {
-      range,
+      range
     });
     const updatedRows = sheetValues.map((row) => {
-      return rows.filter((record) => record[0] == row[3])[0]?.slice(1) || [];
-    });
+      return rows.filter(record => record[0] == row[3])[0]?.slice(1) || []
+    })
 
     // add last_update column
-    columns.push("last_update");
+    columns.push('last_update');
     updatedRows[0] = columns.slice(1);
     updatedRows[1] = [];
     // const newRows = rows.filter(el=> !(sheetValues.map(row => row[3]).includes(el[0])));
@@ -209,14 +211,14 @@ class GoogleSheetsService {
     const body = {
       range: `${range}!W:AH`,
       values: updatedRows,
-      majorDimension: "ROWS",
+      majorDimension: 'ROWS',
     };
 
     const response = await this.updateSheetValues(spreadsheetId, body, {
       range: `${range}!W:AH`,
     });
 
-    console.info("****** Spreadsheet updated ******");
+    console.info('****** Spreadsheet updated ******');
     console.info(`Updated range:   ${response.updatedRange}`);
     console.info(`Updated rows:    ${response.updatedRows}`);
     console.info(`Updated columns: ${response.updatedColumns}`);
@@ -227,12 +229,12 @@ class GoogleSheetsService {
     try {
       await drive.permissions.create({
         resource: {
-          type: "user",
-          role: "writer",
+          type: 'user',
+          role: 'writer',
           emailAddress: email,
         },
         fileId: spreadsheetId,
-        fields: "id",
+        fields: 'id',
       });
     } catch (err) {
       throw new Error(`Error sharing spreadsheet with ${email} - ${err}`);
@@ -249,14 +251,14 @@ class GoogleSheetsService {
     try {
       const response = await this.sheets.spreadsheets.create({
         resource,
-        fields: "spreadsheetId",
+        fields: 'spreadsheetId',
       });
 
       const fileId = response.data.spreadsheetId;
 
       // Now we will share this spreadsheet with the given emails.
       for (const email of emails) {
-        this.givePermission(this.drive, fileId, email);
+        this.givePermission(this.drive, fileId, email)
       }
       return fileId;
     } catch (err) {
@@ -289,7 +291,7 @@ class GoogleSheetsService {
 
   async deleteSpreadsheet(spreadsheetId) {
     if (!this.serviceEnabled) {
-      console.warn("Spreadsheet service is unavailable");
+      console.warn('Spreadsheet service is unavailable');
       return;
     }
     try {
@@ -298,6 +300,8 @@ class GoogleSheetsService {
       throw new Error(`Error deleting spreadsheet - ${error}`);
     }
   }
+
 }
 
 module.exports = GoogleSheetsService;
+

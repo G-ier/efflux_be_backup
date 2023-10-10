@@ -14,7 +14,9 @@ Sentry.init({
 
 // 404
 server.use(function (req, res, next) {
-  return res.status(404).send({ message: "[Route] --> " + req.url + " <-- Not found." });
+  return res
+    .status(404)
+    .send({ message: "[Route] --> " + req.url + " <-- Not found." });
 });
 
 // 500 - Any server error
@@ -25,8 +27,8 @@ server.use(function (err, req, res, next) {
 const port = process.env.PORT || 5000;
 
 server.listen(port, () => {
-  
-  console.log(`🔥 ---------- Server started ------------ 🔥`)
+
+  console.log(`🔥 -------- Server started ---------- 🔥`)
 
   const rulesEnvironment            = process.env.ENVIRONMENT || 'staging';
   const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
@@ -45,10 +47,11 @@ server.listen(port, () => {
   const databaseUrl                 = databaseEnvironment === 'production' ? process.env.DATABASE_URL
                                     : databaseEnvironment === 'staging' ? process.env.DATABASE_URL_STAGING
                                     : process.env.DATABASE_URL_LOCAL;
+
   console.log(`
     Server Info:
       Port: ${port}
-      Slack Notifications: ${disableSlackNotification ? "Disabled" : "Enabled"}
+      Slack Notifications: ${disableSlackNotification ? 'Disabled' : 'Enabled'}
 
     Logging:
       "The production environment logs every modules logs to it's
@@ -56,12 +59,12 @@ server.listen(port, () => {
       to the console. Even if you don't set the LOGGING_ENVIRONMENT
       variable, the default is development."
 
-      Environment: ${loggingEnvironment || "development"}
-      Log Level: ${logLevel || "info"}
+      Environment: ${loggingEnvironment|| 'development'}
+      Log Level: ${logLevel || 'info'}
 
     Database:
-      Environment: ${databaseEnvironment || "development"}
-      URL: ${databaseUrl || "development"}
+      Environment: ${databaseEnvironment || 'development'}
+      URL: ${databaseUrl || 'development'}
 
     Cron Jobs [${rulesEnvironment}]:
       Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
@@ -72,4 +75,5 @@ server.listen(port, () => {
       Aggregates : ${disableAggregatesUpdateCron ? 'Disabled' : 'Enabled'}
       RevealBot  : ${disableRevealBotSheetCron ? 'Disabled' : 'Enabled'}
   `)
+
 });

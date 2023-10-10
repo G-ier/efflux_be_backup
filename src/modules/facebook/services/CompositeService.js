@@ -15,6 +15,7 @@ const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
 const axios = require("axios");
 class CompositeService {
+
   constructor() {
     this.userAccountService = new UserAccountService();
     this.adAccountService = new AdAccountService();
@@ -45,9 +46,8 @@ class CompositeService {
 
     // Sync Pixels
     if (updatePixels)
-      try {
-        await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
-      } catch {}
+      try { await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap)}
+      catch {}
 
     // Sync Campaigns
     if (updateCampaigns)
@@ -102,6 +102,7 @@ class CompositeService {
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
+
     let account;
     try {
       const admins_only = true;
@@ -114,6 +115,7 @@ class CompositeService {
     const { token } = account;
 
     async function updateDatabase(type, entityId, dailyBudget, status) {
+
       const updateData = {
         ...(status && { status }),
         ...(dailyBudget && { daily_budget: dailyBudget }),
@@ -134,7 +136,7 @@ class CompositeService {
     const params = {
       access_token: token,
       ...(status && { status }),
-      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget) }),
+      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget)}),
     };
 
     try {
@@ -183,6 +185,7 @@ class CompositeService {
       return duplicated;
     }
   }
+
 }
 
 module.exports = CompositeService;

@@ -1,4 +1,4 @@
-const environment = process.env.ENVIRONMENT === "production" ? "prod" : "staging";
+const environment = process.env.ENVIRONMENT === 'production' ? 'prod' : 'staging'
 
 const CROSSROADS_UPDATE_2_DAYS_AGO_CRON = '15 8 * * *'
 const CROSSROADS_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON = '4 11 * * *'
@@ -9,5 +9,5 @@ module.exports = {
   CROSSROADS_UPDATE_2_DAYS_AGO_CRON,
   CROSSROADS_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
   CROSSROADS_UPDATE_YESTERDAY_AT_NOON_CRON,
-  CROSSROADS_UPDATE_TODAY_REGULAR_CRON,
+  CROSSROADS_UPDATE_TODAY_REGULAR_CRON
 };

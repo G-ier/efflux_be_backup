@@ -10,7 +10,7 @@ const BaseService = require("../../../shared/services/BaseService");
 const { FB_API_URL } = require("../constants");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
-class CampaignsService extends BaseService {
+class CampaignsService extends BaseService{
   constructor() {
     super(FacebookLogger);
     this.campaignRepository = new CampaignRepository();
@@ -33,7 +33,8 @@ class CampaignsService extends BaseService {
         ...dateParam,
         access_token,
         effective_status,
-      };
+      }
+
       do {
         if (paging?.next) {
           url = paging.next;
@@ -41,13 +42,13 @@ class CampaignsService extends BaseService {
         }
 
         const { data = [] } = await axios
-          .get(url, {
-            params,
-          })
-          .catch((err) => {
-            results.error.push(adAccountId);
-            return {};
-          });
+        .get(url, {
+          params
+        })
+        .catch((err) => {
+          results.error.push(adAccountId);
+          return {};
+        });
         results.sucess.push(adAccountId);
         paging = { ...data?.paging };
         if (data?.data?.length) campaigns.push(...data.data);
@@ -56,9 +57,7 @@ class CampaignsService extends BaseService {
     });
 
     if (results.sucess.length === 0) throw new Error("All ad accounts failed to fetch campaigns");
-    this.logger.info(
-      `Ad Accounts Campaign Fetching Telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.error.length})`,
-    );
+    this.logger.info(`Ad Accounts Campaign Fetching Telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.error.length})`);
     return _.flatten(allCampaigns);
   }
 
@@ -67,8 +66,8 @@ class CampaignsService extends BaseService {
     this.logger.info(`Upserting ${campaigns.length} Campaigns`)
     await this.executeWithLogging(
       () => this.campaignRepository.upsert(campaigns, adAccountsMap, 500),
-      "Error Upserting Campaigns",
-    );
+      "Error Upserting Campaigns"
+    )
     this.logger.info(`Done upserting campaigns`);
     return campaigns.map((campaign) => campaign.id);
   }
