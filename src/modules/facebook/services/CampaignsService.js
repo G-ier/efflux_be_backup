@@ -16,10 +16,9 @@ class CampaignsService extends BaseService{
     this.campaignRepository = new CampaignRepository();
   }
 
-  async getCampaignsFromApi(access_token, adAccountIds, date = "today") {
+  async getCampaignsFromApi(access_token, adAccountIds, startDate, endDate, preset = null) {
     this.logger.info(`Fetching Campaigns from API`);
-    const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-    const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
+    const dateParam = preset ? { date_preset: preset } : { time_range: { since: startDate, until: endDate } };
     const fields =
       "id,account_id,budget_remaining,created_time, daily_budget, status,name,lifetime_budget,start_time,stop_time,updated_time";
     const effective_status = ["ACTIVE", "PAUSED"];
@@ -62,8 +61,8 @@ class CampaignsService extends BaseService{
     return _.flatten(allCampaigns);
   }
 
-  async syncCampaigns(access_token, adAccountIds, adAccountsMap, date = "today") {
-    const campaigns = await this.getCampaignsFromApi(access_token, adAccountIds, date);
+  async syncCampaigns(access_token, adAccountIds, adAccountsMap, startDate, endDate, preset = null) {
+    const campaigns = await this.getCampaignsFromApi(access_token, adAccountIds, startDate, endDate, preset = null);
     this.logger.info(`Upserting ${campaigns.length} Campaigns`)
     await this.executeWithLogging(
       () => this.campaignRepository.upsert(campaigns, adAccountsMap, 500),
@@ -81,6 +80,11 @@ class CampaignsService extends BaseService{
       await sendSlackNotification("ERROR UPDATING campaign. Inspect software if this is a error", error);
       throw error;
     }
+  }
+
+  async fetchUserAccountsEarliestCampaign(userAccountId) {
+    const results = await this.campaignRepository.fetchAccountsEarliestCampaign(userAccountId);
+    return results[0] ? results[0].date_in_utc : null;
   }
 
   async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit) {

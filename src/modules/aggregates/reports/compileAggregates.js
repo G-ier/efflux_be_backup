@@ -1,4 +1,4 @@
-function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate) {
+function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsRestriction) {
   if (trafficSource === 'facebook') {
     return `
       inpulse AS (
@@ -37,6 +37,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate) {
         INNER JOIN inpulse inp ON inp.coefficient_date = fb.date
         WHERE fb.date > '${startDate}' AND fb.date <= '${endDate}'
         AND fb.campaign_id IN (SELECT campaign_id FROM restriction)
+        ${campaignIdsRestriction ? `AND fb.campaign_id IN ${campaignIdsRestriction}` : ''}
         ${
           network === 'crossroads' ? 'GROUP BY fb.date, fb.hour, fb.adset_id' :
           network === 'sedo' ? 'GROUP BY fb.date, fb.adset_id' : ''
@@ -60,6 +61,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate) {
         INNER JOIN campaigns c ON c.id = tt.campaign_id AND c.traffic_source = 'tiktok'
         WHERE tt.date > '${startDate}' AND tt.date <= '${endDate}'
         AND tt.campaign_id IN (SELECT campaign_id FROM restriction)
+        ${campaignIdsRestriction ? `AND tt.campaign_id IN ${campaignIdsRestriction}` : ''}
         ${
           network === 'crossroads' ? 'GROUP BY tt.date, tt.hour, tt.adset_id' :
           network === 'sedo' ? 'GROUP BY tt.date, tt.adset_id' : ''
@@ -72,7 +74,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate) {
 
 }
 
-function NETWORK(network, trafficSource, startDate, endDate) {
+function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
   if (network === 'crossroads') {
     return `
       network AS (
@@ -93,6 +95,7 @@ function NETWORK(network, trafficSource, startDate, endDate) {
         WHERE cr.request_date > '${startDate}'
         AND   cr.request_date <= '${endDate}'
         AND   cr.traffic_source = '${trafficSource}'
+        ${campaignIdsRestriction ? `AND cr.campaign_id IN ${campaignIdsRestriction}` : ''}
         GROUP BY cr.request_date, cr.hour, cr.adset_id
       )
     `
@@ -115,6 +118,7 @@ function NETWORK(network, trafficSource, startDate, endDate) {
               WHERE sedo.date > '${startDate}'
               AND   sedo.date <= '${endDate}'
               AND   sedo.traffic_source = '${trafficSource}'
+              ${campaignIdsRestriction ? `AND sedo.campaign_id IN ${campaignIdsRestriction}` : ''}
         GROUP BY sedo.date, sedo.adset_id
       )
     `
@@ -197,7 +201,7 @@ function RETURN_FIELDS(network, traffic_source) {
   `
 }
 
-async function compileAggregates(database, network, trafficSource, startDate, endDate) {
+async function compileAggregates(database, network, trafficSource, startDate, endDate, campaignIdsRestriction=null) {
 
   const query = `
     WITH restriction AS (
@@ -216,20 +220,23 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         adsets.ad_account_id as ad_account_id
       FROM adsets
         JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
+        ${campaignIdsRestriction ? `WHERE c.id IN ${campaignIdsRestriction}` : ''}
       GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
     )
-    , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate)}
-    , ${NETWORK(network, trafficSource, startDate, endDate)}
+    , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
+    , ${NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
     , postback_events AS (
       SELECT
         pb.date as date,
         ${network === 'sedo'? "--" : ''}pb.hour as hour,
         pb.adset_id,
+        MAX(pb.campaign_id) as campaign_id,
         CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
       FROM postback_events pb
       WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}' AND pb.traffic_source = '${trafficSource}'
+      ${campaignIdsRestriction ? `AND pb.campaign_id IN ${campaignIdsRestriction}` : ''}
       ${
         network === 'crossroads' ? 'GROUP BY pb.date, pb.hour, pb.adset_id' :
         network === 'sedo' ? 'GROUP BY pb.date, pb.adset_id' : ''

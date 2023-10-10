@@ -8,8 +8,8 @@ class CampaignsController {
   }
 
   async syncCampaigns(req, res) {
-    const { token, adAccountIds, adAccountsMap, date } = req.body;
-    const campaignIds = await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date);
+    const { token, adAccountIds, adAccountsMap, startDate, endDate, preset } = req.body;
+    const campaignIds = await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, startDate, endDate, preset);
     res.json(campaignIds);
   }
 

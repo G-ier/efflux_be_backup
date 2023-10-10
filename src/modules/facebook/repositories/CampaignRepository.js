@@ -4,6 +4,7 @@ const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 const AdsetService = require("../services/AdsetsService");
 const AdsetRepository = require("./AdsetsRepository");
 class CampaignRepository {
+
   constructor(database) {
     this.tableName = "campaigns";
     this.database = database || new DatabaseRepository();
@@ -15,6 +16,7 @@ class CampaignRepository {
     const dbObject = this.toDatabaseDTO(campaign);
     return await this.database.insert(this.tableName, dbObject);
   }
+
   async updateOne(adset, criteria) {
     const dbObject = this.toDatabaseDTO(adset);
     return await this.database.update(this.tableName, dbObject, criteria);
@@ -43,6 +45,21 @@ class CampaignRepository {
   async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
+  }
+
+  async fetchAccountsEarliestCampaign(userAccountId) {
+    const results = await this.database.raw(`
+      SELECT
+          TO_CHAR((created_time::timestamptz AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS date_in_utc
+      FROM
+          campaigns
+      WHERE
+          account_id = ${userAccountId}
+      ORDER BY
+          created_time::timestamptz
+      LIMIT 1;
+    `)
+    return results.rows;
   }
 
   async duplicateShallowCampaignOnDb(newCampaignId, entity_id, rename_options) {

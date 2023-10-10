@@ -76,9 +76,7 @@ class Auth0Service {
   async login(reqUser, account) {
 
     const { name, email, image_url, nickname, sub } = account;
-    const acct_type = reqUser.permissions.includes("admin")
-      ? "admin"
-      : "media_buyer";
+    const acct_type = reqUser.permissions.includes("admin") ? "admin" : "media_buyer";
     const userFromAuth0 = await this.getAuth0User(sub);
     const identity = this.getUserIdentity(userFromAuth0);
     const user = await this.userService.fetchOne(['*'], identity);

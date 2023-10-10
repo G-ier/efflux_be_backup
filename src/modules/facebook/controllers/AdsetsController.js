@@ -8,8 +8,8 @@ class AdsetsController {
   }
 
   async syncAdsets(req, res) {
-    const { token, adAccountIds, adAccountsMap, campaignIds, date } = req.body;
-    const adsetIds = await this.adsetsService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date);
+    const { token, adAccountIds, adAccountsMap, campaignIds, startDate, endDate, preset } = req.body;
+    const adsetIds = await this.adsetsService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, startDate, endDate, preset);
     res.json(adsetIds);
   }
 

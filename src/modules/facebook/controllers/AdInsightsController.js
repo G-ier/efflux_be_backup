@@ -8,8 +8,8 @@ class AdInsightsController {
   }
 
   async syncAdInsights(req, res) {
-    const { token, adAccountIds, date } = req.query;
-    const adInsights = await this.adInsightsService.syncAdInsights(token, adAccountIds, date);
+    const { token, adAccountIds, startDate, endDate, preset } = req.query;
+    const adInsights = await this.adInsightsService.syncAdInsights(token, adAccountIds, startDate, endDate, preset);
     return res.status(200).json({ adInsights });
   }
 

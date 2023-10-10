@@ -8,6 +8,7 @@ const AdInsightRepository = require("../repositories/AdInsightsRepository");
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
 const { FB_API_URL, delay } = require('../constants');
+const { listDatesBetween } = require('../helpers');
 
 class AdInsightsService extends BaseService{
 
@@ -26,10 +27,16 @@ class AdInsightsService extends BaseService{
     };;
   }
 
-  async getAdInsightsFromAPI(access_token, adAccountIds, date) {
+  async getAdInsightsFromAPI(access_token, adAccountIds, startDate, endDate, preset=null) {
+
     this.logger.info(`Fetching Insights from API`);
-    const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
-    const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
+
+    const dateParam = preset ? { date_preset: preset }
+    : startDate === endDate ? { time_range: { since: startDate, until: endDate } }
+    : { time_ranges: listDatesBetween(startDate, endDate).map(date => {
+      return { since: date, until: date }
+    }) };
+
     const fields =
       "account_id,ad_id,adset_id,inline_link_clicks,campaign_id,date_start,date_stop,impressions,clicks,reach,frequency,spend,cpc,ad_name,adset_name,campaign_name,account_currency,conversions,actions";
     const results = { sucess: [], error: [] };
@@ -73,7 +80,7 @@ class AdInsightsService extends BaseService{
     return _.flatten(allInsights);
   }
 
-  async getAdInsightsByDate(access_token, adAccountIds, date, development=false) {
+  async getAdInsightsByDate(access_token, adAccountIds, date) {
     const isPreset = !/\d{4}-\d{2}-\d{2}/.test(date);
     const dateParam = isPreset ? { date_preset: date } : { time_range: { since: date, until: date } };
 
@@ -115,11 +122,11 @@ class AdInsightsService extends BaseService{
 
   }
 
-  async syncAdInsights(access_token, adAccountIds, date, development=false) {
-    const insights = await this.getAdInsightsFromAPI(access_token, adAccountIds, date, development);
+  async syncAdInsights(access_token, adAccountIds, startDate, endDate, preset=null) {
+    const insights = await this.getAdInsightsFromAPI(access_token, adAccountIds, startDate, endDate, preset);
     this.logger.info(`Upserting ${insights.length} insights`);
     await this.executeWithLogging(
-      () => this.adInsightRepository.upsert(insights, date),
+      () => this.adInsightRepository.upsert(insights),
       "Error upserting insights"
     )
     this.logger.info(`Done upserting insights`);

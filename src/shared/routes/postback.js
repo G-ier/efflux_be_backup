@@ -56,13 +56,11 @@ async function processQueue() {
 // @route     /trk
 // @desc     GET track
 // @Access   Private
-route.get('/', async (req, res) => {
-
+route.get("/", async (req, res) => {
   try {
-    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const client_user_agent = req.headers['user-agent'];
-    const referrer_url =  `https://${req.get('host')}${req.originalUrl}`
-
+    const client_ip_address = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
+    const client_user_agent = req.headers["user-agent"];
+    const referrer_url = `https://${req.get("host")}${req.originalUrl}`;
     PostbackLogger.info(`DA PBQP: ${JSON.stringify(req.query)}`)
     const {
       tg1,
