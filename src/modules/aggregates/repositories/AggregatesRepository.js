@@ -75,8 +75,8 @@ class AggregatesRepository {
     );
   }
 
-  async compileAggregates(network, trafficSource, startDate, endDate) {
-    return await compileAggregates(this.database, network, trafficSource, startDate, endDate);
+  async compileAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
+    return await compileAggregates(this.database, network, trafficSource, startDate, endDate, campaignIdsRestriction);
   }
 
   async upsert(data, trafficSource, network, chunkSize = 500) {
