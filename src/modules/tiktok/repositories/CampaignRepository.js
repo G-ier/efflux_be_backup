@@ -28,7 +28,17 @@ class CampaignRepository {
       await this.database.upsert(this.tableName, chunk, "id");
     }
   }
+  async updateOne(campaign, criteria) {
+    const data = this.toDatabaseDTO(campaign)
+    const dbObject = Object.keys(data).reduce((acc, key) => {
+      if (data[key] != null) {  // This will check for both null and undefined
+        acc[key] = data[key];
+      }
+      return acc;
+    }, {});
 
+    return await this.database.update(this.tableName, dbObject, criteria);
+  }
   async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
@@ -41,11 +51,11 @@ class CampaignRepository {
       created_time: campaign.create_time,
       updated_time: campaign.modify_time,
       traffic_source: "tiktok",
-      status: campaign.operation_status,
-      user_id: adAccountsMap[campaign.advertiser_id].user_id,
-      account_id: adAccountsMap[campaign.advertiser_id].account_id,
-      ad_account_id: adAccountsMap[campaign.advertiser_id].id,
-      daily_budget: null,
+      status: campaign.status || campaign.operation_status,
+      user_id: adAccountsMap?.[campaign.advertiser_id].user_id,
+      account_id: adAccountsMap?.[campaign.advertiser_id].account_id,
+      ad_account_id: adAccountsMap?.[campaign.advertiser_id].id,
+      daily_budget: campaign.dailyBudget || null,
       lifetime_budget: campaign.budget ?? 0,
       budget_remaining: null,
       network: "unknown",

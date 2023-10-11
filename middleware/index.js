@@ -23,6 +23,7 @@ const scrappedAds = require("../src/modules/scrappedAds/routes");
 const aggregations = require("../src/modules/aggregates/routes");
 const crossroadsRoutes = require("../src/modules/crossroads/routes");
 const auth = require("../src/modules/auth/routes");
+const management = require("../src/shared/routes/management");
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
 
@@ -72,6 +73,7 @@ function configureMiddleware(server) {
   server.use("/api/composite-ad", scrappedAds);
   server.use("/api/aggregations", aggregations);
   server.use("/api/crossroads", crossroadRouter);
+  server.use("/api/management", management);
 
   server.use(ErrorHandler);
 }
