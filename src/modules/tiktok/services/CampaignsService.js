@@ -5,7 +5,6 @@ const BaseService = require("../../../shared/services/BaseService");
 const { TIKTOK_CAMPAIGN_FIELDS_FILTER } = require("../constants");
 const { getTikTokEndpointData, updateTikTokEntity, statusMapping } = require("../helpers");
 
-
 class CampaignService extends BaseService {
 
   constructor() {
@@ -50,7 +49,6 @@ class CampaignService extends BaseService {
         this.logger.error('No update criteria provided');  // Log an error if no criteria are provided
         throw new Error('No update criteria provided');
       }
-
       // Call updateTikTokEntity with the necessary arguments
       this.logger.info(`Updating TikTok entity for ID ${entityId}`);  // Log the start of the TikTok update
       const tikTokResponse = await updateTikTokEntity({

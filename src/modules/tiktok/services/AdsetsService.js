@@ -46,13 +46,11 @@ class AdsetService extends BaseService {
         criteria.status = statusMapping[status];
       }
       this.logger.debug(`Update criteria for entity ID ${entityId}: ${JSON.stringify(criteria)}`);  // Log the update criteria
-
       // Ensure at least one criterion has been provided
       if (Object.keys(criteria).length === 0) {
         this.logger.error('No update criteria provided');  // Log an error if no criteria are provided
         throw new Error('No update criteria provided');
       }
-
       // Call updateTikTokEntity with the necessary arguments
       this.logger.info(`Updating TikTok entity for ID ${entityId}`);  // Log the start of the TikTok update
       const tikTokResponse = await updateTikTokEntity({
@@ -113,6 +111,7 @@ class AdsetService extends BaseService {
         throw error;
     }
   }
+
 
   async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit) {
     return await this.adsetsRepository.fetchAdsets(fields, filters, limit);

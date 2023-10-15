@@ -101,7 +101,6 @@ class CompositeService {
           }
         }
 
-
         if (type === 'campaign' && status !== undefined && (statusResponse && statusResponse.code === 0)) {
           await this.adsetService.updateAdsetsForCampaign(entityId, status, token,provider_id);
             this.logger.info(`Successfully updated adsets for campaign ID ${entityId}`);
@@ -129,6 +128,7 @@ class CompositeService {
       this.logger.info(`Successfully updated entity of type ${type} with ID ${entityId}`);
       return updateResponse;
   }
+
 }
 
 module.exports = CompositeService;

@@ -132,3 +132,4 @@ const calculateAccumulated = (data, fields=['spend']) => {
 }
 
 module.exports = { getTikTokEndpointData, updateTikTokEntity, calculateAccumulated, statusMapping };
+
