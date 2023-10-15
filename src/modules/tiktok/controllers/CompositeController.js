@@ -14,7 +14,18 @@ class CompositeController {
       console.error("Error updating TikTok data in controller: ", error);
       res.status(500).json({ message: "Error updating TikTok data.", error: error.message });
     }
+
+    
+  }
+  async updateEntity(req, res) {
+    const { entityId, status, dailyBudget, type } = req.query;
+    try {
+      const updated = await this.compositeService.updateEntity({ type, entityId, status, dailyBudget });
+
+      res.status(200).json({ updated });
+    } catch ({ message }) {
+      res.status(500).json({ updated: false, message });
+    }
   }
 }
-
 module.exports = CompositeController;

@@ -35,6 +35,18 @@ class AdsetsRepository {
     return results;
   }
 
+  async updateOne(adset, criteria) {
+    const data = this.toDatabaseDTO(adset)
+    const dbObject = Object.keys(data).reduce((acc, key) => {
+      if (data[key] != null) {  // This will check for both null and undefined
+        acc[key] = data[key];
+      }
+      return acc;
+    }, {});
+
+    return await this.database.update(this.tableName, dbObject, criteria);
+  }
+
   toDatabaseDTO(adset, adAccountsMap) {
     return {
       id: adset.adgroup_id,
@@ -44,11 +56,11 @@ class AdsetsRepository {
       traffic_source: "tiktok",
       campaign_id: adset.campaign_id,
       provider_id: adset.adgroup_id,
-      status: adset.operation_status,
-      user_id: adAccountsMap[adset.advertiser_id].user_id,
-      account_id: adAccountsMap[adset.advertiser_id].account_id,
-      ad_account_id: adAccountsMap[adset.advertiser_id].id,
-      daily_budget: adset.daily_budget,
+      status: adset.status || adset.operation_status,
+      user_id: adAccountsMap?.[adset.advertiser_id].user_id,
+      account_id: adAccountsMap?.[adset.advertiser_id].account_id,
+      ad_account_id: adAccountsMap?.[adset.advertiser_id].id,
+      daily_budget: adset.dailyBudget || adset.budget,
       lifetime_budget: adset.lifetime_budget,
       budget_remaining: adset.budget_remaining,
       network: "unknown",

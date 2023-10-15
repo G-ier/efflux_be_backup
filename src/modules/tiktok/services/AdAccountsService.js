@@ -71,6 +71,15 @@ class AdAccountService extends BaseService {
     return results
   }
 
+  async fetchAdAccountDetails(ad_account_id,provider) {
+    const adAccount = await this.fetchAdAccountsFromDatabase(
+        ["id", "provider_id", "user_id", "account_id"],
+        { provider: provider, id: parseInt(ad_account_id) }
+    );
+    this.logger.debug('Fetched ad account details');
+    return adAccount[0];
+}
+
   async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit) {
     const results = await this.adAccountsRepository.fetchAdAccounts(fields, filters, limit);
     return results;

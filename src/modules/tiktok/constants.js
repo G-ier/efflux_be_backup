@@ -76,6 +76,8 @@ const TIKTOK_INSIGHTS_ADDITIONAL_PARAMS = {
     "cpc",
     "ctr",
     "conversion",
+    "campaign_budget",
+    "budget"
   ]),
   filtering: JSON.stringify([{ field_name: "ad_status", filter_type: "IN", filter_value: '["STATUS_ALL"]' }]),
   query_mode: "CHUNK",
