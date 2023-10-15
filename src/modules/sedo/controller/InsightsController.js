@@ -6,9 +6,9 @@ class InsightsController {
   }
 
   async syncInsights(req, res) {
-    const { date } = req.body;
-    await this.service.getInsightsFromApi(date);
-    return res.status(200).json({ adInsights });
+    const { date } = req.query;
+    await this.service.syncSedoInsights(date);
+    return res.status(200).json(`Sedo insights for date ${date} synced successfully`);
   }
 
 }

@@ -19,8 +19,10 @@ const postback = require("../src/shared/routes/postback");
 // New routes
 const temp = require("../src/modules/temp/routes");
 const facebook = require("../src/modules/facebook/routes");
+const tiktok = require("../src/modules/tiktok/routes");
 const scrappedAds = require("../src/modules/scrappedAds/routes");
 const aggregations = require("../src/modules/aggregates/routes");
+const sedo = require("../src/modules/sedo/routes");
 const crossroadsRoutes = require("../src/modules/crossroads/routes");
 const auth = require("../src/modules/auth/routes");
 const management = require("../src/shared/routes/management");
@@ -70,9 +72,11 @@ function configureMiddleware(server) {
   server.use("/api/temp", temp); // This will be replaced by the new routes
   server.use("/api/auth", auth);
   server.use("/api/facebook", facebook);
+  server.use("/api/tiktok", tiktok);
   server.use("/api/composite-ad", scrappedAds);
   server.use("/api/aggregations", aggregations);
   server.use("/api/crossroads", crossroadRouter);
+  server.use("/api/sedo", sedo);
   server.use("/api/management", management);
 
   server.use(ErrorHandler);
