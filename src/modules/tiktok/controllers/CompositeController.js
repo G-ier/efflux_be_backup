@@ -6,9 +6,12 @@ class CompositeController {
   }
 
   async updateData(req, res) {
-    const { date } = req.query;
+    let { date, adAccountIdsLimitation } = req.query;
     try {
-      await this.compositeService.updateTikTokData(date);
+      if (adAccountIdsLimitation) {
+        adAccountIdsLimitation = JSON.parse(adAccountIdsLimitation);
+      }
+      await this.compositeService.updateTikTokData(date, adAccountIdsLimitation);
       res.status(200).json({ message: "TikTok data updated successfully." });
     } catch (error) {
       console.error("Error updating TikTok data in controller: ", error);

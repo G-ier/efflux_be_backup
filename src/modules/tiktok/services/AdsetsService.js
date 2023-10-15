@@ -7,6 +7,7 @@ const { sendSlackNotification }  = require("../../../shared/lib/SlackNotificatio
 const _ = require("lodash");
 
 class AdsetService extends BaseService {
+
   constructor() {
     super(TiktokLogger);
     this.adsetsRepository = new AdsetsRepository();
@@ -35,7 +36,6 @@ class AdsetService extends BaseService {
   async updateEntity({entityId, dailyBudget, status, advertiser_id, token}) {
     try {
       this.logger.info(`Starting update for entity ID: ${entityId}`);  // Log the start of the update operation
-  
       // Dynamically construct criteria based on provided values
       const criteria = {};
       if (dailyBudget !== undefined) {
@@ -45,15 +45,12 @@ class AdsetService extends BaseService {
       if (status !== undefined) {
         criteria.status = statusMapping[status];
       }
-  
       this.logger.debug(`Update criteria for entity ID ${entityId}: ${JSON.stringify(criteria)}`);  // Log the update criteria
-  
       // Ensure at least one criterion has been provided
       if (Object.keys(criteria).length === 0) {
         this.logger.error('No update criteria provided');  // Log an error if no criteria are provided
         throw new Error('No update criteria provided');
       }
-  
       // Call updateTikTokEntity with the necessary arguments
       this.logger.info(`Updating TikTok entity for ID ${entityId}`);  // Log the start of the TikTok update
       const tikTokResponse = await updateTikTokEntity({
@@ -63,15 +60,14 @@ class AdsetService extends BaseService {
         updateParams: criteria,
         entityId
       });
-      
+
       this.logger.info(`Successfully updated TikTok entity for ID ${entityId}`);  // Log the success of the TikTok update
-  
+
       // After successfully updating the TikTok entity, update the local entity in your database
       this.logger.info(`Updating local entity for ID ${entityId}`);  // Log the start of the local update
       const localUpdateResponse = await this.adsetsRepository.updateOne(criteria, { provider_id: entityId });
-  
+
       this.logger.info(`Successfully updated local entity for ID ${entityId}`);  // Log the success of the local update
-  
       return {
         tikTokResponse,
         localUpdateResponse
@@ -82,39 +78,40 @@ class AdsetService extends BaseService {
       throw error;
     }
   }
-  
-async updateAdsetsForCampaign(campaignId, status, token,advertiser_id) {
-  try {
-      this.logger.info(`Fetching adsets for campaign ID ${campaignId}`);
-      const adsets = await this.fetchAdsetsFromDatabase(["provider_id", "ad_account_id"], {campaign_id: campaignId});
-      
-      if (adsets.length === 0) {
-          this.logger.warn(`No adsets found for campaign ID ${campaignId}`);
-          return;
-      }
 
-      const adsetEntityIds = adsets.map(adset => adset.provider_id);
-      this.logger.info(`Updating status for adset IDs ${adsetEntityIds.join(', ')} to ${status}`);
-      
-      const updateResponse = await this.updateEntity({
-          entityId: adsetEntityIds,
-          status,
-          advertiser_id,
-          token
-      });
+  async updateAdsetsForCampaign(campaignId, status, token,advertiser_id) {
+    try {
+        this.logger.info(`Fetching adsets for campaign ID ${campaignId}`);
+        const adsets = await this.fetchAdsetsFromDatabase(["provider_id", "ad_account_id"], {campaign_id: campaignId});
 
-      // Optional: Check updateResponse for success/failure and log accordingly
-      if (updateResponse && updateResponse.tikTokResponse.statusResponse.code === 0) {
-          this.logger.info(`Successfully updated status for adset IDs ${adsetEntityIds.join(', ')} to ${status}`);
-      } else {
-          this.logger.error(`Failed to update status for adset IDs ${adsetEntityIds.join(', ')}. Error Code: ${updateResponse.code}`);
-      }
-      
-  } catch (error) {
-      this.logger.error(`Error updating adsets for campaign ID ${campaignId}: ${error.message}`);
-      throw error;
+        if (adsets.length === 0) {
+            this.logger.warn(`No adsets found for campaign ID ${campaignId}`);
+            return;
+        }
+
+        const adsetEntityIds = adsets.map(adset => adset.provider_id);
+        this.logger.info(`Updating status for adset IDs ${adsetEntityIds.join(', ')} to ${status}`);
+
+        const updateResponse = await this.updateEntity({
+            entityId: adsetEntityIds,
+            status,
+            advertiser_id,
+            token
+        });
+
+        // Optional: Check updateResponse for success/failure and log accordingly
+        if (updateResponse && updateResponse.tikTokResponse.statusResponse.code === 0) {
+            this.logger.info(`Successfully updated status for adset IDs ${adsetEntityIds.join(', ')} to ${status}`);
+        } else {
+            this.logger.error(`Failed to update status for adset IDs ${adsetEntityIds.join(', ')}. Error Code: ${updateResponse.code}`);
+        }
+
+    } catch (error) {
+        this.logger.error(`Error updating adsets for campaign ID ${campaignId}: ${error.message}`);
+        throw error;
+    }
   }
-}
+
 
   async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit) {
     return await this.adsetsRepository.fetchAdsets(fields, filters, limit);

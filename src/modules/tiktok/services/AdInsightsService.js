@@ -1,4 +1,4 @@
-const { getTikTokEndpointData } = require("../helpers");
+const { getTikTokEndpointData, calculateAccumulated } = require("../helpers");
 const { TIKTOK_INSIGHTS_ADDITIONAL_PARAMS } = require("../constants");
 const AdInsightRepository = require("../repositories/AdInsightsRepository");
 const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
@@ -22,10 +22,10 @@ class AdInsightsService extends BaseService {
     return await getTikTokEndpointData(endpoint, access_token, adAccountIds, additionalParams);
   }
 
-  async syncAdInsights(access_token, adAccountIds, adAccountsMap, date) {
+  async syncAdInsights(access_token, adAccountIds, campaignIdsMap, date) {
     const adInsights = await this.getTikTokAdInsights(access_token, adAccountIds, date);
     this.logger.info(`Upserting ${adInsights.length} Ad Insights`);
-    await this.adInsightRepository.upsert(adInsights, adAccountsMap, 500);
+    await this.adInsightRepository.upsert(adInsights, campaignIdsMap, 500);
     this.logger.info(`Done upserting ad insights`);
     return adInsights.map((adInsight) => adInsight.ad_id);
   }

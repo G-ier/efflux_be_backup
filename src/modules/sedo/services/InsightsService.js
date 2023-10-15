@@ -41,10 +41,6 @@ class InsightsService extends BaseService {
       this.logger.error(`Error fetching Sedo data from API for date ${date}: ${parsedXMLBody.SEDOFAULT.faultstring[0]._}`)
       return []
     }
-
-    // const apiResult = calculateAccumulated(parsedXMLBody.SEDOSTATS.item)
-    // console.log(apiResult)
-
     return parsedXMLBody.SEDOSTATS.item;
   }
 

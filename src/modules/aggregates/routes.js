@@ -33,4 +33,8 @@ route.get('/hourly-report', async (req, res) =>
   await aggregatesController.generateTrafficSourceNetworkHourlyReport(req, res)
 );
 
+route.get('/sync-data', async (req, res) =>
+  await aggregatesController.syncData(req, res)
+);
+
 module.exports = route;

@@ -54,7 +54,7 @@ class AdInsightRepository {
       conversions: +adInsight.metrics.conversion,
       impressions: +adInsight.metrics.impressions,
       adset_id: adInsight.metrics.adgroup_id,
-      ad_account_id: adAccountsCampaignIdsMap[adInsight.metrics.campaign_id],
+      ad_account_id: adAccountsCampaignIdsMap[adInsight.metrics.campaign_id]?.ad_account_id || null,
       cpm: +adInsight.metrics.cpm,
       ctr: +adInsight.metrics.ctr,
       unique_identifier: `${adInsight.dimensions.ad_id}-${date}-${hour}`,

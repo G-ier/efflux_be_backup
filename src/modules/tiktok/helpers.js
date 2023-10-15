@@ -1,66 +1,70 @@
-const axios = require("axios");
-const { TIKTOK_API_URL } = require("./constants");
-const { TiktokLogger } = require("../../shared/lib/WinstonLogger");
-  // Create a mapping for status values
-  const statusMapping = {
-    ACTIVE: 'ENABLE',
-    PAUSED: 'DISABLE'
-  };
+// Third party imports
+const _                                     = require('lodash');
+const async                                 = require('async');
+const axios                                 = require('axios');
 
+// Local application imports
+const { TIKTOK_API_URL }                    = require("./constants");
+const { TiktokLogger }                      = require("../../shared/lib/WinstonLogger");
+
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const CONCURRENCY_LIMIT = 5;
 const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, additionalParams = {}) => {
+
   const url = `${TIKTOK_API_URL}/${endpoint}/get/?`;
   const headers = {
     "Access-Token": access_token,
   };
 
-  const requests = ad_account_ids.map((ad_account_id) => {
-    const params = new URLSearchParams({
+  const results = { success: [], error: [] };
+
+  const allData = await async.mapLimit(ad_account_ids, CONCURRENCY_LIMIT, async (ad_account_id) => {
+    const paramsObj = {
       advertiser_id: ad_account_id,
       ...additionalParams,
-    });
-    return {
-      ad_account_id,
-      promise: axios.get(url + params.toString(), { headers }),
     };
+
+    const params = new URLSearchParams(paramsObj);
+    const response = await axios
+      .get(url + params.toString(), { headers })
+      .catch((err) => {
+        results.error.push(ad_account_id);
+        return {};
+      });
+
+    if (response?.data?.code === 0) {
+      results.success.push(ad_account_id);
+      await delay(1000);
+      return response.data.data.list;
+    } else {
+      return [];
+    }
   });
 
-  const allData = [];
-  const results = {sucess: [], failure: []}
-  await Promise.all(
-    requests.map(async ({ ad_account_id, promise }) => {
-      try {
-        const res = await promise;
-        if (res.data.code === 0) {
-          allData.push(...res.data.data.list);
-          results.sucess.push(ad_account_id);
-        } else {
-          results.failure.push(ad_account_id);
-        }
-      } catch {
-        results.failure.push(ad_account_id);
-      }
-    })
-  );
+  if (results.success.length === 0) throw new Error(`All ad accounts failed to fetch from ${endpoint}`);
+  TiktokLogger.info(`Fetched ${allData.flat().length} ${endpoint} from API`);
+  TiktokLogger.info(`Ad Accounts ${endpoint} fetching telemetry: SUCCESS(${results.success.length}) | ERROR(${results.error.length})`);
 
-  if (results.sucess.length === 0) throw new Error(`All ad accounts failed to fetch from ${endpoint}`);
-  TiktokLogger.info(`Fetched ${allData.length} ${endpoint} from API`);
-  TiktokLogger.info(`Ad Accounts ${endpoint} fetching telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.failure.length})`);
-  return allData;
+  return _.flatten(allData);
 };
 
+const statusMapping = {
+  ACTIVE: 'ENABLE',
+  PAUSED: 'DISABLE'
+};
 const updateTikTokEntity = async ({type, access_token, advertiser_id, updateParams, entityId, entityName}) => {
   let endpoint;
   const headers = {
     "Access-Token": access_token,
   };
-  
+
   // Determine the specific ID parameter name based on the type
   const idParamName = type === 'campaign' ? 'campaign_id' : 'adgroup_id';
   // Initialize common params
   const commonParams = new URLSearchParams({
     advertiser_id,
   });
-  
+
   // Function to send request to TikTok API
   const sendRequest = async (endpoint, params) => {
     const url = `${TIKTOK_API_URL}/${endpoint}/?`;
@@ -78,28 +82,28 @@ const updateTikTokEntity = async ({type, access_token, advertiser_id, updatePara
       throw error;
     }
   };
-  
+
   let statusResponse, budgetResponse;
-  
-// Update status if provided
-if (updateParams.status) {
-  endpoint = type === 'campaign' ? 'campaign/status/update' : 'adgroup/status/update';
-  const statusParams = new URLSearchParams(commonParams);
-  
-  // Prepare the entity IDs
-  const entityIds = Array.isArray(entityId) ? entityId : [entityId];
-  
-  if(type === 'campaign') {
-    statusParams.append("campaign_ids", JSON.stringify(entityIds));
-  } else if(type === 'adset') {
-    statusParams.append("adgroup_ids", JSON.stringify(entityIds));
+
+  // Update status if provided
+  if (updateParams.status) {
+    endpoint = type === 'campaign' ? 'campaign/status/update' : 'adgroup/status/update';
+    const statusParams = new URLSearchParams(commonParams);
+
+    // Prepare the entity IDs
+    const entityIds = Array.isArray(entityId) ? entityId : [entityId];
+
+    if(type === 'campaign') {
+      statusParams.append("campaign_ids", JSON.stringify(entityIds));
+    } else if(type === 'adset') {
+      statusParams.append("adgroup_ids", JSON.stringify(entityIds));
+    }
+
+    statusParams.append('operation_status', updateParams.status);
+
+    statusResponse = await sendRequest(endpoint, statusParams);
   }
-  
-  statusParams.append('operation_status', updateParams.status);
-  
-  statusResponse = await sendRequest(endpoint, statusParams);
-}
-  
+
   // Update budget if provided
   if (updateParams.dailyBudget !== undefined || updateParams.budget !== undefined) {
     endpoint = type === 'campaign' ? 'campaign/update' : 'adgroup/update';
@@ -114,4 +118,18 @@ if (updateParams.status) {
   return { statusResponse, budgetResponse };
 };
 
-module.exports = { getTikTokEndpointData, updateTikTokEntity, statusMapping };
+const calculateAccumulated = (data, fields=['spend']) => {
+
+  return data.reduce((acc, item) => {
+    fields.forEach(field => {
+      if (!acc[field]) acc[field] = 0
+      acc[field] += item.metrics[field] ? parseFloat(item.metrics[field]) : 0
+    })
+    return acc
+  }, {
+    spend: 0
+  })
+}
+
+module.exports = { getTikTokEndpointData, updateTikTokEntity, calculateAccumulated, statusMapping };
+

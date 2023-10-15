@@ -1,0 +1,21 @@
+{
+	"metrics": {
+		"campaign_id": "1778319307197458",
+		"campaign_name": "Apostrophe x Roiad - FR Bank Account Sedo | bancaire-enligne.site_260923 new1",
+		"adgroup_id": "1779273995800609",
+		"cpc": "0.00",
+    "currency": "USD",
+    "conversion": "0",
+    "cpm": "6.92",
+    "adgroup_name": "Copy 1 of Apostrophe x Roiad - FR Bank Account Sedo | bancaire-enligne.site_260923_AS_1_CostCap",
+    "ctr": 0.00,
+    "spend": 0.09,
+    "impressions": "13",
+    "ad_name": "0928.mp4_001",
+    "clicks": "0"
+	},
+	"dimensions": {
+    "stat_time_hour": "2023-10-13 09:00:00",
+    "ad_id": "1779274027852802"
+	}
+}

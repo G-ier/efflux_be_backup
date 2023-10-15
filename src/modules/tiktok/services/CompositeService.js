@@ -20,7 +20,7 @@ class CompositeService {
     this.logger = TiktokLogger
   }
 
-  async updateTikTokData(date) {
+  async updateTikTokData(date, adAccountIdsLimitation = null) {
 
     this.logger.info(`Starting to sync TikTok data for date ${date}`);
 
@@ -31,13 +31,13 @@ class CompositeService {
     await this.adAccountService.syncAdAccounts(token, id, user_id);
     const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {provider: "tiktok"});
     const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
-    const adAccountIds = Object.keys(adAccountsMap);
+    const adAccountIds = adAccountIdsLimitation ? adAccountIdsLimitation : Object.keys(adAccountsMap);
 
     // Sync campaigns
     await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date);
 
     // Sync adsets
-    const campaignIdsObjects = await this.campaignService.fetchCampaignsFromDatabase(["id"]);
+    const campaignIdsObjects = await this.campaignService.fetchCampaignsFromDatabase(["id", "ad_account_id"], {traffic_source: "tiktok"});
     const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
     await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date);
 
@@ -45,7 +45,8 @@ class CompositeService {
     await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date);
 
     // Sync ad insights
-    await this.adInsightsService.syncAdInsights(token, adAccountIds, adAccountsMap, date);
+    const campaignIdsMap = _(campaignIdsObjects).keyBy("id").value();
+    await this.adInsightsService.syncAdInsights(token, adAccountIds, campaignIdsMap, date);
 
     this.logger.info(`Done syncing TikTok data for date ${date}`);
   }
@@ -100,7 +101,6 @@ class CompositeService {
           }
         }
 
-      
         if (type === 'campaign' && status !== undefined && (statusResponse && statusResponse.code === 0)) {
           await this.adsetService.updateAdsetsForCampaign(entityId, status, token,provider_id);
             this.logger.info(`Successfully updated adsets for campaign ID ${entityId}`);
@@ -112,24 +112,22 @@ class CompositeService {
         this.logger.error(`Error updating entity of type ${type} with ID ${entityId}: ${error.message}`);
         throw error;
     }
-}
+  }
 
-
-
-async updateServiceEntity({ service, entityId, dailyBudget, status, type, advertiser_id, token, entityName }) {
-    this.logger.info(`Updating entity of type ${type} with ID ${entityId}`);
-    const updateResponse = await service.updateEntity({
-        entityId,
-        dailyBudget,
-        status,
-        type,
-        advertiser_id,
-        token,
-        entityName
-    });
-    this.logger.info(`Successfully updated entity of type ${type} with ID ${entityId}`);
-    return updateResponse;
-}
+  async updateServiceEntity({ service, entityId, dailyBudget, status, type, advertiser_id, token, entityName }) {
+      this.logger.info(`Updating entity of type ${type} with ID ${entityId}`);
+      const updateResponse = await service.updateEntity({
+          entityId,
+          dailyBudget,
+          status,
+          type,
+          advertiser_id,
+          token,
+          entityName
+      });
+      this.logger.info(`Successfully updated entity of type ${type} with ID ${entityId}`);
+      return updateResponse;
+  }
 
 }
 
