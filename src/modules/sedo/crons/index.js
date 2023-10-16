@@ -16,10 +16,10 @@ const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || proce
 const disableSedoCron             = process.env.DISABLE_SEDO_CRON === 'true' || process.env.DISABLE_SEDO_CRON !== 'false';
 const insightsService             = new InsightsService();
 
-const updateSedo = async (date) => {
+const updateSedo = async (date, final=false) => {
   try {
     dataUpdatesLogger.info(`STARTED | SEDO | ${date}`)
-    await insightsService.syncSedoInsights(date);
+    await insightsService.syncSedoInsights(date, final);
     dataUpdatesLogger.info(`COMPLETED | SEDO | ${date}`)
   } catch (error) {
     dataUpdatesLogger.warn(`FAILED | SEDO | ${date} | ${error}`)
@@ -31,14 +31,14 @@ const updateSedo = async (date) => {
 const updateSedoYesterdayData = new CronJob(
   SEDO_UPDATE_YESTERDAY,
   (async () => {
-    await updateSedo(yesterdayYMD(null, SEDO_TZ));
+    await updateSedo(yesterdayYMD(null, SEDO_TZ), true);
   }
 ));
 
 const updateSedoTodayDataRegular = new CronJob(
   SEDO_UPDATE_TODAY_REGULAR_CRON,
   (async () => {
-    await updateSedo(todayYMD(SEDO_TZ));
+    await updateSedo(todayYMD(SEDO_TZ), false);
   }
 ));
 

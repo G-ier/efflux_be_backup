@@ -9,7 +9,7 @@ class DatabaseRepository {
   async insert(table, dbObject, trx = null) {
     try {
       const connection = trx || this.connection;
-      const insertValue =  await connection(table).insert(dbObject).returning("id");
+      const insertValue =  await connection(table).insert(dbObject).returning("*");
       return insertValue;
     } catch (error) {
       console.error(`Failed to insert into table ${table}`, error);
@@ -122,25 +122,30 @@ class DatabaseRepository {
     }
   }
 
-  async queryOne(tableName, fields = ["*"], filters = {}) {
+  async queryOne(tableName, fields = ["*"], filters = {}, orderBy = []) {
     try {
-      let queryBuilder = this.connection(tableName).select(fields);
+        let queryBuilder = this.connection(tableName).select(fields);
 
-      for (const [key, value] of Object.entries(filters)) {
-        if (Array.isArray(value)) {
-          queryBuilder = queryBuilder.whereIn(key, value);
-        } else {
-          queryBuilder = queryBuilder.where(key, value);
+        for (const [key, value] of Object.entries(filters)) {
+            if (Array.isArray(value)) {
+                queryBuilder = queryBuilder.whereIn(key, value);
+            } else {
+                queryBuilder = queryBuilder.where(key, value);
+            }
         }
-      }
 
-      const result = await queryBuilder.first();
-      return result;
+        // Handle order by rules
+        for (const rule of orderBy) {
+            queryBuilder = queryBuilder.orderBy(rule.column, rule.direction);
+        }
+
+        const result = await queryBuilder.first();
+        return result;
     } catch (error) {
-      console.error(`Error querying table ${tableName}`, error);
-      throw error;
+        console.error(`Error querying table ${tableName}`, error);
+        throw error;
     }
-  }
+}
 
   async raw(query) {
     try {

@@ -82,7 +82,6 @@ class AggregatesController {
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } = req.query;
-      if (network === 'sedo') return res.json(['Sedo does not support hourly reports']);
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
         startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q
       );

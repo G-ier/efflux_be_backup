@@ -34,6 +34,35 @@ class BaseService {
       errorMsg
     );
   }
+
+  async postToApi(url, body, errorMsg, headers = {}) {
+
+    const fetch = async () => {
+      const response = await axios.post(url, body, { headers });
+      const { data } = response;
+      return data;
+    }
+
+    return await this.executeWithLogging(
+      () => fetch() ,
+      errorMsg
+    );
+  }
+
+  async putToApi(url, body, errorMsg, headers = {}) {
+
+    const fetch = async () => {
+      const response = await axios.put(url, body, { headers });
+      const { data } = response;
+      return data;
+    }
+
+    return await this.executeWithLogging(
+      () => fetch() ,
+      errorMsg
+    );
+  }
+
 }
 
 module.exports = BaseService;

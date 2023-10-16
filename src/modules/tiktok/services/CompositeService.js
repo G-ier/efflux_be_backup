@@ -128,7 +128,6 @@ class CompositeService {
       this.logger.info(`Successfully updated entity of type ${type} with ID ${entityId}`);
       return updateResponse;
   }
-
 }
 
 module.exports = CompositeService;

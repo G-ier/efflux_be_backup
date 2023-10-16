@@ -13,8 +13,8 @@
     "migrate": "knex migrate:latest",
     "migrate:down": "knex migrate:down",
     "migrate:make": "knex migrate:make",
-    "test-sedo": "node src/modules/sedo/services/InsightsService.js",
-    "knex": "knex --help"
+    "knex": "knex --help",
+    "testFFDataService": "node src/modules/funnelFlux/services/FunnelFluxDataService.js"
   },
   "dependencies": {
     "@sentry/node": "^6.12.0",

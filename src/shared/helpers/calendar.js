@@ -25,12 +25,12 @@ function dayAfterTomorrowYMD(date, timeZone = 'America/Los_Angeles') {
 }
 
 function todayYMDHM(timezone = 'America/Los_Angeles') {
-  return moment().tz(timezone).format('YYYY-MM-DD HH:mm:ss');
+  return moment().tz(timezone).format('YYYY-MM-DDTHH:mm:ss');
 }
 
 function yesterdayYMDHM(date) {
   const m = date ? moment(date) : moment().tz('America/Los_Angeles');
-  return m.subtract(1, 'days').format('YYYY-MM-DD HH:mm:ss');
+  return m.subtract(1, 'days').format('YYYY-MM-DDTHH:mm:ss');
 }
 
 function todayHH(diff = 0, timeZone = 'America/Los_Angeles') {
@@ -87,6 +87,15 @@ function someDaysAgoYMD(days, date, timeZone = 'America/Los_Angeles') {
   return m.subtract(days, 'days').format('YYYY-MM-DD');
 }
 
+function convertTimestampTimezone(timestamp, tzString) {
+
+  // Convert the timestamp to UTC
+  let utcTimestamp = moment.utc(timestamp);
+
+  // Convert the date to desired timezone
+  return utcTimestamp.tz(tzString).format();
+}
+
 module.exports = {
   todayYMD,
   yesterdayYMD,
@@ -107,5 +116,6 @@ module.exports = {
   someDaysAgoYMD,
   todayTenMinsAgoYMDHM,
   todayFifteenMinsAgoYMDHM,
-  someTimeAgoYMDHM
+  someTimeAgoYMDHM,
+  convertTimestampTimezone
 };

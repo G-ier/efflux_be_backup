@@ -10,6 +10,7 @@ const {
 const {
   facebookRevealBotSheets,
   tiktokRevealBotSheets,
+  tiktokFFSedoRevealbotSheets,
   revealBotCampaignSheetColumn,
   revealBotAdsetSheetColumn
 }                                       = require('../revealBotSheetConstants');
@@ -20,7 +21,7 @@ class RevealBotSheetService {
     this.googleSheetsService = GoogleSheetsService.getInstance();
   }
 
-  async updateRevealBotSheet(sheets, trafficSource) {
+  async updateRevealBotSheet(sheets, trafficSource, network) {
     try {
       for (let i=0; i < sheets.length; i ++ ) {
         const startDate = someDaysAgoYMD(sheets[i].day - 1, null);
@@ -30,7 +31,7 @@ class RevealBotSheetService {
           const columnsOrder = k == 0 ? revealBotCampaignSheetColumn : revealBotAdsetSheetColumn;
           const sheetName = k == 0 ? sheets[i].sheetName : sheets[i].sheetNameByAdset;
           const revealBotSheetData = await this.aggregatesRepository.revealBotSheets(
-            startDate, endDate, aggregateBy, trafficSource
+            startDate, endDate, aggregateBy, trafficSource, network
           );
           const mappedData = this.mapRevealBotSheetValues(revealBotSheetData, columnsOrder, aggregateBy);
           await this.googleSheetsService.updateSpreadsheet(
@@ -51,13 +52,29 @@ class RevealBotSheetService {
   async updateFacebookRevealBotSheet() {
     const trafficSource = 'facebook';
     const sheets = facebookRevealBotSheets;
-    await this.updateRevealBotSheet(sheets, trafficSource);
+    const disabled = process.env.DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON === 'true';
+    if (!disabled) await this.updateRevealBotSheet(sheets, trafficSource, 'crossroads');
   }
 
-  async updateTiktokRevealBotSheet() {
-      const trafficSource = 'tiktok';
-      const sheets = tiktokRevealBotSheets;
-      await this.updateRevealBotSheet(sheets, trafficSource);
+  async updateTiktokRevealBotSheets() {
+    const trafficSource = 'tiktok';
+    const sheets = [
+      {
+        sheets: tiktokRevealBotSheets,
+        network: 'crossroads',
+        disabled: process.env.DISABLE_TIKTOK_CROSSROADS_REVEALBOT_SHEET_CRON === 'true'
+      },
+      {
+        sheets: tiktokFFSedoRevealbotSheets,
+        network: 'sedo',
+        disabled: process.env.DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON === 'true'
+      }
+    ]
+    for (let i = 0; i < sheets.length; i ++) {
+      if (!sheets[i].disabled) {
+        await this.updateRevealBotSheet(sheets[i].sheets, trafficSource, sheets[i].network);
+      };
+    }
   }
 
   mapRevealBotSheetValues(data, columns, aggregateBy = 'campaigns') {
