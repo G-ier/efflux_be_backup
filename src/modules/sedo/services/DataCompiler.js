@@ -30,50 +30,116 @@ class DataCompiler {
     const dailyInsightsMap = _.keyBy(dailyInsights, 'unique_identifier');
 
     const telemetryObject = {
-        matched: [],
-        notMatched: [],
-        dailyMatched: [],
-        dailyMatchedRaw: []
+      matched: [],
+      notMatched: [],
+      dailyMatched: [],
+      dailyMatchedRaw: []
     };
 
-    // Loop through each item in hourlyInsights
-    const compiledData = hourlyInsights.map(hourlyInsight => {
+    // Group hourly insights by date_level_matching_identifier.
+    const groupedHourlyInsights = _.groupBy(hourlyInsights, "date_level_matching_identifier")
 
-        const dailyCorrespondingInsight = dailyInsightsMap[hourlyInsight.date_level_matching_identifier];
+    const distributeIntegerValues = (values, total) => {
 
-        // If there's a matching yesterday item
-        if (dailyCorrespondingInsight) {
+      // Create a list of rounded values
+      let roundedValues = values.map(value => Math.round(value));
 
-            telemetryObject['matched'].push(hourlyInsight.campaign_id);  // Store the campaign_id for matched records
-            delete hourlyInsight.date_level_matching_identifier;
-            if (!telemetryObject['dailyMatched'].includes(dailyCorrespondingInsight.unique_identifier)){
-              telemetryObject['dailyMatched'].push(dailyCorrespondingInsight.unique_identifier);
-              telemetryObject['dailyMatchedRaw'].push(dailyCorrespondingInsight);
-            }
+      // Caluclate the rounding loss
+      let diff = total - _.sum(roundedValues);
 
-            const finalDailyConversionsForAggregation = dailyCorrespondingInsight.clicks;
-            const currentAggregationConversions = hourlyInsight.revenue_events;
+      // Randomly add or subtract to some of the values to make the totals match 100%
+      return adjustRoundedValues(roundedValues, diff);
+    }
 
-            // Calculate the proportion of conversions for the current hour compared to the total for the day
-            const conversionProportion = finalDailyConversionsForAggregation !== 0
-              ? currentAggregationConversions / finalDailyConversionsForAggregation
-              : 0;
+    const adjustRoundedValues = (values, diff) => {
 
-            // Distribute the revenue based on the conversion proportion
-            const revenue = conversionProportion * dailyCorrespondingInsight.revenue;
+      const indices = [...Array(values.length).keys()];
+      while (diff !== 0) {
+          let index;
+          if (diff > 0) {
+              index = _.sample(indices);
+              values[index]++;
+              diff--;
+          } else {
+              index = _.sample(indices);
+              if (values[index] > 0) {
+                  values[index]--;
+                  diff++;
+              }
+          }
+      }
+      return values;
+    }
 
-            return {
-                ...hourlyInsight,
-                revenue: revenue,
-            };
+    // Apply the downscaling to every hourly group
+    const compiledData = Object.entries(groupedHourlyInsights).map(([date_level_matching_identifier, hourlyGroup]) => {
 
-        } else {
-            telemetryObject['notMatched'].push(hourlyInsight);
-            delete hourlyInsight.date_level_matching_identifier;
+      // Find corresponding daily insight to the group from the map above.
+      const dailyCorrespondingInsight = dailyInsightsMap[date_level_matching_identifier];
 
-            // If no matching yesterday item, return hourlyInsight as is
-            return hourlyInsight;
+      if (dailyCorrespondingInsight) {
+
+        if (!telemetryObject['dailyMatched'].includes(dailyCorrespondingInsight.unique_identifier)){
+          telemetryObject['dailyMatched'].push(dailyCorrespondingInsight.unique_identifier);
+          telemetryObject['dailyMatchedRaw'].push(dailyCorrespondingInsight);
         }
+
+        // Calculate total hours metrics
+        const hourlyTotalsMetrics = hourlyGroup.reduce((acc, item) => {
+          acc.visits += item.lander_visits
+          acc.conversions += item.revenue_events
+          acc.revenue += item.revenue
+          return acc
+        }, {
+          visits: 0,
+          conversions: 0,
+          revenue: 0
+        })
+        const preRoundedConversions = [];
+        const preRoundedVisitors = [];
+        const finalRevenues = [];
+
+        hourlyGroup.forEach(item => {
+            finalRevenues.push(hourlyTotalsMetrics.revenue !== 0
+                ? (item.revenue / hourlyTotalsMetrics.revenue) * dailyCorrespondingInsight.revenue
+                : 0);
+
+            preRoundedConversions.push(hourlyTotalsMetrics.conversions !== 0
+                ? (item.revenue_events / hourlyTotalsMetrics.conversions) * dailyCorrespondingInsight.clicks
+                : 0);
+
+            preRoundedVisitors.push(hourlyTotalsMetrics.visits !== 0
+                ? (item.lander_visits / hourlyTotalsMetrics.visits) * dailyCorrespondingInsight.visitors
+                : 0);
+        });
+
+        const finalConversions = distributeIntegerValues(preRoundedConversions, dailyCorrespondingInsight.clicks);
+        const finalVisitors = distributeIntegerValues(preRoundedVisitors, dailyCorrespondingInsight.visitors);
+
+        // Update every hour
+        const compiledHours = hourlyGroup.map((item, index) => {
+          telemetryObject['matched'].push(item.campaign_id);
+          delete item.date_level_matching_identifier;
+          const finalHourData = {
+              ...item,
+              revenue: finalRevenues[index],
+              revenue_events: finalConversions[index],
+              lander_visits: finalVisitors[index],
+              total_visitors: finalVisitors[index],
+              total_visits: finalVisitors[index]
+          };
+          return finalHourData
+        });
+        return compiledHours
+
+      } else {
+        // Return items one by one, while deleting their date_level_matching_identifier
+        return hourlyGroup.map((item) => {
+          telemetryObject['notMatched'].push(item);
+          delete item.date_level_matching_identifier
+          return item
+        })
+      }
     });
 
     if (logger) {
@@ -85,14 +151,13 @@ class DataCompiler {
       logger.info("Unmatched Daily Data Revenue" , calculateAccumulated(unmatchedDaily, ["revenue"]));
 
       const notMatched = new Set(telemetryObject.notMatched);
-      logger.info("Number of Hourly Data" , hourlyInsights.length);
+      logger.info("Number of Hourly Data", hourlyInsights.length);
       logger.info(`Number of Hourly Data Matched ${telemetryObject.matched.length}`);
       logger.info(`Matched Hourly Data Revenue ${calculateAccumulated(compiledData, ["revenue"])}`);
       logger.info(`Number of Unmatched Hourly Data ${notMatched.size}`);
       logger.info("Unmatched hourly Data Revenue" , calculateAccumulated(telemetryObject.notMatched, ["revenue"]));
     }
-
-    return compiledData;
+    return _.flatten(compiledData)
   }
 
 }
