@@ -44,7 +44,6 @@ class InsightsService extends BaseService {
     const data = await this.fetchFromApi(url, params, "Error getting Sedo data from API")
     const parsedXMLBody = await xml2js.parseStringPromise(data);
     this.logger.info(`Fetched Sedo data from API for date ${date}`)
-
     if (parsedXMLBody.SEDOFAULT) {
       this.logger.error(`Error fetching Sedo data from API for date ${date}: ${parsedXMLBody.SEDOFAULT.faultstring[0]._}`)
       return []
@@ -52,7 +51,7 @@ class InsightsService extends BaseService {
     return parsedXMLBody.SEDOSTATS.item;
   }
 
-  async getFFApiInsights(date, tz="+01:00",includeDateMatchingIdentifier=false) {
+  async getFFApiInsights(date, tz="+02:00",includeDateMatchingIdentifier=false) {
     this.logger.info(`Starting to sync Sedo data from Funnel Flux for date ${date}`);
     // The timezone is hardcoded to Europe/Berlin because Final Sedo Insights are in that timezone
     const startDate = date + 'T00:00:00' + tz;
@@ -78,25 +77,7 @@ class InsightsService extends BaseService {
     const finalResults = this.dataCompiler.distributeDtoH(funnelFluxInsight, processedSedoInsights, this.logger)
     this.logger.info(`finals results post merge`, calculateAccumulated(finalResults, ['revenue', 'revenue_events', 'lander_visits']))
 
-    const hourShiftedFinalResults = finalResults.map(item => {
-      const [shiftedDate, shiftedHour] = offsetHourByShift(item.date, item.hour, -1)
-      const [campaignId, adsetId, adId, year, month, day, hour] = item.unique_identifier.split("-")
-      const uniqueIdentifier = `${campaignId}-${adsetId}-${adId}-${shiftedDate}-${shiftedHour}`
-
-      return {
-        ...item,
-        date: shiftedDate,
-        hour: shiftedHour,
-        unique_identifier: uniqueIdentifier
-      }
-    });
-
-    const previousDateResults = hourShiftedFinalResults.filter(result => result.date != date)
-    const dateResults = hourShiftedFinalResults.filter(result => result.date == date)
-
-    this.logger.info(`previousDateResults`, calculateAccumulated(previousDateResults, ['revenue', 'revenue_events', 'lander_visits']))
-    this.logger.info(`dateResults`, calculateAccumulated(dateResults, ['revenue', 'revenue_events', 'lander_visits']))
-    return hourShiftedFinalResults
+    return finalResults
   }
 
   async syncSedoInsights(date, final=false) {

@@ -32,7 +32,6 @@ class AggregatesController {
     try {
       const { startDate, endDate, campaignId } = req.query;
       const data = await this.aggregatesService.generateCampaignHourlyReport(startDate, endDate, campaignId);
-      console.log("Data that returns from generateCampaignHourlyReport: ", data)
       return res.json(data);
     } catch (e) {
       console.log(e);
