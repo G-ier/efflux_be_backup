@@ -100,15 +100,18 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
           sedo.date as date,
           sedo.adset_id,
           MAX(sedo.campaign_id) as campaign_id,
-          CAST(ROUND(SUM(sedo.revenue)::decimal, 2) AS FLOAT) as revenue,
-          CAST(SUM(sedo.lander_searches) AS INTEGER) as searches,
-          CAST(SUM(sedo.lander_visits) AS INTEGER) as lander_visits,
-          CAST(SUM(sedo.revenue_events) AS INTEGER) as cr_conversions,
-          MAX(sedo.updated_at) as network_updated_at,
-          CAST(SUM(sedo.total_visitors) AS INTEGER) as visitors,
+          CAST(SUM(sedo.visitors) AS INTEGER) as lander_visits,
+          CAST(SUM(sedo.visitors) AS INTEGER) as tracked_visitors,
+          CAST(SUM(sedo.visitors) AS INTEGER) as visitors,
+          CAST(SUM(sedo.pb_visits) AS INTEGER) as pb_lander_conversions,
+          0 as searches,
+          CAST(SUM(sedo.pb_conversions) AS INTEGER) as pb_conversions,
+          CAST(SUM(sedo.conversions) AS INTEGER) as cr_conversions,
           0 as uniq_conversions,
-          CAST(SUM(sedo.total_visitors) AS INTEGER) as tracked_visitors
-        FROM sedo2 sedo
+          CAST(ROUND(SUM(sedo.pb_revenue)::decimal, 2) AS FLOAT) as pb_revenue,
+          CAST(ROUND(SUM(sedo.revenue)::decimal, 2) AS FLOAT) as revenue,
+          MAX(sedo.updated_at) as network_updated_at
+        FROM sedo sedo
               WHERE sedo.date > '${startDate}'
               AND   sedo.date <= '${endDate}'
               AND   sedo.traffic_source = '${trafficSource}'
@@ -211,6 +214,11 @@ function RETURN_FIELDS(network, traffic_source) {
         postback_events.pb_lander_conversions as pb_lander_conversions,
         postback_events.pb_serp_conversions as pb_serp_conversions,
         postback_events.pb_conversions as pb_conversions,
+      `:
+      network === 'sedo' ? `
+        network.pb_lander_conversions as pb_lander_conversions,
+        0 as pb_serp_conversions,
+        network.pb_conversions as pb_conversions,
       `: ``
     }
     network.searches as searches,
@@ -229,7 +237,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
   const query = `
     WITH restriction AS (
       SELECT DISTINCT campaign_id, adset_id
-        FROM ${network === 'crossroads' ? 'crossroads' : network === 'sedo' ? 'sedo2' : () => new Error('Invalid network')}
+        FROM ${network}
       WHERE
         date > '${startDate}' AND date <= '${endDate}'
       AND traffic_source = '${trafficSource}'

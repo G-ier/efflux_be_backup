@@ -9,8 +9,7 @@ const InsightsRepository                          = require("../repositories/Ins
 const DataCompiler                                = require("../services/DataCompiler")
 const FFDataService                               = require("../../funnelFlux/services/FFDataService")
 const {
-  calculateAccumulated,
-  offsetHourByShift
+  calculateAccumulated
 }                                                 = require("../../../shared/helpers/Utils")
 const {
   SEDO_API_URL
@@ -71,11 +70,14 @@ class InsightsService extends BaseService {
 
     // Fetch Insights from Funnel Flux API
     const funnelFluxInsight = await this.getFFApiInsights(date, "+02:00", true)
-    this.logger.info(`accumulated funnel flux insights post merge`,calculateAccumulated(funnelFluxInsight, ['revenue', 'revenue_events', 'lander_visits']))
+    this.logger.info(`accumulated funnel flux insights post merge`,calculateAccumulated(funnelFluxInsight, ['pb_conversions', 'pb_revenue', 'pb_visits']))
 
     // Merge Sedo and Funnel Flux Insights and distribute sedo final daily insights to hourly insights
     const finalResults = this.dataCompiler.distributeDtoH(funnelFluxInsight, processedSedoInsights, this.logger)
-    this.logger.info(`finals results post merge`, calculateAccumulated(finalResults, ['revenue', 'revenue_events', 'lander_visits']))
+    this.logger.info(`finals results post merge`, calculateAccumulated(finalResults,
+      ['pb_conversions', 'conversions', 'pb_revenue', 'revenue', 'pb_visits', 'visitors']
+    ))
+    this.logger.info("finalResults", finalResults.slice(0, 2))
 
     return finalResults
   }

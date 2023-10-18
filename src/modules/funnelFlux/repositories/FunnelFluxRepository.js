@@ -99,11 +99,9 @@ class FunnelFluxRepository {
       ad_id,
 
       // Metrics
-      lander_visits: funnelTrafficSourceLink.offerViews,
-      lander_searches: 0,
-      revenue_events: funnelTrafficSourceLink.conversions,
-      total_visitors: funnelTrafficSourceLink.offerViews,
-      total_visits: funnelTrafficSourceLink.offerViews,
+      pb_visits: funnelTrafficSourceLink.offerViews,
+      pb_conversions: funnelTrafficSourceLink.conversions,
+      pb_revenue: funnelTrafficSourceLink.revenue ? parseFloat(funnelTrafficSourceLink.revenue) : 0,
       revenue: funnelTrafficSourceLink.revenue ? parseFloat(funnelTrafficSourceLink.revenue) : 0,
 
       // Identifiers

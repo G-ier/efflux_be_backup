@@ -11,7 +11,7 @@ class InsightsRepository {
   // We might need to do some processing on the data, aggregate it, etc.
 
   constructor() {
-    this.tablename = "sedo2";
+    this.tablename = "sedo";
     this.database = new DatabaseRepository();
   }
 
@@ -78,8 +78,8 @@ class InsightsRepository {
     const hit_id = insight.c3[0]?._ ? insight.c3[0]._ : '';
 
     const visitors = insight.uniques[0]._ ? parseInt(insight.uniques[0]._) : 0;
-    const clicks = insight.clicks[0]._ ? parseInt(insight.clicks[0]._) : 0;
-    const earnings = insight.earnings[0]._ ? parseFloat(insight.earnings[0]._) : 0;
+    const conversions = insight.clicks[0]._ ? parseInt(insight.clicks[0]._) : 0;
+    const revenue = insight.earnings[0]._ ? parseFloat(insight.earnings[0]._) : 0;
 
     return {
       date,
@@ -91,8 +91,8 @@ class InsightsRepository {
       funnel_id,
       hit_id,
       visitors,
-      clicks,
-      revenue: earnings,
+      conversions,
+      revenue: revenue,
       unique_identifier: `${campaign_id}-${adset_id}-${ad_id}-${date}`
     }
   }

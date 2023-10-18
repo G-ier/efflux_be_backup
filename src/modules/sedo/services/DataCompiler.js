@@ -86,34 +86,34 @@ class DataCompiler {
 
         // Calculate total hours metrics
         const hourlyTotalsMetrics = hourlyGroup.reduce((acc, item) => {
-          acc.visits += item.lander_visits
-          acc.conversions += item.revenue_events
-          acc.revenue += item.revenue
+          acc.pb_visits += item.pb_visits
+          acc.pb_conversions += item.pb_conversions
+          acc.pb_revenue += item.pb_revenue
           return acc
         }, {
-          visits: 0,
-          conversions: 0,
-          revenue: 0
+          pb_visits: 0,
+          pb_conversions: 0,
+          pb_revenue: 0
         })
         const preRoundedConversions = [];
         const preRoundedVisitors = [];
         const finalRevenues = [];
 
         hourlyGroup.forEach(item => {
-            finalRevenues.push(hourlyTotalsMetrics.revenue !== 0
-                ? (item.revenue / hourlyTotalsMetrics.revenue) * dailyCorrespondingInsight.revenue
+            finalRevenues.push(hourlyTotalsMetrics.pb_revenue !== 0
+                ? (item.pb_revenue / hourlyTotalsMetrics.pb_revenue) * dailyCorrespondingInsight.revenue
                 : 0);
 
-            preRoundedConversions.push(hourlyTotalsMetrics.conversions !== 0
-                ? (item.revenue_events / hourlyTotalsMetrics.conversions) * dailyCorrespondingInsight.clicks
+            preRoundedConversions.push(hourlyTotalsMetrics.pb_conversions !== 0
+                ? (item.pb_conversions / hourlyTotalsMetrics.pb_conversions) * dailyCorrespondingInsight.conversions
                 : 0);
 
-            preRoundedVisitors.push(hourlyTotalsMetrics.visits !== 0
-                ? (item.lander_visits / hourlyTotalsMetrics.visits) * dailyCorrespondingInsight.visitors
+            preRoundedVisitors.push(hourlyTotalsMetrics.pb_visits !== 0
+                ? (item.pb_visits / hourlyTotalsMetrics.pb_visits) * dailyCorrespondingInsight.visitors
                 : 0);
         });
 
-        const finalConversions = distributeIntegerValues(preRoundedConversions, dailyCorrespondingInsight.clicks);
+        const finalConversions = distributeIntegerValues(preRoundedConversions, dailyCorrespondingInsight.conversions);
         const finalVisitors = distributeIntegerValues(preRoundedVisitors, dailyCorrespondingInsight.visitors);
 
         // Update every hour
@@ -123,10 +123,8 @@ class DataCompiler {
           const finalHourData = {
               ...item,
               revenue: finalRevenues[index],
-              revenue_events: finalConversions[index],
-              lander_visits: finalVisitors[index],
-              total_visitors: finalVisitors[index],
-              total_visits: finalVisitors[index]
+              conversions: finalConversions[index],
+              visitors: finalVisitors[index]
           };
           return finalHourData
         });
@@ -153,9 +151,9 @@ class DataCompiler {
       const notMatched = new Set(telemetryObject.notMatched);
       logger.info("Number of Hourly Data", hourlyInsights.length);
       logger.info(`Number of Hourly Data Matched ${telemetryObject.matched.length}`);
-      logger.info(`Matched Hourly Data Revenue ${calculateAccumulated(compiledData, ["revenue"])}`);
+      logger.info(`Matched Hourly Data Revenue ${calculateAccumulated(compiledData, ["pb_revenue"])}`);
       logger.info(`Number of Unmatched Hourly Data ${notMatched.size}`);
-      logger.info("Unmatched hourly Data Revenue" , calculateAccumulated(telemetryObject.notMatched, ["revenue"]));
+      logger.info("Unmatched hourly Data Revenue" , calculateAccumulated(telemetryObject.notMatched, ["pb_revenue"]));
     }
     return _.flatten(compiledData)
   }
