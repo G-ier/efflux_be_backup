@@ -128,7 +128,7 @@ route.get("/", async (req, res) => {
     postbackQueue.push(pb_conversion);
     await processQueue();
 
-    res.status(200).json({message: 'success'});
+    res.status(200).contentType('application/javascript').send('console.log("Operation successful");');
     PostbackLogger.info(`SUCCESS`)
   }
   catch (err) {
