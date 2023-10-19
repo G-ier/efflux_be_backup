@@ -83,16 +83,14 @@ route.get("/", async (req, res) => {
     } = req.query;
 
     const ua = parser(client_user_agent);
-    let traffic_source = 'unknown';
     const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
     const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
 
-    // IMPORTANT NOTE: This traffic source defining is crucial for the platform to work properly.
-    if(tg1?.includes('FB') || src?.includes('FB')) traffic_source = PROVIDERS.FACEBOOK;
-    else if(tg1?.includes('TT') || src?.includes('TT')) {
-      // sendSlackNotification(`Crosroads TikTok Postback tg1: ${tg1} src: ${src} event_type: ${eventType}`)
-      traffic_source = PROVIDERS.TIKTOK
-    };
+    // Traffic source labeling based on src
+    let traffic_source = 'unknown';
+    if (src === 'fbk') traffic_source = PROVIDERS.FACEBOOK;
+    else if (src === 'tt') traffic_source = PROVIDERS.TIKTOK;
+
     // check event_timestamp exist
     let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
     const pb_conversion = {
