@@ -2,7 +2,7 @@ function isNotNumeric(str) {
   return isNaN(parseFloat(str)) || !isFinite(str);
 }
 
-const calculateAccumulated = (data, keys=['revenue', 'clicks', 'visitors']) => {
+const calculateAccumulated = (data, keys=['revenue', 'conversions', 'visitors']) => {
   return data.reduce((acc, item) => {
     keys.forEach(key => {
       if (!acc[key]) acc[key] = 0
