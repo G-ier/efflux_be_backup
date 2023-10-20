@@ -19,7 +19,7 @@ const updateFacebookRevealBotSheetRegular = new CronJob(
   (async () => {
     dataUpdatesLogger.info(`STARTED | REVEALBOT SHEET | FACEBOOK`);
     try{
-      await revealBotSheetService.updateFacebookRevealBotSheet();
+      await revealBotSheetService.updateFacebookRevealBotSheets();
       dataUpdatesLogger.info(`COMPLETED | REVEALBOT SHEET | FACEBOOK`);
     } catch (e) {
       dataUpdatesLogger.warn(`FAILED | REVEALBOT SHEET | FACEBOOK | ${e}`);

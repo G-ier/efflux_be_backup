@@ -11,6 +11,7 @@ const {
   facebookRevealBotSheets,
   tiktokRevealBotSheets,
   tiktokFFSedoRevealbotSheets,
+  facebookFFSedoRevealBotSheets,
   revealBotCampaignSheetColumn,
   revealBotAdsetSheetColumn
 }                                       = require('../revealBotSheetConstants');
@@ -49,16 +50,36 @@ class RevealBotSheetService {
     }
   }
 
-  async updateFacebookRevealBotSheet() {
+  async updateFacebookRevealBotSheets(network = null) {
     const trafficSource = 'facebook';
-    const sheets = facebookRevealBotSheets;
-    const disabled = process.env.DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON === 'true';
-    if (!disabled) await this.updateRevealBotSheet(sheets, trafficSource, 'crossroads');
+    let sheets = [
+      {
+        sheets: facebookRevealBotSheets,
+        network: 'crossroads',
+        disabled: process.env.DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON === 'true'
+      },
+      {
+        sheets: facebookFFSedoRevealBotSheets,
+        network: 'sedo',
+        disabled: process.env.DISABLE_FACEBOOK_SEDO_REVEALBOT_SHEET_CRON === 'true'
+      }
+    ]
+
+    if (network) {
+      const filteredSheets = sheets.filter(sheet => sheet.network === network)
+      if (filteredSheets.length > 0) sheets = filteredSheets;
+    }
+
+    for (let i = 0; i < sheets.length; i ++) {
+      if (!sheets[i].disabled) {
+        await this.updateRevealBotSheet(sheets[i].sheets, trafficSource, sheets[i].network);
+      };
+    }
   }
 
-  async updateTiktokRevealBotSheets() {
+  async updateTiktokRevealBotSheets(network = null) {
     const trafficSource = 'tiktok';
-    const sheets = [
+    let sheets = [
       {
         sheets: tiktokRevealBotSheets,
         network: 'crossroads',
@@ -70,11 +91,18 @@ class RevealBotSheetService {
         disabled: process.env.DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON === 'true'
       }
     ]
+
+    if (network) {
+      const filteredSheets = sheets.filter(sheet => sheet.network === network)
+      if (filteredSheets.length > 0) sheets = filteredSheets;
+    }
+
     for (let i = 0; i < sheets.length; i ++) {
       if (!sheets[i].disabled) {
         await this.updateRevealBotSheet(sheets[i].sheets, trafficSource, sheets[i].network);
       };
     }
+
   }
 
   mapRevealBotSheetValues(data, columns, aggregateBy = 'campaigns') {

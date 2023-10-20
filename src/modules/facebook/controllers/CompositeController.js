@@ -9,9 +9,14 @@ class CompositeController {
 
   async updateFacebookData(req, res) {
     const { startDate, endDate } = req.query;
-    const updateResult = await this.compositeService.updateFacebookData(startDate, endDate);
+    const updateResult = await this.compositeService.updateFacebookData(startDate, endDate, {
+      updatePixels: true,
+      updateCampaigns: true,
+      updateAdsets: true,
+      updateInsights: true
+    });
 
-    if (updateResult) res.staus(200).send("Facebook data updated");
+    if (updateResult) res.status(200).send("Facebook data updated");
     else res.status(500).send("The server failed to update facebook data");
   }
 

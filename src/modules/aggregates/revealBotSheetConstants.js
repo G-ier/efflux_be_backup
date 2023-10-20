@@ -30,6 +30,37 @@ const facebookRevealBotSheets = [
   }
 ]
 
+const facebookFFSedoRevealBotSheets = [
+  {
+    day: 8,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Last 7days',
+    sheetNameByAdset:'Adset Last 7days',
+    traffic_source: 'facebook',
+  },
+  {
+    day: 4,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Last 3days',
+    sheetNameByAdset:'Adset Last 3days',
+    traffic_source: 'facebook',
+  },
+   {
+    day: 2,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Yesterday',
+    sheetNameByAdset:'Adset Yesterday',
+    traffic_source: 'facebook',
+  },
+  {
+    day: 1,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Today',
+    sheetNameByAdset:'Adset Today',
+    traffic_source: 'facebook',
+  }
+]
+
 const tiktokRevealBotSheets = [
   {
     day: 8,
@@ -118,6 +149,7 @@ module.exports = {
   facebookRevealBotSheets,
   tiktokRevealBotSheets,
   tiktokFFSedoRevealbotSheets,
+  facebookFFSedoRevealBotSheets,
   revealBotCampaignSheetColumn,
   revealBotAdsetSheetColumn
 }

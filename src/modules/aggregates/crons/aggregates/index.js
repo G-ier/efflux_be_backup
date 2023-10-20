@@ -8,7 +8,8 @@ const AggregatesService                                          = require('../.
 const { AVAILABLE_NETWORKS, AVAILABLE_TRAFFIC_SOURCES }          = require('../../constants');
 const {
   AGGREGATES_UPDATE_TODAY_REGULAR_CRON,
-  AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON_CRON
+  SEDO_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
+  CROSSROADS_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require("../../../../shared/lib/WinstonLogger");
 
@@ -47,13 +48,20 @@ const updateTodayDataRegular = new CronJob(
   }
 ));
 
-const updateYesterdayDataAfterMidnightAndNoon = new CronJob(
-  AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON_CRON,
+const updateSedoDataYesterday = new CronJob(
+  SEDO_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
   (async () => {
-    for (const network of AVAILABLE_NETWORKS) {
-      for (const trafficSource of AVAILABLE_TRAFFIC_SOURCES) {
-        await updateCompiledAggregates("yesterday", network, trafficSource);
-      }
+    for (const trafficSource of AVAILABLE_TRAFFIC_SOURCES) {
+      await updateCompiledAggregates("yesterday", "sedo", trafficSource);
+    }
+  }
+));
+
+const updateCrossroadsDataYesterday = new CronJob(
+  CROSSROADS_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
+  (async () => {
+    for (const trafficSource of AVAILABLE_TRAFFIC_SOURCES) {
+      await updateCompiledAggregates("yesterday", "crossroads", trafficSource);
     }
   }
 
@@ -65,7 +73,8 @@ const initializeAggregatesUpdateCron = async () => {
   if (disableGeneralCron && disableAggregatesUpdateCron) return;
 
   updateTodayDataRegular.start();
-  updateYesterdayDataAfterMidnightAndNoon.start();
+  updateSedoDataYesterday.start();
+  updateCrossroadsDataYesterday.start();
 
 };
 
