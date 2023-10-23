@@ -1,4 +1,5 @@
 const InsightsService = require("../services/InsightsService");
+const { CROSSROADS_ACCOUNTS }  = require('../constants');
 
 class InsightsController {
 
@@ -10,6 +11,18 @@ class InsightsController {
     try {
       await this.insightsService.updateCrossroadsData(req.body.account, req.body.request_date);
       res.json({ message: "Crossroads data updated successfully." });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+
+  async getTrafficSourceNakedLinks(req, res) {
+    try {
+      const { campaign_id } = req.query;
+      const account = CROSSROADS_ACCOUNTS[0];
+      console.log("Acc Key", account.key, "Campaign Id", campaign_id)
+      const nakedLinks = await this.insightsService.getTrafficSourceNakedLinks(account.key, campaign_id);
+      res.json(nakedLinks);
     } catch (error) {
       res.status(500).json({ error: error.message });
     }

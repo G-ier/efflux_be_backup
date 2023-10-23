@@ -1,4 +1,26 @@
-async function revealBotSheets(database, startDate, endDate, aggregateBy="campaigns", trafficSource="facebook") {
+const POSTBACKS = (entityGrouping, startDate, endDate, trafficSource, network) => {
+  if (network === 'crossroads') {
+    return `
+      , live_postbacks AS (
+        SELECT
+          pb.${entityGrouping},
+          CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
+          CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
+          CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions
+          FROM postback_events as pb
+          WHERE pb.date >= '${startDate}' AND pb.date <= '${endDate}'
+          AND pb.traffic_source = '${trafficSource}'
+          GROUP BY pb.${entityGrouping}
+    )
+    `
+  } else if (network === 'sedo') {
+    return ``
+  } else {
+    throw new Error('Invalid network')
+  }
+}
+
+async function revealBotSheets(database, startDate, endDate, aggregateBy="campaigns", trafficSource="facebook", network='crossroads') {
 
   if (aggregateBy === "campaigns") {
     entityGrouping = `campaign_id`
@@ -51,6 +73,13 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
         ROUND(CAST(SUM(ins.lander_visits) AS numeric), 2) as lander_visits,
         ROUND(CAST(SUM(ins.searches) AS numeric), 2) as lander_searches,
         ROUND(CAST(SUM(ins.cr_conversions) AS numeric), 2) as revenue_events,
+        ${
+          network === 'sedo' ? `
+            ROUND(CAST(SUM(ins.pb_lander_conversions) AS numeric), 2) as pb_lander_conversions,
+            0 as pb_serp_conversions,
+            ROUND(CAST(SUM(ins.pb_conversions) AS numeric), 2) as pb_conversions,
+          `: ``
+        }
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(CAST(SUM(cr_conversions) as float) / CAST(SUM(tracked_visitors) as float) * 100 as numeric), 2) || '%' END ctr_cr,
         CASE WHEN SUM(ins.cr_conversions) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.cr_conversions) as numeric), 2) END rpc,
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.tracked_visitors) * 1000 as numeric), 2) END rpm,
@@ -60,27 +89,27 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
         TO_CHAR(CURRENT_TIMESTAMP, 'dd/HH24:MI (TZ)') as sheet_last_update
       FROM insights ins
         ${joinString}
-      WHERE ins.date >= '${startDate}' AND ins.date <= '${endDate}' AND ins.traffic_source = '${trafficSource}'
+      WHERE ins.date >= '${startDate}' AND ins.date <= '${endDate}' AND ins.traffic_source = '${trafficSource}' AND ins.network = '${network}'
       GROUP BY ${groupBy}
       ORDER BY MAX(ins.campaign_name)
-  ), live_postbacks AS (
-      SELECT
-        pb.${entityGrouping},
-        CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions,
-        CAST(COUNT(CASE WHEN pb.event_type = 'PageView' THEN 1 ELSE null END) AS INTEGER) as pb_lander_conversions,
-        CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions
-        FROM postback_events as pb
-        WHERE pb.date >= '${startDate}' AND pb.date <= '${endDate}'
-        AND pb.traffic_source = '${trafficSource}'
-        GROUP BY pb.${entityGrouping}
-  )
+  ) ${POSTBACKS(entityGrouping, startDate, endDate, trafficSource, network)}
   SELECT
     ins.*,
-    live_pb.pb_lander_conversions,
-    live_pb.pb_serp_conversions,
-    live_pb.pb_conversions
+    ${
+      network === 'crossroads' ? `
+        live_pb.pb_lander_conversions,
+        live_pb.pb_serp_conversions,
+        live_pb.pb_conversions
+      ` : network === 'sedo' ? `
+        ins.pb_lander_conversions as pb_lander_conversions,
+        ins.pb_serp_conversions as pb_serp_conversions,
+        ins.pb_conversions as pb_conversions
+      ` : ``
+    }
   FROM insights_report ins
-  FULL OUTER JOIN live_postbacks live_pb ON live_pb.${entityGrouping} = ins.${entityGrouping}
+  ${
+    network === 'crossroads' ? `FULL OUTER JOIN live_postbacks live_pb ON live_pb.${entityGrouping} = ins.${entityGrouping}` : ''
+  }
   `
   const data = await database.raw(query)
   const { rows } = data;

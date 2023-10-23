@@ -32,7 +32,6 @@ class AggregatesController {
     try {
       const { startDate, endDate, campaignId } = req.query;
       const data = await this.aggregatesService.generateCampaignHourlyReport(startDate, endDate, campaignId);
-      console.log("Data that returns from generateCampaignHourlyReport: ", data)
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -82,7 +81,6 @@ class AggregatesController {
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } = req.query;
-      if (network === 'sedo') return res.json(['Sedo does not support hourly reports']);
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
         startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q
       );

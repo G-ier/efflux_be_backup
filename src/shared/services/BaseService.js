@@ -10,6 +10,7 @@ class BaseService {
     try {
       return await asyncFn();
     } catch (error) {
+      console.log(error)
       this.logger.error(`${errorMsg}: ${error}`);
       throw error;
     }
@@ -34,6 +35,35 @@ class BaseService {
       errorMsg
     );
   }
+
+  async postToApi(url, body, errorMsg, headers = {}) {
+
+    const fetch = async () => {
+      const response = await axios.post(url, body, { headers });
+      const { data } = response;
+      return data;
+    }
+
+    return await this.executeWithLogging(
+      () => fetch() ,
+      errorMsg
+    );
+  }
+
+  async putToApi(url, body, errorMsg, headers = {}) {
+
+    const fetch = async () => {
+      const response = await axios.put(url, body, { headers });
+      const { data } = response;
+      return data;
+    }
+
+    return await this.executeWithLogging(
+      () => fetch() ,
+      errorMsg
+    );
+  }
+
 }
 
 module.exports = BaseService;

@@ -20,8 +20,8 @@ class AggregatesRepository {
     this.database = database || new DatabaseRepository();
   }
 
-  async revealBotSheets(startDate, endDate, aggregateBy="campaigns", trafficSource="facebook") {
-    return await revealBotSheets(this.database, startDate, endDate, aggregateBy, trafficSource);
+  async revealBotSheets(startDate, endDate, aggregateBy="campaigns", trafficSource="facebook", network='crossroads') {
+    return await revealBotSheets(this.database, startDate, endDate, aggregateBy, trafficSource, network);
   }
 
   async campaignAdsets(params) {

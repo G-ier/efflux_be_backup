@@ -10,7 +10,7 @@ const compositeController = new CompositeController();
 // @route    /api/facebook/refresh
 // @desc     POST facebook refresh data
 // @Access   Private
-route.post("/refresh", async (req, res) => {
+route.get("/refresh", async (req, res) => {
   compositeController.updateFacebookData(req, res);
 });
 

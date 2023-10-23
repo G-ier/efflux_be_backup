@@ -112,6 +112,13 @@ const AggregatesLogger = new CustomLogger({
   filePath: filePath('aggregates')
 });
 
+// FunnelFlux Logger
+const FunnelFluxLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('funnelFlux')
+});
+
 // Postback Logger
 const PostbackLogger = new CustomLogger({
   destination:streamDestination,
@@ -122,9 +129,9 @@ const PostbackLogger = new CustomLogger({
 
 // Requests Logger
 const RequestsLogger = new CustomLogger({
-  destination:streamDestination,
+  destination: 'file',
   level: 'info',
-  filePath: filePath('requests'),
+  filePath: './logs/requests.log',
   pattern: '[{timestamp}]:[{level}]:{message}'
 });
 
@@ -147,6 +154,7 @@ module.exports = {
   FacebookLogger,
   TiktokLogger,
   AggregatesLogger,
+  FunnelFluxLogger,
   PostbackLogger,
   RequestsLogger,
   dataUpdatesLogger,

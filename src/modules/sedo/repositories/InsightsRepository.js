@@ -1,10 +1,10 @@
 // Third party imports
-const _ = require("lodash");
+const _                           = require("lodash");
 
 // Local application imports
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const Insights = require("../entities/Insights");
-
+const DatabaseRepository          = require("../../../shared/lib/DatabaseRepository");
+const Insights                    = require("../entities/Insights");
+const { isNotNumeric }            = require("../../../shared/helpers/Utils");
 
 class InsightsRepository {
 
@@ -15,19 +15,6 @@ class InsightsRepository {
     this.database = new DatabaseRepository();
   }
 
-  async saveOne(insight) {
-    const dbObject = this.toDatabaseDTO(insight);
-    return await this.database.insert(this.tablename, dbObject);
-  }
-
-  async saveInBulk(insights, chunkSize = 500) {
-    let data = insights.map((insight) => this.toDatabaseDTO(insight))
-    let dataChunks = _.chunk(data, chunkSize)
-    for (let chunk of dataChunks) {
-      await this.database.insert(this.tablename, chunk)
-    }
-  }
-
   async update(data, criteria) {
     await this.database.update(this.tablename, data, criteria);
   }
@@ -36,13 +23,39 @@ class InsightsRepository {
     await this.database.delete(this.tablename, criteria);
   }
 
-  async upsert(insights, date, chunkSize = 500) {
+  aggregateByUniqueIdentifier(dataList) {
+    // Group by unique_identifier
+    const groupedData = _.groupBy(dataList, 'unique_identifier');
 
-    const data = insights.map((insight) => this.toDatabaseDTO(insight, date))
-    const dataChunks = _.chunk(data, chunkSize)
-    for (let chunk of dataChunks) {
-      const inserChunk = _.uniqBy(chunk, 'unique_identifier')
-      await this.database.upsert(this.tablename, inserChunk, 'unique_identifier')
+    // Reduce each group by merging them together
+    const mergedData = _.map(groupedData, (group) => {
+      return group.reduce((acc, current) => {
+        Object.keys(current).forEach((key) => {
+          if (key === 'hour') {
+            acc[key] = current[key];  // keep the hour value from the last item in the group
+          } else if (_.isNumber(current[key])) {
+            acc[key] = (acc[key] || 0) + current[key];
+          } else {
+            acc[key] = current[key];  // for other non-numeric fields
+          }
+        });
+        return acc;
+      }, {});
+    });
+
+    return mergedData;
+  }
+
+  processSedoInsights(insights, date) {
+    const databaseDTOInsights = insights.map((insight) => this.parseSedoAPIData(insight, date))
+    const aggregatedInsights = this.aggregateByUniqueIdentifier(databaseDTOInsights)
+    return aggregatedInsights
+  }
+
+  async upsert(insights, chunkSize = 500) {
+    const dataChunks = _.chunk(insights, chunkSize)
+    for (const chunk of dataChunks) {
+      await this.database.upsert(this.tablename, chunk, 'unique_identifier')
     }
   }
 
@@ -51,16 +64,22 @@ class InsightsRepository {
     return results.map(this.toDomainEntity);
   }
 
-  toDatabaseDTO(insight, date) {
+  parseSedoAPIData(insight, date) {
     const domain = insight.domain[0]._;
 
     const funnel_id = insight.c1[0]?._ ? insight.c1[0]._ : '';
-    const [campaign_id, adset_id, ad_id, traffic_source] = insight.c2[0]?._ ? (insight.c2[0]._).replace(" ", "").split('|') : ['', '', '', ''];
+    let [campaign_id, adset_id, ad_id, traffic_source] = insight.c2[0]?._ ? (insight.c2[0]._).replace(" ", "").split('|') : ['Unkown', 'Unkown', 'Unkown', 'Unkown'];
+
+    if (isNotNumeric(campaign_id)) campaign_id = 'Unkown';
+    if (isNotNumeric(adset_id)) adset_id = 'Unkown';
+    if (isNotNumeric(ad_id)) ad_id = 'Unkown';
+    if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unkown';
+
     const hit_id = insight.c3[0]?._ ? insight.c3[0]._ : '';
 
     const visitors = insight.uniques[0]._ ? parseInt(insight.uniques[0]._) : 0;
-    const clicks = insight.clicks[0]._ ? parseInt(insight.clicks[0]._) : 0;
-    const earnings = insight.earnings[0]._ ? parseFloat(insight.earnings[0]._) : 0;
+    const conversions = insight.clicks[0]._ ? parseInt(insight.clicks[0]._) : 0;
+    const revenue = insight.earnings[0]._ ? parseFloat(insight.earnings[0]._) : 0;
 
     return {
       date,
@@ -72,9 +91,9 @@ class InsightsRepository {
       funnel_id,
       hit_id,
       visitors,
-      clicks,
-      revenue: earnings,
-      unique_identifier: `${date}_${domain}_${campaign_id}_${adset_id}_${ad_id}_${hit_id}`,
+      conversions,
+      revenue: revenue,
+      unique_identifier: `${campaign_id}-${adset_id}-${ad_id}-${date}`
     }
   }
 

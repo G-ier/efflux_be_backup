@@ -99,6 +99,11 @@ class InsightsService extends BaseService {
     return data;
   }
 
+  async getTrafficSourceNakedLinks(key, campaign_id) {
+    this.logger.info("Getting traffic source naked links")
+    return await this.fetchFromApi(`${CROSSROADS_URL}get-traffic-sources`, { key, campaign_id }, "Error getting traffic source naked links");
+  }
+
   async updateCrossroadsData(account, request_date) {
 
     const available_fields = await this.getAvailableFields(account.key)

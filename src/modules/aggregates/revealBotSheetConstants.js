@@ -30,6 +30,37 @@ const facebookRevealBotSheets = [
   }
 ]
 
+const facebookFFSedoRevealBotSheets = [
+  {
+    day: 8,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Last 7days',
+    sheetNameByAdset:'Adset Last 7days',
+    traffic_source: 'facebook',
+  },
+  {
+    day: 4,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Last 3days',
+    sheetNameByAdset:'Adset Last 3days',
+    traffic_source: 'facebook',
+  },
+   {
+    day: 2,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Yesterday',
+    sheetNameByAdset:'Adset Yesterday',
+    traffic_source: 'facebook',
+  },
+  {
+    day: 1,
+    spreadsheetId: '1IPhXe2uVAN-WVgEQeaZv59ewRBiOFdfuI4IpcxYqbW4',
+    sheetName: 'Campaign Today',
+    sheetNameByAdset:'Adset Today',
+    traffic_source: 'facebook',
+  }
+]
+
 const tiktokRevealBotSheets = [
   {
     day: 8,
@@ -61,6 +92,37 @@ const tiktokRevealBotSheets = [
   }
 ]
 
+const tiktokFFSedoRevealbotSheets = [
+  {
+    day: 8,
+    spreadsheetId: '1-4GVEBkwA7atL2PUkl_XBD1g9aqlWwt5-iWAZdm6pV8',
+    sheetName: 'Campaign Last 7days',
+    sheetNameByAdset:'Adset Last 7days',
+    traffic_source: 'tiktok',
+  },
+  {
+    day: 4,
+    spreadsheetId: '1-4GVEBkwA7atL2PUkl_XBD1g9aqlWwt5-iWAZdm6pV8',
+    sheetName: 'Campaign Last 3days',
+    sheetNameByAdset:'Adset Last 3days',
+    traffic_source: 'tiktok',
+  },
+   {
+    day: 2,
+    spreadsheetId: '1-4GVEBkwA7atL2PUkl_XBD1g9aqlWwt5-iWAZdm6pV8',
+    sheetName: 'Campaign Yesterday',
+    sheetNameByAdset:'Adset Yesterday',
+    traffic_source: 'tiktok',
+  },
+  {
+    day: 1,
+    spreadsheetId: '1-4GVEBkwA7atL2PUkl_XBD1g9aqlWwt5-iWAZdm6pV8',
+    sheetName: 'Campaign Today',
+    sheetNameByAdset:'Adset Today',
+    traffic_source: 'tiktok',
+  }
+]
+
 const revealBotCampaignSheetColumn = [
     'ad_account_name', 'time_zone', 'entity_name', 'campaign_id', 'status', 'daily_budget' ,'launch_date', 'amount_spent', 'impressions',
     'link_clicks', 'cpc_link_click', 'clicks_all', 'cpc_all', 'cpm', 'ctr_fb', 'results', 'cost_per_result', 'fb_last_update',
@@ -86,6 +148,8 @@ const revealBotAdsetSheetColumn = [
 module.exports = {
   facebookRevealBotSheets,
   tiktokRevealBotSheets,
+  tiktokFFSedoRevealbotSheets,
+  facebookFFSedoRevealBotSheets,
   revealBotCampaignSheetColumn,
   revealBotAdsetSheetColumn
 }

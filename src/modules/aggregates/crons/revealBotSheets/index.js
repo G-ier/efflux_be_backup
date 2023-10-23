@@ -19,7 +19,7 @@ const updateFacebookRevealBotSheetRegular = new CronJob(
   (async () => {
     dataUpdatesLogger.info(`STARTED | REVEALBOT SHEET | FACEBOOK`);
     try{
-      await revealBotSheetService.updateFacebookRevealBotSheet();
+      await revealBotSheetService.updateFacebookRevealBotSheets();
       dataUpdatesLogger.info(`COMPLETED | REVEALBOT SHEET | FACEBOOK`);
     } catch (e) {
       dataUpdatesLogger.warn(`FAILED | REVEALBOT SHEET | FACEBOOK | ${e}`);
@@ -34,7 +34,7 @@ const updateTikTokRevealBotSheetRegular = new CronJob(
   (async () => {
     dataUpdatesLogger.info(`STARTED | REVEALBOT SHEET | TIKTOK`);
     try {
-      await revealBotSheetService.updateTiktokRevealBotSheet();
+      await revealBotSheetService.updateTiktokRevealBotSheets();
       dataUpdatesLogger.info(`COMPLETED | REVEALBOT SHEET | TIKTOK`);
     } catch (e) {
       dataUpdatesLogger.warn(`FAILED | REVEALBOT SHEET | TIKTOK | ${e}`);

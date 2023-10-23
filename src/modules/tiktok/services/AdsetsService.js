@@ -112,7 +112,6 @@ class AdsetService extends BaseService {
     }
   }
 
-
   async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit) {
     return await this.adsetsRepository.fetchAdsets(fields, filters, limit);
   }
