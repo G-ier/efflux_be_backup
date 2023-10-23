@@ -15,6 +15,13 @@ route.post("/update-data", async (req, res) => {
   compositeController.updateData(req, res);
 });
 
+// @route     /api/crossroads/traffic-source-naked-links
+// @desc     GET crossroads traffic-source-naked-links
+// @Access   Private
+route.get('/traffic-source-naked-links', async (req, res) =>
+  insightsController.getTrafficSourceNakedLinks(req, res)
+);
+
 // @route     /api/crossroads/campaigns
 // @desc      GET fetch all campaigns
 // @Access    Private
@@ -80,7 +87,6 @@ route.post("/domain-look-up", async (req, res) => {
     res.status(500).json({ message: err.message });
   }
 });
-
 
 // @route     /api/crossroads/domain-availability
 // @desc      POST check domain availability

@@ -10,6 +10,7 @@ class BaseService {
     try {
       return await asyncFn();
     } catch (error) {
+      console.log(error)
       this.logger.error(`${errorMsg}: ${error}`);
       throw error;
     }
