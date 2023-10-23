@@ -43,5 +43,4 @@ route.get('/refresh-sheet', async (req, res) =>  {
   await revealBotSheetController.refreshSheet(req, res)
 })
 
-
 module.exports = route;

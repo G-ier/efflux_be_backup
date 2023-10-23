@@ -57,7 +57,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
         FROM tiktok tt
         --INNER JOIN campaigns c ON c.id = tt.campaign_id AND c.traffic_source = 'tiktok'
         WHERE tt.date > '${startDate}' AND tt.date <= '${endDate}'
-        AND tt.campaign_id IN (SELECT campaign_id FROM restriction)
+        ${network === 'crossroads' ? 'AND tt.campaign_id IN (SELECT campaign_id FROM restriction)' : ''}
         ${campaignIdsRestriction ? `AND tt.campaign_id IN ${campaignIdsRestriction}` : ''}
         GROUP BY tt.date, tt.hour, tt.adset_id
       )
