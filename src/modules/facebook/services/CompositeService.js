@@ -25,7 +25,6 @@ class CompositeService {
     this.adInsightsService = new AdInsightsService();
   }
 
-
   async syncUserAccountsData(account, startDate, endDate, {
     updatePixels = true,
     updateCampaigns = true,
@@ -100,18 +99,56 @@ class CompositeService {
     return true;
   }
 
+  async fetchEntitiesOwnerAccount(entityType, entityId) {
+    const entityConfig = {
+      adset: {
+          service: this.adsetsService.fetchAdsetsFromDatabase.bind(this.adsetsService),
+          tableName: 'adsets'
+      },
+      campaign: {
+          service: this.campaignsService.fetchCampaignsFromDatabase.bind(this.campaignsService),
+          tableName: 'campaigns'
+      }
+    };
+
+    const config = entityConfig[entityType];
+
+    if (!config) {
+        throw new Error(`Unsupported entity type: ${entityType}`);
+    }
+
+    let result;
+    try {
+      const whereClause = { [`${config.tableName}.${config.tableName === 'campaigns' ? 'id' : 'provider_id' }`]: entityId };
+      result = await config.service(
+          ["ua.name", "ua.token"],
+          whereClause,
+          1,
+          [{
+              type: "inner",
+              table: "user_accounts AS ua",
+              first: `${config.tableName}.account_id`,
+              operator: "=",
+              second: "ua.id"
+          }]
+      );
+    } catch(e) {
+      console.log(e);
+      await sendSlackNotification(`Error fetching account for entity ${entityType} with id ${entityId}`);
+    }
+
+    if (!result.length) {
+      throw new Error(`No account found for entity ${entityType} with id ${entityId}`);
+    }
+
+    return result[0];
+  }
+
   async updateEntity({ type, entityId, dailyBudget, status }) {
 
-    let account;
-    try {
-      const admins_only = true;
-      account = await this.userAccountService.getFetchingAccount(admins_only);
-    } catch (e) {
-      console.log("No account to fetch data from facebook", e);
-      await sendSlackNotification("No account to get token from to update entity. Inspect software if this is a error");
-      return false;
-    }
-    const { token } = account;
+    const account = await this.fetchEntitiesOwnerAccount(type, entityId);
+    const { name, token } = account;
+    console.log("Fetched Token for account", name)
 
     async function updateDatabase(type, entityId, dailyBudget, status) {
 

@@ -44,23 +44,34 @@ class DatabaseRepository {
     }
   }
 
-  async query(tableName, fields = ["*"], filters = {}, limit) {
+  async query(
+    tableName,
+    fields = ["*"],
+    filters = {},
+    limit,
+    joins = []
+  ) {
     try {
-      // Start with a basic select on the given fields
       let queryBuilder = this.connection(tableName).select(fields);
+
+      // Handling joins
+      for (const join of joins) {
+        if (join.type === "inner") {
+          queryBuilder = queryBuilder.join(join.table, join.first, join.operator, join.second);
+        } else if (join.type === "left") {
+          queryBuilder = queryBuilder.leftJoin(join.table, join.first, join.operator, join.second);
+        }
+      }
 
       // Apply filters to the query
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
-          // If the filter value is an array, use "whereIn" for the filter
           queryBuilder = queryBuilder.whereIn(key, value);
         } else {
-          // If not, use the standard "where" method
           queryBuilder = queryBuilder.where(key, value);
         }
       }
 
-      // Apply the limit if provided
       if (limit) queryBuilder = queryBuilder.limit(limit);
 
       const results = await queryBuilder;

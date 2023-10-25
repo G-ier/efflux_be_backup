@@ -104,8 +104,8 @@ class AdsetsService extends BaseService {
     }
   }
 
-  async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit) {
-    const results = await this.adsetsRepository.fetchAdsets(fields, filters, limit);
+  async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit, joins=[]) {
+    const results = await this.adsetsRepository.fetchAdsets(fields, filters, limit, joins);
     return results;
   }
 }
