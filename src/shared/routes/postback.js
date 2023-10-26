@@ -87,12 +87,15 @@ route.get("/", async (req, res) => {
     const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
 
     // Traffic source labeling based on src
-    let traffic_source = 'unknown';
+    let traffic_source;
     if (src === 'fbk') traffic_source = PROVIDERS.FACEBOOK;
     else if (src === 'tt') traffic_source = PROVIDERS.TIKTOK;
+    else if (!src) traffic_source = 'unknown';
+    else traffic_source = src;
 
     // check event_timestamp exist
-    let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
+    const ts = event_timestamp ? event_timestamp : Math.floor(Date.now() / 1000);
+    let event_id = md5(ts + fbclid + tg2 + tg5 + eventType);
     const pb_conversion = {
       fbclid,
       city,
@@ -170,12 +173,15 @@ route.post("/", async (req, res) => {
     const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
 
     // Traffic source labeling based on src
-    let traffic_source = 'unknown';
+    let traffic_source;
     if (src === 'fbk') traffic_source = PROVIDERS.FACEBOOK;
     else if (src === 'tt') traffic_source = PROVIDERS.TIKTOK;
+    else if (!src) traffic_source = 'unknown';
+    else traffic_source = src;
 
     // check event_timestamp exist
-    let event_id = md5(event_timestamp + fbclid + tg2 + tg5 + eventType);
+    const ts = event_timestamp ? event_timestamp : Math.floor(Date.now() / 1000);
+    let event_id = md5(ts + fbclid + tg2 + tg5 + eventType);
     const pb_conversion = {
       fbclid,
       city,
