@@ -3,29 +3,36 @@ const { TIKTOK_ADSET_AVAILABLE_FIELDS } = require("../constants");
 const AdsetsRepository = require("../repositories/AdsetsRepository");
 const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
+const UserAccountService = require("./UserAccountService");
+const AdAccountService = require("./AdAccountsService");
 const { sendSlackNotification }  = require("../../../shared/lib/SlackNotificationService");
 const _ = require("lodash");
+const CampaignService = require("./CampaignsService");
 
 class AdsetService extends BaseService {
 
   constructor() {
     super(TiktokLogger);
     this.adsetsRepository = new AdsetsRepository();
+    this.adAccountService = new AdAccountService();
+    this.userAccountsService = new UserAccountService();
+    this.campaignService = new CampaignService();
   }
 
-  async getTikTokAdsets(access_token, adAccountIds, date) {
+  async getTikTokAdsets(access_token, adAccountIds, date, endDate) {
     this.logger.info("Fetching Adsets from API");
     const endpoint = "adgroup";
     const additionalParams = {
       fields: JSON.stringify(TIKTOK_ADSET_AVAILABLE_FIELDS),
       creation_filter_start_time: date + " 00:00:00",
+      creation_filter_end_time: endDate === null ? null : endDate + " 23:59:59"
     };
 
     return await getTikTokEndpointData(endpoint, access_token, adAccountIds, additionalParams);
   }
 
-  async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, date) {
-    let adsets = await this.getTikTokAdsets(access_token, adAccountIds, date);
+  async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, date, endDate) {
+    let adsets = await this.getTikTokAdsets(access_token, adAccountIds, date, endDate);
     adsets = adsets.filter((adset) => campaignIds.includes(adset.campaign_id));
     this.logger.info(`Upserting ${adsets.length} Adsets`);
     await this.adsetsRepository.upsert(adsets, adAccountsMap, 500);

@@ -20,11 +20,16 @@ class CompositeService {
     this.logger = TiktokLogger
   }
 
-  async updateTikTokData(date, adAccountIdsLimitation = null) {
+  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uCampaigns, uAdsets, uAds, uInsights) {
+    
+    if(endDate){
+      this.logger.info(`Starting to sync TikTok data for daterange ${date} - ${endDate}`);
+    }
+    else{
+      this.logger.info(`Starting to sync TikTok data for date ${date}`);
+    }
 
-    this.logger.info(`Starting to sync TikTok data for date ${date}`);
-
-    // Retrieving account we will use for fetching data
+    //Retrieving account we will use for fetching data
     const { id, user_id, token } = await this.userAccountsService.getFetchingAccounts();
 
     // Sync ad accounts
@@ -33,22 +38,32 @@ class CompositeService {
     const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
     const adAccountIds = adAccountIdsLimitation ? adAccountIdsLimitation : Object.keys(adAccountsMap);
 
+
     // Sync campaigns
-    await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date);
+    if(uCampaigns) await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date, endDate);
 
     // Sync adsets
     const campaignIdsObjects = await this.campaignService.fetchCampaignsFromDatabase(["id", "ad_account_id"], {traffic_source: "tiktok"});
+    if(uAdsets){
     const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-    await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date);
+    await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date, endDate);
+    }
 
     // Sync ads
-    await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date);
+    if (uAds) await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date, endDate);
 
     // Sync ad insights
+    if (uInsights){
     const campaignIdsMap = _(campaignIdsObjects).keyBy("id").value();
-    await this.adInsightsService.syncAdInsights(token, adAccountIds, campaignIdsMap, date);
+    await this.adInsightsService.syncAdInsights(token, adAccountIds, campaignIdsMap, date, endDate);
+    }
 
-    this.logger.info(`Done syncing TikTok data for date ${date}`);
+    if(endDate){
+      this.logger.info(`Done syncing TikTok data for daterange ${date} - ${endDate}`);
+    }
+    else{
+      this.logger.info(`Done syncing TikTok data for date ${date}`);
+    }
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
