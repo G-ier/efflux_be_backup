@@ -68,11 +68,11 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
         ROUND(CASE WHEN SUM(ins.ts_clicks::numeric) = 0 THEN 0 ELSE (SUM(ins.spend)::numeric / SUM(ins.ts_clicks)::numeric) END, 2) as cpc_all,
         ROUND(CASE WHEN SUM(ins.impressions::numeric) = 0 THEN 0 ELSE (SUM(ins.spend)::numeric / (SUM(ins.impressions::numeric) / 1000::numeric)) END, 2) as cpm,
         ROUND(CASE WHEN SUM(ins.ts_clicks)::numeric = 0 THEN 0 ELSE (SUM(ins.ts_clicks)::numeric / SUM(ins.impressions)::numeric) * 100 END, 2) || '%' as ctr_fb,
-        TO_CHAR(MAX(ins.ts_updated_at), 'dd/HH24:MI') as fb_updated_at,
+        TO_CHAR(MAX(ins.ts_updated_at), 'dd/HH24:MI') as ts_updated_at,
         ROUND(CAST(SUM(ins.tracked_visitors) AS numeric), 2) as visitors,
         ROUND(CAST(SUM(ins.lander_visits) AS numeric), 2) as lander_visits,
         ROUND(CAST(SUM(ins.searches) AS numeric), 2) as lander_searches,
-        ROUND(CAST(SUM(ins.cr_conversions) AS numeric), 2) as revenue_events,
+        ROUND(CAST(SUM(ins.nw_conversions) AS numeric), 2) as revenue_events,
         ${
           network === 'sedo' ? `
             ROUND(CAST(SUM(ins.pb_lander_conversions) AS numeric), 2) as pb_lander_conversions,
@@ -80,12 +80,12 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
             ROUND(CAST(SUM(ins.pb_conversions) AS numeric), 2) as pb_conversions,
           `: ``
         }
-        CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(CAST(SUM(cr_conversions) as float) / CAST(SUM(tracked_visitors) as float) * 100 as numeric), 2) || '%' END ctr_cr,
-        CASE WHEN SUM(ins.cr_conversions) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.cr_conversions) as numeric), 2) END rpc,
+        CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(CAST(SUM(nw_conversions) as float) / CAST(SUM(tracked_visitors) as float) * 100 as numeric), 2) || '%' END ctr_cr,
+        CASE WHEN SUM(ins.nw_conversions) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.nw_conversions) as numeric), 2) END rpc,
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.tracked_visitors) * 1000 as numeric), 2) END rpm,
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.tracked_visitors) as numeric), 2) END rpv,
         ROUND((SUM(ins.revenue) + SUM(unallocated_revenue))::numeric, 2) as publisher_revenue,
-        TO_CHAR(MAX(ins.network_updated_at), 'dd/HH24:MI') as cr_updated_at,
+        TO_CHAR(MAX(ins.network_updated_at), 'dd/HH24:MI') as nw_updated_at,
         TO_CHAR(CURRENT_TIMESTAMP, 'dd/HH24:MI (TZ)') as sheet_last_update
       FROM insights ins
         ${joinString}

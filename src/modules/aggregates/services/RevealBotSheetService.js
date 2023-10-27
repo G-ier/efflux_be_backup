@@ -31,6 +31,7 @@ class RevealBotSheetService {
           const aggregateBy = k == 0 ? 'campaigns' : 'adsets';
           const columnsOrder = k == 0 ? revealBotCampaignSheetColumn : revealBotAdsetSheetColumn;
           const sheetName = k == 0 ? sheets[i].sheetName : sheets[i].sheetNameByAdset;
+          console.log(sheetName);
           const revealBotSheetData = await this.aggregatesRepository.revealBotSheets(
             startDate, endDate, aggregateBy, trafficSource, network
           );
@@ -109,7 +110,7 @@ class RevealBotSheetService {
 
     const rows = data.map(item => {
       const result = {
-        // facebook
+        // Traffic Source
         ad_account_name: item.ad_account_name,
         time_zone: item.time_zone,
         entity_name: item.entity_name,
@@ -126,9 +127,9 @@ class RevealBotSheetService {
         ctr_fb: item.ctr_fb,
         results: item.results,
         cost_per_result: null,
-        fb_last_update: item.fb_updated_at,
+        ts_last_update: item.ts_updated_at,
 
-        // crossroads
+        // Network
         visitors: item.visitors,
         lander_visits: item.lander_visits,
         lander_searches: item.lander_searches,
@@ -138,7 +139,7 @@ class RevealBotSheetService {
         rpm: item.rpm,
         rpv: item.rpv,
         publisher_revenue: item.publisher_revenue,
-        cr_last_update: item.cr_updated_at,
+        nw_last_update: item.nw_updated_at,
 
         // clickflare
         tr_visits: item.tr_visits,
