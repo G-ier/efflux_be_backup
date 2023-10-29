@@ -2,7 +2,7 @@ const environment = process.env.ENVIRONMENT === 'production' ? 'prod' : 'staging
 
 const fbCrRevealBotSheetId = environment === 'prod'
     ? '1A6Pfy2GPq0z12b_CtDdaMb5zKWecJa2jkzLVA3BwBuQ'
-    : '1Wwj22EkteaOCyRUVpSRXtjt0J2K3sTEBR-j3Lpbgb7E '
+    : '1Wwj22EkteaOCyRUVpSRXtjt0J2K3sTEBR-j3Lpbgb7E'
 
 const facebookRevealBotSheets = [
   {
