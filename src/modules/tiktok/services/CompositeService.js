@@ -20,8 +20,8 @@ class CompositeService {
     this.logger = TiktokLogger
   }
 
-  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uCampaigns, uAdsets, uAds, uInsights) {
-    
+  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {
+
     if(endDate){
       this.logger.info(`Starting to sync TikTok data for daterange ${date} - ${endDate}`);
     }
