@@ -401,7 +401,7 @@ Resources:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
       ClusterName: Efflux-BE
-      CacheNodeType: cache.t3.small
+      CacheNodeType: cache.t3.medium
       Engine: redis
       NumCacheNodes: 1
       Port: 6379
