@@ -1,0 +1,706 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+####################
+# Parameters
+####################
+
+Parameters:
+  OperatorEmail:
+    Description: The email address to notify when there are any scaling activities
+    Type: String
+    Default: ilyas@roi.ad
+  # TODO: Replace the default password with a random generated password
+  RDSPostgresClusterPassword:
+    Description: The password for the database
+    NoEcho: "true"
+    Type: String
+    MinLength: "8"
+    MaxLength: "41"
+    Default: "nG#*uah3Skt$VsQ8px39"
+  RDSPostgresClusterIops:
+    Description: The IOPS for the database
+    Type: Number
+    Default: 3000
+
+####################
+# Resources
+####################
+
+Resources:
+  # Creating the VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      EnableDnsSupport: yes
+      EnableDnsHostnames: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-VPC
+        - Key: project
+          Value: efflux
+
+  # Creating Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Efflux-InternetGateway
+        - Key: project
+          Value: efflux
+
+  # Attaching the ITG to the VPC
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Creating Public Subnet 1
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.10.1.0/24
+      MapPublicIpOnLaunch: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicSubnet1
+        - Key: project
+          Value: efflux
+
+  # Creating Public Subnet 2
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.10.2.0/24
+      MapPublicIpOnLaunch: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicSubnet2
+        - Key: project
+          Value: efflux
+
+  # Creating Public Subnet 3
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1c
+      CidrBlock: 10.10.3.0/24
+      MapPublicIpOnLaunch: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicSubnet3
+        - Key: project
+          Value: efflux
+
+  # Creating a Public Route Table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicRouteTable
+        - Key: project
+          Value: efflux
+
+  # Configuring Public Route
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  # Associating Subnet 1 and Route Table
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  # Associating Subnet 2 and Route Table
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  # Associating Subnet 3 and Route Table
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet3
+
+  # Creating Security Group for EC2 Instances
+  InstanceSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: Efflux-BE
+      GroupDescription: Enable SSH access and HTTP
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+
+  # Configuring launch template
+  LaunchTemplate:
+    Type: AWS::EC2::LaunchTemplate
+    Properties:
+      LaunchTemplateName: Efflux-BE
+      LaunchTemplateData:
+        BlockDeviceMappings:
+          - DeviceName: /dev/sda1
+            Ebs:
+              VolumeSize: 20
+              VolumeType: gp3
+              DeleteOnTermination: yes
+              Encrypted: true
+        NetworkInterfaces:
+          - DeviceIndex: 0
+            AssociatePublicIpAddress: yes
+            DeleteOnTermination: yes
+            Groups:
+              - !Ref InstanceSecurityGroup
+        ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+        KeyName: efflux-backend
+        InstanceType: t3.small
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            # Update and install initial packages
+            sudo apt-get update && \
+            sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+            sudo mkdir -p /var/www/efflux-backend && \
+            sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
+
+            # Install NodeJS
+            sudo mkdir -p /etc/apt/keyrings
+            curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | sudo gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+
+            NODE_MAJOR=20
+            echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
+
+            sudo apt-get update
+            sudo apt-get install nodejs -y
+
+            # Install PM2
+            sudo npm install pm2@latest -g
+
+            # Install CodeDeploy Agent
+            cd /tmp && \
+            wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install && \
+            sudo chmod +x ./install && \
+            sudo ./install auto && \
+            sudo service codedeploy-agent start
+
+        TagSpecifications:
+          - ResourceType: volume
+            Tags:
+              - Key: Name
+                Value: Efflux-BE Volume
+              - Key: project
+                Value: efflux
+          - ResourceType: instance
+            Tags:
+              - Key: Name
+                Value: Efflux-BE Instance
+              - Key: project
+                Value: efflux
+
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      Subscription:
+        - Endpoint: !Ref OperatorEmail
+          Protocol: email
+      TopicName: Efflux-ScalingNotification
+      Tags:
+        - Key: Name
+          Value: Efflux-ScalingNotification
+        - Key: project
+          Value: efflux
+
+  # Create an Auto Scaling Group
+  AutoScalingGroup:
+    Type: AWS::AutoScaling::AutoScalingGroup
+    Properties:
+      AutoScalingGroupName: Efflux-BE-ASG
+      LaunchTemplate:
+        LaunchTemplateId: !Ref LaunchTemplate
+        Version: !GetAtt LaunchTemplate.LatestVersionNumber
+      MaxSize: "4"
+      MinSize: "2"
+      DesiredCapacity: "2"
+      NotificationConfigurations:
+        - TopicARN: !Ref NotificationTopic
+          NotificationTypes:
+            [
+              "autoscaling:EC2_INSTANCE_LAUNCH",
+              "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",
+              "autoscaling:EC2_INSTANCE_TERMINATE",
+              "autoscaling:EC2_INSTANCE_TERMINATE_ERROR",
+            ]
+      TargetGroupARNs:
+        - !Ref ALBTargetGroup
+      VPCZoneIdentifier:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-BE Instance
+          PropagateAtLaunch: true
+        - Key: project
+          Value: efflux
+          PropagateAtLaunch: true
+
+  # Creating an Application Load Balancer
+  ApplicationLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: EffluxALB
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: EffluxALB
+        - Key: project
+          Value: efflux
+
+  # Configuring Application Load Balancer Target Group
+  ALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: Efflux-BE
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: "30"
+      HealthCheckTimeoutSeconds: "5"
+      Port: "80"
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: ALBTargetGroup
+        - Key: project
+          Value: efflux
+
+  # Configuring Application Load Balancer Listener
+  ALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+      LoadBalancerArn: !Ref ApplicationLoadBalancer
+      Port: "80"
+      Protocol: HTTP
+
+  # Configuring Application Load Balancer Listener Rule
+  ALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref ALBTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /*
+      ListenerArn: !Ref ALBListener
+      Priority: "1"
+
+  # Scaling Policy
+  ScalingPolicy:
+    Type: AWS::AutoScaling::ScalingPolicy
+    Properties:
+      AdjustmentType: ChangeInCapacity
+      AutoScalingGroupName: !Ref AutoScalingGroup
+      ScalingAdjustment: "1"
+
+  # Alarm for testing
+  CloudWatchAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: Efflux-CPU-Alarm
+      EvaluationPeriods: "1"
+      Statistic: Average
+      Threshold: "50"
+      AlarmDescription: Alarm set fo 50% of CPU utilization
+      Period: "60"
+      AlarmActions:
+        - !Ref ScalingPolicy
+      Namespace: AWS/EC2
+      Dimensions:
+        - Name: AutoScalingGroupName
+          Value:
+            Ref: AutoScalingGroup
+      ComparisonOperator: GreaterThanThreshold
+      MetricName: CPUUtilization
+
+  # ElasticFileSystem
+  ElasticFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      BackupPolicy: { "Status": "ENABLED" }
+      Encrypted: true
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_60_DAYS
+        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
+      FileSystemTags:
+        - Key: Name
+          Value: Efflux-EFS
+        - Key: project
+          Value: efflux
+
+  # Mount Target 1
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticFileSystem
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+
+  # Mount Target 2
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticFileSystem
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet2
+
+  # Mount Target 3
+  MountTarget3:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticFileSystem
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet3
+
+  # Create an RDS Postgres cluster with 1 instance and 100GB storage and Multi-AZ enabled and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
+  RDSPostgresCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      AllocatedStorage: 100
+      DeletionProtection: false
+      DBClusterInstanceClass: db.m5d.large
+      Engine: postgres
+      EngineVersion: 15.4
+      EngineMode: provisioned
+      DBClusterParameterGroupName: default.postgres15
+      DatabaseName: efflux
+      MasterUsername: effluxapp
+      MasterUserPassword: !Ref RDSPostgresClusterPassword
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 5
+      Port: 5432
+      StorageEncrypted: false
+      StorageType: io1
+      Iops: !Ref RDSPostgresClusterIops
+      PreferredBackupWindow: 00:30-01:00
+      PreferredMaintenanceWindow: mon:03:00-mon:03:30
+      AutoMinorVersionUpgrade: true
+      VpcSecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+
+  # Create a DB Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Efflux RDS
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-BE-SubnetGroup
+        - Key: project
+          Value: efflux
+
+  # Create an ElastiCache Redis Cluster
+  RedisCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      ClusterName: Efflux-BE
+      CacheNodeType: cache.t3.medium
+      Engine: redis
+      NumCacheNodes: 1
+      Port: 6379
+      VpcSecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+
+  # Create a Cache Subnet Group
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet group for Efflux ElastiCache
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-BE-SubnetGroup
+        - Key: project
+          Value: efflux
+
+  # Create CodeDeploy Application
+  CodeDeployApplication:
+    Type: AWS::CodeDeploy::Application
+    Properties:
+      ApplicationName: Efflux-BE
+      ComputePlatform: Server
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+
+  # Create CodeDeploy Deployment Group
+  CodeDeployDeploymentGroup:
+    Type: AWS::CodeDeploy::DeploymentGroup
+    Properties:
+      ApplicationName: !Ref CodeDeployApplication
+      DeploymentGroupName: Efflux-BE
+      DeploymentConfigName: CodeDeployDefault.OneAtATime
+      ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
+      AutoScalingGroups:
+        - !Ref AutoScalingGroup
+      DeploymentStyle:
+        DeploymentOption: WITH_TRAFFIC_CONTROL
+        DeploymentType: IN_PLACE
+      LoadBalancerInfo:
+        TargetGroupInfoList:
+          - Name: Efflux-BE
+        TargetGroupPairInfoList:
+          - TargetGroups:
+              - Name: !Ref ALBTargetGroup
+            ProdTrafficRoute:
+              ListenerArns:
+                - !Ref ALBListener
+      Ec2TagFilters:
+        - Key: Name
+          Type: KEY_AND_VALUE
+          Value: Efflux-BE Instance
+      TriggerConfigurations:
+        - TriggerEvents:
+            - DeploymentFailure
+            - DeploymentStop
+            - DeploymentSuccess
+          TriggerName: Efflux-BE-DeploymentTrigger
+          TriggerTargetArn: !Ref NotificationTopic
+      Tags:
+        - Key: Name
+          Value: Efflux-BE-DeploymentGroup
+        - Key: project
+          Value: efflux
+
+  # Create CodeDeploy Service Role
+  CodeDeployServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: CodeDeployServiceRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - autoscaling:CompleteLifecycleAction
+                  - autoscaling:DeleteLifecycleHook
+                  - autoscaling:DescribeAutoScalingGroups
+                  - autoscaling:DescribeLifecycleHooks
+                  - autoscaling:PutLifecycleHook
+                  - autoscaling:RecordLifecycleActionHeartbeat
+                  - autoscaling:PutInstanceInStandby
+                  - autoscaling:PutInstanceInService
+                  - autoscaling:TerminateInstanceInAutoScalingGroup
+                  - ec2:Describe*
+                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+                  - elasticloadbalancing:DeregisterTargets
+                  - elasticloadbalancing:Describe*
+                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+                  - elasticloadbalancing:RegisterTargets
+                  - s3:Get*
+                  - s3:List*
+                  - sns:*
+                  - cloudwatch:*
+                  - cloudformation:*
+                  - codedeploy:*
+                Resource: "*"
+
+  # Create CodeDeploy Instance Profile
+  CodeDeployInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref CodeDeployServiceRole
+      InstanceProfileName: Efflux-BE-InstanceProfile
+
+  # Create CodeDeploy Role
+  CodeDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codedeploy.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: CodeDeployRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - autoscaling:CompleteLifecycleAction
+                  - autoscaling:DeleteLifecycleHook
+                  - autoscaling:DescribeAutoScalingGroups
+                  - autoscaling:DescribeLifecycleHooks
+                  - autoscaling:PutLifecycleHook
+                  - autoscaling:RecordLifecycleActionHeartbeat
+                  - autoscaling:PutInstanceInStandby
+                  - autoscaling:PutInstanceInService
+                  - autoscaling:TerminateInstanceInAutoScalingGroup
+                  - ec2:Describe*
+                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+                  - elasticloadbalancing:DeregisterTargets
+                  - elasticloadbalancing:Describe*
+                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+                  - elasticloadbalancing:RegisterTargets
+                  - s3:Get*
+                  - s3:List*
+                  - sns:*
+                  - cloudwatch:*
+                  - cloudformation:*
+                  - codedeploy:*
+                Resource: "*"
+
+  # Create CodeDeploy Role Policy
+  CodeDeployRolePolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: CodeDeployRolePolicy
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Action:
+              - autoscaling:CompleteLifecycleAction
+              - autoscaling:DeleteLifecycleHook
+              - autoscaling:DescribeAutoScalingGroups
+              - autoscaling:DescribeLifecycleHooks
+              - autoscaling:PutLifecycleHook
+              - autoscaling:RecordLifecycleActionHeartbeat
+              - autoscaling:PutInstanceInStandby
+              - autoscaling:PutInstanceInService
+              - autoscaling:TerminateInstanceInAutoScalingGroup
+              - ec2:Describe*
+              - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
+              - elasticloadbalancing:DeregisterTargets
+              - elasticloadbalancing:Describe*
+              - elasticloadbalancing:RegisterInstancesWithLoadBalancer
+              - elasticloadbalancing:RegisterTargets
+              - s3:Get*
+              - s3:List*
+              - sns:*
+              - cloudwatch:*
+              - cloudformation:*
+              - codedeploy:*
+            Resource: "*"
+      Roles:
+        - !Ref CodeDeployRole
+
+  # Create CodeDeploy Role Instance Profile
+  CodeDeployRoleInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref CodeDeployRole
+      InstanceProfileName: Efflux-BE
+
+####################
+# Outputs
+####################
+
+Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC
+  ALBTargetGroup:
+    Description: Application Load Balancer Target Group ID
+    Value: !Ref ALBTargetGroup
+  CloudWatchAlarm:
+    Description: CloudWatch Alarm ID
+    Value: !Ref CloudWatchAlarm
+  ElasticFileSystem:
+    Description: Elastic File System ID
+    Value: !Ref ElasticFileSystem
+  RDSPostgresCluster:
+    Description: RDS Postgres Cluster ID
+    Value: !Ref RDSPostgresCluster
+  RedisCluster:
+    Description: ElastiCache Redis Cluster ID
+    Value: !Ref RedisCluster
