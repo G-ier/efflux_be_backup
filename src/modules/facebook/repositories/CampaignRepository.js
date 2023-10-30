@@ -42,8 +42,8 @@ class CampaignRepository {
     return await this.database.update(this.tableName, updateFields, criterion);
   }
 
-  async fetchCampaigns(fields = ["*"], filters = {}, limit) {
-    const results = await this.database.query(this.tableName, fields, filters, limit);
+  async fetchCampaigns(fields = ["*"], filters = {}, limit, joins = []) {
+    const results = await this.database.query(this.tableName, fields, filters, limit, joins);
     return results;
   }
 

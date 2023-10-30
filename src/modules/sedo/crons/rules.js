@@ -1,6 +1,6 @@
 const environment = process.env.ENVIRONMENT === 'production' ? 'prod' : 'staging'
 
-const SEDO_UPDATE_YESTERDAY = '0 0,6,10 * * *'
+const SEDO_UPDATE_YESTERDAY = '20 0,7,9,11 * * *'
 const SEDO_UPDATE_TODAY_REGULAR_CRON = environment === 'prod' ? '*/15 * * * *' : '0 * * * *'
 
 module.exports = {

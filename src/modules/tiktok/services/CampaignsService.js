@@ -1,7 +1,11 @@
+const _ = require("lodash");
+
 // Local application imports
 const CampaignRepository = require("../repositories/CampaignRepository");
 const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
+const UserAccountService = require("./UserAccountService");
+const AdAccountService = require("./AdAccountsService");
 const { TIKTOK_CAMPAIGN_FIELDS_FILTER } = require("../constants");
 const { getTikTokEndpointData, updateTikTokEntity, statusMapping } = require("../helpers");
 
@@ -9,20 +13,23 @@ class CampaignService extends BaseService {
 
   constructor() {
     super(TiktokLogger);
+    this.adAccountService = new AdAccountService();
+    this.userAccountsService = new UserAccountService();
     this.campaignRepository = new CampaignRepository();
   }
 
-  async getCampaignsFromAPI(access_token, adAccountIds, date) {
+  async getCampaignsFromAPI(access_token, adAccountIds, date, endDate) {
     this.logger.info("Fetching Campaigns from API");
     const additionalParams = {
       fields: TIKTOK_CAMPAIGN_FIELDS_FILTER,
-      creation_filter_start_time: date + " 00:00:00"
+      creation_filter_start_time: date + " 00:00:00",
+      creation_filter_end_time: endDate === null ? null : endDate + " 23:59:59"
     };
     return await getTikTokEndpointData("campaign", access_token, adAccountIds, additionalParams);
   }
 
-  async syncCampaigns(access_token, adAccountIds, adAccountsMap, date) {
-    const campaigns = await this.getCampaignsFromAPI(access_token, adAccountIds, date);
+  async syncCampaigns(access_token, adAccountIds, adAccountsMap, date, endDate) {
+    const campaigns = await this.getCampaignsFromAPI(access_token, adAccountIds, date, endDate);
     this.logger.info(`Upserting ${campaigns.length} Campaigns`);
     await this.campaignRepository.upsert(campaigns, adAccountsMap, 500);
     this.logger.info(`Done upserting campaigns`);

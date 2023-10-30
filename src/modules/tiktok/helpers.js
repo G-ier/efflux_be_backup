@@ -40,7 +40,6 @@ const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, add
       return [];
     }
   });
-
   if (results.success.length === 0) throw new Error(`All ad accounts failed to fetch from ${endpoint}`);
   TiktokLogger.info(`Fetched ${allData.flat().length} ${endpoint} from API`);
   TiktokLogger.info(`Ad Accounts ${endpoint} fetching telemetry: SUCCESS(${results.success.length}) | ERROR(${results.error.length})`);

@@ -29,7 +29,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
           CAST(ROUND(SUM(fb.total_spent)::decimal, 2) AS FLOAT) as spend,
           CAST(SUM(fb.clicks) AS INTEGER) as clicks,
           CAST(SUM(fb.link_clicks) AS INTEGER) as link_clicks,
-          CAST(SUM(fb.conversions) AS INTEGER) as fb_conversions,
+          CAST(SUM(fb.conversions) AS INTEGER) as ts_conversions,
           CAST(SUM(fb.impressions) AS INTEGER) as impressions
         FROM facebook fb
         INNER JOIN campaigns c ON c.id = fb.campaign_id AND c.traffic_source = 'facebook'
@@ -53,7 +53,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
           CAST(ROUND(SUM(tt.total_spent)::decimal, 2) AS FLOAT) as spend,
           CAST(ROUND(SUM(tt.impressions)::decimal, 2) AS FLOAT) as impressions,
           CAST(ROUND(SUM(tt.clicks)::decimal, 2) AS FLOAT) as clicks,
-          CAST(ROUND(SUM(tt.conversions)::decimal, 2) AS FLOAT) as conversions
+          CAST(ROUND(SUM(tt.conversions)::decimal, 2) AS FLOAT) as ts_conversions
         FROM tiktok tt
         --INNER JOIN campaigns c ON c.id = tt.campaign_id AND c.traffic_source = 'tiktok'
         WHERE tt.date > '${startDate}' AND tt.date <= '${endDate}'
@@ -203,12 +203,12 @@ function RETURN_FIELDS(network, traffic_source) {
     CASE WHEN traffic_source.date IS NULL THEN network.revenue ELSE 0 END as unallocated_revenue,
     CASE WHEN traffic_source.date IS NOT NULL THEN network.revenue ELSE 0 END as revenue,
 
-    traffic_source.${traffic_source === 'facebook' ? 'fb_conversions' : 'conversions'} as fb_conversions,
+    traffic_source.ts_conversions as ts_conversions,
     traffic_source.clicks as ts_clicks,
     traffic_source.ts_last_updated as ts_updated_at,
     network.network_updated_at as network_updated_at,
-    network.cr_conversions as cr_conversions,
-    network.uniq_conversions as cr_uniq_conversions,
+    network.cr_conversions as nw_conversions,
+    network.uniq_conversions as nw_uniq_conversions,
     ${
       network === 'crossroads' ? `
         postback_events.pb_lander_conversions as pb_lander_conversions,

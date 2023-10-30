@@ -12,6 +12,7 @@ const trafficSourceNetworkDaily                 = require('../reports/trafficSou
 const trafficSourceNetworkHourly                = require('../reports/trafficSourceNetworkHourly');
 const compileAggregates                        = require('../reports/compileAggregates');
 const DatabaseRepository                        = require("../../../shared/lib/DatabaseRepository");
+const adsetsByCampaignId = require("../reports/adsetsByCampaignId")
 
 class AggregatesRepository {
 
@@ -26,9 +27,14 @@ class AggregatesRepository {
 
   async campaignAdsets(params) {
     const { startDate, endDate, campaignId } = params;
-    return await campaignAdsets(this.database, startDate, endDate, campaignId);
+  
+    // Check if campaignId is an array
+    if (Array.isArray(campaignId)) {
+      return await adsetsByCampaignId(this.database, startDate, endDate,campaignId);
+    } else {
+      return await campaignAdsets(this.database, startDate, endDate, campaignId);
+    }
   }
-
   async campaignDaily(params) {
     const { startDate, endDate, campaignId } = params;
     return await campaignDaily(this.database, startDate, endDate, campaignId);

@@ -3,6 +3,7 @@ const knex = require("knex");
 const knexConfig = require("../knexfile");
 const oldDB = knex(knexConfig.oldproduction);
 const DatabaseConnection = require("../src/shared/lib/DatabaseConnection");
+const { iam } = require("googleapis/build/src/apis/iam");
 const newDB = new DatabaseConnection().getConnection();
 
 
@@ -36,8 +37,13 @@ const migrateEntities = async (startDate, endDate) => {
   // const users = await oldDB.raw(`SELECT * FROM users;`);
   // await ______(users, startDate, endDate, 'users');
 
-  // const userAccounts = await oldDB.raw(`SELECT * FROM user_accounts;`);
-  // await ______(userAccounts, startDate, endDate, 'user_accounts');
+  const userAccounts = await oldDB.raw(`SELECT * FROM user_accounts;`);
+  let finalUserAccounts = userAccounts.rows.map((ua) => {
+    delete ua.fetching
+    return ua
+  })
+
+  await ______({ rows:finalUserAccounts }, startDate, endDate, 'user_accounts');
 
   const adAccounts = await oldDB.raw(`SELECT * FROM ad_accounts;`);
   await ______(adAccounts, startDate, endDate, 'ad_accounts');
@@ -51,5 +57,5 @@ const migrateEntities = async (startDate, endDate) => {
 };
 
 const updateStartDate = '2021-09-11'
-const updateEndDate = '2023-09-13'
+const updateEndDate = '2023-10-18'
 migrateEntities(updateStartDate, updateEndDate);

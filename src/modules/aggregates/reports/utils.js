@@ -14,13 +14,14 @@ function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
     ` : ``
   }
   ${castSum(`${prefix}searches`)} as searches,
-  ${castSum(`${prefix}cr_conversions`)} as cr_conversions,
+  ${castSum(`${prefix}nw_conversions`)} as nw_conversions,
+  ${castSum(`${prefix}ts_conversions`)} as ts_conversions,
   ${castSum(`${prefix}visitors`)} as visitors,
   ${castSum(`${prefix}tracked_visitors`)} as tracked_visitors,
   ${castSum(`${prefix}link_clicks`)} as link_clicks,
   ${castSum(`${prefix}impressions`)} as impressions,
   ${castSum(`${prefix}pb_conversions`)} as pb_conversions,
-  ${castSum(`${prefix}cr_uniq_conversions`)} as uniq_conversions,
+  ${castSum(`${prefix}nw_uniq_conversions`)} as uniq_conversions,
   0 as cost_per_purchase,
   0 as cost_per_lead,
   0 as cost_per_complete_payment,

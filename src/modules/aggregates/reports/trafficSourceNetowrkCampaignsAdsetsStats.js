@@ -12,7 +12,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       MAX(adsets.status) as status,
       CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
       MAX(insights.adset_name) as adset_name,
-      ${castSum(`cr_uniq_conversions`)} as cr_uniq_conversions,
+      ${castSum(`nw_uniq_conversions`)} as nw_uniq_conversions,
       ${buildSelectionColumns("", calculateSpendRevenue=true)}
     FROM insights
     JOIN adsets ON insights.adset_id = adsets.provider_id
