@@ -286,7 +286,7 @@ Resources:
   ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: Efflux-TG
+      Name: Efflux-BE
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: "30"
       HealthCheckTimeoutSeconds: "5"
