@@ -12,6 +12,8 @@ deploy-stack:
 		--parameter-overrides \
 			ProjectName=efflux \
 			OperatorEmail=ilyas@ad.roi\
+    --tags \
+      project=efflux \
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION) \
 
