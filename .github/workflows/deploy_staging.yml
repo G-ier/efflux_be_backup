@@ -18,10 +18,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v2
         with:
-           node-version: 16
-           
-      - name: Install Knex.js
-        run: npm install knex
+           node-version: 16 
 
       - name: Build and Deploy using Docker Compose
         run: |
@@ -37,6 +34,9 @@ jobs:
 
           # Cleaning up unused resources
           docker system prune -f --volumes
-
+          
+          # install knex
+          npm install knex
+          
           # Run latex knex migrations
           npx knex migrate:latest --env staging
