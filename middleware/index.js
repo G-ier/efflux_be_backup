@@ -65,7 +65,7 @@ function configureMiddleware(server) {
   server.use(paginate.middleware(10, 50));
 
   // Authentication routes
-  if (!process.env.DISABLE_AUTH_DEDLOCK === "true") {
+  if (process.env.DISABLE_AUTH_DEADLOCK !== "true") {
     server.use(jwtCheck);
     server.use(jwtPermissions);
     server.use(AuthUser);
