@@ -8,7 +8,19 @@ Parameters:
   OperatorEmail:
     Description: The email address to notify when there are any scaling activities
     Type: String
-    Default: tim@roi.ad
+    Default: ilyas@roi.ad
+  # TODO: Replace the default password with a random generated password
+  RDSPostgresClusterPassword:
+    Description: The password for the database
+    NoEcho: "true"
+    Type: String
+    MinLength: "8"
+    MaxLength: "41"
+    Default: "nG#*uah3Skt$VsQ8px39"
+  RDSPostgresClusterIops:
+    Description: The IOPS for the database
+    Type: Number
+    Default: 3000
 
 ####################
 # Resources
@@ -396,6 +408,53 @@ Resources:
         - !Ref InstanceSecurityGroup
       SubnetId: !Ref PublicSubnet3
 
+  # Create an RDS Postgres cluster with 1 instance and 100GB storage and Multi-AZ enabled and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
+  RDSPostgresCluster:
+    Type: AWS::RDS::DBCluster
+    Properties:
+      AllocatedStorage: 100
+      DeletionProtection: false
+      DBClusterInstanceClass: db.m5d.large
+      Engine: postgres
+      EngineVersion: 15.4
+      EngineMode: provisioned
+      DBClusterParameterGroupName: default.postgres15
+      DatabaseName: efflux
+      MasterUsername: effluxapp
+      MasterUserPassword: !Ref RDSPostgresClusterPassword
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 5
+      Port: 5432
+      StorageEncrypted: false
+      StorageType: io1
+      Iops: !Ref RDSPostgresClusterIops
+      PreferredBackupWindow: 00:30-01:00
+      PreferredMaintenanceWindow: mon:03:00-mon:03:30
+      AutoMinorVersionUpgrade: true
+      VpcSecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+
+  # Create a DB Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Efflux RDS
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-BE-SubnetGroup
+        - Key: project
+          Value: efflux
+
   # Create an ElastiCache Redis Cluster
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
@@ -639,3 +698,9 @@ Outputs:
   ElasticFileSystem:
     Description: Elastic File System ID
     Value: !Ref ElasticFileSystem
+  RDSPostgresCluster:
+    Description: RDS Postgres Cluster ID
+    Value: !Ref RDSPostgresCluster
+  RedisCluster:
+    Description: ElastiCache Redis Cluster ID
+    Value: !Ref RedisCluster
