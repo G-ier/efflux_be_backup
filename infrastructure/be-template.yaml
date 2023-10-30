@@ -400,7 +400,7 @@ Resources:
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
-      ClusterName: Efflux-Redis
+      ClusterName: Efflux-BE
       CacheNodeType: cache.t3.small
       Engine: redis
       NumCacheNodes: 1
@@ -411,7 +411,7 @@ Resources:
       AutoMinorVersionUpgrade: true
       Tags:
         - Key: Name
-          Value: Efflux-Redis
+          Value: Efflux-BE
         - Key: project
           Value: efflux
 
@@ -426,7 +426,7 @@ Resources:
         - !Ref PublicSubnet3
       Tags:
         - Key: Name
-          Value: Efflux-Redis-SubnetGroup
+          Value: Efflux-BE-SubnetGroup
         - Key: project
           Value: efflux
 
@@ -457,7 +457,7 @@ Resources:
         DeploymentType: IN_PLACE
       LoadBalancerInfo:
         TargetGroupInfoList:
-          - Name: !Ref ALBTargetGroup
+          - Name: Efflux-BE
         TargetGroupPairInfoList:
           - TargetGroups:
               - Name: !Ref ALBTargetGroup
