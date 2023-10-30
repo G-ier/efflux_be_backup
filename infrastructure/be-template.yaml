@@ -131,7 +131,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: Efflux-BE-SG
+      GroupName: Efflux-BE
       GroupDescription: Enable SSH access and HTTP
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -149,7 +149,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: Efflux-BE-SG
+          Value: Efflux-BE
         - Key: project
           Value: efflux
 
@@ -157,7 +157,7 @@ Resources:
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: Efflux-BE-LaunchTemplate
+      LaunchTemplateName: Efflux-BE
       LaunchTemplateData:
         BlockDeviceMappings:
           - DeviceName: /dev/sda1
@@ -434,11 +434,11 @@ Resources:
   CodeDeployApplication:
     Type: AWS::CodeDeploy::Application
     Properties:
-      ApplicationName: Efflux-BE-CodeDeploy
+      ApplicationName: Efflux-BE
       ComputePlatform: Server
       Tags:
         - Key: Name
-          Value: Efflux-BE-CodeDeploy
+          Value: Efflux-BE
         - Key: project
           Value: efflux
 
@@ -447,7 +447,7 @@ Resources:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
       ApplicationName: !Ref CodeDeployApplication
-      DeploymentGroupName: Efflux-BE-DG
+      DeploymentGroupName: Efflux-BE
       DeploymentConfigName: CodeDeployDefault.OneAtATime
       ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
       AutoScalingGroups:
@@ -620,7 +620,7 @@ Resources:
       Path: "/"
       Roles:
         - !Ref CodeDeployRole
-      InstanceProfileName: Efflux-BE-CodeDeploy-InstanceProfile
+      InstanceProfileName: Efflux-BE
 
 ####################
 # Outputs

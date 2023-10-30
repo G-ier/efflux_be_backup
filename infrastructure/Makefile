@@ -14,10 +14,10 @@ deploy-stack:
     --tags \
       project=efflux \
 		--profile $(AWS_PROFILE) \
-		--region $(AWS_REGION) \
+		--region $(AWS_REGION)
 
 destroy-stack:
 	@aws cloudformation delete-stack \
 		--stack-name $(STACK_NAME) \
 		--profile $(AWS_PROFILE) \
-		--region $(AWS_REGION) \
+		--region $(AWS_REGION)
