@@ -29,3 +29,6 @@ jobs:
 
           # Cleaning up unused resources
           docker system prune -f --volumes
+
+      - name: Knex Migration
+        run: npx knex migrate:latest --env staging
