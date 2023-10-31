@@ -9,7 +9,6 @@ Parameters:
     Description: The email address to notify when there are any scaling activities
     Type: String
     Default: ilyas@roi.ad
-  # TODO: Replace the default password with a random generated password
   RDSPostgresClusterPassword:
     Description: The password for the database
     NoEcho: "true"
