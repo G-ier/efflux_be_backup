@@ -16,7 +16,6 @@ Parameters:
     Type: String
     MinLength: "8"
     MaxLength: "41"
-    Default: "nG#*uah3Skt$VsQ8px39"
   RDSPostgresClusterIops:
     Description: The IOPS for the database
     Type: Number
