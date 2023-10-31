@@ -15,12 +15,7 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v2
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v2
-        with:
-           node-version: 16 
-
-      - name: Build and Deploy using Docker Compose
+      - name: Build and Deploy using Docker Compose + run knex migrations
         run: |
           cd ~/goerge-efflux-platform
           git checkout ${GITHUB_REF#refs/heads/}
