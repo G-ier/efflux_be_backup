@@ -5,7 +5,7 @@ module.exports = {
       script: "./index.js",
       ignore_watch: ["./node_modules", "./logs", "./storage"],
       watch: true,
-      instances: 2,
+      instances: 1,
       exec_mode: "fork",
       max_memory_restart: "512M",
       env: {
@@ -14,7 +14,7 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: "production",
-        PORT: 5000,
+        PORT: 80,
       },
     },
   ],
