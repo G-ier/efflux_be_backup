@@ -33,7 +33,8 @@ class GoogleSheetsService {
     if (fs.existsSync(this.KEY_FILE)) {
       this.serviceEnabled = true;
     } else {
-        throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
+      console.warn(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
+      return;
     }
 
     const auth = new google.auth.GoogleAuth({
