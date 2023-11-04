@@ -13,9 +13,12 @@ const {
   CROSSROADS_UPDATE_TODAY_REGULAR_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
+const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableCrossroadsCron       = process.env.DISABLE_CROSSROADS_CRON === 'true' || process.env.DISABLE_CROSSROADS_CRON !== 'false';
+const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_CROSSROADS_CRON     = EnvironmentVariablesManager.getEnvVariable('DISABLE_CROSSROADS_CRON')
+const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+const disableCrossroadsCron       = DISABLE_CROSSROADS_CRON === 'true' || DISABLE_CROSSROADS_CRON !== 'false';
 const compositeService            = new CompositeService();
 
 const updateCrossroadsForAllAccounts = async (request_date) => {

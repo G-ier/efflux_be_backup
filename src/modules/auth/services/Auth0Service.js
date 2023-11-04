@@ -1,5 +1,9 @@
-const axios = require("axios");
-const UserService = require("./UserService");
+// Third part imports
+const axios                       = require("axios");
+
+// Local application imports
+const UserService                 = require("./UserService");
+const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
 
 class Auth0Service {
 
@@ -10,11 +14,11 @@ class Auth0Service {
   async getAuth0AccessToken() {
     const { data, status } = await axios
       .post(
-        `https://${process.env.AUTH0_DOMAIN}/oauth/token`,
+        `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/oauth/token`,
         {
-          client_id: process.env.AUTH0_CLIENT_ID,
-          client_secret: process.env.AUTH0_CLIENT_SECRET,
-          audience: process.env.AUTH0_API,
+          client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
+          client_secret: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_SECRET'),
+          audience: EnvironmentVariablesManager.getEnvVariable('AUTH0_API'),
           grant_type: "client_credentials",
         },
         {
@@ -36,7 +40,7 @@ class Auth0Service {
   async getAuth0User(sub) {
     const Authorization = await this.getAuth0AccessToken();
 
-    const { data: user } = await axios.get(`${process.env.AUTH0_API}users/${sub}`, {
+    const { data: user } = await axios.get(`${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${sub}`, {
       headers: {
         Authorization,
       },
@@ -48,7 +52,7 @@ class Auth0Service {
   async createAuth0User({ email, password }) {
     const Authorization = await this.getAuth0AccessToken();
     return axios.post(
-      `${process.env.AUTH0_API}users`,
+      `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users`,
       {
         email,
         password,

@@ -15,6 +15,8 @@ const {
   revealBotCampaignSheetColumn,
   revealBotAdsetSheetColumn
 }                                       = require('../revealBotSheetConstants');
+const EnvironmentVariablesManager       = require('../../../shared/services/EnvironmentVariablesManager');
+
 class RevealBotSheetService {
 
   constructor() {
@@ -57,12 +59,12 @@ class RevealBotSheetService {
       {
         sheets: facebookRevealBotSheets,
         network: 'crossroads',
-        disabled: process.env.DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON === 'true'
+        disabled: EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON') === 'true'
       },
       {
         sheets: facebookFFSedoRevealBotSheets,
         network: 'sedo',
-        disabled: process.env.DISABLE_FACEBOOK_SEDO_REVEALBOT_SHEET_CRON === 'true'
+        disabled: EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_SEDO_REVEALBOT_SHEET_CRON') === 'true'
       }
     ]
 
@@ -84,12 +86,12 @@ class RevealBotSheetService {
       {
         sheets: tiktokRevealBotSheets,
         network: 'crossroads',
-        disabled: process.env.DISABLE_TIKTOK_CROSSROADS_REVEALBOT_SHEET_CRON === 'true'
+        disabled: EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CROSSROADS_REVEALBOT_SHEET_CRON') === 'true'
       },
       {
         sheets: tiktokFFSedoRevealbotSheets,
         network: 'sedo',
-        disabled: process.env.DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON === 'true'
+        disabled: EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON') === 'true'
       }
     ]
 

@@ -11,9 +11,12 @@ const {
 }                                                                = require('./rules');
 const { SEDO_TZ }                                                = require('../constants');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
+const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableSedoCron             = process.env.DISABLE_SEDO_CRON === 'true' || process.env.DISABLE_SEDO_CRON !== 'false';
+const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_SEDO_CRON           = EnvironmentVariablesManager.getEnvVariable('DISABLE_SEDO_CRON')
+const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+const disableSedoCron             = DISABLE_SEDO_CRON === 'true' || DISABLE_SEDO_CRON !== 'false';
 const insightsService             = new InsightsService();
 
 const updateSedo = async (date, final=false) => {

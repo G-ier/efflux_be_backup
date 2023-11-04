@@ -14,7 +14,7 @@ const {
 const {
   SEDO_API_URL
 }                                                 = require("../constants")
-
+const EnvironmentVariablesManager                 = require('../../../shared/services/EnvironmentVariablesManager');
 class InsightsService extends BaseService {
 
   constructor() {
@@ -29,10 +29,10 @@ class InsightsService extends BaseService {
     this.logger.info(`Fetching Sedo data from API for date ${date}`);
     const url = `${SEDO_API_URL}DomainParkingSubIdReport`;
     const params = {
-      'partnerid'     : 328108, // process.env.SEDO_PARTNERID,
-      'signkey'       : '620ca021b16a56a0c32666bd4f6544', //process.env.SEDO_SIGNKEY,
-      'username'      : 'roixad2', //process.env.SEDO_USERNAME,
-      'password'      : 'zu6i$iFC0lt7t01', //process.env.SEDO_PASSWORD,
+      'partnerid'     : EnvironmentVariablesManager.getEnvVariable('SEDO_PARTNERID'),
+      'signkey'       : EnvironmentVariablesManager.getEnvVariable('SEDO_SIGNKEY'),
+      'username'      : EnvironmentVariablesManager.getEnvVariable('SEDO_USERNAME'),
+      'password'      : EnvironmentVariablesManager.getEnvVariable('SEDO_PASSWORD'),
       'output_method' : 'xml',
       'final'         : true,
       'date'          : date,

@@ -12,9 +12,12 @@ const {
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
+const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableFacebookCron         = process.env.DISABLE_FACEBOOK_CRON === 'true' || process.env.DISABLE_FACEBOOK_CRON !== 'false';
+const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_FACEBOOK_CRON       = EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_CRON')
+const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+const disableFacebookCron         = DISABLE_FACEBOOK_CRON === 'true' || DISABLE_FACEBOOK_CRON !== 'false';
 const compositeService            = new CompositeService();
 
 async function updateFacebookData(day) {

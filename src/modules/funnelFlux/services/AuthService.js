@@ -5,6 +5,7 @@ const BaseService                         = require("../../../shared/services/Ba
 const {
   FunnelFluxApiBaseUrl
 }                                         = require('../constants');
+const EnvironmentVariablesManager         = require('../../../shared/services/EnvironmentVariablesManager');
 
 class AuthService extends BaseService {
 
@@ -18,8 +19,8 @@ class AuthService extends BaseService {
 
     this.logger.info('Refreshing the access token')
     const url = `${FunnelFluxApiBaseUrl}/auth/validate`;
-    const refresh_token = dbResponse ? dbResponse.refresh_token : process.env.FUNNEL_FLUX_API_REFRESH_TOKEN;
-    const acces_token = dbResponse ? dbResponse.access_token : process.env.FUNNEL_FLUX_API_ACCESS_TOKEN;
+    const refresh_token = dbResponse ? dbResponse.refresh_token : EnvironmentVariablesManager.getEnvVariable('FUNNEL_FLUX_API_REFRESH_TOKEN');
+    const acces_token = dbResponse ? dbResponse.access_token : EnvironmentVariablesManager.getEnvVariable('FUNNEL_FLUX_API_ACCESS_TOKEN');
     const data = { refresh_token: refresh_token}
     const headers = {
       'Accept': 'application/json',

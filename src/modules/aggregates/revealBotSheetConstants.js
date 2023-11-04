@@ -1,4 +1,6 @@
-const environment = process.env.ENVIRONMENT === 'production' ? 'prod' : 'staging';
+const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
+
+const environment = EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT') === 'production' ? 'prod' : 'staging';
 
 const fbCrRevealBotSheetId = environment === 'prod'
     ? '1A6Pfy2GPq0z12b_CtDdaMb5zKWecJa2jkzLVA3BwBuQ'

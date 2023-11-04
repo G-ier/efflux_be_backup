@@ -12,9 +12,13 @@ const {
   CROSSROADS_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require("../../../../shared/lib/WinstonLogger");
+const EnvironmentVariablesManager                                = require('../../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableAggregatesUpdateCron = process.env.DISABLE_AGGREGATES_UPDATE_CRON === 'true' || process.env.DISABLE_AGGREGATES_UPDATE_CRON !== 'false';
+const DISABLE_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_AGGREGATES_UPDATE_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_AGGREGATES_UPDATE_CRON')
+
+const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+const disableAggregatesUpdateCron = DISABLE_AGGREGATES_UPDATE_CRON === 'true' || DISABLE_AGGREGATES_UPDATE_CRON !== 'false';
 const aggregatesService           = new AggregatesService();
 
 async function updateCompiledAggregates(day="today", network, trafficSource) {
