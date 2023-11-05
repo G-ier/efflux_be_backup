@@ -28,6 +28,11 @@ jobs:
         run: |
           cd ~/goerge-efflux-platform
           git checkout ${GITHUB_REF#refs/heads/}
+
+          # Discard local changes to all files, including yarn.lock
+          git reset --hard
+          git clean -fd
+
           git pull origin ${GITHUB_REF#refs/heads/}
           
           # Exporting AWS credentials to be used by Docker
