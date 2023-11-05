@@ -21,21 +21,30 @@ jobs:
            node-version: 16 
 
       - name: Build and Deploy using Docker Compose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # If you added this as a secret.
         run: |
           cd ~/goerge-efflux-platform
           git checkout ${GITHUB_REF#refs/heads/}
           git pull origin ${GITHUB_REF#refs/heads/}
           
+          # Exporting AWS credentials to be used by Docker
+          echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" > .env.aws
+          echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> .env.aws
+          echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> .env.aws
+
           # Stopping and removing all containers
           docker-compose down
 
           # Building and starting services in detached mode
-          docker-compose up --build -d 
+          docker-compose --env-file .env.aws up --build -d 
 
           # Cleaning up unused resources
           docker system prune -f --volumes
           
-          # install knex
+          # Install knex
           npm install knex
           
           # Run latex knex migrations

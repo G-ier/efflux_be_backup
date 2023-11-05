@@ -26,6 +26,9 @@ services:
     environment:
       - REDIS_HOST=redis
       - DATABASE_HOST=postgres
+      - AWS_ACCESS_KEY_ID
+      - AWS_SECRET_ACCESS_KEY
+      - AWS_DEFAULT_REGION
     volumes:
       - ./logs:/logs
     depends_on:
