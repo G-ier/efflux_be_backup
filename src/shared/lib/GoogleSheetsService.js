@@ -45,7 +45,7 @@ class GoogleSheetsService {
       ],
     }
 
-    if (process.env.DEVELOPMENT_ENVIRONMENT === 'true') {
+    if (process.env.ENVIRONMENT_LOCATION === 'local') {
       if (fs.existsSync(this.KEY_FILE)) {
         this.serviceEnabled = true;
         configuration.keyfile = this.KEY_FILE;

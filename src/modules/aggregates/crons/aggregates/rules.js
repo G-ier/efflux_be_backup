@@ -1,5 +1,5 @@
 const EnvironmentVariablesManager = require('../../../../shared/services/EnvironmentVariablesManager');
-const environment = EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT') === 'production' ? 'prod' : 'staging'
+const environment = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT') === 'production' ? 'prod' : 'staging'
 
 const AGGREGATES_UPDATE_TODAY_REGULAR_CRON = environment === 'prod' ? '4,19,34,49 * * * *' : '6 * * * *'
 const SEDO_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON = '30 0,7,9,11 * * *'

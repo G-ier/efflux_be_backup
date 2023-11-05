@@ -46,7 +46,7 @@ const initializeAPI = async () => {
     const DISABLE_REVEALBOT_SHEET_CRON    = EnvironmentVariablesManager.getEnvVariable('DISABLE_REVEALBOT_SHEET_CRON')
     const DISABLE_SLACK_NOTIFICATION      = EnvironmentVariablesManager.getEnvVariable('DISABLE_SLACK_NOTIFICATION')
 
-    const rulesEnvironment                = EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT') || 'staging';
+    const rulesEnvironment                = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT') || 'staging';
     const disableGeneralCron              = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
     const disableCrossroadsCron           = DISABLE_CROSSROADS_CRON === 'true' || DISABLE_CROSSROADS_CRON !== 'false';
     const disableSedoCron                 = DISABLE_SEDO_CRON === 'true' || DISABLE_SEDO_CRON !== 'false';
@@ -71,8 +71,7 @@ const initializeAPI = async () => {
       Server Info:
         Port: ${port}
         Slack Notifications: ${disableSlackNotification ? 'Disabled' : 'Enabled'}
-        Development Environment: ${process.env.DEVELOPMENT_ENVIRONMENT === 'true' ? 'True' : 'False'}
-
+        Environment Location: ${process.env.ENVIRONMENT_LOCATION === 'local' ? 'Local' : 'AWS Cloud'}
       Logging:
         "The production environment logs every modules logs to it's
         own file. The development environment logs all modules logs

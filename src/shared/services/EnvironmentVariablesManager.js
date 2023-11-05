@@ -30,7 +30,7 @@ class EnvironmentVariablesManager {
     'DISABLE_FACEBOOK_SEDO_REVEALBOT_SHEET_CRON',
 
     // Server settings
-    'DATABASE_ENVIRONMENT', 'PORT', 'DISABLE_SLACK_NOTIFICATION', 'ENVIRONMENT', 'DISABLE_AUTH_DEADLOCK',
+    'DATABASE_ENVIRONMENT', 'PORT', 'DISABLE_SLACK_NOTIFICATION', 'CRON_ENVIRONMENT', 'DISABLE_AUTH_DEADLOCK',
 
     // Logging
     'LOGGING_ENVIRONMENT', 'LOG_LEVEL'
@@ -39,7 +39,7 @@ class EnvironmentVariablesManager {
   constructor() {
     if (!EnvironmentVariablesManager.instance) {
       // Check if the runtime environment is development or production
-      this.runtimeEnvironment = process.env.DEVELOPMENT_ENVIRONMENT === 'true' ? 'development' : 'production';
+      this.environmentLocation = process.env.ENVIRONMENT_LOCATION === 'local' ? 'Local' : 'AWS Cloud'
       this.region = 'us-east-1';
       this.secretsManager = new SecretsManagerClient({
         region: this.region
@@ -109,7 +109,7 @@ class EnvironmentVariablesManager {
 
   // Initialize the service by retrieving all secrets
   async init() {
-    if (this.runtimeEnvironment === 'development') {
+    if (this.environmentLocation === 'Local') {
       const envVars = EnvironmentVariablesManager.secrets.concat(EnvironmentVariablesManager.parameters);
       for (const secretName of envVars) {
         this.cachedValues[secretName] = process.env[secretName];
