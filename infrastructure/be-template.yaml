@@ -15,10 +15,6 @@ Parameters:
     Type: String
     MinLength: "8"
     MaxLength: "41"
-  RDSPostgresClusterIops:
-    Description: The IOPS for the database
-    Type: Number
-    Default: 3000
 
 ####################
 # Resources
@@ -406,30 +402,28 @@ Resources:
         - !Ref InstanceSecurityGroup
       SubnetId: !Ref PublicSubnet3
 
-  # Create an RDS Postgres cluster with 1 instance and 100GB storage and Multi-AZ enabled and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
-  RDSPostgresCluster:
-    Type: AWS::RDS::DBCluster
+  # Create an RDS Postgres Database with 100GB storage, db.t3.large instance, and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
+  RDSPostgresDB:
+    Type: AWS::RDS::DBInstance
     Properties:
-      AllocatedStorage: 100
+      AllocatedStorage: 70
       DeletionProtection: false
-      DBClusterInstanceClass: db.m5d.large
+      DBInstanceClass: db.t3.large
       Engine: postgres
       EngineVersion: 15.4
-      EngineMode: provisioned
-      DBClusterParameterGroupName: default.postgres15
-      DatabaseName: efflux
+      DBInstanceIdentifier: efflux-be
+      DBName: efflux
       MasterUsername: effluxapp
       MasterUserPassword: !Ref RDSPostgresClusterPassword
       PubliclyAccessible: true
       BackupRetentionPeriod: 5
       Port: 5432
       StorageEncrypted: false
-      StorageType: io1
-      Iops: !Ref RDSPostgresClusterIops
+      StorageType: gp3
       PreferredBackupWindow: 00:30-01:00
       PreferredMaintenanceWindow: mon:03:00-mon:03:30
       AutoMinorVersionUpgrade: true
-      VpcSecurityGroupIds:
+      VPCSecurityGroups:
         - !Ref InstanceSecurityGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
       Tags:
@@ -696,9 +690,9 @@ Outputs:
   ElasticFileSystem:
     Description: Elastic File System ID
     Value: !Ref ElasticFileSystem
-  RDSPostgresCluster:
-    Description: RDS Postgres Cluster ID
-    Value: !Ref RDSPostgresCluster
-  RedisCluster:
-    Description: ElastiCache Redis Cluster ID
-    Value: !Ref RedisCluster
+  RDSPostgresDB:
+    Description: RDS Postgres Database ID
+    Value: !Ref RDSPostgresDB
+  RDSPostgresEndpoint:
+    Description: RDS Postgres Database Endpoint
+    Value: !GetAtt RDSPostgresDB.Endpoint.Address
