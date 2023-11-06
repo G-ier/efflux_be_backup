@@ -48,7 +48,7 @@ class GoogleSheetsService {
     if (process.env.ENVIRONMENT_LOCATION === 'local') {
       if (fs.existsSync(this.KEY_FILE)) {
         this.serviceEnabled = true;
-        configuration.keyfile = this.KEY_FILE;
+        configuration.keyFile = this.KEY_FILE;
       } else {
           throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
       }
