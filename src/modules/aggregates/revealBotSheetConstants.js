@@ -1,5 +1,4 @@
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
-
 const environment = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT') === 'production' ? 'prod' : 'staging';
 
 const fbCrRevealBotSheetId = environment === 'prod'
