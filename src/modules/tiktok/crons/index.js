@@ -12,9 +12,12 @@ const {
   TIKTOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
+const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableTikTokCron           = process.env.DISABLE_TIKTOK_CRON === 'true' || process.env.DISABLE_TIKTOK_CRON !== 'false';
+const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_TIKTOK_CRON         = EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CRON')
+const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+const disableTikTokCron           = DISABLE_TIKTOK_CRON === 'true' || DISABLE_TIKTOK_CRON !== 'false';
 const compositeService            = new CompositeService();
 
 async function updateTikTokData(day) {

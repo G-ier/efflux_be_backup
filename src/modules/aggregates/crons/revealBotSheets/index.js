@@ -9,10 +9,13 @@ const {
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require("../../../../shared/lib/WinstonLogger");
 const { sendSlackNotification }                                  = require("../../../../shared/lib/SlackNotificationService");
+const EnvironmentVariablesManager                                = require('../../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableRevealBotSheetCron   = process.env.DISABLE_REVEALBOT_SHEET_CRON === 'true' || process.env.DISABLE_REVEALBOT_SHEET_CRON !== 'false';
-const revealBotSheetService       = new RevealBotSheetService();
+const DISABLE_CRON                  = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_REVEALBOT_SHEET_CRON  = EnvironmentVariablesManager.getEnvVariable('DISABLE_REVEALBOT_SHEET_CRON')
+const disableGeneralCron            = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+  const disableRevealBotSheetCron   = DISABLE_REVEALBOT_SHEET_CRON === 'true' || DISABLE_REVEALBOT_SHEET_CRON !== 'false';
+  const revealBotSheetService       = new RevealBotSheetService();
 
 const updateFacebookRevealBotSheetRegular = new CronJob(
   FACEBOOK_REVEALBOT_SHEET_REGULAR_CRON,

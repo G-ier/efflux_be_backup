@@ -6,6 +6,7 @@ const { FB_API_URL } = require('../constants');
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const UserAccountRepository = require("../repositories/UserAccountRepository");
 const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
+const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 class UserAccountService {
 
@@ -65,8 +66,8 @@ class UserAccountService {
     const { data } =  await axios.get(`${FB_API_URL}oauth/access_token`, {
       params: {
         grant_type: 'fb_exchange_token',
-        client_id: process.env.FACEBOOK_APP_ID,
-        client_secret: process.env.FACEBOOK_APP_SECRET,
+        client_id: EnvironmentVariablesManager.getEnvVariable('FACEBOOK_APP_ID'),
+        client_secret: EnvironmentVariablesManager.getEnvVariable('FACEBOOK_APP_SECRET'),
         fb_exchange_token: accessToken,
       }
     }).catch(err => {
@@ -94,7 +95,6 @@ class UserAccountService {
 
     let accountValidity = {};
 
-    // Here we need the TokenService to get the token for each account
     for (const account of accounts) {
       let [username, isValid] = await this.debug(admin_token ? admin_token : account.token, account.token);
       accountValidity[account.id] = isValid;

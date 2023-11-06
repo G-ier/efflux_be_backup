@@ -1,7 +1,12 @@
+// Third party imports
 const { google } = require('googleapis');
 const fs = require('fs');
-const {todayYMDHM} = require('../../shared/helpers/calendar');
+
 const path = require('path');
+
+// Local imports
+const { todayYMDHM } = require('../../shared/helpers/calendar');
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
 class GoogleSheetsService {
 
@@ -30,15 +35,7 @@ class GoogleSheetsService {
   }
 
   init() {
-    if (fs.existsSync(this.KEY_FILE)) {
-      this.serviceEnabled = true;
-    } else {
-      console.warn(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
-      return;
-    }
-
-    const auth = new google.auth.GoogleAuth({
-      keyFile: this.KEY_FILE,
+    let configuration = {
       scopes: [
         'https://www.googleapis.com/auth/drive',
         'https://www.googleapis.com/auth/drive.file',
@@ -46,7 +43,21 @@ class GoogleSheetsService {
         'https://www.googleapis.com/auth/spreadsheets',
         'https://www.googleapis.com/auth/spreadsheets.readonly',
       ],
-    });
+    }
+
+    if (process.env.ENVIRONMENT_LOCATION === 'local') {
+      if (fs.existsSync(this.KEY_FILE)) {
+        this.serviceEnabled = true;
+        configuration.keyfile = this.KEY_FILE;
+      } else {
+          throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
+      }
+    } else {
+      this.serviceEnabled = true;
+      configuration.credentials = EnvironmentVariablesManager.getEnvVariable('GOOGLE_API_KEY_FILE');
+    }
+
+    const auth = new google.auth.GoogleAuth(configuration);
 
     google.options({ auth });
     this.drive = google.drive({ version: 'v3' });

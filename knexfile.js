@@ -1,16 +1,18 @@
-// Update with your config settings.
+// Third party imports
 require("dotenv").config();
 const pg = require("pg");
 
-if (process.env.DATABASE_ENVIRONMENT !== "development") {
+// Local imports
+const EnvironmentVariablesManager = require("./src/shared/services/EnvironmentVariablesManager");
+
+if (EnvironmentVariablesManager.getEnvVariable("DATABASE_ENVIRONMENT") !== "development") {
   pg.defaults.ssl = { rejectUnauthorized: false };
 }
-// process.env["NODE_TLS_REJECT_UNAUTHORIZED"] = 0;
 
 module.exports = {
   production: {
     client: "pg",
-    connection: process.env.DATABASE_URL,
+    connection: EnvironmentVariablesManager.getEnvVariable("DATABASE_URL"),
     pool: {
       min: 2,
       max: 40,
@@ -25,7 +27,7 @@ module.exports = {
   },
   staging: {
     client: "pg",
-    connection: process.env.DATABASE_URL_STAGING,
+    connection: EnvironmentVariablesManager.getEnvVariable("DATABASE_URL_STAGING"),
     pool: {
       min: 2,
       max: 20,
@@ -53,7 +55,7 @@ module.exports = {
   },
   oldproduction: {
     client: "pg",
-    connection: process.env.OLD_PRODUCTION_DATABASE_URL,
+    connection: EnvironmentVariablesManager.getEnvVariable("OLD_PRODUCTION_DATABASE_URL"),
     pool: {
       min: 2,
       max: 20,

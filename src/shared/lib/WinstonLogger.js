@@ -1,5 +1,9 @@
+// Third party imports
 const { createLogger, format, transports } = require('winston');
 const path = require('path');
+
+// Local application imports
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
 class CustomLogger {
 
@@ -81,8 +85,8 @@ class CustomLogger {
 
 }
 
-const streamDestination = process.env.LOGGING_ENVIRONMENT === "production" ? 'file' : 'console';
-const filePath = (msName) => process.env.LOGGING_ENVIRONMENT === "production" ? `./logs/${msName}.log` : null;
+const streamDestination = EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT') === "production" ? 'file' : 'console';
+const filePath = (msName) => EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT') === "production" ? `./logs/${msName}.log` : null;
 
 // Crossroads Logger
 const CrossroadsLogger = new CustomLogger({

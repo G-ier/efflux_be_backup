@@ -9,9 +9,12 @@ const { dataUpdatesLogger }                                      = require('../.
 const {
   FUNNEL_FLUX_REGULAR_COST_UPDATE_CRON
 }                                                                = require('./rules');
+const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
 
-const disableGeneralCron          = process.env.DISABLE_CRON === 'true' || process.env.DISABLE_CRON !== 'false';
-const disableFunnelFluxCron       = process.env.DISABLE_FUNNEL_FLUX_CRON === 'true' || process.env.DISABLE_FUNNEL_FLUX_CRON !== 'false';
+const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
+const DISABLE_FUNNEL_FLUX_CRON    = EnvironmentVariablesManager.getEnvVariable('DISABLE_FUNNEL_FLUX_CRON')
+const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
+const disableFunnelFluxCron       = DISABLE_FUNNEL_FLUX_CRON === 'true' || DISABLE_FUNNEL_FLUX_CRON !== 'false';
 const funnelFluxService           = new FFDataService();
 
 // This updates the cost of every linkage between funnels and traffic sources in our database

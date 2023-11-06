@@ -17,7 +17,8 @@
     "testFFDataService": "node src/modules/funnelFlux/services/FunnelFluxDataService.js"
   },
   "dependencies": {
-    "@sentry/node": "^6.12.0",
+    "@aws-sdk/client-secrets-manager": "^3.441.0",
+    "@aws-sdk/client-ssm": "^3.441.0",
     "async": "^3.2.3",
     "axios": "^0.21.1",
     "cloudinary": "^1.23.0",

@@ -1,4 +1,5 @@
-const environment = process.env.ENVIRONMENT === 'production' ? 'prod' : 'staging'
+const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
+const environment = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT') === 'production' ? 'prod' : 'staging'
 
 const TIKTOK_UPDATE_TODAY_REGULAR_CRON              = environment === 'prod' ?  '*/15 * * * *' : '0 * * * *'
 const TIKTOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON  = '5 8 * * *'

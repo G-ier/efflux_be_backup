@@ -29,6 +29,7 @@ const funnelFlux = require("../src/modules/funnelFlux/routes");
 const management = require("../src/shared/routes/management");
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
+const EnvironmentVariablesManager = require("../src/shared/services/EnvironmentVariablesManager");
 
 // Routes Logger
 const routesLogger = require("./routeLoggers");
@@ -65,7 +66,7 @@ function configureMiddleware(server) {
   server.use(paginate.middleware(10, 50));
 
   // Authentication routes
-  if (process.env.DISABLE_AUTH_DEADLOCK !== "true") {
+  if (EnvironmentVariablesManager.getEnvVariable('DISABLE_AUTH_DEADLOCK') !== "true") {
     server.use(jwtCheck);
     server.use(jwtPermissions);
     server.use(AuthUser);

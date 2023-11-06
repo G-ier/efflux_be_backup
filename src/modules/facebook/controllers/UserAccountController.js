@@ -17,7 +17,7 @@ class UserAccountController {
       const exists = await this.userAccountService.fetchUserAccounts(['*'], { provider, provider_id }, 1)
       if (exists.length > 0) {
         return res.status(200).json({
-          message: `Account already exists for ${name} | ${process.env.FACEBOOK_APP_ID}`
+          message: `Account already exists for ${name}`
         });
       }
 
@@ -71,7 +71,7 @@ class UserAccountController {
       token
     })
     res.status(200).json({
-      message: `Successfully updated account for ${name} | ${process.env.FACEBOOK_APP_ID}`
+      message: `Successfully updated account for ${name}`
     });
   }
 
@@ -87,12 +87,12 @@ class UserAccountController {
     const account = await this.userAccountService.fetchUserAccounts(['*'], { id: accountId }, 1);
     const { name, token, provider_id } = account[0];
     const result = await this.userAccountService.revokeFacebookToken(token, provider_id);
-    if (!result) res.status(400).json({ message: `Failed to revoke token for ${name} | ${process.env.FACEBOOK_APP_ID}` });
+    if (!result) res.status(400).json({ message: `Failed to revoke token for ${name}` });
 
     // We need to alter the database to cascade on delete for every table that references user_accounts.
     await this.userAccountService.deleteUserAccount({ id: accountId });
     res.status(200).json({
-      message: `Successfully deleted account for ${name} | ${process.env.FACEBOOK_APP_ID}`
+      message: `Successfully deleted account for ${name}`
     });
 
   }

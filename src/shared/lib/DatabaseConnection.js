@@ -1,6 +1,7 @@
 const knex = require("knex");
 const knexConfig = require("../../../knexfile");
-const databaseEnvironment = process.env.DATABASE_ENVIRONMENT || "development";
+const EnvironmentVariablesManager = require("../services/EnvironmentVariablesManager");
+const databaseEnvironment = EnvironmentVariablesManager.getEnvVariable("DATABASE_ENVIRONMENT") || "development";
 class DatabaseConnection {
 
   constructor(config = knexConfig[databaseEnvironment]) {
