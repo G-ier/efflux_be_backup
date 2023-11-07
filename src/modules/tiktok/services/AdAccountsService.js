@@ -56,7 +56,12 @@ class AdAccountService extends BaseService {
 
     this.logger.info(`Fetched ${data.data.list.length} Ad Accounts from API`)
     const adAccountsIds = data.data.list.map(({ advertiser_id }) => advertiser_id);
-    const adAccountsData = await this.getAdAccountDataFromApi(access_token, adAccountsIds);
+    const dataChunks = _.chunk(adAccountsIds, 100);
+    const adAccountsData = [];
+    for (const chunk of dataChunks) {
+      let adAccountsDataIter = await this.getAdAccountDataFromApi(access_token, chunk);
+      adAccountsData.push(...adAccountsDataIter);
+    }
     return adAccountsData;
   }
 
