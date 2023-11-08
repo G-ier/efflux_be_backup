@@ -45,7 +45,7 @@ class InsightsService extends BaseService {
     this.logger.info(`Fetched Sedo data from API for date ${date}`)
     if (parsedXMLBody.SEDOFAULT) {
       this.logger.error(`Error fetching Sedo data from API for date ${date}: ${parsedXMLBody.SEDOFAULT.faultstring[0]._}`)
-      return []
+      throw new Error(`Error fetching Sedo data from API for date ${date}: ${parsedXMLBody.SEDOFAULT.faultstring[0]._}`)
     }
     return parsedXMLBody.SEDOSTATS.item;
   }
@@ -77,7 +77,6 @@ class InsightsService extends BaseService {
     this.logger.info(`finals results post merge`, calculateAccumulated(finalResults,
       ['pb_conversions', 'conversions', 'pb_revenue', 'revenue', 'pb_visits', 'visitors']
     ))
-    this.logger.info("finalResults", finalResults.slice(0, 2))
 
     return finalResults
   }
