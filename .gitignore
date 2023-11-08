@@ -90,4 +90,4 @@ typings/
 cert/*
 !cert/.placeholder
 .idea/*
-clickhouse
+datagrip
