@@ -447,6 +447,88 @@ Resources:
         - Key: project
           Value: efflux
 
+  ClickHouseInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+      InstanceType: t3.medium
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 94
+            VolumeType: gp3
+            DeleteOnTermination: yes
+            Encrypted: false
+      EbsOptimized: true
+      Monitoring: true
+      KeyName: efflux-clickhouse
+      SecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+        - !Ref ClickHouseSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: Efflux-ClickHouse
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          # Setup the repo
+          sudo apt-get install -y apt-transport-https ca-certificates dirmngr
+          GNUPGHOME=$(mktemp -d)
+          sudo GNUPGHOME="$GNUPGHOME" gpg --no-default-keyring --keyring /usr/share/keyrings/clickhouse-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8919F6BD2B48D754
+          sudo rm -r "$GNUPGHOME"
+          sudo chmod +r /usr/share/keyrings/clickhouse-keyring.gpg
+
+          echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee \
+              /etc/apt/sources.list.d/clickhouse.list
+          sudo apt-get update
+
+  # add an elastic IP to the clickhouse instance
+  ClickHouseEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref ClickHouseInstance
+      Domain: standard
+      Tags:
+        - Key: Name
+          Value: Efflux-ClickHouse-EIP
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  # Create a ClickHouse Security Group
+  ClickHouseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: Efflux-ClickHouse
+      GroupDescription: Enable SSH access and HTTP
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 8123
+          ToPort: 8123
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Efflux-ClickHouse
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
   # Create an ElastiCache Redis Cluster
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
@@ -465,6 +547,8 @@ Resources:
           Value: Efflux-BE
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: cache
 
   # Create a Cache Subnet Group
   CacheSubnetGroup:
@@ -480,6 +564,8 @@ Resources:
           Value: Efflux-BE-SubnetGroup
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: cache
 
   # Create CodeDeploy Application
   CodeDeployApplication:
@@ -492,6 +578,8 @@ Resources:
           Value: Efflux-BE
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: deployment
 
   # Create CodeDeploy Deployment Group
   CodeDeployDeploymentGroup:
@@ -531,6 +619,8 @@ Resources:
           Value: Efflux-BE-DeploymentGroup
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: deployment
 
   # Create CodeDeploy Service Role
   CodeDeployServiceRole:
@@ -696,3 +786,6 @@ Outputs:
   RDSPostgresEndpoint:
     Description: RDS Postgres Database Endpoint
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
+  ClickHouseEIP:
+    Description: ClickHouse Elastic IP
+    Value: !Ref ClickHouseEIP
