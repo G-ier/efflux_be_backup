@@ -50,7 +50,7 @@ class GoogleSheetsService {
         this.serviceEnabled = true;
         configuration.keyFile = this.KEY_FILE;
       } else {
-          throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
+          // throw new Error(`Keyfile is not found at '${this.KEY_FILE}'. Spreadsheet service disabled`);
       }
     } else {
       this.serviceEnabled = true;

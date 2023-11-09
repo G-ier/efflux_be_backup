@@ -1,6 +1,6 @@
 // Standard library imports
 const _ = require("lodash");
-
+const FormData = require("form-data");
 // Local application imports
 const UserAccountService = require("./UserAccountService");
 const AdAccountService = require("./AdAccountService");
@@ -15,7 +15,6 @@ const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
 const axios = require("axios");
 class CompositeService {
-
   constructor() {
     this.userAccountService = new UserAccountService();
     this.adAccountService = new AdAccountService();
@@ -25,59 +24,80 @@ class CompositeService {
     this.adInsightsService = new AdInsightsService();
   }
 
-  async syncUserAccountsData(account, startDate, endDate, {
-    updatePixels = true,
-    updateCampaigns = true,
-    updateAdsets = true,
-    updateInsights = true
-    }) {
-
+  async syncUserAccountsData(
+    account,
+    startDate,
+    endDate,
+    { updatePixels = true, updateCampaigns = true, updateAdsets = true, updateInsights = true },
+  ) {
     const { token, name, user_id, id, provider_id } = account;
     FacebookLogger.info(`Syncing data for account ${name}`);
 
     // Sync Ad Accounts
     const updatedResults = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
     if (!updatedResults.length) throw new Error("No ad accounts to update");
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], { account_id: id });
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+      ["id", "provider_id", "user_id", "account_id"],
+      { account_id: id },
+    );
     const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
     const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
 
     // Sync Pixels
     if (updatePixels)
-      try { await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap)}
-      catch {}
+      try {
+        await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
+      } catch {}
 
     // Sync Campaigns
     if (updateCampaigns)
-      try { await this.campaignsService.syncCampaigns(token, updatedAdAccountIds, updatedAdAccountsDataMap, startDate, endDate)}
-      catch {}
+      try {
+        await this.campaignsService.syncCampaigns(
+          token,
+          updatedAdAccountIds,
+          updatedAdAccountsDataMap,
+          startDate,
+          endDate,
+        );
+      } catch {}
 
     // Sync Adsets
     if (updateAdsets) {
       const campaignIdsObjects = await this.campaignsService.fetchCampaignsFromDatabase(["id"]);
       const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-      try {await this.adsetsService.syncAdsets(token, updatedAdAccountIds, updatedAdAccountsDataMap, campaignIds, startDate, endDate)}
-      catch (e) {console.log(e)}
+      try {
+        await this.adsetsService.syncAdsets(
+          token,
+          updatedAdAccountIds,
+          updatedAdAccountsDataMap,
+          campaignIds,
+          startDate,
+          endDate,
+        );
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     // Sync Insights
     if (updateInsights) {
       const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
       const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
-      try {await this.adInsightsService.syncAdInsights(token, adAccountsIds, startDate, endDate)}
-      catch (e) {console.log(e)}
+      try {
+        await this.adInsightsService.syncAdInsights(token, adAccountsIds, startDate, endDate);
+      } catch (e) {
+        console.log(e);
+      }
     }
 
     return true;
   }
 
-  async updateFacebookData(startDate, endDate, {
-    updatePixels = true,
-    updateCampaigns = true,
-    updateAdsets = true,
-    updateInsights = true,
-  }) {
-
+  async updateFacebookData(
+    startDate,
+    endDate,
+    { updatePixels = true, updateCampaigns = true, updateAdsets = true, updateInsights = true },
+  ) {
     FacebookLogger.info(`Starting to sync Facebook data for date range ${startDate} -> ${endDate}`);
 
     if (!updatePixels && !updateCampaigns && !updateAdsets && !updateInsights)
@@ -93,65 +113,66 @@ class CompositeService {
         updateAdsets,
         updateInsights,
       });
-
     }
     FacebookLogger.info(`Done syncing Facebook data for  date range ${startDate} -> ${endDate}`);
     return true;
   }
 
   async fetchEntitiesOwnerAccount(entityType, entityId) {
+
     const entityConfig = {
       adset: {
-          service: this.adsetsService.fetchAdsetsFromDatabase.bind(this.adsetsService),
-          tableName: 'adsets'
+        service: this.adsetsService.fetchAdsetsFromDatabase.bind(this.adsetsService),
+        tableName: "adsets",
       },
       campaign: {
           service: this.campaignsService.fetchCampaignsFromDatabase.bind(this.campaignsService),
           tableName: 'campaigns'
+      },
+      ad_account: {
+          service: this.adAccountService.fetchAdAccountsFromDatabase.bind(this.adAccountService),
+          tableName: 'ad_accounts'
       }
     };
 
     const config = entityConfig[entityType];
 
     if (!config) {
-        throw new Error(`Unsupported entity type: ${entityType}`);
+      throw new Error(`Unsupported entity type: ${entityType}`);
     }
 
     let result;
     try {
-      const whereClause = { [`${config.tableName}.${config.tableName === 'campaigns' ? 'id' : 'provider_id' }`]: entityId };
-      result = await config.service(
-          ["ua.name", "ua.token"],
-          whereClause,
-          1,
-          [{
-              type: "inner",
-              table: "user_accounts AS ua",
-              first: `${config.tableName}.account_id`,
-              operator: "=",
-              second: "ua.id"
-          }]
-      );
-    } catch(e) {
+      const whereClause = {
+        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : "provider_id"}`]: entityId,
+      };
+      result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
+        {
+          type: "inner",
+          table: "user_accounts AS ua",
+          first: `${config.tableName}.account_id`,
+          operator: "=",
+          second: "ua.id",
+        },
+      ]);
+    } catch (e) {
       console.log(e);
       await sendSlackNotification(`Error fetching account for entity ${entityType} with id ${entityId}`);
     }
 
     if (!result.length) {
-      throw new Error(`No account found for entity ${entityType} with id ${entityId}`);
+      throw new Error(`${entityType} with id ${entityId} not found in the database`);
     }
 
     return result[0];
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
-
     const account = await this.fetchEntitiesOwnerAccount(type, entityId);
     const { name, token } = account;
-    console.log("Fetched Token for account", name)
+    console.log("Fetched Token for account", name);
 
     async function updateDatabase(type, entityId, dailyBudget, status) {
-
       const updateData = {
         ...(status && { status }),
         ...(dailyBudget && { daily_budget: dailyBudget }),
@@ -172,7 +193,7 @@ class CompositeService {
     const params = {
       access_token: token,
       ...(status && { status }),
-      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget)}),
+      ...(dailyBudget && { daily_budget: Math.ceil(dailyBudget) }),
     };
 
     try {
@@ -219,6 +240,81 @@ class CompositeService {
         campaign_id: null,
       });
       return duplicated;
+    }
+  }
+
+  async uploadImage(imageBuffer, filename, adAccountId, token) {
+    const formData = new FormData();
+    formData.append("file", imageBuffer, filename);
+
+    const url = `${FB_API_URL}/act_${adAccountId}/adimages`;
+
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          ...formData.getHeaders(), // form-data module handles the Content-Type multipart/form-data header automatically
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Depending on the actual structure of the response you might need to adjust the way you access the imageHash
+      // const imageHash = response.data.images[0].hash;
+      return response.data;
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      throw error;
+    }
+  }
+
+  async uploadVideo(videoBuffer, filename, adAccountId, token) {
+    const formData = new FormData();
+    formData.append("file", videoBuffer, filename);
+
+    const url = `${FB_API_URL}/act_${adAccountId}/advideos`;
+
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          ...formData.getHeaders(), // form-data module handles the Content-Type multipart/form-data header automatically
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      // Depending on the actual structure of the response you might need to adjust the way you access the videoId
+      const videoId = response.data.id;
+      return videoId;
+    } catch (error) {
+      console.error("Error uploading video:", error);
+      throw error;
+    }
+  }
+
+  async createAd({ token , adAccountId, adData }) {
+    const url = `${FB_API_URL}act_${adAccountId}/ads`;
+    // Construct the request payload according to the Facebook API specifications
+    const payload = {
+      ...adData,
+      access_token: token, // Assuming the token is passed directly, could be managed differently
+    };
+
+    // Additional properties and configurations can be added to the payload as needed
+
+    try {
+      // Make the post request to the Facebook API
+      const response = await axios.post(url, payload);
+
+      // Handle the response. Assuming the API returns a JSON with the created ad's ID
+      const createdAdId = response.data.id;
+
+      // Return a success response, or the ad ID, depending on what is needed
+      return {
+        success: true,
+        id: createdAdId,
+      };
+    } catch (error) {
+      // Log the error and throw it to be handled by the caller
+      FacebookLogger.error(`Error creating ad: ${error.response}`);
+      throw error?.response?.data?.error;
     }
   }
 
