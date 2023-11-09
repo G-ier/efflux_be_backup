@@ -1,6 +1,6 @@
 CREATE TABLE redirections (
     clientip String,
-    timestamp String,
+    timestamp DateTime,
     `from-mobile` String,
     `from-tablet` String,
     `from-desktop` String,

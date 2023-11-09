@@ -91,3 +91,4 @@ cert/*
 !cert/.placeholder
 .idea/*
 datagrip
+clickhouse

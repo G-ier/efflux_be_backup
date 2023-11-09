@@ -463,7 +463,6 @@ Resources:
       Monitoring: true
       KeyName: efflux-clickhouse
       SecurityGroupIds:
-        - !Ref InstanceSecurityGroup
         - !Ref ClickHouseSecurityGroup
       SubnetId: !Ref PublicSubnet1
       Tags:
@@ -473,19 +472,19 @@ Resources:
           Value: efflux
         - Key: operation
           Value: analytics
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-          # Setup the repo
-          sudo apt-get install -y apt-transport-https ca-certificates dirmngr
-          GNUPGHOME=$(mktemp -d)
-          sudo GNUPGHOME="$GNUPGHOME" gpg --no-default-keyring --keyring /usr/share/keyrings/clickhouse-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8919F6BD2B48D754
-          sudo rm -r "$GNUPGHOME"
-          sudo chmod +r /usr/share/keyrings/clickhouse-keyring.gpg
+      # UserData:
+      #   Fn::Base64: !Sub |
+      #     #!/bin/bash
+      #     # Setup the repo
+      #     sudo apt-get install -y apt-transport-https ca-certificates dirmngr
+      #     GNUPGHOME=$(mktemp -d)
+      #     sudo GNUPGHOME="$GNUPGHOME" gpg --no-default-keyring --keyring /usr/share/keyrings/clickhouse-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8919F6BD2B48D754
+      #     sudo rm -r "$GNUPGHOME"
+      #     sudo chmod +r /usr/share/keyrings/clickhouse-keyring.gpg
 
-          echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee \
-              /etc/apt/sources.list.d/clickhouse.list
-          sudo apt-get update
+      #     echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee \
+      #         /etc/apt/sources.list.d/clickhouse.list
+      #     sudo apt-get update
 
   # add an elastic IP to the clickhouse instance
   ClickHouseEIP:
@@ -518,8 +517,8 @@ Resources:
           ToPort: 8123
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
+          FromPort: 9440
+          ToPort: 9440
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
