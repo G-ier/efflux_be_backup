@@ -447,7 +447,7 @@ Resources:
         - Key: project
           Value: efflux
 
-  ClickHouseInstance:
+  MetabaseInstance:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
@@ -467,7 +467,7 @@ Resources:
       SubnetId: !Ref PublicSubnet1
       Tags:
         - Key: Name
-          Value: Efflux-ClickHouse
+          Value: Efflux-Metabase
         - Key: project
           Value: efflux
         - Key: operation
@@ -490,11 +490,11 @@ Resources:
   ClickHouseEIP:
     Type: AWS::EC2::EIP
     Properties:
-      InstanceId: !Ref ClickHouseInstance
+      InstanceId: !Ref MetabaseInstance
       Domain: standard
       Tags:
         - Key: Name
-          Value: Efflux-ClickHouse-EIP
+          Value: Efflux-Metabase-EIP
         - Key: project
           Value: efflux
         - Key: operation
@@ -522,7 +522,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: Efflux-ClickHouse
+          Value: Efflux-Metabase
         - Key: project
           Value: efflux
         - Key: operation
