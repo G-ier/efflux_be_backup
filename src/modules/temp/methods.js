@@ -59,7 +59,7 @@ class TemporaryService {
 
     let adAccountFilters = {};
     if (!isAdmin) adAccountFilters = { user_id: userIds };
-    const adAccounts = await this.adAccountRepository.fetchAdAccounts(['id', 'user_id', 'name', 'provider'], adAccountFilters, 1000);
+    const adAccounts = await this.adAccountRepository.fetchAdAccounts(['id', 'provider_id' ,'user_id', 'name', 'provider'], adAccountFilters, 1000);
 
     users = users.map(user => {
       user.ad_accounts = adAccounts.filter(adAccount => adAccount.user_id === user.id);

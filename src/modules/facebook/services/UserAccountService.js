@@ -141,6 +141,8 @@ class UserAccountService {
 
     }
 
+    if (admins_only) return adminAccount;
+
     const clientAccounts = await this.fetchUserAccounts(fetchingFields,
       { provider: "facebook", role: 'client', fetching: true, backup: false }
     );
@@ -153,7 +155,6 @@ class UserAccountService {
       validClientAccounts = validAccounts;
     } catch {}
 
-    if (admins_only) return adminAccount;
     if (clients_only) return validClientAccounts;
     return [adminAccount, ...validClientAccounts];
   }

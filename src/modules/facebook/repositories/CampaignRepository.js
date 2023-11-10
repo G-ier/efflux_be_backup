@@ -12,8 +12,8 @@ class CampaignRepository {
     this.adsetRepository = new AdsetRepository();
   }
 
-  async saveOne(campaign) {
-    const dbObject = this.toDatabaseDTO(campaign);
+  async saveOne(campaign,adAccountsMap) {
+    const dbObject = this.toDatabaseDTO(campaign,adAccountsMap);
     return await this.database.insert(this.tableName, dbObject);
   }
 

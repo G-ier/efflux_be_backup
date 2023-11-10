@@ -73,7 +73,7 @@ class AdCreativesService {
     return adCreative;
   }
 
-  async createAdCreative(data) {
+  async createAdCreative(token,data) {
     try {
       // Extracting necessary data from the request
       const adAccountId = data.adAccountId;
@@ -88,7 +88,7 @@ class AdCreativesService {
       const creativeResponse = await axios
         .post(url, params, {
           headers: {
-            Authorization: `Bearer ${data.params.access_token}`,
+            Authorization: `Bearer ${token}`,
           },
         })
         .catch((err) => {
@@ -104,7 +104,6 @@ class AdCreativesService {
       };
 
       // Transform the adCreative object to fit the database schema and save to the database
-      console.log(adCreative);
       const result = await this.adCreativesRepository.saveOne(adCreative);
       return result;
     } catch (error) {
