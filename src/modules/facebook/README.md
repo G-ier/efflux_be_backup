@@ -13,6 +13,13 @@ Campaign: [Campaign Endpoint!](https://developers.facebook.com/docs/marketing-ap
 Pixel: [Pixel Endpoint!](https://developers.facebook.com/docs/marketing-api/reference/ad-study-objective/adspixels/)
 Token: [Token Endpoint!](https://developers.facebook.com/docs/graph-api/reference/v18.0/debug_token)
 
+# Ad Launcher Endpoints
+Ad Account Ad Campaigns  :   (https://developers.facebook.com/docs/marketing-api/reference/ad-account/campaigns/#Creating)
+Ad Account Adsets        :   (https://developers.facebook.com/docs/marketing-api/reference/ad-account/adsets/#Creating)
+Ad Account Ad Creative   :   (https://developers.facebook.com/docs/graph-api/reference/adaccount/adcreatives/#Creating)
+Ad Account Ads           :   (https://developers.facebook.com/docs/marketing-api/reference/ad-account/ads/)
+
+
 # Overview
 This folder facilitates access to various levels of the Facebook ad structure, including data retrieval, formatting, and storage in a PostgreSQL database, along with CRUD operations.
 In addition to that, it also handles user account management, data syncing, and a token expiration notification system.

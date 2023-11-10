@@ -45,8 +45,8 @@ class AdAccountService extends BaseService {
     return apiAdAccounts.map((account) => account.id);
   }
 
-  async fetchAdAccountsFromDatabase(fields = ["*"], filters = {}, limit) {
-    const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
+  async fetchAdAccountsFromDatabase(fields = ["*"], filters = {}, limit, joins = []) {
+    const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit, joins);
     return results;
   }
 

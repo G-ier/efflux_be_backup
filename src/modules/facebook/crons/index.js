@@ -1,15 +1,18 @@
 // Third party imports
 const { CronJob }                                                = require('cron');
+require("dotenv").config();
 
 // Local application imports
 const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD }          = require('../../../shared/helpers/calendar');
 const { sendSlackNotification }                                  = require("../../../shared/lib/SlackNotificationService");
 const CompositeService                                           = require('../services/CompositeService');
+const PageService                                                = require('../services/PageService');
 const {
   FACEBOOK_UPDATE_TODAY_REGULAR_CRON,
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
   FACEBOOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
-  FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON
+  FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON,
+  FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
@@ -77,6 +80,24 @@ const updateTodayDataRegular = new CronJob(
   }
 ));
 
+const updatePagesRegular = new CronJob(
+FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
+  (async () =>{
+    try{
+      let facebookBusinessIds = process.env.FACEBOOK_BUSINESS_IDS;
+      if (typeof facebookBusinessIds === 'string') {
+        facebookBusinessIds = JSON.parse(facebookBusinessIds);
+      }
+      await compositeService.syncPages(facebookBusinessIds);
+      dataUpdatesLogger.info(`COMPLETED | PAGES | today`);
+    } catch (error) {
+      dataUpdatesLogger.warn(`FAILED | PAGES | today | ${error}`);
+      await sendSlackNotification(`FAILED | PAGES | today`)
+      console.log(error);
+    };
+  }
+));
+
 const initializeFacebookCron = () => {
 
   // If both are disabled, return immediately
@@ -86,7 +107,7 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST.start();
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
-
+  updatePagesRegular.start();
 }
 
 module.exports = initializeFacebookCron;

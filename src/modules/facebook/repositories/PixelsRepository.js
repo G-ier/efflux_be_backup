@@ -58,7 +58,8 @@ class PixelRepository {
       last_fired_time: pixel.last_fired_time,
       creation_time: pixel.creation_time,
       data_use_setting: pixel.data_use_setting,
-      pixel_id_ad_account_id: (pixel.id || pixel.pixel_id) + "_" + pixel.ad_account_id
+      pixel_id_ad_account_id: (pixel.id || pixel.pixel_id) + "_" + pixel.ad_account_id,
+      ad_account_id: pixel.ad_account_id
     }
   }
 
@@ -74,7 +75,8 @@ class PixelRepository {
       dbObject.last_fired_time,
       dbObject.creation_time,
       dbObject.data_use_setting,
-      pixel_id_ad_account_id
+      dbObject.pixel_id_ad_account_id,
+      dbObject.ad_account_id
     );
   }
 

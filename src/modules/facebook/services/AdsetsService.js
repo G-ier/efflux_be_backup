@@ -11,7 +11,6 @@ const { FB_API_URL } = require("../constants");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
 class AdsetsService extends BaseService {
-
   constructor() {
     super(FacebookLogger);
     this.adsetsRepository = new AdsetsRepository();
@@ -32,19 +31,17 @@ class AdsetsService extends BaseService {
         fields,
         ...dateParam,
         access_token,
-        limit: 5000
-      }
+        limit: 5000,
+      };
       do {
         if (paging?.next) {
           url = paging.next;
           params = {};
         }
-        const { data = [] } = await axios
-          .get(url, {params})
-          .catch((err) => {
-            results.error.push(adAccountId);
-            return {};
-          });
+        const { data = [] } = await axios.get(url, { params }).catch((err) => {
+          results.error.push(adAccountId);
+          return {};
+        });
         results.sucess.push(adAccountId);
         paging = { ...data?.paging };
         if (data?.data?.length) adsets.push(...data.data);
@@ -52,18 +49,17 @@ class AdsetsService extends BaseService {
       return adsets;
     });
     if (results.sucess.length === 0) throw new Error("All ad accounts failed to fetch adsets");
-    this.logger.info(`Ad Accounts Adsets Fetching Telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.error.length})`);
+    this.logger.info(
+      `Ad Accounts Adsets Fetching Telemetry: SUCCESS(${results.sucess.length}) | ERROR(${results.error.length})`,
+    );
     return _.flatten(allAdsets);
   }
 
   async syncAdsets(access_token, adAccountIds, adAccountsMap, campaignIds, startDate, endDate, preset = null) {
-    let adsets = await this.getAdsetsFromApi(access_token, adAccountIds, startDate, endDate, preset = null);
+    let adsets = await this.getAdsetsFromApi(access_token, adAccountIds, startDate, endDate, (preset = null));
     adsets = adsets.filter((adset) => campaignIds.includes(adset.campaign_id));
     this.logger.info(`Upserting ${adsets.length} adsets`);
-    await this.executeWithLogging(
-      () => this.adsetsRepository.upsert(adsets, adAccountsMap),
-      "Error upserting adsets",
-    )
+    await this.executeWithLogging(() => this.adsetsRepository.upsert(adsets, adAccountsMap), "Error upserting adsets");
     this.logger.info(`Done upserting adsets`);
     return adsets.map((adset) => adset.id);
   }
@@ -104,7 +100,50 @@ class AdsetsService extends BaseService {
     }
   }
 
-  async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit, joins=[]) {
+  async createAdsetInFacebook(token, adAccountId, adsetDetails) {
+    const url = `${FB_API_URL}act_${adAccountId}/adsets`;
+
+    try {
+      // Attempt to create the adset via Facebook's API
+      const response = await axios.post(url, {
+        ...adsetDetails,
+        access_token: token,
+      });
+
+      // If the response has data and an id, assume success
+      if (response.data && response.data.id) {
+        return response.data;
+      } else {
+        throw new Error("Facebook response did not include an id.");
+      }
+    } catch (err) {
+      // Log the error details
+      console.warn(`Failed to create adset in Facebook for ad_account_id ${adAccountId}`, err.response?.data ?? err);
+      // Rethrow the error for the caller to handle
+      throw err?.response?.data?.error
+    }
+  }
+
+  async createAdset(token, adAccountId, adsetDetails, adAccountsDataMap) {
+    try {
+      // Create the adset on Facebook
+      const facebookResponse = await this.createAdsetInFacebook(token, adAccountId, adsetDetails);
+
+      // Prepare the object for the database
+      const dbObject = { ...facebookResponse, ...adsetDetails, account_id: adAccountId };
+
+      // Save the adset to your local database
+      await this.adsetsRepository.upsert([dbObject], adAccountsDataMap);
+
+     return facebookResponse
+    } catch (err) {
+      // Log the error and rethrow it to be handled by the caller
+      console.error("Error in createAdset service method:", err.message);
+      throw err;
+    }
+  }
+
+  async fetchAdsetsFromDatabase(fields = ["*"], filters = {}, limit, joins = []) {
     const results = await this.adsetsRepository.fetchAdsets(fields, filters, limit, joins);
     return results;
   }
