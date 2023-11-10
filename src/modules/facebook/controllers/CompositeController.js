@@ -299,8 +299,7 @@ class CompositeController {
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
     } catch (error) {
-      // Log any errors encountered during the ad launch process
-      FacebookLogger.error(`Error during ad launch: ${error.message}`, { error });
+
       this.respondWithError(res, error);
     }
   }
@@ -505,6 +504,8 @@ class CompositeController {
   }
 
   respondWithError(res, error) {
+    // Log any errors encountered during the ad launch process
+    FacebookLogger.error(`Error during ad launch: ${error.error_user_msg || error.message}`, { error });
     res.status(500).json({
       success: false,
       message: "An error occurred while launching the ad.",
