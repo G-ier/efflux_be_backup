@@ -22,7 +22,6 @@ const DISABLE_FACEBOOK_CRON       = EnvironmentVariablesManager.getEnvVariable('
 const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
 const disableFacebookCron         = DISABLE_FACEBOOK_CRON === 'true' || DISABLE_FACEBOOK_CRON !== 'false';
 const compositeService            = new CompositeService();
-const pageService                 = new PageService();
 
 async function updateFacebookData(day) {
 
@@ -85,16 +84,19 @@ const updatePagesRegular = new CronJob(
 FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
   (async () =>{
     try{
-    await pageService.syncPages(process.env.FACEBOOK_PAGE_ACCESS_TOKEN ,process.env.FACEBOOK_BUSINESS_IDS.split(','));
-
-    dataUpdatesLogger.info(`COMPLETED | PAGES | today`);
+      let facebookBusinessIds = process.env.FACEBOOK_BUSINESS_IDS;
+      if (typeof facebookBusinessIds === 'string') {
+        facebookBusinessIds = JSON.parse(facebookBusinessIds);
+      }
+      await compositeService.syncPages(facebookBusinessIds);
+      dataUpdatesLogger.info(`COMPLETED | PAGES | today`);
     } catch (error) {
-    dataUpdatesLogger.warn(`FAILED | PAGES | today | ${error}`);
-    await sendSlackNotification(`FAILED | PAGES | today`)
-    console.log(error);
+      dataUpdatesLogger.warn(`FAILED | PAGES | today | ${error}`);
+      await sendSlackNotification(`FAILED | PAGES | today`)
+      console.log(error);
     };
   }
-  ));
+));
 
 const initializeFacebookCron = () => {
 

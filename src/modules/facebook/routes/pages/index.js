@@ -1,5 +1,7 @@
 const route = require("express").Router();
 const PageController = require("../../controllers/PageController");
+const CompositeController = require("../../controllers/CompositeController");
+const compositeController = new CompositeController();
 const pageController = new PageController();
 
 
@@ -12,8 +14,8 @@ route.get('/', async (req, res) => await pageController.fetchPages(req, res));
 // @route    /api/facebook/pageTest/refreshPages
 // @desc     Get pages refresh data
 // @Access   Private
-route.get("/refreshPages", async (req, res) => {
-    await pageController.syncPages(req, res);
-  });
+route.get("/refresh-pages", async (req, res) => {
+  await compositeController.syncPages(req, res);
+});
 
 module.exports = route;

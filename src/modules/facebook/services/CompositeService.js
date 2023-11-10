@@ -8,6 +8,7 @@ const PixelsService = require("./PixelsService");
 const CampaignsService = require("./CampaignsService");
 const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
+const PageService = require("./PageService");
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 
@@ -15,6 +16,7 @@ const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
 const axios = require("axios");
 class CompositeService {
+
   constructor() {
     this.userAccountService = new UserAccountService();
     this.adAccountService = new AdAccountService();
@@ -22,6 +24,7 @@ class CompositeService {
     this.campaignsService = new CampaignsService();
     this.adsetsService = new AdsetsService();
     this.adInsightsService = new AdInsightsService();
+    this.pageService = new PageService();
   }
 
   async syncUserAccountsData(
@@ -166,6 +169,15 @@ class CompositeService {
 
     return result[0];
   }
+
+  async syncPages(businessIds) {
+
+    const admins_only = true;
+    const { name, token } = await this.userAccountService.getFetchingAccount(admins_only);
+    FacebookLogger.info(`Syncing pages with account ${name}`);
+    await this.pageService.syncPages(token, businessIds);
+
+  };
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
     const account = await this.fetchEntitiesOwnerAccount(type, entityId);

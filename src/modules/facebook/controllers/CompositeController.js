@@ -83,6 +83,16 @@ class CompositeController {
     res.status(200).send("Facebook data synced");
   }
 
+  async syncPages(req, res) {
+    let facebookBusinessIds = process.env.FACEBOOK_BUSINESS_IDS;
+    if (typeof facebookBusinessIds === 'string') {
+      facebookBusinessIds = JSON.parse(facebookBusinessIds);
+    }
+    if (!facebookBusinessIds) res.status(500).send("No facebook business ids found");
+    const pageIds = await this.compositeService.syncPages(facebookBusinessIds);
+    res.json(pageIds);
+  }
+
   async updateEntity(req, res) {
     const { entityId, status, dailyBudget, type } = req.query;
     try {
@@ -333,25 +343,25 @@ class CompositeController {
   async getAdAccountsDataMap(adAccountId) {
     // First try to match using provider_id
     let adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ["id", "provider_id", "user_id", "account_id"], 
+      ["id", "provider_id", "user_id", "account_id"],
       { provider_id: adAccountId }
     );
-    
+
     // If no accounts found using provider_id, try to match using id
     if (!adAccounts || adAccounts.length === 0) {
       adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-        ["id", "provider_id", "user_id", "account_id"], 
+        ["id", "provider_id", "user_id", "account_id"],
         { id: adAccountId }
       );
     }
-  
+
     // Key the results by provider_id for easy lookup later
     return _(adAccounts).keyBy("provider_id").value();
   }
 
   async handleCampaignCreation(req, token, adAccountId, adAccountsDataMap) {
     let campaignData = req.body.campaignData;
-  
+
     // Check if campaignData is a string and parse it
     if (typeof campaignData === 'string') {
       try {
@@ -360,26 +370,25 @@ class CompositeController {
         throw new Error("Failed to parse campaignData: " + error.message);
       }
     }
-  
-  
+
+
     if (campaignData.existingId) {
       return campaignData.existingId;
     }
-  
+
     const campaignCreationResult = await this.campaignService.createCampaign(
       token,
       adAccountId,
       campaignData,
       adAccountsDataMap
     );
-  
+
     return campaignCreationResult.data.id;
   }
-  
 
   async handleAdsetCreation(req, token, adAccountId, campaignId, adAccountsDataMap) {
     let adsetData = req.body.adsetData;
-  
+
     // Check if adsetData is a string and parse it
     if (typeof adsetData === 'string') {
       try {
@@ -388,15 +397,15 @@ class CompositeController {
         throw new Error("Failed to parse adsetData: " + error.message);
       }
     }
-  
+
     // Add the campaignId to the adsetData object
     adsetData.campaign_id = campaignId;
-  
+
     // If adsetData has an existingId, return it and skip creation
     if (adsetData.existingId) {
       return adsetData.existingId;
     }
-    
+
     // Create the ad set with the provided data
     const adSetCreationResult = await this.adsetsService.createAdset(
       token,
@@ -404,11 +413,10 @@ class CompositeController {
       adsetData,
       adAccountsDataMap
     );
-  
+
     // Return the ID of the newly created ad set
     return adSetCreationResult.id;
   }
-  
 
   async handleMediaUploads(req, adAccountId, token) {
     const uploadedMedia = [];
@@ -442,12 +450,12 @@ class CompositeController {
         throw new Error('Invalid adData format. Unable to parse adData to JSON.');
       }
     }
-  
+
     // Check if adData is an object now
     if (typeof adData !== 'object' || adData === null) {
       throw new Error('Invalid adData format. adData should be an object.');
     }
-  
+
     // Parse adData.creative if it's a string
     if (typeof adData.creative === 'string') {
       try {
@@ -456,7 +464,7 @@ class CompositeController {
         throw new Error('Invalid adData format. Unable to parse adData.creative to JSON.');
       }
     }
-  
+
     // Now that we know adData.creative is an object, check for asset_feed_spec
     if (typeof adData.creative.asset_feed_spec === 'string') {
       try {
@@ -465,25 +473,25 @@ class CompositeController {
         throw new Error('Invalid adData format. Unable to parse adData.creative.asset_feed_spec to JSON.');
       }
     }
-  
+
     // Initialize images array if not already present
     if (!Array.isArray(adData.creative.asset_feed_spec.images)) {
       adData.creative.asset_feed_spec.images = [];
     }
-  
+
     // Add image hashes to the asset_feed_spec.images array
     uploadedMedia.forEach(media => {
       if (media.type === 'image') {
         adData.creative.asset_feed_spec.images.push({ hash: media.hash });
       }
     });
-  
+
     // Set the adset_id
     adData.adset_id = adSetId;
-  
+
     return adData;
   }
-  
+
   async createAd(token, adAccountId, adData) {
     return this.compositeService.createAd({ token, adAccountId, adData });
   }

@@ -3,7 +3,7 @@ const route = require("express").Router();
 const management    = require("./management");
 const userAccounts  = require("./userAccounts");
 const pixels        = require("./pixels");
-const pages        = require("./pageTest/pages");
+const pages         = require("./pages");
 
 const CompositeController = require("../controllers/CompositeController");
 const compositeController = new CompositeController();
@@ -26,6 +26,6 @@ route.get("/sync-account-data", async (req, res) => {
 route.use("/management", management);
 route.use("/user_accounts", userAccounts);
 route.use("/pixels", pixels);
-route.use("/pageTest", pages);
+route.use("/pages", pages);
 
 module.exports = route;

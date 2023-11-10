@@ -123,7 +123,7 @@ class AdsetsService extends BaseService {
       throw err?.response?.data?.error
     }
   }
- 
+
   async createAdset(token, adAccountId, adsetDetails, adAccountsDataMap) {
     try {
       // Create the adset on Facebook
