@@ -455,15 +455,15 @@ Resources:
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
-            VolumeSize: 94
+            VolumeSize: 63
             VolumeType: gp3
             DeleteOnTermination: yes
             Encrypted: false
       EbsOptimized: true
-      Monitoring: true
+      Monitoring: false
       KeyName: efflux-clickhouse
       SecurityGroupIds:
-        - !Ref ClickHouseSecurityGroup
+        - !Ref MetaBaseSecurityGroup
       SubnetId: !Ref PublicSubnet1
       Tags:
         - Key: Name
@@ -472,22 +472,9 @@ Resources:
           Value: efflux
         - Key: operation
           Value: analytics
-      # UserData:
-      #   Fn::Base64: !Sub |
-      #     #!/bin/bash
-      #     # Setup the repo
-      #     sudo apt-get install -y apt-transport-https ca-certificates dirmngr
-      #     GNUPGHOME=$(mktemp -d)
-      #     sudo GNUPGHOME="$GNUPGHOME" gpg --no-default-keyring --keyring /usr/share/keyrings/clickhouse-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 8919F6BD2B48D754
-      #     sudo rm -r "$GNUPGHOME"
-      #     sudo chmod +r /usr/share/keyrings/clickhouse-keyring.gpg
 
-      #     echo "deb [signed-by=/usr/share/keyrings/clickhouse-keyring.gpg] https://packages.clickhouse.com/deb stable main" | sudo tee \
-      #         /etc/apt/sources.list.d/clickhouse.list
-      #     sudo apt-get update
-
-  # add an elastic IP to the clickhouse instance
-  ClickHouseEIP:
+  # add an elastic IP to the MetaBase instance
+  MetaBaseEIP:
     Type: AWS::EC2::EIP
     Properties:
       InstanceId: !Ref MetabaseInstance
@@ -500,11 +487,74 @@ Resources:
         - Key: operation
           Value: analytics
 
-  # Create a ClickHouse Security Group
-  ClickHouseSecurityGroup:
+  # Add an ALB for MetaBase
+  MetaBaseALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: Efflux-MetaBase-ALB
+      SecurityGroups:
+        - !Ref MetaBaseSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-MetaBase-ALB
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  # Add a MetaBase ALB Target Group
+  MetaBaseALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: Efflux-MetaBase-ALB-TargetGroup
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: "30"
+      HealthCheckTimeoutSeconds: "5"
+      Port: "3000"
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Efflux-MetaBase-ALB-TargetGroup
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  # Add a MetaBase ALB Listener
+  MetaBaseALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      LoadBalancerArn: !Ref MetaBaseALB
+      Port: "80"
+      Protocol: HTTP
+
+  # Add a MetaBase ALB Listener Rule
+  MetaBaseALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /*
+      ListenerArn: !Ref MetaBaseALBListener
+      Priority: "1"
+
+  # Create a MetaBase Security Group
+  MetaBaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: Efflux-ClickHouse
+      GroupName: Efflux-MetaBase
       GroupDescription: Enable SSH access and HTTP
       VpcId: !Ref VPC
       SecurityGroupIngress:
@@ -785,6 +835,6 @@ Outputs:
   RDSPostgresEndpoint:
     Description: RDS Postgres Database Endpoint
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
-  ClickHouseEIP:
-    Description: ClickHouse Elastic IP
-    Value: !Ref ClickHouseEIP
+  MetaBaseEIP:
+    Description: Metabase Elastic IP
+    Value: !Ref MetaBaseEIP
