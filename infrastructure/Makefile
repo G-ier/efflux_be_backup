@@ -11,6 +11,7 @@ deploy-stack:
 		--parameter-overrides \
 			ProjectName=efflux \
 			OperatorEmail=ilyas@ad.roi\
+      RDSPostgresClusterPassword=eapsU6KlwrnUWswdZ9BWnY \
     --tags \
       project=efflux \
 		--profile $(AWS_PROFILE) \

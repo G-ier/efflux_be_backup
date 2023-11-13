@@ -451,7 +451,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-      InstanceType: t3.medium
+      InstanceType: t3a.large
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -467,13 +467,13 @@ Resources:
       SubnetId: !Ref PublicSubnet1
       Tags:
         - Key: Name
-          Value: Efflux-Metabase
+          Value: Metabase Instance
         - Key: project
           Value: efflux
         - Key: operation
           Value: analytics
 
-  # add an elastic IP to the MetaBase instance
+      # add an elastic IP to the MetaBase instance
   MetaBaseEIP:
     Type: AWS::EC2::EIP
     Properties:
@@ -481,7 +481,7 @@ Resources:
       Domain: standard
       Tags:
         - Key: Name
-          Value: Efflux-Metabase-EIP
+          Value: MetabaseEIP
         - Key: project
           Value: efflux
         - Key: operation
@@ -491,7 +491,7 @@ Resources:
   MetaBaseALB:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: Efflux-MetaBase-ALB
+      Name: MetabaseALB
       SecurityGroups:
         - !Ref MetaBaseSecurityGroup
       Subnets:
@@ -500,7 +500,7 @@ Resources:
         - !Ref PublicSubnet3
       Tags:
         - Key: Name
-          Value: Efflux-MetaBase-ALB
+          Value: MetabaseALB
         - Key: project
           Value: efflux
         - Key: operation
@@ -510,16 +510,21 @@ Resources:
   MetaBaseALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: Efflux-MetaBase-ALB-TargetGroup
+      Name: Metabase
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: "30"
       HealthCheckTimeoutSeconds: "5"
+      HealthCheckPath: /api/health
       Port: "3000"
       Protocol: HTTP
       VpcId: !Ref VPC
+      TargetType: instance
+      Targets:
+        - Id: !Ref MetabaseInstance
+          Port: "3000"
       Tags:
         - Key: Name
-          Value: Efflux-MetaBase-ALB-TargetGroup
+          Value: Metabase
         - Key: project
           Value: efflux
         - Key: operation
@@ -554,8 +559,8 @@ Resources:
   MetaBaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: Efflux-MetaBase
-      GroupDescription: Enable SSH access and HTTP
+      GroupName: Metabase-SG
+      GroupDescription: Enable Metabase and Portainer access
       VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -563,16 +568,16 @@ Resources:
           ToPort: 22
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 8123
-          ToPort: 8123
+          FromPort: 3000
+          ToPort: 3000
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 9440
-          ToPort: 9440
+          FromPort: 9443
+          ToPort: 9443
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: Efflux-Metabase
+          Value: Metabase-SG
         - Key: project
           Value: efflux
         - Key: operation
