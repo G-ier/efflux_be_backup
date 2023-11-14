@@ -180,7 +180,7 @@ route.post("/", async (req, res) => {
     else traffic_source = src;
 
     // check event_timestamp exist
-    const ts = event_timestamp ? event_timestamp : Math.floor(Date.now() / 1000);
+    const ts = event_timestamp ? event_timestamp : Date.now()
     let event_id = md5(ts + fbclid + tg2 + tg5 + eventType);
     const pb_conversion = {
       fbclid,
