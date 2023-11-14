@@ -188,7 +188,7 @@ route.post("/", async (req, res) => {
       state,
       country,
       zipcode,
-      event_timestamp,
+      event_timestamp: ts,
       running_direct: running_direct === 'true',
       step,
       referrer_url,
