@@ -72,6 +72,7 @@ const initializeAPI = async () => {
         Port: ${port}
         Slack Notifications: ${disableSlackNotification ? 'Disabled' : 'Enabled'}
         Environment Location: ${process.env.ENVIRONMENT_LOCATION === 'local' ? 'Local' : 'AWS Cloud'}
+
       Logging:
         "The production environment logs every modules logs to it's
         own file. The development environment logs all modules logs
