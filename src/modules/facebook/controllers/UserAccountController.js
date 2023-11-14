@@ -1,3 +1,4 @@
+const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const UserAccountService = require('../services/UserAccountService');
 
 
@@ -53,6 +54,7 @@ class UserAccountController {
     const accountId = req.body.accountId;
     const accountDetails = req.body.user;
     const { name, accessToken, providerId: provider_id, imageUrl: image_url } = accountDetails;
+    FacebookLogger.info(`Reauthorizing account ${accountId}, with details ${JSON.stringify(accountDetails)}`);
 
     // Locate the account in our database.
     const foundAccount = await this.userAccountService.fetchUserAccounts(['*'], { id: accountId }, 1);
@@ -64,12 +66,13 @@ class UserAccountController {
     // Get the long-lived token from Facebook.
     const token = await this.userAccountService.getFacebookLongToken(accessToken);
 
+    const dataUpdate = {token: token, image_url: image_url};
+    const filter = {id: accountId};
+
+    FacebookLogger.info(`Setting token for ${name} to ${token}`);
+
     // Update the account in our database.
-    await this.userAccountService.updateUserAccount({ id: accountId, provider_id }, {
-      name,
-      image_url,
-      token
-    })
+    await this.userAccountService.updateUserAccount(dataUpdate, filter)
     res.status(200).json({
       message: `Successfully updated account for ${name}`
     });

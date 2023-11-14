@@ -447,6 +447,142 @@ Resources:
         - Key: project
           Value: efflux
 
+  MetabaseInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+      InstanceType: t3a.large
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 63
+            VolumeType: gp3
+            DeleteOnTermination: yes
+            Encrypted: false
+      EbsOptimized: true
+      Monitoring: false
+      KeyName: efflux-clickhouse
+      SecurityGroupIds:
+        - !Ref MetaBaseSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: Metabase Instance
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+      # add an elastic IP to the MetaBase instance
+  MetaBaseEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MetabaseInstance
+      Domain: standard
+      Tags:
+        - Key: Name
+          Value: MetabaseEIP
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  # Add an ALB for MetaBase
+  MetaBaseALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: MetabaseALB
+      SecurityGroups:
+        - !Ref MetaBaseSecurityGroup
+      Subnets:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: MetabaseALB
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  # Add a MetaBase ALB Target Group
+  MetaBaseALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: Metabase
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: "30"
+      HealthCheckTimeoutSeconds: "5"
+      HealthCheckPath: /api/health
+      Port: "3000"
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: instance
+      Targets:
+        - Id: !Ref MetabaseInstance
+          Port: "3000"
+      Tags:
+        - Key: Name
+          Value: Metabase
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  # Add a MetaBase ALB Listener
+  MetaBaseALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      LoadBalancerArn: !Ref MetaBaseALB
+      Port: "80"
+      Protocol: HTTP
+
+  # Add a MetaBase ALB Listener Rule
+  MetaBaseALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /*
+      ListenerArn: !Ref MetaBaseALBListener
+      Priority: "1"
+
+  # Create a MetaBase Security Group
+  MetaBaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: Metabase-SG
+      GroupDescription: Enable Metabase and Portainer access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9443
+          ToPort: 9443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Metabase-SG
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
   # Create an ElastiCache Redis Cluster
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
@@ -465,6 +601,8 @@ Resources:
           Value: Efflux-BE
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: cache
 
   # Create a Cache Subnet Group
   CacheSubnetGroup:
@@ -480,6 +618,8 @@ Resources:
           Value: Efflux-BE-SubnetGroup
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: cache
 
   # Create CodeDeploy Application
   CodeDeployApplication:
@@ -492,6 +632,8 @@ Resources:
           Value: Efflux-BE
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: deployment
 
   # Create CodeDeploy Deployment Group
   CodeDeployDeploymentGroup:
@@ -531,6 +673,8 @@ Resources:
           Value: Efflux-BE-DeploymentGroup
         - Key: project
           Value: efflux
+        - Key: operation
+          Value: deployment
 
   # Create CodeDeploy Service Role
   CodeDeployServiceRole:
@@ -696,3 +840,6 @@ Outputs:
   RDSPostgresEndpoint:
     Description: RDS Postgres Database Endpoint
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
+  MetaBaseEIP:
+    Description: Metabase Elastic IP
+    Value: !Ref MetaBaseEIP
