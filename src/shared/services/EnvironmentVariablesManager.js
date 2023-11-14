@@ -49,6 +49,7 @@ class EnvironmentVariablesManager {
       });
       this.cachedValues = {}; // Object to hold cached secrets
       EnvironmentVariablesManager.instance = this;
+      this.initialized = false;
     }
     return EnvironmentVariablesManager.instance;
   }
@@ -122,10 +123,15 @@ class EnvironmentVariablesManager {
         await this.retrieveParameter(parameterName);
       }
     }
+    this.initialized = true;
   }
 
   // Get an env variable from the cache
   getEnvVariable(envVariableName) {
+    if (!this.initialized) {
+      console.log("EnvironmentVariablesManager not initialized yet, returning process.env value", process.env[envVariableName])
+      return process.env[envVariableName];
+    }
     return this.cachedValues[envVariableName] ? this.cachedValues[envVariableName] : null;
   }
 
