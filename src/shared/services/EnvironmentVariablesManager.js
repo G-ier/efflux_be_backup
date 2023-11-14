@@ -5,6 +5,7 @@ const { SSMClient, GetParameterCommand }                = require("@aws-sdk/clie
 class EnvironmentVariablesManager {
 
   static instance = null;
+  static initialized = false;
 
   static secrets = [
     // Database
@@ -36,6 +37,10 @@ class EnvironmentVariablesManager {
     'LOGGING_ENVIRONMENT', 'LOG_LEVEL'
   ]
 
+  get isInitialized() {
+    return !!this._initialized; // Use a private property _initialized for internal tracking
+  }
+
   constructor() {
     if (!EnvironmentVariablesManager.instance) {
       // Check if the runtime environment is development or production
@@ -49,7 +54,6 @@ class EnvironmentVariablesManager {
       });
       this.cachedValues = {}; // Object to hold cached secrets
       EnvironmentVariablesManager.instance = this;
-      this.initialized = false;
     }
     return EnvironmentVariablesManager.instance;
   }
@@ -123,13 +127,12 @@ class EnvironmentVariablesManager {
         await this.retrieveParameter(parameterName);
       }
     }
-    this.initialized = true;
+    EnvironmentVariablesManager.initialized = true;
   }
 
   // Get an env variable from the cache
   getEnvVariable(envVariableName) {
-    if (!this.initialized) {
-      console.log("EnvironmentVariablesManager not initialized yet, returning process.env value", process.env[envVariableName])
+    if (!EnvironmentVariablesManager.initialized) {
       return process.env[envVariableName];
     }
     return this.cachedValues[envVariableName] ? this.cachedValues[envVariableName] : null;
