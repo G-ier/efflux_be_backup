@@ -83,10 +83,15 @@ class ReportingService extends FunnelFluxBaseService {
         },
         {
           "attribute": "Element: Offer"
+        },
+        {
+          "attribute": "Third Parties: Offer Source"
         }
       ],
       "filters": []
     }
+
+
     const errorMessage = 'Error creating the drilldown report';
     return await this.makeFunnelFluxApiRequest('POST', 'reporting/drilldown', body, errorMessage);
   }

@@ -66,7 +66,12 @@ class FFDataService {
   async getAdsetHourlyReport(startDate, endDate, includeDateMatchingIdentifier=false) {
     this.logger.info('Generating adset hourly revenue report');
     const data = await this.reportingService.createAdsetHourlyReport(startDate, endDate);
-    const parsedFFData = data.rows.map((insight) => this.repository.parseFunnelFluxAPIData(insight, includeDateMatchingIdentifier));
+
+    const sedoData = data.rows.filter((insight) =>
+      insight.attributes[7].value.includes("Sedo")
+    );
+
+    const parsedFFData = sedoData.map((insight) => this.repository.parseFunnelFluxAPIData(insight, includeDateMatchingIdentifier));
     this.logger.info(`Generated adset with ${parsedFFData.length} insights for date range ${startDate} -> ${endDate}`);
     return parsedFFData
   };
