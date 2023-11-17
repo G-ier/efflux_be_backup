@@ -146,6 +146,13 @@ const SedoLogger = new CustomLogger({
   filePath: filePath('sedo')
 });
 
+// Analysis Logger
+const AnalysisLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('analysis')
+});
+
 // CRON data update Logger
 const dataUpdatesLogger = new CustomLogger({
   destination: 'file',
@@ -161,6 +168,7 @@ module.exports = {
   FunnelFluxLogger,
   PostbackLogger,
   RequestsLogger,
+  AnalysisLogger,
   dataUpdatesLogger,
   SedoLogger
 };

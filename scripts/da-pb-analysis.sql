@@ -1,16 +1,23 @@
 
 
 --ACCURACY ANALYSIS CAMPAIGN LEVEL ALL METRICS-------------------
+
 WITH test_campaigns AS (
 	SELECT
 		DISTINCT campaign_id
 	FROM crossroads
 	WHERE crossroads_campaign_id IN (
 		SELECT 
-			id 
+			id
 		FROM crossroads_campaigns 
 		WHERE 
-			name IN ('PT_FB_TH_PersonalLoans_190923', 'PT_FB_AU_PersonalLoans_BP_121023', 'PT_FB_US_EyeFillers_210923')
+			name IN (
+      'PT_FB_TH_PersonalLoans_190923', 'PT_FB_AU_PersonalLoans_BP_121023', 'PT_FB_US_EyeFillers_210923', 
+      'PT_FB_JP_PersonalLoans_CourtneyHammond_101023', 'PC_FB_MX_PersonalLoans', 'PT_FB_GB_CarInsurance_190923',
+      'PT_FB_CA_Vacation Packages_211023', 'PT_FB_ES_UsedCars_280923', 'PT_FB_US_EyeFillers1_051023',
+      'PT_FB_US_DepressionTreatment_310823', 'PT_FB_MX_Contractors_211023', 'PT_FB_CA_FHALoans_211023',
+      'PT_FB_MX_DataAnalyticsDegree_211023'
+      )
 	)
 ),
 
@@ -24,7 +31,7 @@ pb_events AS (
 		SUM(CASE WHEN pb.event_type = 'Purchase' THEN pb.pb_value ELSE 0 END) as revenue
 	FROM 
 		postback_events pb
-	WHERE pb.date = '2023-10-25' AND pb.campaign_id IN (SELECT campaign_id FROM test_campaigns)
+	WHERE pb.date > '2023-10-27' AND pb.date <= '2023-10-28' AND pb.campaign_id IN (SELECT campaign_id FROM test_campaigns)
 	GROUP BY pb.date, pb.campaign_id
 ), 
 
@@ -39,7 +46,7 @@ aggregated_conversions AS (
 		SUM(cr.total_revenue_clicks) as revenue_events,
 		SUM(cr.total_revenue) as total_revenue
 	FROM crossroads cr
-	WHERE cr.date = '2023-10-25' AND cr.campaign_id IN (SELECT campaign_id FROM test_campaigns)
+	WHERE cr.date > '2023-10-27' AND cr.date <= '2023-10-28' AND cr.campaign_id IN (SELECT campaign_id FROM test_campaigns)
 	GROUP BY cr.date, cr.campaign_id
 )
 
@@ -76,7 +83,7 @@ SELECT
   COUNT(*) as count
 FROM 
   postback_events pb
-WHERE pb.date = '2023-10-25' AND pb.campaign_id = '23858850879740624'
+WHERE pb.date = '2023-10-28' AND pb.campaign_id = '23858850879740624'
 GROUP BY pb.campaign_id, pb.event_type;
 ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
