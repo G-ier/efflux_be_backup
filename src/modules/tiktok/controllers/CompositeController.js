@@ -28,7 +28,7 @@ class CompositeController {
   async updateEntity(req, res) {
     const { entityId, status, dailyBudget, type } = req.query;
     try {
-      const updated = await this.compositeService.updateEntity({ type, entityId, status, dailyBudget });
+      const updated = await this.service.updateEntity({ type, entityId, status, dailyBudget });
 
       res.status(200).json({ updated });
     } catch ({ message }) {
