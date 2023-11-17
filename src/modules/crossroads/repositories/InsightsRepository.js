@@ -49,16 +49,27 @@ class InsightsRepository {
   }
 
   async saveRawData(data, account, request_date, campaignIdRestrictions) {
+
     function convertToDatabaseDTO(data, account, request_date) {
       return data.map((item) => {
-        delete item.day
+
+        if (item.tg3 === "{{fbclid}}" || item.tg3 === '') {
+          return false;
+        }
+
+        delete item.day; delete item.tqs;
         item.account = account;
         item.date = request_date;
+
+
         // campaign_id-user_ip-session_id-metric#1-metric#2-metric#3-metric#4-metric#5-metric#6
-        item.unique_identifier = `${item.tg2}-${item.tg5}-${item.tg6}-${item.tg4}-${item.tg3}-${item.lander_searches}-${item.lander_visitors}-${item.publisher_revenue_amount}-${item.revenue_clicks}-${item.total_visitors}-${item.tracked_visitors}`
+        item.unique_identifier = `${item.tg3}-${item.lander_keyword}`
         return item;
       })
     }
+
+    data = data.filter((item) => item.tg3 !== "{{fbclid}}" && item.tg3 !== '');
+
     if (campaignIdRestrictions && campaignIdRestrictions.length > 0) {
       data = data.filter((item) => campaignIdRestrictions.includes(item.tg2));
     }

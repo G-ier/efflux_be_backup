@@ -9,7 +9,7 @@ const api_vs_pb_report = async (database, date, hour, campaign_ids) => {
       WITH api_sessions AS (
         SELECT
           tg2 as campaign_id,
-          tg3 as sessions_id,
+          tg3 as session_id,
           tg4 as ip,
           SUM(total_visitors) AS total_visitors,
           SUM(tracked_visitors) AS tracked_visitors,
@@ -45,24 +45,28 @@ const api_vs_pb_report = async (database, date, hour, campaign_ids) => {
         COALESCE(api_s.ip, pb_s.ip, 'Unkown') AS ip,
         COALESCE(api_s.session_id, pb_s.session_id, 'Unkown') as session_id,
 
-        SUM(api_s.total_visitors) as api_visitors,
-        SUM(api_s.tracked_visitors) as api_t_visitors,
-        SUM(api_s.lander_visitors) as api_landers,
-        SUM(pb_s.pb_lander_conversions) as pb_landers,
+        COALESCE(SUM(api_s.total_visitors), 0) as api_visitors,
+        COALESCE(SUM(api_s.tracked_visitors), 0) as api_t_visitors,
+        COALESCE(SUM(api_s.lander_visitors), 0) as api_landers,
+        COALESCE(SUM(pb_s.pb_lander_conversions), 0) as pb_landers,
 
-        SUM(api_s.lander_searches) as api_searches,
-        SUM(pb_s.pb_serp_conversions) as pb_searches,
+        COALESCE(SUM(api_s.lander_searches), 0) as api_searches,
+        COALESCE(SUM(pb_s.pb_serp_conversions), 0) as pb_searches,
 
-        SUM(api_s.revenue_clicks) as api_purchase,
-        SUM(pb_s.pb_conversions) as pb_purchase,
+        COALESCE(SUM(api_s.revenue_clicks), 0) as api_purchase,
+        COALESCE(SUM(pb_s.pb_conversions), 0) as pb_purchase,
 
-        SUM(api_s.revenue) as api_revenue,
-        SUM(pb_s.revenue) as pb_revenue,
-        CONCAT(sd.ip, '-', sd.session_id, '-', '${date}', '-', '${hour}') AS unique_identifier
+        COALESCE(SUM(api_s.revenue), 0) as api_revenue,
+        COALESCE(SUM(pb_s.revenue), 0) as pb_revenue,
+        CONCAT(COALESCE(api_s.ip, pb_s.ip, 'Unkown'), '-', COALESCE(api_s.session_id, pb_s.session_id, 'Unkown'), '-', '${date}', '-', '${hour}') AS unique_identifier
 
       FROM api_sessions api_s
       FULL OUTER JOIN postback_sessions pb_s ON api_s.ip = pb_s.ip AND api_s.session_id = pb_s.session_id AND api_s.campaign_id = pb_s.campaign_id
-      GROUP BY api_s.ip, api_s.session_id, pb_s.ip, pb_s.session_id, api_s.campaign_id, pb_s.campaign_id
+      GROUP BY
+        api_s.ip, pb_s.ip,
+        api_s.session_id,
+        pb_s.session_id,
+        api_s.campaign_id, pb_s.campaign_id
     ----------------------------------------------------------------------------------------------------------------------------------------------------------------
   `
   const data = await database.raw(query)

@@ -5,7 +5,7 @@ const { CronJob }                                     = require('cron');
 // Local application imports
 const EnvironmentVariablesManager                     = require('../../../shared/services/EnvironmentVariablesManager');
 const { todayYMD, todayHH }                           = require('../../../shared/helpers/calendar');
-const { api_vs_pb_mild_report }                       = require('../reports/api_vs_pb_report_milder')
+const { api_vs_pb_report }                            = require('../reports/api_vs_pb_report')
 const DatabaseRepository                              = require('../../../shared/lib/DatabaseRepository');
 const InsightsService                                 = require('../../crossroads/services/InsightsService');
 const { AnalysisLogger }                              = require('../../../shared/lib/WinstonLogger');
@@ -42,12 +42,11 @@ const updatePbAnalysis = async (date, hour) => {
   // Generate report
   AnalysisLogger.info(`Generating report for campaign ids: ${ParsedTestCampaignIds.join(",")}`)
   const campaignIdRestrictionsForReport = `('${ParsedTestCampaignIds.join("','")}')`;
-  const data = await api_vs_pb_mild_report(database, date, hour, campaignIdRestrictionsForReport);
+  const data = await api_vs_pb_report(database, date, hour, campaignIdRestrictionsForReport);
   AnalysisLogger.info(`Finished generating report for campaign ids: ${ParsedTestCampaignIds.join(",")}`)
 
   // Chunk data into 500 rows per insert
   const dataChunks = _.chunk(data, 500);
-
   AnalysisLogger.info(`Inserting data into database for campaign ids: ${ParsedTestCampaignIds.join(",")}`)
   // Insert data into database
   for (const chunk of dataChunks) {
@@ -58,7 +57,7 @@ const updatePbAnalysis = async (date, hour) => {
 }
 
 const updatePbAnalysisRegular = new CronJob(
-  '10 * * * *',
+  '49 * * * *',
   (async () => {
     await updatePbAnalysis(todayYMD(), Number(todayHH()));
   }
