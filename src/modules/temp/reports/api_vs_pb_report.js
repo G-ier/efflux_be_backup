@@ -58,7 +58,7 @@ const api_vs_pb_report = async (database, date, hour, minute, campaign_ids) => {
 
         COALESCE(SUM(api_s.revenue), 0) as api_revenue,
         COALESCE(SUM(pb_s.revenue), 0) as pb_revenue,
-        CONCAT(COALESCE(api_s.ip, pb_s.ip, 'Unkown'), '-', COALESCE(api_s.session_id, pb_s.session_id, 'Unkown'), '-', '${date}', '-', '${hour}') AS unique_identifier
+        CONCAT(COALESCE(api_s.ip, pb_s.ip, 'Unkown'), '-', COALESCE(api_s.session_id, pb_s.session_id, 'Unkown'), '-', '${date}', '-', '${hour}', '-', '${minute}') AS unique_identifier
 
       FROM api_sessions api_s
       FULL OUTER JOIN postback_sessions pb_s ON api_s.ip = pb_s.ip AND api_s.session_id = pb_s.session_id AND api_s.campaign_id = pb_s.campaign_id
