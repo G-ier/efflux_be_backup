@@ -1,6 +1,5 @@
 
-
-const api_vs_pb_report = async (database, date, hour, campaign_ids) => {
+const api_vs_pb_report = async (database, date, hour, minute, campaign_ids) => {
 
   const query = `
       -- Post Back vs. API Change Over Time Analysis
@@ -39,8 +38,9 @@ const api_vs_pb_report = async (database, date, hour, campaign_ids) => {
       )
 
       SELECT
-        ${date} AS date,
+        '${date}' AS date,
         ${hour} AS hour,
+        ${minute} AS minute,
         COALESCE(api_s.campaign_id, pb_s.campaign_id, 'Unkown') as campaign_id,
         COALESCE(api_s.ip, pb_s.ip, 'Unkown') AS ip,
         COALESCE(api_s.session_id, pb_s.session_id, 'Unkown') as session_id,
