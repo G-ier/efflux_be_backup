@@ -20,7 +20,7 @@ const POSTBACKS = (entityGrouping, startDate, endDate, trafficSource, network) =
   }
 }
 
-async function revealBotSheets(database, startDate, endDate, aggregateBy="campaigns", trafficSource="facebook", network='crossroads') {
+async function revealBotSheets(database, startDate, endDate, aggregateBy="campaigns", trafficSource="facebook", network='crossroads', today) {
 
   if (aggregateBy === "campaigns") {
     entityGrouping = `campaign_id`
@@ -54,6 +54,21 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
     orderBy = 'MAX(ins.adset_name)'
   }
 
+
+  if (today){
+    todayCTE = `, rpc_addition as (SELECT
+    ${entityGrouping}, 
+    CASE WHEN SUM(ins.nw_conversions) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.nw_conversions) as numeric), 2) END last_3days_rpc
+    FROM insights ins
+    WHERE ins.date::date >= '${startDate}'::date - INTERVAL '3 days'
+    AND ins.traffic_source = '${trafficSource}' AND ins.network = '${network}'
+    GROUP BY ${groupBy})`
+
+  }
+  else{
+    todayCTE = ''
+  }
+
   const query = `
     WITH insights_report AS (
       SELECT
@@ -81,7 +96,9 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
           `: ``
         }
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(CAST(SUM(nw_conversions) as float) / CAST(SUM(tracked_visitors) as float) * 100 as numeric), 2) || '%' END ctr_cr,
+  
         CASE WHEN SUM(ins.nw_conversions) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.nw_conversions) as numeric), 2) END rpc,
+  
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.tracked_visitors) * 1000 as numeric), 2) END rpm,
         CASE WHEN SUM(ins.tracked_visitors) = 0 THEN null ELSE ROUND(CAST(SUM(ins.revenue) / SUM(ins.tracked_visitors) as numeric), 2) END rpv,
         ROUND((SUM(ins.revenue) + SUM(unallocated_revenue))::numeric, 2) as publisher_revenue,
@@ -92,9 +109,12 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
       WHERE ins.date >= '${startDate}' AND ins.date <= '${endDate}' AND ins.traffic_source = '${trafficSource}' AND ins.network = '${network}'
       GROUP BY ${groupBy}
       ORDER BY MAX(ins.campaign_name)
-  ) ${POSTBACKS(entityGrouping, startDate, endDate, trafficSource, network)}
+  )
+  ${todayCTE}
+  ${POSTBACKS(entityGrouping, startDate, endDate, trafficSource, network)}
   SELECT
     ins.*,
+    ${today === true ? 'rpc_addition.last_3days_rpc,':  ''}
     ${
       network === 'crossroads' ? `
         live_pb.pb_lander_conversions,
@@ -109,6 +129,10 @@ async function revealBotSheets(database, startDate, endDate, aggregateBy="campai
   FROM insights_report ins
   ${
     network === 'crossroads' ? `FULL OUTER JOIN live_postbacks live_pb ON live_pb.${entityGrouping} = ins.${entityGrouping}` : ''
+
+  }
+  ${
+    today === true ? `LEFT JOIN rpc_addition ON ins.${entityGrouping} = rpc_addition.${entityGrouping}`: ''
   }
   `
   const data = await database.raw(query)

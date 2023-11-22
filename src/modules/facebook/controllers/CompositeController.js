@@ -293,8 +293,8 @@ class CompositeController {
       const adData = this.prepareAdData(req, uploadedMedia, adSetId);
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
-      const adCreationResult = await this.createAd(token, firstKey, adData);
-
+      const adCreationResult = await this.compositeService.createAd({token, adAccountId:firstKey, adData});
+      
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
@@ -308,7 +308,7 @@ class CompositeController {
     const { files, body } = req;
     const { adData, campaignData, adsetData, adAccountId } = body;
 
-    const missingParameters = [];
+        const missingParameters = [];
 
     if (!files || (!files.video && !files.images)) {
       missingParameters.push('files');
@@ -370,7 +370,6 @@ class CompositeController {
       }
     }
 
-
     if (campaignData.existingId) {
       return campaignData.existingId;
     }
@@ -379,7 +378,7 @@ class CompositeController {
       token,
       adAccountId,
       campaignData,
-      adAccountsDataMap
+      adAccountsDataMap,
     );
 
     return campaignCreationResult.data.id;
@@ -389,7 +388,7 @@ class CompositeController {
     let adsetData = req.body.adsetData;
 
     // Check if adsetData is a string and parse it
-    if (typeof adsetData === 'string') {
+    if (typeof adsetData === "string") {
       try {
         adsetData = JSON.parse(adsetData);
       } catch (error) {
@@ -406,12 +405,7 @@ class CompositeController {
     }
 
     // Create the ad set with the provided data
-    const adSetCreationResult = await this.adsetsService.createAdset(
-      token,
-      adAccountId,
-      adsetData,
-      adAccountsDataMap
-    );
+    const adSetCreationResult = await this.adsetsService.createAdset(token, adAccountId, adsetData, adAccountsDataMap);
 
     // Return the ID of the newly created ad set
     return adSetCreationResult.id;
@@ -421,67 +415,90 @@ class CompositeController {
     const uploadedMedia = [];
 
     if (req.files) {
-      if (req.files["video"]) {
-        for (const file of req.files["video"]) {
-          const videoHash = await this.compositeService.uploadVideo(file.buffer, file.originalname, adAccountId, token);
-          uploadedMedia.push({ type: "video", hash: videoHash });
+      let firstImageBuffer = null;
+      let firstImageName = null;
+
+      // Process Images
+      if (req.files["images"]) {
+        for (const [index, file] of req.files["images"].entries()) {
+          const imageHash = await this.compositeService.uploadImage(file.buffer, file.originalname, adAccountId, token);
+          uploadedMedia.push({ type: "image", hash: imageHash["images"][file.originalname].hash });
+
+          // Store the first image to be used as a thumbnail
+          if (index === 0) {
+            firstImageBuffer = file.buffer;
+            firstImageName = file.originalname;
+          }
         }
       }
 
-      if (req.files["images"]) {
-        for (const file of req.files["images"]) {
-          const imageHash = await this.compositeService.uploadImage(file.buffer, file.originalname, adAccountId, token);
-          uploadedMedia.push({ type: "image", hash: imageHash['images'][file.originalname].hash });
+      // Process Videos
+      if (req.files["video"]) {
+        for (const file of req.files["video"]) {
+          let videoHash;
+            videoHash = await this.compositeService.uploadVideo(file.buffer, file.originalname, adAccountId, token);
+
+          uploadedMedia.push({ type: "video", video_id: videoHash });
         }
       }
     }
-
     return uploadedMedia;
   }
 
   prepareAdData(req, uploadedMedia, adSetId) {
     // Parse adData if it's a string
     let adData = req.body.adData;
-    if (typeof adData === 'string') {
+    if (typeof adData === "string") {
       try {
         adData = JSON.parse(adData);
       } catch (error) {
-        throw new Error('Invalid adData format. Unable to parse adData to JSON.');
+        throw new Error("Invalid adData format. Unable to parse adData to JSON.");
       }
     }
 
     // Check if adData is an object now
-    if (typeof adData !== 'object' || adData === null) {
-      throw new Error('Invalid adData format. adData should be an object.');
+    if (typeof adData !== "object" || adData === null) {
+      throw new Error("Invalid adData format. adData should be an object.");
     }
 
     // Parse adData.creative if it's a string
-    if (typeof adData.creative === 'string') {
+    if (typeof adData.creative === "string") {
       try {
         adData.creative = JSON.parse(adData.creative);
       } catch (error) {
-        throw new Error('Invalid adData format. Unable to parse adData.creative to JSON.');
+        throw new Error("Invalid adData format. Unable to parse adData.creative to JSON.");
       }
     }
 
     // Now that we know adData.creative is an object, check for asset_feed_spec
-    if (typeof adData.creative.asset_feed_spec === 'string') {
+    if (typeof adData.creative.asset_feed_spec === "string") {
       try {
         adData.creative.asset_feed_spec = JSON.parse(adData.creative.asset_feed_spec);
       } catch (error) {
-        throw new Error('Invalid adData format. Unable to parse adData.creative.asset_feed_spec to JSON.');
+        throw new Error("Invalid adData format. Unable to parse adData.creative.asset_feed_spec to JSON.");
       }
     }
 
-    // Initialize images array if not already present
+    // // Initialize images array if not already present
     if (!Array.isArray(adData.creative.asset_feed_spec.images)) {
       adData.creative.asset_feed_spec.images = [];
     }
 
+    // Initialize videos array if not already present
+    if (!Array.isArray(adData.creative.asset_feed_spec.videos)) {
+      adData.creative.asset_feed_spec.videos = [];
+    }
+
     // Add image hashes to the asset_feed_spec.images array
-    uploadedMedia.forEach(media => {
-      if (media.type === 'image') {
+    uploadedMedia.forEach((media) => {
+      
+      if (media.type === "image") {
         adData.creative.asset_feed_spec.images.push({ hash: media.hash });
+      } else {
+        adData.creative.asset_feed_spec.videos.push({
+          video_id: media.video_id,
+          url_tags: "video=video1",
+        });
       }
     });
 
@@ -489,10 +506,6 @@ class CompositeController {
     adData.adset_id = adSetId;
 
     return adData;
-  }
-
-  async createAd(token, adAccountId, adData) {
-    return this.compositeService.createAd({ token, adAccountId, adData });
   }
 
   respondWithResult(res, adCreationResult) {
@@ -509,10 +522,9 @@ class CompositeController {
     res.status(500).json({
       success: false,
       message: "An error occurred while launching the ad.",
-      error: error.error_user_msg || error.message
+      error: error.error_user_msg || error.message,
     });
   }
-
 }
 
 module.exports = CompositeController;

@@ -278,6 +278,17 @@ class CompositeService {
     }
   }
 
+  async checkVideoStatus(videoId, token) {
+    const statusUrl = `${FB_API_URL}/${videoId}?fields=status&access_token=${token}`;
+    try {
+      const response = await axios.get(statusUrl);
+      return response.data.status.video_status;
+    } catch (error) {
+      console.error("Error checking video status:", error);
+      throw error;
+    }
+  }
+
   async uploadVideo(videoBuffer, filename, adAccountId, token) {
     const formData = new FormData();
     formData.append("file", videoBuffer, filename);
@@ -291,9 +302,16 @@ class CompositeService {
           Authorization: `Bearer ${token}`,
         },
       });
+      const videoId = response.data.id;
+
+      // Check video status until it's ready
+      let videoStatus = await this.checkVideoStatus(videoId, token);
+      while (videoStatus !== "ready") {
+        await new Promise((resolve) => setTimeout(resolve, 30000)); // Wait for 30 seconds before checking again
+        videoStatus = await this.checkVideoStatus(videoId, token);
+      }
 
       // Depending on the actual structure of the response you might need to adjust the way you access the videoId
-      const videoId = response.data.id;
       return videoId;
     } catch (error) {
       console.error("Error uploading video:", error);
@@ -301,7 +319,7 @@ class CompositeService {
     }
   }
 
-  async createAd({ token , adAccountId, adData }) {
+  async createAd({ token, adAccountId, adData }) {
     const url = `${FB_API_URL}act_${adAccountId}/ads`;
     // Construct the request payload according to the Facebook API specifications
     const payload = {
@@ -309,7 +327,9 @@ class CompositeService {
       access_token: token, // Assuming the token is passed directly, could be managed differently
     };
 
-    // Additional properties and configurations can be added to the payload as needed
+    // Dont include the images and videos sent for processing to get hashes and id-s
+    delete payload["images"];
+    delete payload["videos"];
 
     try {
       // Make the post request to the Facebook API
