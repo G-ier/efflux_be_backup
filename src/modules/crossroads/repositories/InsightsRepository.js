@@ -50,7 +50,7 @@ class InsightsRepository {
 
   async saveRawData(data, account, request_date, campaignIdRestrictions) {
 
-    function convertToDatabaseDTO(data, account, request_date) {
+    const convertToDatabaseDTO = (data, account, request_date) => {
 
       return data.map((item) => {
 
