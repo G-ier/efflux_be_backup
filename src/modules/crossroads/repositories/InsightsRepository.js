@@ -57,6 +57,7 @@ class InsightsRepository {
         delete item.day; delete item.tqs;
         item.account = account;
         item.date = request_date;
+        item.traffic_source = this.getTrafficSource(item);
 
         // session_id-lander_keyword
         item.unique_identifier = `${item.tg3}-${item.lander_keyword}`
@@ -75,7 +76,7 @@ class InsightsRepository {
 
     for (const chunk of dataChunks) {
       const parsedChunk = _.uniqBy(chunk, "unique_identifier");
-      await this.database.upsert("raw_crossroads_data", parsedChunk, "unique_identifier");
+      await this.database.upsert("raw_crossroads_data", parsedChunk, "unique_identifier", ['reported_to_ts']);
     }
   }
 
