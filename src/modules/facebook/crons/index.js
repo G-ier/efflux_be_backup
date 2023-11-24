@@ -6,13 +6,13 @@ require("dotenv").config();
 const { todayYMD, yesterdayYMD, dayBeforeYesterdayYMD }          = require('../../../shared/helpers/calendar');
 const { sendSlackNotification }                                  = require("../../../shared/lib/SlackNotificationService");
 const CompositeService                                           = require('../services/CompositeService');
-const PageService                                                = require('../services/PageService');
 const {
   FACEBOOK_UPDATE_TODAY_REGULAR_CRON,
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
   FACEBOOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON,
-  FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON
+  FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
@@ -52,6 +52,18 @@ async function updateFacebookData(day) {
   }
 }
 
+async function reportFacebookConversions(date) {
+  dataUpdatesLogger.info(`STARTED | FACEBOOK | ${date} | REPORTING CONVERSIONS`);
+  try {
+    await compositeService.sendCapiEvents(date);
+    dataUpdatesLogger.info(`COMPLETED | FACEBOOK | ${date} | REPORTING CONVERSIONS`);
+  } catch (error) {
+    dataUpdatesLogger.warn(`FAILED | FACEBOOK | ${date} | REPORTING CONVERSIONS | ${error}`);
+    await sendSlackNotification(`FAILED | FACEBOOK | ${date} | REPORTING CONVERSIONS`)
+    console.log(error);
+  }
+}
+
 const updateYesterdayDataBeforeMidnightPST = new CronJob(
   FACEBOOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
   (async () => {
@@ -80,8 +92,15 @@ const updateTodayDataRegular = new CronJob(
   }
 ));
 
+const reportFacebookConversionsRegular = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
+  (async () => {
+    await reportFacebookConversions(todayYMD());
+  }
+));
+
 const updatePagesRegular = new CronJob(
-FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
+  FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
   (async () =>{
     try{
       let facebookBusinessIds = process.env.FACEBOOK_BUSINESS_IDS;
@@ -108,6 +127,7 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
   updatePagesRegular.start();
+  reportFacebookConversionsRegular.start();
 }
 
 module.exports = initializeFacebookCron;

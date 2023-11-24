@@ -108,7 +108,12 @@ const TiktokLogger = new CustomLogger({
   level: 'info',
   filePath: filePath('tiktok')
 });
-
+// Capi Logger
+const CapiLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('capi')
+});
 // Aggregates Logger
 const AggregatesLogger = new CustomLogger({
   destination:streamDestination,
@@ -164,6 +169,7 @@ module.exports = {
   CrossroadsLogger,
   FacebookLogger,
   TiktokLogger,
+  CapiLogger,
   AggregatesLogger,
   FunnelFluxLogger,
   PostbackLogger,

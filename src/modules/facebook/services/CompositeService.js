@@ -1,6 +1,10 @@
+// Third party imports
+const axios = require("axios");
+
 // Standard library imports
 const _ = require("lodash");
 const FormData = require("form-data");
+
 // Local application imports
 const UserAccountService = require("./UserAccountService");
 const AdAccountService = require("./AdAccountService");
@@ -9,12 +13,13 @@ const CampaignsService = require("./CampaignsService");
 const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
 const PageService = require("./PageService");
+const CapiService = require("./CapiService");
+const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
-
 const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
-const axios = require("axios");
+
 class CompositeService {
 
   constructor() {
@@ -25,6 +30,7 @@ class CompositeService {
     this.adsetsService = new AdsetsService();
     this.adInsightsService = new AdInsightsService();
     this.pageService = new PageService();
+    this.capiService = new CapiService();
   }
 
   async syncUserAccountsData(
@@ -135,6 +141,10 @@ class CompositeService {
       ad_account: {
           service: this.adAccountService.fetchAdAccountsFromDatabase.bind(this.adAccountService),
           tableName: 'ad_accounts'
+      },
+      pixel: {
+        service: this.pixelsService.fetchPixelsFromDatabase.bind(this.pixelsService),
+        tableName: 'fb_pixels'
       }
     };
 
@@ -147,7 +157,7 @@ class CompositeService {
     let result;
     try {
       const whereClause = {
-        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : "provider_id"}`]: entityId,
+        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : config.tableName === 'fb_pixels' ? "pixel_id" : "provider_id"}`]: entityId,
       };
       result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
         {
@@ -348,6 +358,46 @@ class CompositeService {
       FacebookLogger.error(`Error creating ad: ${error.response}`);
       throw error?.response?.data?.error;
     }
+  }
+
+  async sendCapiEvents(date) {
+
+    // Retrieve the data
+    FacebookLogger.info(`Fetching events from DB.`);
+    const data = await detectPurchaseEvents(this.capiService.database, date, 'facebook');
+    if (data.length === 0) {
+      FacebookLogger.info(`No events found for date ${date}.`);
+      return;
+    }
+    FacebookLogger.info(`Done fetching ${data.length} events from DB.`);
+
+    // Fetch pixels from database
+    const pixels = await this.pixelsService.fetchPixelsFromDatabase(['pixel_id']);
+
+    // Filter Data
+    const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents(data, pixels);
+
+    // Flag incorrect Data
+    await this.capiService.updateInvalidEvents(brokenPixelEvents);
+
+    // If no valid events, return
+    if (validPixelEvents.length === 0) {
+      FacebookLogger.info(`No valid events found for date ${date}.`);
+      return;
+    }
+
+    const { fbProcessedPayloads, eventIds } = await this.capiService.constructFacebookCAPIPayload(validPixelEvents);
+
+    FacebookLogger.info(`Posting events to FB CAPI in batches.`);
+    for(const batch of fbProcessedPayloads){
+      const { token } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
+        for(const payload of batch.payloads){
+          await this.capiService.postCapiEvents(token, batch.entityId, payload);
+        }
+    }
+    FacebookLogger.info(`DONE Posting events to FB CAPI in batches.`);
+
+    await this.capiService.updateReportedEvents(eventIds);
   }
 
 }

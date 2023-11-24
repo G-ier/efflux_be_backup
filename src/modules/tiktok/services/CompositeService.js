@@ -6,7 +6,10 @@ const AdsService = require("./AdsService");
 const AdAccountService = require("./AdAccountsService");
 const UserAccountService = require("./UserAccountService");
 const AdInsightsService = require("./AdInsightsService");
+const PixelService = require("./PixelsService")
+const EventsApiService = require("./EventsApiService")
 const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
+const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
 
 class CompositeService {
 
@@ -17,10 +20,12 @@ class CompositeService {
     this.adsService = new AdsService();
     this.adAccountService = new AdAccountService();
     this.adInsightsService = new AdInsightsService();
+    this.pixelService = new PixelService();
+    this.capiService = new EventsApiService();
     this.logger = TiktokLogger
   }
 
-  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {
+  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uPixels=true, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {
 
     if(endDate){
       this.logger.info(`Starting to sync TikTok data for daterange ${date} - ${endDate}`);
@@ -38,6 +43,8 @@ class CompositeService {
     const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
     const adAccountIds = adAccountIdsLimitation ? adAccountIdsLimitation : Object.keys(adAccountsMap);
 
+    // Sync pixels
+    if(uPixels) await this.pixelService.syncPixels(token, adAccountIds, adAccountsMap);
 
     // Sync campaigns
     if(uCampaigns) await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date, endDate);
@@ -143,6 +150,49 @@ class CompositeService {
       this.logger.info(`Successfully updated entity of type ${type} with ID ${entityId}`);
       return updateResponse;
   }
+
+  async sendCapiEvents(date) {
+
+    // Retrieve the data
+    this.logger.info(`Fetching events from DB.`);
+    const data = await detectPurchaseEvents(this.capiService.database, date, 'tiktok');
+    if (data.length === 0) {
+      this.logger.info(`No events found for date ${date}.`);
+      return;
+    }
+    this.logger.info(`Done fetching ${data.length} events from DB.`);
+
+    // Fetch pixels from database
+    const pixels = await this.pixelService.fetchPixelsFromDatabase(['code']);
+
+    // Filter Data
+    const { brokenPixelEvents, validPixelEvents } = this.capiService.parseBrokenPixelEvents(data, pixels);
+
+    // Flag incorrect Data
+    await this.capiService.updateInvalidEvents(brokenPixelEvents);
+
+    // If no valid events, return
+    if (validPixelEvents.length === 0) {
+      this.logger.info(`No valid events found for date ${date}.`);
+      return;
+    }
+
+    const { ttProcessedPayloads, eventIds } = await this.capiService.constructTiktokCAPIPayload(validPixelEvents);
+
+    this.logger.info(`Posting events to TT CAPI in batches.`);
+    for (const batch of ttProcessedPayloads) {
+      const { token } = await this.userAccountsService.getFetchingAccounts();
+      const pixelId = batch.entityId;
+
+      for( const payload of batch.payloads ){
+        await this.capiService.postCapiEvents(token, pixelId, payload);
+      }
+    }
+    this.logger.info(`Done posting events to TT CAPI in batches.`);
+
+    await this.capiService.updateReportedEvents(eventIds);
+  }
+
 }
 
 module.exports = CompositeService;
