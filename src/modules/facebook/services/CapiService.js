@@ -18,7 +18,7 @@ class CapiService extends BaseService{
 
     async postCapiEvents(token, pixel, data) {
 
-      this.logger.info(`Sending Facebook data to Conversion API.`);
+      this.logger.info(`Sending ${data.data.length} events to Facebook CAPI for pixel ${pixel}`);
 
       const url = `${FB_API_URL}/${pixel}/events`;
       const response = await this.postToApi(url, {
@@ -29,7 +29,7 @@ class CapiService extends BaseService{
       return response;
     }
 
-    async parseBrokenPixelEvents(events, pixels){
+    async parseBrokenPixelEvents(events, pixels) {
       this.logger.info(`Parsing Events with broken Pixel ID`);
       const dbPixelIds        = pixels.map((pixel) => pixel.pixel_id);
       const brokenPixelEvents = events.filter((event) => !dbPixelIds.includes(event.pixel_id))
@@ -42,7 +42,8 @@ class CapiService extends BaseService{
       return { brokenPixelEvents, validPixelEvents };
     }
 
-    async constructFacebookCAPIPayload(filteredEvents){
+    async constructFacebookCAPIPayload(filteredEvents) {
+
       this.logger.info(`Constructing FB Capi payload`);
       // 1. Extract Event Ids
       const eventIds        = filteredEvents.map((event) => event.id)
@@ -71,11 +72,14 @@ class CapiService extends BaseService{
       let currentPayload = { data: [] };
 
       events.forEach((event) => {
+
         for ( let i = 0; i < event.purchase_event_count; i++ ) {
+
           if ( currentPayload.data.length === MAX_EVENTS ) {
             payloads.push(currentPayload)
             currentPayload = { data: [] }
           }
+
           const eventPayload = {
             event_name: 'Purchase',
             event_time: Number(event.timestamp),
@@ -110,6 +114,7 @@ class CapiService extends BaseService{
           }
           currentPayload.data.push(eventPayload)
         }
+
       })
 
       // Add the last payload if it has any events
@@ -128,12 +133,11 @@ class CapiService extends BaseService{
     }
 
     async updateReportedEvents(eventIds){
-      this.logger.info(`Updating Reported Events in DB`);
+      this.logger.info(`Updating Reported Session in DB`);
       const updatedCount = await this.database.update('raw_crossroads_data', {reported_to_ts: true}, {unique_identifier: eventIds})
-      this.logger.info(`Reported ${updatedCount} events to Facebook CAPI`);
+      this.logger.info(`Reported ${updatedCount} session to Facebook CAPI`);
     }
+
 }
-
-
 
 module.exports = CapiService;

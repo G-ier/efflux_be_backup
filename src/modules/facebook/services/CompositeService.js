@@ -15,7 +15,7 @@ const AdInsightsService = require("./AdInsightsService");
 const PageService = require("./PageService");
 const CapiService = require("./CapiService");
 const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
-const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
+const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
@@ -363,13 +363,13 @@ class CompositeService {
   async sendCapiEvents(date) {
 
     // Retrieve the data
-    FacebookLogger.info(`Fetching events from DB.`);
+    CapiLogger.info(`Fetching session from DB.`);
     const data = await detectPurchaseEvents(this.capiService.database, date, 'facebook');
     if (data.length === 0) {
-      FacebookLogger.info(`No events found for date ${date}.`);
+      CapiLogger.info(`No events found for date ${date}.`);
       return;
     }
-    FacebookLogger.info(`Done fetching ${data.length} events from DB.`);
+    CapiLogger.info(`Done fetching ${data.length} session from DB.`);
 
     // Fetch pixels from database
     const pixels = await this.pixelsService.fetchPixelsFromDatabase(['pixel_id']);
@@ -382,20 +382,20 @@ class CompositeService {
 
     // If no valid events, return
     if (validPixelEvents.length === 0) {
-      FacebookLogger.info(`No valid events found for date ${date}.`);
+      CapiLogger.info(`No valid sessions found for date ${date}.`);
       return;
     }
 
     const { fbProcessedPayloads, eventIds } = await this.capiService.constructFacebookCAPIPayload(validPixelEvents);
 
-    FacebookLogger.info(`Posting events to FB CAPI in batches.`);
+    CapiLogger.info(`Posting events to FB CAPI in batches.`);
     for(const batch of fbProcessedPayloads){
       const { token } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
         for(const payload of batch.payloads){
           await this.capiService.postCapiEvents(token, batch.entityId, payload);
         }
     }
-    FacebookLogger.info(`DONE Posting events to FB CAPI in batches.`);
+    CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
 
     await this.capiService.updateReportedEvents(eventIds);
   }

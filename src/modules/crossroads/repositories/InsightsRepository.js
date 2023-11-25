@@ -261,7 +261,7 @@ class InsightsRepository {
         browser: !click.browser || click.browser === "0" ? null : click.browser,
         device_type: click.device_type || null,
         platform: !click.platform || click.platform === "0" ? null : click.platform,
-        date: click.day || null,
+        date: request_date,
         gclid: click.gclid && click.gclid !== "null" ? click.gclid : null,
         hour: click.hour,
         city: click.city || null,

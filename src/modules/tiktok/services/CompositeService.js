@@ -8,7 +8,7 @@ const UserAccountService = require("./UserAccountService");
 const AdInsightsService = require("./AdInsightsService");
 const PixelService = require("./PixelsService")
 const EventsApiService = require("./EventsApiService")
-const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
+const { TiktokLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
 
 class CompositeService {
@@ -154,13 +154,13 @@ class CompositeService {
   async sendCapiEvents(date) {
 
     // Retrieve the data
-    this.logger.info(`Fetching events from DB.`);
+    CapiLogger.info(`Fetching sessions from DB.`);
     const data = await detectPurchaseEvents(this.capiService.database, date, 'tiktok');
     if (data.length === 0) {
-      this.logger.info(`No events found for date ${date}.`);
+      CapiLogger.info(`No sessions found for date ${date}.`);
       return;
     }
-    this.logger.info(`Done fetching ${data.length} events from DB.`);
+    CapiLogger.info(`Done fetching ${data.length} sessions from DB.`);
 
     // Fetch pixels from database
     const pixels = await this.pixelService.fetchPixelsFromDatabase(['code']);
@@ -173,13 +173,13 @@ class CompositeService {
 
     // If no valid events, return
     if (validPixelEvents.length === 0) {
-      this.logger.info(`No valid events found for date ${date}.`);
+      CapiLogger.info(`No valid sessions found for date ${date}.`);
       return;
     }
 
     const { ttProcessedPayloads, eventIds } = await this.capiService.constructTiktokCAPIPayload(validPixelEvents);
 
-    this.logger.info(`Posting events to TT CAPI in batches.`);
+    CapiLogger.info(`Posting events to TT CAPI in batches.`);
     for (const batch of ttProcessedPayloads) {
       const { token } = await this.userAccountsService.getFetchingAccounts();
       const pixelId = batch.entityId;
@@ -188,7 +188,7 @@ class CompositeService {
         await this.capiService.postCapiEvents(token, pixelId, payload);
       }
     }
-    this.logger.info(`Done posting events to TT CAPI in batches.`);
+    CapiLogger.info(`Done posting events to TT CAPI in batches.`);
 
     await this.capiService.updateReportedEvents(eventIds);
   }

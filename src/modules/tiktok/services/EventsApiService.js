@@ -15,7 +15,7 @@ class EventsService extends BaseService {
 
     async postCapiEvents(token, pixel, data){
 
-        this.logger.info(`Sending TIKTOK data to Conversion API.`);
+        this.logger.info(`Sending Tiktok events to Conversion API.`);
 
         const url = `${TIKTOK_API_URL}/pixel/batch/`;
         const headers = {
@@ -26,13 +26,13 @@ class EventsService extends BaseService {
           "pixel_code": pixel,
           "batch": data.data
         }
-
+        this.logger.info(`Sending ${data.data.length} events to Tiktok CAPI for pixel ${pixel}`);
         const response = await this.postToApi(url, body, "Error posting events", headers);
         return response;
     }
 
     async constructTiktokCAPIPayload(filteredEvents){
-      this.logger.info(`Constructing TT Capi payload`);
+      this.logger.info(`Constructing Tiktok Capi payloads`);
       const eventIds        = filteredEvents.map((event) => event.id)
       // 2. Group by pixel id
       const ttPixelGrouped    = _.groupBy(filteredEvents, 'pixel_id')
@@ -46,20 +46,20 @@ class EventsService extends BaseService {
           payloads: ttCAPIPayloads
         })
       })
-      this.logger.info(`Done constructing TT Capi payload`);
+      this.logger.info(`Done constructing Tiktok Capi payloads`);
       return { ttProcessedPayloads, eventIds }
     }
 
     parseBrokenPixelEvents(events, pixels) {
 
-      this.logger.info(`Parsing Events with broken Pixel ID`);
+      this.logger.info(`Parsing Sessions with broken Pixel ID`);
       const dbPixelIds        = pixels.map((pixel) => pixel.code);
 
       const brokenPixelEvents = events.filter((event) => !dbPixelIds.includes(event.pixel_id));
       // Mark broken pixel events as broken pixel events?
       const validPixelEvents  = events.filter((event) => dbPixelIds.includes(event.pixel_id));
       this.logger.info(
-        `Events Parsing Telemetry: SUCCESS(${validPixelEvents.length}) | ERROR(${brokenPixelEvents.length})`,
+        `Session Parsing Telemetry: SUCCESS(${validPixelEvents.length}) | ERROR(${brokenPixelEvents.length})`,
       );
 
       return { brokenPixelEvents, validPixelEvents };
@@ -118,15 +118,15 @@ class EventsService extends BaseService {
 
     async updateInvalidEvents(brokenEvents){
       const eventIds        = brokenEvents.map((event) => event.id)
-      this.logger.info(`Updating Broken Events in DB`);
+      this.logger.info(`Updating Broken Sessions in DB`);
       const updatedCount = await this.database.update('raw_crossroads_data', {valid_pixel: false}, {unique_identifier: eventIds});
-      this.logger.info(`Updated ${updatedCount} Broken events to Tiktok CAPI`)
+      this.logger.info(`Updated ${updatedCount} Broken Sessions in DB`)
     }
 
     async updateReportedEvents(eventIds){
-      this.logger.info(`Updating Reported Events in DB`);
+      this.logger.info(`Updating Reported Sessions in DB`);
       const updatedCount = await this.database.update('raw_crossroads_data', {reported_to_ts: true}, {unique_identifier: eventIds})
-      this.logger.info(`Reported ${updatedCount} events to Tiktok CAPI`);
+      this.logger.info(`Reported ${updatedCount} Sessions in DB`);
     }
 }
 
