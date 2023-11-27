@@ -9,9 +9,9 @@ const { TiktokLogger }                      = require("../../shared/lib/WinstonL
 
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 const CONCURRENCY_LIMIT = 5;
-const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, additionalParams = {}) => {
+const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, additionalParams = {}, edge = 'get') => {
 
-  const url = `${TIKTOK_API_URL}/${endpoint}/get/?`;
+  const url = `${TIKTOK_API_URL}/${endpoint}/${edge}/?`;
   const headers = {
     "Access-Token": access_token,
   };
@@ -35,6 +35,9 @@ const getTikTokEndpointData = async (endpoint, access_token, ad_account_ids, add
     if (response?.data?.code === 0) {
       results.success.push(ad_account_id);
       await delay(1000);
+      if (endpoint === 'pixel') {
+        return response.data.data.pixels.map((item) => ({ ...item, ad_account_id }));
+      }
       return response.data.data.list;
     } else {
       return [];

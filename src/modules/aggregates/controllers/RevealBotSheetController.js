@@ -13,6 +13,7 @@ class RevealBotSheetController {
   async refreshSheet(req, res) {
 
     const {traffic_source, network} = req.query;
+
     if (!AVAILABLE_NETWORKS.includes(network)) {
       return res.status(400).json({error: `Network ${network} is not supported`});
     }

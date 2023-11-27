@@ -1,0 +1,6 @@
+from pb_analysis import plot_avg_validation_delay, plot_validation_delay, plot_avg_validation_delay_quarter_hours, plot_validation_delay_quarter_hours
+
+# plot_avg_validation_delay()
+# plot_validation_delay()
+# plot_avg_validation_delay_quarter_hours()
+plot_validation_delay_quarter_hours()
