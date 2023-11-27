@@ -1,19 +1,49 @@
 // Third Party Imports
-const _ = require("lodash");
-const sha256              = require('js-sha256');
+const _                     = require("lodash");
+const sha256                = require('js-sha256');
+const moment                = require('moment-timezone');
 
 // Local Imports
-const { usStates }        = require('../../../shared/constants/states');
-const BaseService = require("../../../shared/services/BaseService");
-const { CapiLogger } = require("../../../shared/lib/WinstonLogger");
-const { FB_API_URL } = require('../constants');
-const DatabaseRepository                  = require('../../../shared/lib/DatabaseRepository')
+const { usStates }          = require('../../../shared/constants/states');
+const { todayYMD, todayHH } = require('../../../shared/helpers/calendar');
+const BaseService           = require("../../../shared/services/BaseService");
+const { CapiLogger }        = require("../../../shared/lib/WinstonLogger");
+const { FB_API_URL }        = require('../constants');
+const DatabaseRepository    = require('../../../shared/lib/DatabaseRepository')
 
 class CapiService extends BaseService{
 
     constructor(){
         super(CapiLogger);
         this.database = new DatabaseRepository();
+    }
+
+    async createCapiLogEntry(data) {
+      this.logger.info(`Adding CAPI Logs to the database`);
+      const logEntries = data.map((event) => {
+        const session_id = event.id.split('-')[0];
+        const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
+        return {
+          traffic_source: 'facebook',
+          reported_date: todayYMD(),
+          reported_hour: todayHH(),
+          event_unix_timestamp: event.timestamp,
+          isos_timestamp: pst_timestamp,
+          tz: 'America/Los_Angeles',
+          session_id: session_id,
+          campaign_name: event.campaign_name,
+          campaign_id: event.campaign_id,
+          conversions_reported: event.purchase_event_count,
+          revenue_reported: event.purchase_event_value
+        }
+      })
+
+      const dataChunks = _.chunk(logEntries, 1000);
+      for (const chunk of dataChunks) {
+        await this.database.insert('capi_logs', chunk);
+      }
+
+      this.logger.info(`Done adding CAPI Logs to the database`);
     }
 
     async postCapiEvents(token, pixel, data) {
@@ -45,6 +75,8 @@ class CapiService extends BaseService{
     async constructFacebookCAPIPayload(filteredEvents) {
 
       this.logger.info(`Constructing FB Capi payload`);
+      await this.createCapiLogEntry(filteredEvents);
+
       // 1. Extract Event Ids
       const eventIds        = filteredEvents.map((event) => event.id)
       // 2. Group by pixel id

@@ -3,6 +3,8 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
 
   const QUERY = `
     SELECT
+      tg1 as campaign_name,
+      tg2 as campaign_id,
       unique_identifier as id,
       traffic_source,
       tg4 as ip,
@@ -33,8 +35,8 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
     FROM
       raw_crossroads_data
     WHERE
-      reported_to_ts = false
-      AND revenue_clicks > 0
+      revenue_clicks > 0
+      AND reported_to_ts = false
       AND date = '${date}'
       AND traffic_source = '${traffic_source}'
       AND valid_pixel = true

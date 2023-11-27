@@ -1,16 +1,47 @@
-const axios = require("axios");
-const _ = require("lodash");
-const {TIKTOK_API_URL} = require("../constants");
+// Third Party Imports
+const _                     = require("lodash");
+const moment                = require('moment-timezone');
 
-const BaseService = require("../../../shared/services/BaseService");
-const { CapiLogger } = require("../../../shared/lib/WinstonLogger");
-const DatabaseRepository                  = require('../../../shared/lib/DatabaseRepository')
+// Local Imports
+const {TIKTOK_API_URL}      = require("../constants");
+const BaseService           = require("../../../shared/services/BaseService");
+const { todayYMD, todayHH } = require('../../../shared/helpers/calendar');
+const { CapiLogger }        = require("../../../shared/lib/WinstonLogger");
+const DatabaseRepository    = require('../../../shared/lib/DatabaseRepository')
 
 class EventsService extends BaseService {
 
     constructor(){
         super(CapiLogger);
         this.database = new DatabaseRepository();
+    }
+
+    async createCapiLogEntry(data) {
+      this.logger.info(`Adding CAPI Logs to the database`);
+      const logEntries = data.map((event) => {
+        const session_id = event.id.split('-')[0];
+        const isos_timestamp = moment.utc(event.timestamp * 1000).tz('Europe/Paris').format('YYYY-MM-DDTHH:mm:ss');
+        return {
+          traffic_source: 'tiktok',
+          reported_date: todayYMD('Europe/Paris'),
+          reported_hour: todayHH(0, 'Europe/Paris'),
+          event_unix_timestamp: event.timestamp,
+          isos_timestamp: isos_timestamp,
+          tz: 'Europe/Paris',
+          session_id: session_id,
+          campaign_name: event.campaign_name,
+          campaign_id: event.campaign_id,
+          conversions_reported: event.purchase_event_count,
+          revenue_reported: event.purchase_event_value
+        }
+      })
+
+      const dataChunks = _.chunk(logEntries, 1000);
+      for (const chunk of dataChunks) {
+        await this.database.insert('capi_logs', chunk);
+      }
+
+      this.logger.info(`Done adding CAPI Logs to the database`);
     }
 
     async postCapiEvents(token, pixel, data){
@@ -33,6 +64,7 @@ class EventsService extends BaseService {
 
     async constructTiktokCAPIPayload(filteredEvents){
       this.logger.info(`Constructing Tiktok Capi payloads`);
+      await this.createCapiLogEntry(filteredEvents);
       const eventIds        = filteredEvents.map((event) => event.id)
       // 2. Group by pixel id
       const ttPixelGrouped    = _.groupBy(filteredEvents, 'pixel_id')
