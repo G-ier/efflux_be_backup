@@ -1,6 +1,7 @@
 // Third Party Imports
 const _                     = require("lodash");
 const moment                = require('moment-timezone');
+const crypto                = require("crypto");
 
 // Local Imports
 const {TIKTOK_API_URL}      = require("../constants");
@@ -20,14 +21,14 @@ class EventsService extends BaseService {
       this.logger.info(`Adding CAPI Logs to the database`);
       const logEntries = data.map((event) => {
         const session_id = event.id.split('-')[0];
-        const isos_timestamp = moment.utc(event.timestamp * 1000).tz('Europe/Paris').format('YYYY-MM-DDTHH:mm:ss');
+        const isos_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
         return {
           traffic_source: 'tiktok',
-          reported_date: todayYMD('Europe/Paris'),
-          reported_hour: todayHH(0, 'Europe/Paris'),
+          reported_date: todayYMD(),
+          reported_hour: todayHH(),
           event_unix_timestamp: event.timestamp,
           isos_timestamp: isos_timestamp,
-          tz: 'Europe/Paris',
+          tz: 'America/Los_Angeles',
           session_id: session_id,
           campaign_name: event.campaign_name,
           campaign_id: event.campaign_id,
@@ -59,6 +60,7 @@ class EventsService extends BaseService {
         }
         this.logger.info(`Sending ${data.data.length} events to Tiktok CAPI for pixel ${pixel}`);
         const response = await this.postToApi(url, body, "Error posting events", headers);
+        this.logger.info(`Response from Tiktok CAPI: ${JSON.stringify(response)}`)
         return response;
     }
 
@@ -116,7 +118,7 @@ class EventsService extends BaseService {
             event: "CompletePayment",
             timestamp: new Date(event.timestamp * 1000).toISOString(),
             pixel_code: event.pixel_id,
-            event_id: `${event.external}_.${event.ip.replace(/\.|\:/g, '')}`,
+            event_id: `${event.external}_${event.ip.replace(/\.|\:/g, '')}_${crypto.randomBytes(8).toString("hex")}`,
             context: {
               ad: {
                 callback: event.external,
