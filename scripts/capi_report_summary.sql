@@ -20,7 +20,7 @@
 		FROM 
 			capi_logs 
 		WHERE 
-			isos_timestamp > '2023-11-27T09:00:00' AND isos_timestamp < '2023-11-28T09:00:00' AND traffic_source = 'tiktok'
+			isos_timestamp > '2023-11-28' AND isos_timestamp < '2023-11-29' AND traffic_source = 'facebook'
 	),
 	reported_summary AS (
 		SELECT 

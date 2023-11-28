@@ -118,7 +118,6 @@ class EventsService extends BaseService {
             event: "CompletePayment",
             timestamp: new Date(event.timestamp * 1000).toISOString(),
             pixel_code: event.pixel_id,
-            event_id: `${event.external}_${event.ip.replace(/\.|\:/g, '')}_${crypto.randomBytes(8).toString("hex")}`,
             context: {
               ad: {
                 callback: event.external,
