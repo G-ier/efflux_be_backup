@@ -138,9 +138,9 @@ class UserAccountService {
         FacebookLogger.error("No valid admin accounts found. Terminating")
         throw new Error("No valid admin accounts found");
       }
-
     }
 
+    adminAccount.business = true;
     if (admins_only) return adminAccount;
 
     const clientAccounts = await this.fetchUserAccounts(fetchingFields,
@@ -153,6 +153,9 @@ class UserAccountService {
       const validAccounts = await this.validateAccounts(clientAccounts, adminAccount.token);
       FacebookLogger.info(`Found ${validAccounts.length} valid client accounts`)
       validClientAccounts = validAccounts;
+      for (const account of validClientAccounts) {
+        account.business = false;
+      }
     } catch {}
 
     if (clients_only) return validClientAccounts;
