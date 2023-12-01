@@ -2,7 +2,7 @@ module.exports = {
   apps: [
     {
       name: "efflux-be",
-      script: "./index.js",
+      script: "-r newrelic ./index.js",
       ignore_watch: ["./node_modules", "./logs", "./storage"],
       watch: true,
       instances: 1,
