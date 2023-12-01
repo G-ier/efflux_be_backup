@@ -158,6 +158,10 @@ class DatabaseRepository {
     }
 }
 
+  async startTransaction() {
+    return this.connection.transaction();
+  }
+
   async raw(query) {
     try {
       const result = await this.connection.raw(query);
