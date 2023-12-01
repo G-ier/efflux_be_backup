@@ -25,17 +25,64 @@ class CompositeService {
     this.logger = TiktokLogger
   }
 
-  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uPixels=true, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {
+  async fetchEntitiesOwnerAccount(entityType, entityId) {
 
-    if(endDate){
-      this.logger.info(`Starting to sync TikTok data for daterange ${date} - ${endDate}`);
+    const entityConfig = {
+      adset: {
+        service: this.adsetService.fetchAdsetsFromDatabase.bind(this.adsetService),
+        tableName: "adsets",
+      },
+      campaign: {
+          service: this.campaignService.fetchCampaignsFromDatabase.bind(this.campaignService),
+          tableName: 'campaigns'
+      },
+      ad_account: {
+          service: this.adAccountService.fetchAdAccountsFromDatabase.bind(this.adAccountService),
+          tableName: 'ad_accounts'
+      },
+      pixel: {
+        service: this.pixelService.fetchPixelsFromDatabase.bind(this.pixelService),
+        tableName: 'tt_pixels'
+      }
+    };
+
+    const config = entityConfig[entityType];
+
+    if (!config) {
+      throw new Error(`Unsupported entity type: ${entityType}`);
     }
-    else{
-      this.logger.info(`Starting to sync TikTok data for date ${date}`);
+
+    let result;
+    try {
+      const whereClause = {
+        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : config.tableName === 'tt_pixels' ? "code" : "provider_id"}`]: entityId,
+      };
+      result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
+        {
+          type: "inner",
+          table: "user_accounts AS ua",
+          first: `${config.tableName}.account_id`,
+          operator: "=",
+          second: "ua.id",
+        },
+      ]);
+    } catch (e) {
+      console.log(e);
+      await sendSlackNotification(`Error fetching account for entity ${entityType} with id ${entityId}`);
     }
+
+    if (!result.length) {
+      throw new Error(`${entityType} with id ${entityId} not found in the database`);
+    }
+
+    return result[0];
+  }
+
+  async syncUserAccountData(account, date, endDate = null, adAccountIdsLimitation = null, uPixels=true, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {
 
     //Retrieving account we will use for fetching data
-    const { id, user_id, token } = await this.userAccountsService.getFetchingAccounts();
+    const { token, name, user_id, id } = account;
+    this.logger.info(`Syncing data for account ${name}`);
 
     // Sync ad accounts
     await this.adAccountService.syncAdAccounts(token, id, user_id);
@@ -57,7 +104,7 @@ class CompositeService {
     }
 
     // Sync ads
-    if (uAds) await this.adsService.syncAds(token,adAccountIds,adAccountsMap,date, endDate);
+    if (uAds) await this.adsService.syncAds(token,adAccountIds,adAccountsMap, date, endDate);
 
     // Sync ad insights
     if (uInsights){
@@ -65,19 +112,36 @@ class CompositeService {
     await this.adInsightsService.syncAdInsights(token, adAccountIds, campaignIdsMap, date, endDate);
     }
 
-    if(endDate){
+  }
+
+  async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uPixels=true, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {
+
+    if (endDate)
+      this.logger.info(`Starting to sync Tiktok data for date range ${date} -> ${endDate}`);
+    else
+      this.logger.info(`Starting to sync Tiktok data for date ${date}`);
+
+    if (!uPixels && !uCampaigns && !uAdsets && !uAds &&!uInsights)
+      throw new Error("No data to update. Please select at least one option");
+
+    //Retrieving account we will use for fetching data
+    const accounts = await this.userAccountsService.getFetchingAccounts();
+
+    for (const account of accounts) {
+      await this.syncUserAccountData(account, date, endDate, adAccountIdsLimitation, uPixels, uCampaigns, uAdsets, uAds, uInsights);
+    }
+    if(endDate)
       this.logger.info(`Done syncing TikTok data for daterange ${date} - ${endDate}`);
-    }
-    else{
+    else
       this.logger.info(`Done syncing TikTok data for date ${date}`);
-    }
+    return true;
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
     try {
         this.logger.info(`Starting update for entity of type ${type} with ID: ${entityId}`);
 
-        const { token } = await this.userAccountsService.getFetchingAccounts();
+        const { token } = await this.fetchEntitiesOwnerAccount(type, entityId);
         this.logger.debug('Fetched user accounts information');
 
         let service;
@@ -181,7 +245,7 @@ class CompositeService {
 
     CapiLogger.info(`Posting events to TT CAPI in batches.`);
     for (const batch of ttProcessedPayloads) {
-      const { token } = await this.userAccountsService.getFetchingAccounts();
+      const { token } = await this.userAccountsService.fetchEntitiesOwnerAccount('pixel', batch.entityId);
       const pixelId = batch.entityId;
 
       for( const payload of batch.payloads ){

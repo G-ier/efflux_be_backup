@@ -65,9 +65,28 @@ class DatabaseRepository {
 
       // Apply filters to the query
       for (const [key, value] of Object.entries(filters)) {
+
         if (Array.isArray(value)) {
           queryBuilder = queryBuilder.whereIn(key, value);
+
+        } else if (typeof value === 'object' && value !== null) {
+
+          // Handle special filter conditions like greater than, less than, etc.
+          if (value.gt !== undefined) {
+            queryBuilder = queryBuilder.where(key, '>', value.gt);
+          }
+          if (value.lt !== undefined) {
+            queryBuilder = queryBuilder.where(key, '<', value.lt);
+          }
+          if (value.gte !== undefined) {
+            queryBuilder = queryBuilder.where(key, '>=', value.gte);
+          }
+          if (value.lte !== undefined) {
+            queryBuilder = queryBuilder.where(key, '<=', value.lte);
+          }
+          // Add more conditions as needed
         } else {
+          // Default case for direct equality
           queryBuilder = queryBuilder.where(key, value);
         }
       }

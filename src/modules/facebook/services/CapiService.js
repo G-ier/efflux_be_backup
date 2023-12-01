@@ -56,6 +56,7 @@ class CapiService extends BaseService{
           access_token: token
         }, "Error posting events"
       );
+      this.logger.info(`Response from Facebook CAPI: ${JSON.stringify(response)}`)
       return response;
     }
 

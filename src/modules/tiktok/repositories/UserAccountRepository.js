@@ -16,13 +16,17 @@ class UserAccountRepository {
     let data = user_accounts.map((user_account) => this.toDatabaseDTO(user_account));
     const dataChunks = _.chunk(data, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "token")
+      await this.database.upsert(this.tableName, chunk, "name")
     }
   }
 
   async fetchUserAccounts(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
+  }
+
+  async delete(criteria) {
+    return await this.database.delete(this.tableName, criteria);
   }
 
   toDatabaseDTO(user_account) {

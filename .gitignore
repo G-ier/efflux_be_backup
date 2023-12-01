@@ -94,6 +94,7 @@ cert/*
 datagrip
 clickhouse
 pb_analysis/
+scripts/
 
 # Test
 testing.js
