@@ -200,8 +200,8 @@ Resources:
             sudo apt-get update
             sudo apt-get install nodejs -y
 
-            # Install PM2
-            sudo npm install pm2@latest -g
+            # Install PM2 && New Relic
+            sudo npm install pm2@latest newrelic -g
 
             # Install CodeDeploy Agent
             cd /tmp && \
@@ -209,6 +209,14 @@ Resources:
             sudo chmod +x ./install && \
             sudo ./install auto && \
             sudo service codedeploy-agent start
+
+            # Install New Relic Agent
+            sudo sh -c 'echo deb http://apt.newrelic.com/debian/ newrelic non-free > /etc/apt/sources.list.d/newrelic.list'
+            wget -O- https://download.newrelic.com/548C16BF.gpg | sudo apt-key add -
+            sudo apt-get update
+            sudo apt-get install newrelic-sysmond -y
+            nrsysmond-config --set license_key=05deb215fbdea6d15e080ae888415b2dFFFFNRAL
+            sudo nrsysmond
 
         TagSpecifications:
           - ResourceType: volume
