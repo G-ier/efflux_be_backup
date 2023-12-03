@@ -41,6 +41,12 @@ exports.up = function(knex) {
     table.integer('revenue_clicks');
     table.integer('total_visitors');
     table.integer('tracked_visitors');
+    table.text('unique_identifier').unique('raw_crossroads_unique_identifier');
+    table.string('traffic_source').defaultTo('Unkwon');
+    table.boolean('reported_to_ts').defaultTo(false);
+    table.boolean('valid_pixel').defaultTo(true);
+    table.integer('reported_conversions').defaultTo(0);
+    table.float('reported_amount').defaultTo(0);
   });
 };
 

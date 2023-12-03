@@ -56,7 +56,7 @@ class CampaignService extends BaseService {
         this.logger.error('No update criteria provided');  // Log an error if no criteria are provided
         throw new Error('No update criteria provided');
       }
-      
+
       // Call updateTikTokEntity with the necessary arguments
       this.logger.info(`Updating TikTok entity for ID ${entityId}`);  // Log the start of the TikTok update
       const tikTokResponse = await updateTikTokEntity({
@@ -85,8 +85,8 @@ class CampaignService extends BaseService {
     }
   }
 
-  async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit) {
-    const results = await this.campaignRepository.fetchCampaigns(fields, filters, limit);
+  async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit, joins=[]) {
+    const results = await this.campaignRepository.fetchCampaigns(fields, filters, limit, joins);
     return results;
   }
 }

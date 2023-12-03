@@ -1,6 +1,7 @@
 const route                 = require("express").Router();
 
 const pixels                = require("./pixels");
+const userAccounts          = require("./user_accounts");
 const CompositeController   = require("../controllers/CompositeController");
 const compositeController   = new CompositeController();
 
@@ -12,5 +13,6 @@ route.get("/refresh", async (req, res) => {
 });
 
 route.use("/pixels", pixels);
+route.use("/user_accounts", userAccounts);
 
 module.exports = route;
