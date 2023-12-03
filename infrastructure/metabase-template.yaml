@@ -57,130 +57,134 @@ Resources:
     Properties:
       DBSubnetGroupDescription: Subnet group for Metabase RDS
       SubnetIds:
-        - !ImportValue Efflux-PublicSubnet1
-        - !ImportValue Efflux-PublicSubnet2
-        - !ImportValue Efflux-PublicSubnet3
+        # - !ImportValue Efflux-PublicSubnet1
+        # - !ImportValue Efflux-PublicSubnet2
+        # - !ImportValue Efflux-PublicSubnet3
+        - "subnet-0f764705dc685a12d"
+        - "subnet-0e91fa175ab9de549"
+        - "subnet-05fa106425bfcc391"
       Tags:
         - Key: Name
           Value: Metabase-SubnetGroup
         - Key: project
           Value: metabase
 
-  MetabaseInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-      InstanceType: t3a.large
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: 43
-            VolumeType: gp3
-            DeleteOnTermination: yes
-            Encrypted: false
-      EbsOptimized: true
-      Monitoring: false
-      KeyName: efflux-metabase
-      SecurityGroupIds:
-        - !Ref MetaBaseSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet1
-      Tags:
-        - Key: Name
-          Value: Metabase
-        - Key: project
-          Value: metabase
-        - Key: operation
-          Value: analytics
+  # MetabaseInstance:
+  #   Type: AWS::EC2::Instance
+  #   Properties:
+  #     ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+  #     InstanceType: t3a.large
+  #     BlockDeviceMappings:
+  #       - DeviceName: /dev/sda1
+  #         Ebs:
+  #           VolumeSize: 43
+  #           VolumeType: gp3
+  #           DeleteOnTermination: yes
+  #           Encrypted: false
+  #     EbsOptimized: true
+  #     Monitoring: false
+  #     KeyName: efflux-metabase
+  #     SecurityGroupIds:
+  #       - !Ref MetaBaseSecurityGroup
+  #     SubnetId: !ImportValue Efflux-PublicSubnet1
+  #     Tags:
+  #       - Key: Name
+  #         Value: Metabase
+  #       - Key: project
+  #         Value: metabase
+  #       - Key: operation
+  #         Value: analytics
 
-  # add an elastic IP to the MetaBase instance
-  MetaBaseEIP:
-    Type: AWS::EC2::EIP
-    Properties:
-      InstanceId: !Ref MetabaseInstance
-      Domain: standard
-      Tags:
-        - Key: Name
-          Value: MetabaseIP
-        - Key: project
-          Value: metabase
-        - Key: operation
-          Value: analytics
+  # # add an elastic IP to the MetaBase instance
+  # MetaBaseEIP:
+  #   Type: AWS::EC2::EIP
+  #   Properties:
+  #     InstanceId: !Ref MetabaseInstance
+  #     Domain: standard
+  #     Tags:
+  #       - Key: Name
+  #         Value: MetabaseIP
+  #       - Key: project
+  #         Value: metabase
+  #       - Key: operation
+  #         Value: analytics
 
-  # Add an ALB for MetaBase
-  MetaBaseALB:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: Metabase-ALB
-      SecurityGroups:
-        - !Ref MetaBaseSecurityGroup
-      Subnets:
-        - !ImportValue Efflux-PublicSubnet1
-        - !ImportValue Efflux-PublicSubnet2
-        - !ImportValue Efflux-PublicSubnet3
-      Tags:
-        - Key: Name
-          Value: Metabase-ALB
-        - Key: project
-          Value: metabase
-        - Key: operation
-          Value: analytics
+  # # Add an ALB for MetaBase
+  # MetaBaseALB:
+  #   Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+  #   Properties:
+  #     Name: Metabase-ALB
+  #     SecurityGroups:
+  #       - !Ref MetaBaseSecurityGroup
+  #     Subnets:
+  #       - !ImportValue Efflux-PublicSubnet1
+  #       - !ImportValue Efflux-PublicSubnet2
+  #       - !ImportValue Efflux-PublicSubnet3
+  #     Tags:
+  #       - Key: Name
+  #         Value: Metabase-ALB
+  #       - Key: project
+  #         Value: metabase
+  #       - Key: operation
+  #         Value: analytics
 
-  # Add a MetaBase ALB Target Group
-  MetaBaseALBTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: Metabase-TG
-      HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
-      HealthCheckPath: /api/health
-      Port: "3000"
-      Protocol: HTTP
-      VpcId: !Ref VPC
-      TargetType: instance
-      Targets:
-        - Id: !Ref MetabaseInstance
-          Port: "3000"
-      Tags:
-        - Key: Name
-          Value: Metabase-TG
-        - Key: project
-          Value: metabase
-        - Key: operation
-          Value: analytics
+  # # Add a MetaBase ALB Target Group
+  # MetaBaseALBTargetGroup:
+  #   Type: AWS::ElasticLoadBalancingV2::TargetGroup
+  #   Properties:
+  #     Name: Metabase-TG
+  #     HealthCheckEnabled: true
+  #     HealthCheckIntervalSeconds: "30"
+  #     HealthCheckTimeoutSeconds: "5"
+  #     HealthCheckPath: /api/health
+  #     Port: "3000"
+  #     Protocol: HTTP
+  #     VpcId: !Ref VPC
+  #     TargetType: instance
+  #     Targets:
+  #       - Id: !Ref MetabaseInstance
+  #         Port: "3000"
+  #     Tags:
+  #       - Key: Name
+  #         Value: Metabase-TG
+  #       - Key: project
+  #         Value: metabase
+  #       - Key: operation
+  #         Value: analytics
 
-  # Add a MetaBase ALB Listener
-  MetaBaseALBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      LoadBalancerArn: !Ref MetaBaseALB
-      Port: "80"
-      Protocol: HTTP
+  # # Add a MetaBase ALB Listener
+  # MetaBaseALBListener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     DefaultActions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref MetaBaseALBTargetGroup
+  #     LoadBalancerArn: !Ref MetaBaseALB
+  #     Port: "80"
+  #     Protocol: HTTP
 
-  # Add a MetaBase ALB Listener Rule
-  MetaBaseALBListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - /*
-      ListenerArn: !Ref MetaBaseALBListener
-      Priority: "1"
+  # # Add a MetaBase ALB Listener Rule
+  # MetaBaseALBListenerRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties:
+  #     Actions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref MetaBaseALBTargetGroup
+  #     Conditions:
+  #       - Field: path-pattern
+  #         Values:
+  #           - /*
+  #     ListenerArn: !Ref MetaBaseALBListener
+  #     Priority: "1"
 
-  # Create a MetaBase Security Group
-  MetaBaseSecurityGroup:
+  # # Create a MetaBase Security Group
+  InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupName: Metabase
       GroupDescription: Enable Metabase and Portainer access
-      VpcId: !Ref VPC
+      # VpcId: ImportValue: Efflux-VPC
+      VpcId: "vpc-00890dca2a074bf6c"
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -209,15 +213,14 @@ Resources:
           Value: metabase
         - Key: operation
           Value: analytics
-
 ####################
 # Outputs
 ####################
 
-Outputs:
-  MetabaseInstance:
-    Description: Metabase Instance
-    Value: !Ref MetabaseInstance
-  MetaBaseEIP:
-    Description: Metabase Elastic IP
-    Value: !Ref MetaBaseEIP
+# Outputs:
+# MetabaseInstance:
+#   Description: Metabase Instance
+#   Value: !Ref MetabaseInstance
+# MetaBaseEIP:
+#   Description: Metabase Elastic IP
+#   Value: !Ref MetaBaseEIP
