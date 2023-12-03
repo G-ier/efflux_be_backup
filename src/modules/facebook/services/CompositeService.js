@@ -182,10 +182,22 @@ class CompositeService {
 
   async syncPages(businessIds) {
 
-    const admins_only = true;
-    const { name, token } = await this.userAccountService.getFetchingAccount(admins_only);
-    FacebookLogger.info(`Syncing pages with account ${name}`);
-    await this.pageService.syncPages(token, businessIds);
+    const accounts = await this.userAccountService.getFetchingAccount()
+
+    // Construct an account for each business id.
+    const businessAdminAccount = accounts.filter(account => account.business)[0]
+    const businessAdminAccounts = businessIds.map(businessId => {
+      return {
+        ...businessAdminAccount,
+        businessId
+      }
+    })
+    // Sync business pages
+    await this.pageService.syncPages(businessAdminAccounts, true);
+
+    // Sync pages for users
+    const clientAccounts = accounts.filter(account => !account.business)
+    await this.pageService.syncPages(clientAccounts, false);
 
   };
 
