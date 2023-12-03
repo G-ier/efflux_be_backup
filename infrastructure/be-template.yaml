@@ -210,9 +210,6 @@ Resources:
             sudo ./install auto && \
             sudo service codedeploy-agent start
 
-            # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-instance
-
         TagSpecifications:
           - ResourceType: volume
             Tags:
@@ -837,7 +834,7 @@ Outputs:
     Description: VPC ID
     Value: !Ref VPC
     Export:
-      Name: Efflux-VPC
+      Name: EffluxVPC
   ALBTargetGroup:
     Description: Application Load Balancer Target Group ID
     Value: !Ref ALBTargetGroup
@@ -853,6 +850,8 @@ Outputs:
   RDSPostgresEndpoint:
     Description: RDS Postgres Database Endpoint
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
+    Export:
+      Name: EffluxRDSPostgresEndpoint
   MetaBaseEIP:
     Description: Metabase Elastic IP
     Value: !Ref MetaBaseEIP
