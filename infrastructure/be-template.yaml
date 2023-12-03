@@ -531,29 +531,29 @@ Resources:
           Value: analytics
 
   # Add a MetaBase ALB Listener
-  MetaBaseALBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      LoadBalancerArn: !Ref MetaBaseALB
-      Port: "80"
-      Protocol: HTTP
+  # MetaBaseALBListener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     DefaultActions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref MetaBaseALBTargetGroup
+  #     LoadBalancerArn: !Ref MetaBaseALB
+  #     Port: "80"
+  #     Protocol: HTTP
 
   # Add a MetaBase ALB Listener Rule
-  MetaBaseALBListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - /*
-      ListenerArn: !Ref MetaBaseALBListener
-      Priority: "1"
+  # MetaBaseALBListenerRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties:
+  #     Actions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref MetaBaseALBTargetGroup
+  #     Conditions:
+  #       - Field: path-pattern
+  #         Values:
+  #           - /*
+  #     ListenerArn: !Ref MetaBaseALBListener
+  #     Priority: "1"
 
   # Create a MetaBase Security Group
   MetaBaseSecurityGroup:
@@ -834,7 +834,27 @@ Outputs:
     Description: VPC ID
     Value: !Ref VPC
     Export:
-      Name: EffluxVPC
+      Name: Efflux-VPC
+  InternetGateway:
+    Description: Internet Gateway ID
+    Value: !Ref InternetGateway
+    Export:
+      Name: Efflux-InternetGateway
+  PublicSubnet1:
+    Description: Public Subnet 1 ID
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: Efflux-PublicSubnet1
+  PublicSubnet2:
+    Description: Public Subnet 2 ID
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: Efflux-PublicSubnet2
+  PublicSubnet3:
+    Description: Public Subnet 3 ID
+    Value: !Ref PublicSubnet3
+    Export:
+      Name: Efflux-PublicSubnet3
   ALBTargetGroup:
     Description: Application Load Balancer Target Group ID
     Value: !Ref ALBTargetGroup
