@@ -3,7 +3,7 @@ module.exports = {
     {
       name: "efflux-be",
       script:
-        "NEW_RELIC_APP_NAME=Efflux Backend NEW_RELIC_LICENSE_KEY=05deb215fbdea6d15e080ae888415b2dFFFFNRAL node -r newrelic index.js",
+        "NEW_RELIC_APP_NAME=Efflux Backend NEW_RELIC_LICENSE_KEY=05deb215fbdea6d15e080ae888415b2dFFFFNRAL NEW_RELIC_DISTRIBUTED_TRACING_ENABLED=true node -r newrelic index.js",
       ignore_watch: ["./node_modules", "./logs", "./storage"],
       watch: true,
       instances: 1,
