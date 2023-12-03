@@ -183,7 +183,9 @@ Resources:
               VolumeSize: 20
               VolumeType: gp3
               DeleteOnTermination: yes
-              Encrypted: true
+              Encrypted: false
+        IamInstanceProfile:
+          Name: !Ref CodeDeployInstanceProfile
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: yes
