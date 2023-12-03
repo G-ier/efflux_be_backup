@@ -583,9 +583,9 @@ Outputs:
   CloudWatchAlarm:
     Description: CloudWatch Alarm ID
     Value: !Ref CloudWatchAlarm
-  ElasticFileSystem:
-    Description: Elastic File System ID
-    Value: !Ref ElasticFileSystem
+  # ElasticFileSystem:
+  #   Description: Elastic File System ID
+  #   Value: !Ref ElasticFileSystem
   # RDSPostgresDB:
   #   Description: RDS Postgres Database ID
   #   Value: !Ref RDSPostgresDB
