@@ -695,6 +695,7 @@ Resources:
             Principal:
               Service:
                 - codedeploy.amazonaws.com
+                - ec2.amazonaws.com
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -714,6 +715,7 @@ Resources:
                   - autoscaling:PutInstanceInStandby
                   - autoscaling:PutInstanceInService
                   - autoscaling:TerminateInstanceInAutoScalingGroup
+                  - autoscaling:PutInstanceInService
                   - ec2:Describe*
                   - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
                   - elasticloadbalancing:DeregisterTargets
@@ -726,6 +728,16 @@ Resources:
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
+                Resource: "*"
+
+              - Effect: Allow
+                Action:
+                  - ssm:GetParameter*
+                Resource: "*"
+
+              - Effect: Allow
+                Action:
+                  - secretsmanager:GetSecretValue
                 Resource: "*"
 
   # Create CodeDeploy Instance Profile
