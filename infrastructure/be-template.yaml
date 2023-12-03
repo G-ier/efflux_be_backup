@@ -210,6 +210,14 @@ Resources:
             sudo ./install auto && \
             sudo service codedeploy-agent start
 
+            # Install New Relic Agent
+            sudo sh -c 'echo deb http://apt.newrelic.com/debian/ newrelic non-free > /etc/apt/sources.list.d/newrelic.list'
+            wget -O- https://download.newrelic.com/548C16BF.gpg | sudo apt-key add -
+            sudo apt-get update
+            sudo apt-get install newrelic-sysmond -y
+            nrsysmond-config --set license_key=05deb215fbdea6d15e080ae888415b2dFFFFNRAL
+            sudo nrsysmond
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
@@ -531,29 +539,29 @@ Resources:
           Value: analytics
 
   # Add a MetaBase ALB Listener
-  MetaBaseALBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      LoadBalancerArn: !Ref MetaBaseALB
-      Port: "80"
-      Protocol: HTTP
+  # MetaBaseALBListener:
+  #   Type: AWS::ElasticLoadBalancingV2::Listener
+  #   Properties:
+  #     DefaultActions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref MetaBaseALBTargetGroup
+  #     LoadBalancerArn: !Ref MetaBaseALB
+  #     Port: "80"
+  #     Protocol: HTTP
 
   # Add a MetaBase ALB Listener Rule
-  MetaBaseALBListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - /*
-      ListenerArn: !Ref MetaBaseALBListener
-      Priority: "1"
+  # MetaBaseALBListenerRule:
+  #   Type: AWS::ElasticLoadBalancingV2::ListenerRule
+  #   Properties:
+  #     Actions:
+  #       - Type: forward
+  #         TargetGroupArn: !Ref MetaBaseALBTargetGroup
+  #     Conditions:
+  #       - Field: path-pattern
+  #         Values:
+  #           - /*
+  #     ListenerArn: !Ref MetaBaseALBListener
+  #     Priority: "1"
 
   # Create a MetaBase Security Group
   MetaBaseSecurityGroup:
@@ -848,6 +856,8 @@ Outputs:
   RDSPostgresEndpoint:
     Description: RDS Postgres Database Endpoint
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
+    Export:
+      Name: EffluxRDSPostgresEndpoint
   MetaBaseEIP:
     Description: Metabase Elastic IP
     Value: !Ref MetaBaseEIP
