@@ -186,6 +186,7 @@ Resources:
             #!/bin/bash
             # Update and install initial packages
             sudo apt-get update && \
+            sudo apt-get upgrade -y && \
             sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
