@@ -57,12 +57,9 @@ Resources:
     Properties:
       DBSubnetGroupDescription: Subnet group for Metabase RDS
       SubnetIds:
-        # - !ImportValue Efflux-PublicSubnet1
-        # - !ImportValue Efflux-PublicSubnet2
-        # - !ImportValue Efflux-PublicSubnet3
-        - "subnet-0f764705dc685a12d"
-        - "subnet-0e91fa175ab9de549"
-        - "subnet-05fa106425bfcc391"
+        - !ImportValue Efflux-PublicSubnet1
+        - !ImportValue Efflux-PublicSubnet2
+        - !ImportValue Efflux-PublicSubnet3
       Tags:
         - Key: Name
           Value: Metabase-SubnetGroup
@@ -183,8 +180,7 @@ Resources:
     Properties:
       GroupName: Metabase
       GroupDescription: Enable Metabase and Portainer access
-      # VpcId: ImportValue: Efflux-VPC
-      VpcId: "vpc-00890dca2a074bf6c"
+      VpcId: !ImportValue Efflux-VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
