@@ -740,6 +740,3 @@ Outputs:
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
     Export:
       Name: EffluxRDSPostgresEndpoint
-  MetaBaseEIP:
-    Description: Metabase Elastic IP
-    Value: !Ref MetaBaseEIP
