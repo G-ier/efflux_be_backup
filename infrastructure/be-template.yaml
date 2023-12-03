@@ -293,9 +293,11 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
       Name: Efflux-BE
-      HealthCheckEnabled: true
+      HealthCheckEnabled: false
       HealthCheckIntervalSeconds: "30"
       HealthCheckTimeoutSeconds: "5"
+      Matcher:
+        HttpCode: "200,301,302,404"
       Port: "80"
       Protocol: HTTP
       VpcId: !Ref VPC
