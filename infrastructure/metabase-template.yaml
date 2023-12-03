@@ -1,0 +1,223 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+####################
+# Parameters
+####################
+
+Parameters:
+  OperatorEmail:
+    Description: The email address to notify when there are any scaling activities
+    Type: String
+    Default: ilyas@roi.ad
+  RDSPostgresClusterPassword:
+    Description: The password for the database
+    NoEcho: "true"
+    Type: String
+    MinLength: "8"
+    MaxLength: "41"
+
+####################
+# Resources
+####################
+
+Resources:
+  # Create an RDS Postgres Database with 50GB storage, db.t3.large instance, and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
+  RDSPostgresDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 50
+      DeletionProtection: false
+      DBInstanceClass: db.t3.micro
+      Engine: postgres
+      EngineVersion: 15.4
+      DBInstanceIdentifier: metabase
+      DBName: mbdb
+      MasterUsername: mbapp
+      MasterUserPassword: !Ref RDSPostgresClusterPassword
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 5
+      Port: 5432
+      StorageEncrypted: false
+      StorageType: gp3
+      PreferredBackupWindow: 00:30-01:00
+      PreferredMaintenanceWindow: mon:03:00-mon:03:30
+      AutoMinorVersionUpgrade: true
+      VPCSecurityGroups:
+        - !Ref InstanceSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Tags:
+        - Key: Name
+          Value: Metabase
+        - Key: project
+          Value: metabase
+
+  # Create a DB Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Metabase RDS
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Metabase-SubnetGroup
+        - Key: project
+          Value: metabase
+
+  MetabaseInstance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+      InstanceType: t3a.large
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 43
+            VolumeType: gp3
+            DeleteOnTermination: yes
+            Encrypted: false
+      EbsOptimized: true
+      Monitoring: false
+      KeyName: efflux-metabase
+      SecurityGroupIds:
+        - !Ref MetaBaseSecurityGroup
+      SubnetId: !ImportValue Efflux-PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: Metabase
+        - Key: project
+          Value: metabase
+        - Key: operation
+          Value: analytics
+
+  # add an elastic IP to the MetaBase instance
+  MetaBaseEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref MetabaseInstance
+      Domain: standard
+      Tags:
+        - Key: Name
+          Value: MetabaseIP
+        - Key: project
+          Value: metabase
+        - Key: operation
+          Value: analytics
+
+  # Add an ALB for MetaBase
+  MetaBaseALB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: Metabase-ALB
+      SecurityGroups:
+        - !Ref MetaBaseSecurityGroup
+      Subnets:
+        - !ImportValue Efflux-PublicSubnet1
+        - !ImportValue Efflux-PublicSubnet2
+        - !ImportValue Efflux-PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Metabase-ALB
+        - Key: project
+          Value: metabase
+        - Key: operation
+          Value: analytics
+
+  # Add a MetaBase ALB Target Group
+  MetaBaseALBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: Metabase-TG
+      HealthCheckEnabled: true
+      HealthCheckIntervalSeconds: "30"
+      HealthCheckTimeoutSeconds: "5"
+      HealthCheckPath: /api/health
+      Port: "3000"
+      Protocol: HTTP
+      VpcId: !Ref VPC
+      TargetType: instance
+      Targets:
+        - Id: !Ref MetabaseInstance
+          Port: "3000"
+      Tags:
+        - Key: Name
+          Value: Metabase-TG
+        - Key: project
+          Value: metabase
+        - Key: operation
+          Value: analytics
+
+  # Add a MetaBase ALB Listener
+  MetaBaseALBListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      LoadBalancerArn: !Ref MetaBaseALB
+      Port: "80"
+      Protocol: HTTP
+
+  # Add a MetaBase ALB Listener Rule
+  MetaBaseALBListenerRule:
+    Type: AWS::ElasticLoadBalancingV2::ListenerRule
+    Properties:
+      Actions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      Conditions:
+        - Field: path-pattern
+          Values:
+            - /*
+      ListenerArn: !Ref MetaBaseALBListener
+      Priority: "1"
+
+  # Create a MetaBase Security Group
+  MetaBaseSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: Metabase
+      GroupDescription: Enable Metabase and Portainer access
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 22
+          ToPort: 22
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 3000
+          ToPort: 3000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 9443
+          ToPort: 9443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: Metabase
+        - Key: project
+          Value: metabase
+        - Key: operation
+          Value: analytics
+
+####################
+# Outputs
+####################
+
+Outputs:
+  MetabaseInstance:
+    Description: Metabase Instance
+    Value: !Ref MetabaseInstance
+  MetaBaseEIP:
+    Description: Metabase Elastic IP
+    Value: !Ref MetaBaseEIP
