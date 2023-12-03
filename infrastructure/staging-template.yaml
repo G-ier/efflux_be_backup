@@ -293,11 +293,11 @@ Resources:
         - !Ref InstanceSecurityGroup
       SubnetId: !ImportValue Efflux-PublicSubnet3
 
-  # Create an RDS Postgres Database with 100GB storage, db.t3.large instance, and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
+  # Create an RDS Postgres Database with 53GB storage, db.t3.large instance, and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
   # RDSPostgresDB:
   #   Type: AWS::RDS::DBInstance
   #   Properties:
-  #     AllocatedStorage: 70
+  #     AllocatedStorage: 53
   #     DeletionProtection: false
   #     DBInstanceClass: db.t3.micro
   #     Engine: postgres
