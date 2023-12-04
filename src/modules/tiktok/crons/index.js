@@ -17,6 +17,7 @@ const EnvironmentVariablesManager                                = require('../.
 
 const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
 const DISABLE_TIKTOK_CRON         = EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CRON')
+const CRON_ENVIRONMENT            = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT')
 const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
 const disableTikTokCron           = DISABLE_TIKTOK_CRON === 'true' || DISABLE_TIKTOK_CRON !== 'false';
 const compositeService            = new CompositeService();
@@ -95,7 +96,7 @@ const initializeTikTokCron = async () => {
     updateYesterdayDataAfterMidnightPST.start();
     updateYesterdayDataAfterMidnightPST2.start();
     updateTodayDataRegular.start()
-    reportTikTokConversionsRegular.start();
+    if (CRON_ENVIRONMENT === 'production') reportTikTokConversionsRegular.start();
 }
 
 module.exports = initializeTikTokCron;
