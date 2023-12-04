@@ -579,39 +579,18 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - autoscaling:CompleteLifecycleAction
-                  - autoscaling:DeleteLifecycleHook
-                  - autoscaling:DescribeAutoScalingGroups
-                  - autoscaling:DescribeLifecycleHooks
-                  - autoscaling:PutLifecycleHook
-                  - autoscaling:RecordLifecycleActionHeartbeat
-                  - autoscaling:PutInstanceInStandby
-                  - autoscaling:PutInstanceInService
-                  - autoscaling:TerminateInstanceInAutoScalingGroup
-                  - autoscaling:PutInstanceInService
+                  - autoscaling:*
                   - ec2:Describe*
-                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-                  - elasticloadbalancing:DeregisterTargets
-                  - elasticloadbalancing:Describe*
-                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-                  - elasticloadbalancing:RegisterTargets
-                  - s3:Get*
-                  - s3:List*
+                  - elasticloadbalancing:*
+                  - s3:*
                   - sns:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
-                Resource: "*"
-
-              - Effect: Allow
-                Action:
+                  - secretsmanager:GetSecretValue
                   - ssm:GetParameter*
                 Resource: "*"
 
-              - Effect: Allow
-                Action:
-                  - secretsmanager:GetSecretValue
-                Resource: "*"
   # Create CodeDeploy Instance Profile
   CodeDeployInstanceProfile:
     Type: AWS::IAM::InstanceProfile
