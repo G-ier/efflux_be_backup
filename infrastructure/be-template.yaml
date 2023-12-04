@@ -225,6 +225,13 @@ Resources:
             sudo ./install auto && \
             sudo service codedeploy-agent start
 
+            # Add alias for pm2
+            echo "alias pm2='sudo pm2'" >> ~/.bashrc
+
+            # Add alias for quickly accessing the project directory
+            echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
+            source ~/.bashrc
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
