@@ -16,9 +16,9 @@ Parameters:
     MinLength: "8"
     MaxLength: "41"
 
-####################
+#####################
 # Resources
-####################
+#####################
 
 Resources:
   # Create an RDS Postgres Database with 50GB storage, db.t3.large instance, and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
