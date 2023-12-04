@@ -3,8 +3,7 @@ module.exports = {
     {
       name: "efflux-be",
       script: "node -r newrelic index.js",
-      // script: "./index.js",
-      ignore_watch: ["./node_modules", "./logs", "./storage"],
+      ignore_watch: ["./node_modules", "./logs", "./storage", "newrelic_agent.log"],
       watch: true,
       instances: 1,
       exec_mode: "fork",
