@@ -29,22 +29,35 @@ class RevealBotSheetService {
       for (let i=0; i < sheets.length; i ++ ) {
         const startDate = someDaysAgoYMD(sheets[i].day - 1, null);
         const endDate = sheets[i].day == 1 ? todayYMD('UTC') : yesterdayYMD(null);
+        const today = startDate === someDaysAgoYMD(0, null) && trafficSource === 'facebook';
         for (let k = 0; k < 2; k ++) {
           const aggregateBy = k == 0 ? 'campaigns' : 'adsets';
-          const columnsOrder = k == 0 ? revealBotCampaignSheetColumn : revealBotAdsetSheetColumn;
+          let columnsOrder = k == 0 ? revealBotCampaignSheetColumn : revealBotAdsetSheetColumn;
           const sheetName = k == 0 ? sheets[i].sheetName : sheets[i].sheetNameByAdset;
-          console.log(sheetName);
+
           const revealBotSheetData = await this.aggregatesRepository.revealBotSheets(
-            startDate, endDate, aggregateBy, trafficSource, network
+            startDate, endDate, aggregateBy, trafficSource, network, today
           );
-          const mappedData = this.mapRevealBotSheetValues(revealBotSheetData, columnsOrder, aggregateBy);
+          const mappedData = this.mapRevealBotSheetValues(revealBotSheetData, columnsOrder, aggregateBy, today);
+
           await this.googleSheetsService.updateSpreadsheet(
-            mappedData,
+            {columns: mappedData.columns, rows: mappedData.rows},
             { spreadsheetId: sheets[i].spreadsheetId, sheetName: sheetName},
             `!A3:AK5000`,
             false,
             false
-          )
+          );
+
+          if (today){
+            await this.googleSheetsService.updateSpreadsheet(
+              {columns: ['rpc_last_3days'], rows: mappedData.lastColumn},
+              { spreadsheetId: sheets[i].spreadsheetId, sheetName: sheetName},
+              `!AT3:AT5000`,
+              false,
+              false
+            );
+          }
+
         }
       }
     } catch (err) {
@@ -108,7 +121,7 @@ class RevealBotSheetService {
 
   }
 
-  mapRevealBotSheetValues(data, columns, aggregateBy = 'campaigns') {
+  mapRevealBotSheetValues(data, columns, aggregateBy = 'campaigns', today=false) {
 
     const rows = data.map(item => {
       const result = {
@@ -155,15 +168,25 @@ class RevealBotSheetService {
         pb_serp_conversions: item.pb_serp_conversions,
         pb_conversions: item.pb_conversions,
         sheet_last_update: item.sheet_last_update,
-      }
 
+      }
       // Change the delete on adset vs campaign
       aggregateBy === 'campaigns'
       ? result.campaign_id = item.campaign_id
       : result.adset_id = item.adset_id
-
       return preferredOrder(result, columns)
     })
+
+    if (today){
+      const lastColumn = data.map(item => {
+        const result = {
+          rpc_last_3days: item.last_3days_rpc
+        }
+        return result;
+      });
+      return {columns, rows, lastColumn}
+    }
+
     return {columns, rows}
   }
 

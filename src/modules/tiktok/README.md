@@ -6,6 +6,7 @@ Campaigns entity/repository/service/controller: [Campaigns Endpoint!](https://bu
 Ad Groups entity/repository/service/controller: [Ad Groups Endpoint!](https://business-api.tiktok.com/portal/docs?id=1739314558673922)
 Ads entity/repository/service/controller: [Ads Endpoint!](https://business-api.tiktok.com/portal/docs?id=1735735588640770)
 Ad Insights entity/repository/service/controller: [Ad Insights Report Endpoint!](https://business-api.tiktok.com/portal/docs?id=1738864915188737)
+Events API : [Events API Endpoint!](https://business-api.tiktok.com/portal/docs?id=1739584864945154)
 
 # Overview
 ...

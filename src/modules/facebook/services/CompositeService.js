@@ -1,6 +1,10 @@
+// Third party imports
+const axios = require("axios");
+
 // Standard library imports
 const _ = require("lodash");
 const FormData = require("form-data");
+
 // Local application imports
 const UserAccountService = require("./UserAccountService");
 const AdAccountService = require("./AdAccountService");
@@ -9,12 +13,13 @@ const CampaignsService = require("./CampaignsService");
 const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
 const PageService = require("./PageService");
-const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
+const CapiService = require("./CapiService");
+const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
+const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
-
 const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
-const axios = require("axios");
+
 class CompositeService {
 
   constructor() {
@@ -25,6 +30,7 @@ class CompositeService {
     this.adsetsService = new AdsetsService();
     this.adInsightsService = new AdInsightsService();
     this.pageService = new PageService();
+    this.capiService = new CapiService();
   }
 
   async syncUserAccountsData(
@@ -135,6 +141,10 @@ class CompositeService {
       ad_account: {
           service: this.adAccountService.fetchAdAccountsFromDatabase.bind(this.adAccountService),
           tableName: 'ad_accounts'
+      },
+      pixel: {
+        service: this.pixelsService.fetchPixelsFromDatabase.bind(this.pixelsService),
+        tableName: 'fb_pixels'
       }
     };
 
@@ -147,7 +157,7 @@ class CompositeService {
     let result;
     try {
       const whereClause = {
-        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : "provider_id"}`]: entityId,
+        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : config.tableName === 'fb_pixels' ? "pixel_id" : "provider_id"}`]: entityId,
       };
       result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
         {
@@ -172,10 +182,22 @@ class CompositeService {
 
   async syncPages(businessIds) {
 
-    const admins_only = true;
-    const { name, token } = await this.userAccountService.getFetchingAccount(admins_only);
-    FacebookLogger.info(`Syncing pages with account ${name}`);
-    await this.pageService.syncPages(token, businessIds);
+    const accounts = await this.userAccountService.getFetchingAccount()
+
+    // Construct an account for each business id.
+    const businessAdminAccount = accounts.filter(account => account.business)[0]
+    const businessAdminAccounts = businessIds.map(businessId => {
+      return {
+        ...businessAdminAccount,
+        businessId
+      }
+    })
+    // Sync business pages
+    await this.pageService.syncPages(businessAdminAccounts, true);
+
+    // Sync pages for users
+    const clientAccounts = accounts.filter(account => !account.business)
+    await this.pageService.syncPages(clientAccounts, false);
 
   };
 
@@ -320,6 +342,46 @@ class CompositeService {
   }
 
   
+
+  async sendCapiEvents(date) {
+
+    // Retrieve the data
+    CapiLogger.info(`Fetching session from DB.`);
+    const data = await detectPurchaseEvents(this.capiService.database, date, 'facebook');
+    if (data.length === 0) {
+      CapiLogger.info(`No events found for date ${date}.`);
+      return;
+    }
+    CapiLogger.info(`Done fetching ${data.length} session from DB.`);
+
+    // Fetch pixels from database
+    const pixels = await this.pixelsService.fetchPixelsFromDatabase(['pixel_id']);
+
+    // Filter Data
+    const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents(data, pixels);
+
+    // Flag incorrect Data
+    await this.capiService.updateInvalidEvents(brokenPixelEvents);
+
+    // If no valid events, return
+    if (validPixelEvents.length === 0) {
+      CapiLogger.info(`No valid sessions found for date ${date}.`);
+      return;
+    }
+
+    const { fbProcessedPayloads, eventIds } = await this.capiService.constructFacebookCAPIPayload(validPixelEvents);
+
+    CapiLogger.info(`Posting events to FB CAPI in batches.`);
+    for(const batch of fbProcessedPayloads){
+      const { token } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
+        for(const payload of batch.payloads){
+          await this.capiService.postCapiEvents(token, batch.entityId, payload);
+        }
+    }
+    CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
+
+    await this.capiService.updateReportedEvents(eventIds);
+  }
 
 }
 

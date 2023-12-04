@@ -153,6 +153,18 @@ Resources:
           FromPort: 3000
           ToPort: 3000
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: Efflux-BE
@@ -171,7 +183,9 @@ Resources:
               VolumeSize: 20
               VolumeType: gp3
               DeleteOnTermination: yes
-              Encrypted: true
+              Encrypted: false
+        IamInstanceProfile:
+          Name: !Ref CodeDeployInstanceProfile
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: yes
@@ -180,12 +194,13 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        InstanceType: t3.small
+        InstanceType: t3.medium
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
             # Update and install initial packages
             sudo apt-get update && \
+            sudo apt-get upgrade -y && \
             sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
@@ -294,8 +309,10 @@ Resources:
     Properties:
       Name: Efflux-BE
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
+      HealthCheckIntervalSeconds: 5
+      HealthCheckTimeoutSeconds: 2
+      Matcher:
+        HttpCode: "200"
       Port: "80"
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -447,142 +464,6 @@ Resources:
         - Key: project
           Value: efflux
 
-  MetabaseInstance:
-    Type: AWS::EC2::Instance
-    Properties:
-      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-      InstanceType: t3a.large
-      BlockDeviceMappings:
-        - DeviceName: /dev/sda1
-          Ebs:
-            VolumeSize: 63
-            VolumeType: gp3
-            DeleteOnTermination: yes
-            Encrypted: false
-      EbsOptimized: true
-      Monitoring: false
-      KeyName: efflux-clickhouse
-      SecurityGroupIds:
-        - !Ref MetaBaseSecurityGroup
-      SubnetId: !Ref PublicSubnet1
-      Tags:
-        - Key: Name
-          Value: Metabase Instance
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
-      # add an elastic IP to the MetaBase instance
-  MetaBaseEIP:
-    Type: AWS::EC2::EIP
-    Properties:
-      InstanceId: !Ref MetabaseInstance
-      Domain: standard
-      Tags:
-        - Key: Name
-          Value: MetabaseEIP
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
-  # Add an ALB for MetaBase
-  MetaBaseALB:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: MetabaseALB
-      SecurityGroups:
-        - !Ref MetaBaseSecurityGroup
-      Subnets:
-        - !Ref PublicSubnet1
-        - !Ref PublicSubnet2
-        - !Ref PublicSubnet3
-      Tags:
-        - Key: Name
-          Value: MetabaseALB
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
-  # Add a MetaBase ALB Target Group
-  MetaBaseALBTargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      Name: Metabase
-      HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
-      HealthCheckPath: /api/health
-      Port: "3000"
-      Protocol: HTTP
-      VpcId: !Ref VPC
-      TargetType: instance
-      Targets:
-        - Id: !Ref MetabaseInstance
-          Port: "3000"
-      Tags:
-        - Key: Name
-          Value: Metabase
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
-  # Add a MetaBase ALB Listener
-  MetaBaseALBListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      LoadBalancerArn: !Ref MetaBaseALB
-      Port: "80"
-      Protocol: HTTP
-
-  # Add a MetaBase ALB Listener Rule
-  MetaBaseALBListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref MetaBaseALBTargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - /*
-      ListenerArn: !Ref MetaBaseALBListener
-      Priority: "1"
-
-  # Create a MetaBase Security Group
-  MetaBaseSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupName: Metabase-SG
-      GroupDescription: Enable Metabase and Portainer access
-      VpcId: !Ref VPC
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 22
-          ToPort: 22
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 3000
-          ToPort: 3000
-          CidrIp: 0.0.0.0/0
-        - IpProtocol: tcp
-          FromPort: 9443
-          ToPort: 9443
-          CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: Name
-          Value: Metabase-SG
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
   # Create an ElastiCache Redis Cluster
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
@@ -687,6 +568,7 @@ Resources:
             Principal:
               Service:
                 - codedeploy.amazonaws.com
+                - ec2.amazonaws.com
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -697,27 +579,16 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - autoscaling:CompleteLifecycleAction
-                  - autoscaling:DeleteLifecycleHook
-                  - autoscaling:DescribeAutoScalingGroups
-                  - autoscaling:DescribeLifecycleHooks
-                  - autoscaling:PutLifecycleHook
-                  - autoscaling:RecordLifecycleActionHeartbeat
-                  - autoscaling:PutInstanceInStandby
-                  - autoscaling:PutInstanceInService
-                  - autoscaling:TerminateInstanceInAutoScalingGroup
+                  - autoscaling:*
                   - ec2:Describe*
-                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-                  - elasticloadbalancing:DeregisterTargets
-                  - elasticloadbalancing:Describe*
-                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-                  - elasticloadbalancing:RegisterTargets
-                  - s3:Get*
-                  - s3:List*
+                  - elasticloadbalancing:*
+                  - s3:*
                   - sns:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
+                  - secretsmanager:GetSecretValue
+                  - ssm:GetParameter*
                 Resource: "*"
 
   # Create CodeDeploy Instance Profile
@@ -825,6 +696,28 @@ Outputs:
   VPC:
     Description: VPC ID
     Value: !Ref VPC
+    Export:
+      Name: Efflux-VPC
+  InternetGateway:
+    Description: Internet Gateway ID
+    Value: !Ref InternetGateway
+    Export:
+      Name: Efflux-InternetGateway
+  PublicSubnet1:
+    Description: Public Subnet 1 ID
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: Efflux-PublicSubnet1
+  PublicSubnet2:
+    Description: Public Subnet 2 ID
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: Efflux-PublicSubnet2
+  PublicSubnet3:
+    Description: Public Subnet 3 ID
+    Value: !Ref PublicSubnet3
+    Export:
+      Name: Efflux-PublicSubnet3
   ALBTargetGroup:
     Description: Application Load Balancer Target Group ID
     Value: !Ref ALBTargetGroup
@@ -840,6 +733,5 @@ Outputs:
   RDSPostgresEndpoint:
     Description: RDS Postgres Database Endpoint
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
-  MetaBaseEIP:
-    Description: Metabase Elastic IP
-    Value: !Ref MetaBaseEIP
+    Export:
+      Name: EffluxRDSPostgresEndpoint

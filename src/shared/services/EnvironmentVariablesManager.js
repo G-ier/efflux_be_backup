@@ -34,7 +34,10 @@ class EnvironmentVariablesManager {
     'DATABASE_ENVIRONMENT', 'PORT', 'DISABLE_SLACK_NOTIFICATION', 'CRON_ENVIRONMENT', 'DISABLE_AUTH_DEADLOCK',
 
     // Logging
-    'LOGGING_ENVIRONMENT', 'LOG_LEVEL'
+    'LOGGING_ENVIRONMENT', 'LOG_LEVEL',
+
+    // Temporary
+    'TESTING_CAMPAIGN_IDS'
   ]
 
   get isInitialized() {

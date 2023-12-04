@@ -3,6 +3,8 @@ const axios = require("axios");
 const { CROSSROADS_URL } = require("../constants");
 const { todayM } = require("../helpers");
 const fs = require("fs");
+const path = require('path');
+
 const _ = require("lodash");
 const CampaignService = require("./CampaignService");
 const { CrossroadsLogger } = require("../../../shared/lib/WinstonLogger");
@@ -105,19 +107,60 @@ class InsightsService extends BaseService {
     return await this.fetchFromApi(`${CROSSROADS_URL}get-traffic-sources`, { key, campaign_id }, "Error getting traffic source naked links");
   }
 
-  async updateCrossroadsData(account, request_date) {
+  async updateCrossroadsData(account, request_date, saveAggregated=true, saveRawData = false, saveRawDataToFile = false, campaignIdRestrictions = []) {
 
-    const available_fields = await this.getAvailableFields(account.key)
+    if (!saveAggregated && !saveRawData) {
+      CrossroadsLogger.info("No data to save. Skipping crossroads data update");
+      return;
+    }
+
+    const available_fields = await this.getAvailableFields(account.key);
     const fields = available_fields.join(",");
-    const { request_id } = await this.prepareBulkData(account.key, request_date, fields)
-    const file_url = await this.waitForBulkData(account.key, request_id)
-    const crossroadsData = await this.getBulkData(file_url)
-    CrossroadsLogger.info("Upserting crossroads data to the database")
-    await this.executeWithLogging(
-      () => this.repository.upsert(crossroadsData, account.id, request_date),
-      "Error processing and upserting bulk data"
-    );
-    CrossroadsLogger.info("Finished crossroads data update")
+    const { request_id } = await this.prepareBulkData(account.key, request_date, fields);
+    const file_url = await this.waitForBulkData(account.key, request_id);
+    const crossroadsData = await this.getBulkData(file_url);
+
+    if (saveRawDataToFile) {
+      // Save the data to a JSON file
+      const filePath = path.join(__dirname, '../testData/', `${account.id}_${request_date}.json`);
+      fs.writeFileSync(filePath, JSON.stringify(crossroadsData, null, 2));
+      CrossroadsLogger.info(`Saved crossroads data to ${filePath}`);
+    }
+
+    if (saveRawData) {
+      // Save the raw data to the database
+      CrossroadsLogger.info("Saving raw data to the database");
+      await this.executeWithLogging(
+        () => this.repository.saveRawData(crossroadsData, account.id, request_date, campaignIdRestrictions),
+        "Error saving raw data"
+      );
+    }
+
+    if (saveAggregated) {
+      // Save the aggregated data to the database
+      CrossroadsLogger.info("Upserting crossroads data to the database");
+      await this.executeWithLogging(
+          () => this.repository.upsert(crossroadsData, account.id, request_date),
+          "Error processing and upserting bulk data"
+      );
+    }
+
+    CrossroadsLogger.info("Finished crossroads data update");
+  }
+
+  async queryCrossroadsData(accountId, requestDate, queryKey, queryValue) {
+
+    const filePath = path.join(__dirname, '../testData/', `${accountId}_${requestDate}.json`);
+
+    // Read the data from the file
+    const fileData = fs.readFileSync(filePath, 'utf-8');
+    const jsonData = JSON.parse(fileData);
+
+    // Filter data based on the queryKey
+    return jsonData.filter(data => {
+      // Adjust this condition as per your requirements
+      return data[queryKey] === queryValue;
+    });
   }
 
   async getCrossroadsById(id) {

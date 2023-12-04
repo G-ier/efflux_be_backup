@@ -9,13 +9,15 @@ const {
   TIKTOK_UPDATE_TODAY_REGULAR_CRON,
   TIKTOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
   TIKTOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
-  TIKTOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON
+  TIKTOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON,
+  TIKTOK_REPORT_CONVERSIONS_HOURLY_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
 
 const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
 const DISABLE_TIKTOK_CRON         = EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CRON')
+const CRON_ENVIRONMENT            = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT')
 const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
 const disableTikTokCron           = DISABLE_TIKTOK_CRON === 'true' || DISABLE_TIKTOK_CRON !== 'false';
 const compositeService            = new CompositeService();
@@ -33,6 +35,18 @@ async function updateTikTokData(day) {
   } catch (error) {
     dataUpdatesLogger.warn(`FAILED | TIKTOK | ${day} | ${error}`);
     await sendSlackNotification(`FAILED | TIKTOK | ${day}`)
+    console.log(error);
+  }
+}
+
+async function reportTikTokConversions(date) {
+  dataUpdatesLogger.info(`STARTED | TIKTOK | ${date} | REPORTING CONVERSIONS`);
+  try {
+    await compositeService.sendCapiEvents(date);
+    dataUpdatesLogger.info(`COMPLETED | TIKTOK | ${date} | REPORTING CONVERSIONS`);
+  } catch (error) {
+    dataUpdatesLogger.warn(`FAILED | TIKTOK | ${date} | REPORTING CONVERSIONS | ${error}`);
+    await sendSlackNotification(`FAILED | TIKTOK | ${date} | REPORTING CONVERSIONS`)
     console.log(error);
   }
 }
@@ -58,6 +72,14 @@ const updateYesterdayDataAfterMidnightPST2 = new CronJob(
   }
 ));
 
+const reportTikTokConversionsRegular = new CronJob(
+  TIKTOK_REPORT_CONVERSIONS_HOURLY_CRON,
+  (async () => {
+    await reportTikTokConversions(todayYMD());
+  }
+));
+
+
 const updateTodayDataRegular = new CronJob(
   TIKTOK_UPDATE_TODAY_REGULAR_CRON,
   (async () => {
@@ -74,6 +96,7 @@ const initializeTikTokCron = async () => {
     updateYesterdayDataAfterMidnightPST.start();
     updateYesterdayDataAfterMidnightPST2.start();
     updateTodayDataRegular.start()
+    if (CRON_ENVIRONMENT === 'production') reportTikTokConversionsRegular.start();
 }
 
 module.exports = initializeTikTokCron;

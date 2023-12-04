@@ -9,7 +9,7 @@ class BaseService {
   async executeWithLogging(asyncFn, errorMsg) {
     try {
       return await asyncFn();
-    } catch (error) {
+    } catch ({ response: { data: { error } } }) {
       console.log(error)
       this.logger.error(`${errorMsg}: ${error}`);
       throw error;

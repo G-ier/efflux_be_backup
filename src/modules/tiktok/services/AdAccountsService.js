@@ -85,8 +85,8 @@ class AdAccountService extends BaseService {
     return adAccount[0];
   }
 
-  async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit) {
-    const results = await this.adAccountsRepository.fetchAdAccounts(fields, filters, limit);
+  async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit, joins=[]) {
+    const results = await this.adAccountsRepository.fetchAdAccounts(fields, filters, limit, joins);
     return results;
   }
 

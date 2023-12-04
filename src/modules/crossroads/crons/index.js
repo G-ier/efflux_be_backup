@@ -21,11 +21,20 @@ const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 
 const disableCrossroadsCron       = DISABLE_CROSSROADS_CRON === 'true' || DISABLE_CROSSROADS_CRON !== 'false';
 const compositeService            = new CompositeService();
 
+const TESTING_CAMPAIGN_IDS = EnvironmentVariablesManager.getEnvVariable('TESTING_CAMPAIGN_IDS');
+const ParsedTestCampaignIds = TESTING_CAMPAIGN_IDS ? JSON.parse(TESTING_CAMPAIGN_IDS.replace(/'/g, '"')) : []
+
 const updateCrossroadsForAllAccounts = async (request_date) => {
   const account = CROSSROADS_ACCOUNTS[0];
   try {
+
     dataUpdatesLogger.info(`STARTED | CROSSROADS | ${request_date}`)
-    await compositeService.updateData(account, request_date);
+    const saveAggregated = true; const saveRawData = true; const saveRawDataToFile = false; const campaignIdRestrictions = ParsedTestCampaignIds;
+
+    await compositeService.updateData(account, request_date,
+      saveAggregated, saveRawData, saveRawDataToFile, campaignIdRestrictions
+    );
+
     dataUpdatesLogger.info(`COMPLETED | CROSSROADS | ${request_date}`)
   } catch (error) {
     dataUpdatesLogger.warn(`FAILED | CROSSROADS | ${request_date} | ${error}`)

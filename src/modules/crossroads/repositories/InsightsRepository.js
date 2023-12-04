@@ -48,6 +48,38 @@ class InsightsRepository {
     }
   }
 
+  async saveRawData(data, account, request_date, campaignIdRestrictions) {
+
+    const convertToDatabaseDTO = (data, account, request_date) => {
+
+      return data.map((item) => {
+
+        delete item.day; delete item.tqs;
+        item.account = account;
+        item.date = request_date;
+        item.traffic_source = this.getTrafficSource(item);
+
+        // session_id-lander_keyword
+        item.unique_identifier = `${item.tg3}-${item.lander_keyword}`
+        return item;
+      })
+    }
+
+    data = data.filter((item) => item.tg3 !== "{{fbclid}}" && item.tg3 !== '');
+
+    if (campaignIdRestrictions && campaignIdRestrictions.length > 0) {
+      data = data.filter((item) => campaignIdRestrictions.includes(item.tg2));
+    }
+
+    const dbObjects = convertToDatabaseDTO(data, account, request_date);
+    const dataChunks = _.chunk(dbObjects, 500);
+
+    for (const chunk of dataChunks) {
+      const parsedChunk = _.uniqBy(chunk, "unique_identifier");
+      await this.database.upsert("raw_crossroads_data", parsedChunk, "unique_identifier", ['reported_to_ts']);
+    }
+  }
+
   async fetchInsights(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results.map(this.toDomainEntity);
@@ -111,6 +143,8 @@ class InsightsRepository {
   }
 
   parseTG2(stat, regex) {
+    // The tg2 never starts with 'facebook' so this logic is always neglected, therefore
+    // is redundant.
     if (stat.tg2 && stat.tg2.startsWith(PROVIDERS.FACEBOOK)) {
       const [traffic_source, campaign_id, ad_id] = stat.tg2.split("_");
       return {
@@ -145,12 +179,23 @@ class InsightsRepository {
   }
 
   parseTGParams(stat, regex) {
+
+    // Label the traffic source. To do this, we rely on Crossroads Campaign Naming convention
+    // Basically we're vulnerable to human error for it. If the campaign name contains FB, we
+    // assume it's Facebook. If it contains OUTB, we assume it's Outbrain. If it contains TT, we
+    // assume it's TikTok. Otherwise, we assume it's unknown.
     const traffic_source = this.getTrafficSource(stat);
+
+    // If tokens from traffic source (only Facebook) fail to convert and they're
+    // send over the API as {{fbclid}} we set them to null
     for (const key in stat) {
       stat[key] = !regex.test(stat[key]) ? stat[key] : null;
     }
+
     stat.crossroads_campaign_id = stat.campaign_id;
     stat.campaign_id = null;
+
+    // Then, based on the traffic source label, we parse the tokens
     if (traffic_source === PROVIDERS.FACEBOOK) {
       stat = this.parseTG2(stat, regex);
       return {
@@ -216,7 +261,7 @@ class InsightsRepository {
         browser: !click.browser || click.browser === "0" ? null : click.browser,
         device_type: click.device_type || null,
         platform: !click.platform || click.platform === "0" ? null : click.platform,
-        date: click.day || null,
+        date: request_date,
         gclid: click.gclid && click.gclid !== "null" ? click.gclid : null,
         hour: click.hour,
         city: click.city || null,
@@ -234,6 +279,8 @@ class InsightsRepository {
         unique_identifier: `${click.campaign_id}-${click.adset_id}-${click.ad_id}-${request_date}-${click.hour}`
       };
     });
+    // When we aggregate at an adset hourly level, plenty data it lost in aggregatiosn.
+    // e.g fbclid, gclid, hour, city, country_code, referrer, keyword, etc.
     return this.aggregateCrossroadsData(proccesedData);
   }
 
