@@ -97,7 +97,7 @@ class CapiService extends BaseService{
       return { fbProcessedPayloads, eventIds }
     }
 
-    constructFacebookConversionEvents (events){
+    constructFacebookConversionEvents (events) {
 
       const MAX_EVENTS = 1000;
 
@@ -105,6 +105,9 @@ class CapiService extends BaseService{
       let currentPayload = { data: [] };
 
       events.forEach((event) => {
+
+        if (['', null, undefined].includes(event.timestamp) || ['', null, undefined].includes(event.external))
+          return;
 
         for ( let i = 0; i < event.purchase_event_count; i++ ) {
 

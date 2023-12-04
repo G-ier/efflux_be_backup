@@ -13,7 +13,7 @@ const initializeCronJobs = () => {
   initializeTikTokCron();
   initializeAggregatesUpdateCron();
   initializeRevealBotSheetsUpdateCron();
-  initializeTemporaryCron();
+  // initializeTemporaryCron();
 };
 
 module.exports = { initializeCronJobs };
