@@ -309,10 +309,10 @@ Resources:
     Properties:
       Name: Efflux-BE
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
+      HealthCheckIntervalSeconds: 15
+      HealthCheckTimeoutSeconds: 5
       Matcher:
-        HttpCode: "200,301,302,404"
+        HttpCode: "200"
       Port: "80"
       Protocol: HTTP
       VpcId: !Ref VPC
