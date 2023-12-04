@@ -309,8 +309,8 @@ Resources:
     Properties:
       Name: Efflux-BE
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: 15
-      HealthCheckTimeoutSeconds: 5
+      HealthCheckIntervalSeconds: 5
+      HealthCheckTimeoutSeconds: 2
       Matcher:
         HttpCode: "200"
       Port: "80"
