@@ -40,6 +40,10 @@ deploy-metabase:
 		--stack-name $(METABASE_PROD) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
 		--template-file metabase-template.yaml \
+		--parameter-overrides \
+			OperatorEmail=ilyas@ad.roi\
+			RDSPostgresClusterPassword=eapsU6KlwrnUWswdZ9BWnY \
 		--tags project=metabase \
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
+
