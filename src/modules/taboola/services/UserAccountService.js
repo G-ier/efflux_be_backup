@@ -8,11 +8,12 @@ const { sendSlackNotification }  = require("../../../shared/lib/SlackNotificatio
 const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
 const { TABOOLA_URL,
   TABOOLA_CLIENT_ID,
-  TABOOLA_CLIENT_SECRET 
+  TABOOLA_CLIENT_SECRET
 } = require("../constants");
 
 
-class UserAccountService extends BaseService{
+class UserAccountService extends BaseService {
+
     constructor() {
         super(TaboolaLogger);
         this.userAccountRepostiory = new UserAccountRepository();
@@ -25,7 +26,7 @@ class UserAccountService extends BaseService{
 
     async upsertAccountToDB(account) {
       return await this.userAccountRepostiory.upsert([account]);
-    
+
     }
 
     async getFetchingAccounts() {
@@ -55,7 +56,7 @@ class UserAccountService extends BaseService{
       return res;
     }
 
-    async getTaboolaAdvertiserTokenFromClient(){
+    async getTaboolaAdvertiserTokenFromClient() {
 
       this.logger.info("Fetching access token from API");
 
@@ -63,13 +64,16 @@ class UserAccountService extends BaseService{
       const headers = {
         "Content-Type": "application/x-www-form-urlencoded",
       };
-      const params = {
+
+      const queryParams = new URLSearchParams({
         client_id: TABOOLA_CLIENT_ID,
         client_secret: TABOOLA_CLIENT_SECRET,
         grant_type: 'client_credentials'
-      };
+      }).toString();
 
-      const res = await this.postToApi(url, params, "Error getting Taboola Access token", headers);
+      const finalURL = `${url}?${queryParams}`;
+
+      const res = await this.postToApi(finalURL, {}, "Error getting Taboola Access token", headers);
 
       return res;
     }
