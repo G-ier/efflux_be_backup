@@ -178,7 +178,7 @@ Resources:
   MetaBaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: Metabase
+      GroupName: Metabase-SG
       GroupDescription: Enable Metabase and Portainer access
       VpcId: !ImportValue Efflux-VPC
       SecurityGroupIngress:
@@ -204,7 +204,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: Metabase
+          Value: Metabase-SG
         - Key: project
           Value: metabase
         - Key: operation

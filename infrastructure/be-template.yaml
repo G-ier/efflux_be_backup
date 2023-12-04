@@ -631,27 +631,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - autoscaling:CompleteLifecycleAction
-                  - autoscaling:DeleteLifecycleHook
-                  - autoscaling:DescribeAutoScalingGroups
-                  - autoscaling:DescribeLifecycleHooks
-                  - autoscaling:PutLifecycleHook
-                  - autoscaling:RecordLifecycleActionHeartbeat
-                  - autoscaling:PutInstanceInStandby
-                  - autoscaling:PutInstanceInService
-                  - autoscaling:TerminateInstanceInAutoScalingGroup
-                  - ec2:Describe*
-                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-                  - elasticloadbalancing:DeregisterTargets
-                  - elasticloadbalancing:Describe*
-                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-                  - elasticloadbalancing:RegisterTargets
+                  - autoscaling:*
+                  - ec2:*
+                  - elasticloadbalancing:*
                   - s3:Get*
                   - s3:List*
                   - sns:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
+                  - secretsmanager:GetSecretValue
+                  - ssm:GetParameter*
                 Resource: "*"
 
   # Create CodeDeploy Role Policy
@@ -664,27 +654,17 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - autoscaling:CompleteLifecycleAction
-              - autoscaling:DeleteLifecycleHook
-              - autoscaling:DescribeAutoScalingGroups
-              - autoscaling:DescribeLifecycleHooks
-              - autoscaling:PutLifecycleHook
-              - autoscaling:RecordLifecycleActionHeartbeat
-              - autoscaling:PutInstanceInStandby
-              - autoscaling:PutInstanceInService
-              - autoscaling:TerminateInstanceInAutoScalingGroup
-              - ec2:Describe*
-              - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-              - elasticloadbalancing:DeregisterTargets
-              - elasticloadbalancing:Describe*
-              - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-              - elasticloadbalancing:RegisterTargets
+              - autoscaling:*
+              - ec2:*
+              - elasticloadbalancing:*
               - s3:Get*
               - s3:List*
               - sns:*
               - cloudwatch:*
               - cloudformation:*
               - codedeploy:*
+              - secretsmanager:GetSecretValue
+              - ssm:GetParameter*
             Resource: "*"
       Roles:
         - !Ref CodeDeployRole
