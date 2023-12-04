@@ -101,6 +101,13 @@ Resources:
             # Install New Relic Agent
             curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-staging
 
+            # Add alias for pm2
+            echo "alias pm2='sudo pm2'" >> ~/.bashrc
+
+            # Add alias for quickly accessing the project directory
+            echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
+            source ~/.bashrc
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
