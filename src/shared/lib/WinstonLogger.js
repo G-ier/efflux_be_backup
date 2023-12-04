@@ -108,6 +108,13 @@ const TiktokLogger = new CustomLogger({
   level: 'info',
   filePath: filePath('tiktok')
 });
+
+// Taboola Logger
+const TaboolaLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('taboola')
+});
 // Capi Logger
 const CapiLogger = new CustomLogger({
   destination:streamDestination,
@@ -169,6 +176,7 @@ module.exports = {
   CrossroadsLogger,
   FacebookLogger,
   TiktokLogger,
+  TaboolaLogger,
   CapiLogger,
   AggregatesLogger,
   FunnelFluxLogger,
