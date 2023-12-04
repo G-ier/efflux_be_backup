@@ -153,6 +153,18 @@ Resources:
           FromPort: 3000
           ToPort: 3000
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5000
+          ToPort: 5000
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: Efflux-BE
@@ -171,7 +183,9 @@ Resources:
               VolumeSize: 20
               VolumeType: gp3
               DeleteOnTermination: yes
-              Encrypted: true
+              Encrypted: false
+        IamInstanceProfile:
+          Name: !Ref CodeDeployInstanceProfile
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: yes
@@ -180,12 +194,13 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        InstanceType: t3.small
+        InstanceType: t3.medium
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
             # Update and install initial packages
             sudo apt-get update && \
+            sudo apt-get upgrade -y && \
             sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
@@ -296,6 +311,8 @@ Resources:
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: "30"
       HealthCheckTimeoutSeconds: "5"
+      Matcher:
+        HttpCode: "200,301,302,404"
       Port: "80"
       Protocol: HTTP
       VpcId: !Ref VPC
@@ -551,6 +568,7 @@ Resources:
             Principal:
               Service:
                 - codedeploy.amazonaws.com
+                - ec2.amazonaws.com
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -561,27 +579,16 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - autoscaling:CompleteLifecycleAction
-                  - autoscaling:DeleteLifecycleHook
-                  - autoscaling:DescribeAutoScalingGroups
-                  - autoscaling:DescribeLifecycleHooks
-                  - autoscaling:PutLifecycleHook
-                  - autoscaling:RecordLifecycleActionHeartbeat
-                  - autoscaling:PutInstanceInStandby
-                  - autoscaling:PutInstanceInService
-                  - autoscaling:TerminateInstanceInAutoScalingGroup
+                  - autoscaling:*
                   - ec2:Describe*
-                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-                  - elasticloadbalancing:DeregisterTargets
-                  - elasticloadbalancing:Describe*
-                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-                  - elasticloadbalancing:RegisterTargets
-                  - s3:Get*
-                  - s3:List*
+                  - elasticloadbalancing:*
+                  - s3:*
                   - sns:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
+                  - secretsmanager:GetSecretValue
+                  - ssm:GetParameter*
                 Resource: "*"
 
   # Create CodeDeploy Instance Profile
@@ -728,6 +735,3 @@ Outputs:
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
     Export:
       Name: EffluxRDSPostgresEndpoint
-  MetaBaseEIP:
-    Description: Metabase Elastic IP
-    Value: !Ref MetaBaseEIP
