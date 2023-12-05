@@ -294,7 +294,7 @@ class CompositeController {
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
       const adCreationResult = await this.compositeService.createAd({token, adAccountId:firstKey, adData});
-      
+
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
@@ -491,7 +491,7 @@ class CompositeController {
 
     // Add image hashes to the asset_feed_spec.images array
     uploadedMedia.forEach((media) => {
-      
+
       if (media.type === "image") {
         adData.creative.asset_feed_spec.images.push({ hash: media.hash });
       } else {

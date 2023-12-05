@@ -17,6 +17,11 @@ class UserAccountService extends BaseService{
     this.userAccountRepostiory = new UserAccountRepository();
   }
 
+  async fetchUserAccountById(id, fields = ['*']) {
+    const userAccount = await this.userAccountRepostiory.fetchUserAccounts(fields, { id: id });
+    return userAccount;
+  }
+
   async fetchAccountFromDatabase(fields = ["*"], filters = {}, limit) {
     const accounts = await this.userAccountRepostiory.fetchUserAccounts(fields, filters, limit);
     return accounts;
