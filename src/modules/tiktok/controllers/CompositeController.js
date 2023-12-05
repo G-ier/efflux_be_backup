@@ -50,7 +50,10 @@ class CompositeController {
       "provider_id",
       "id",
     ]);
-    if (!accounts.length) res.status(200).send("No entity was found for the user");
+    if (!accounts.length) {
+      res.status(500).send("No entity was found for the user")
+      return
+    }
     const account = accounts[0];
 
     // // 2. Sync the Tiktok data of the account without insights
