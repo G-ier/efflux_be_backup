@@ -450,6 +450,10 @@ Resources:
       PreferredBackupWindow: 00:30-01:00
       PreferredMaintenanceWindow: mon:03:00-mon:03:30
       AutoMinorVersionUpgrade: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 31
       VPCSecurityGroups:
         - !Ref InstanceSecurityGroup
       DBSubnetGroupName: !Ref DBSubnetGroup
@@ -458,6 +462,30 @@ Resources:
           Value: Efflux-BE
         - Key: project
           Value: efflux
+
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - monitoring.rds.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: RDSMonitoringRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:*
+                  - logs:*
+                Resource: "*"
 
   # Create a DB Subnet Group
   DBSubnetGroup:
@@ -631,27 +659,17 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - autoscaling:CompleteLifecycleAction
-                  - autoscaling:DeleteLifecycleHook
-                  - autoscaling:DescribeAutoScalingGroups
-                  - autoscaling:DescribeLifecycleHooks
-                  - autoscaling:PutLifecycleHook
-                  - autoscaling:RecordLifecycleActionHeartbeat
-                  - autoscaling:PutInstanceInStandby
-                  - autoscaling:PutInstanceInService
-                  - autoscaling:TerminateInstanceInAutoScalingGroup
-                  - ec2:Describe*
-                  - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-                  - elasticloadbalancing:DeregisterTargets
-                  - elasticloadbalancing:Describe*
-                  - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-                  - elasticloadbalancing:RegisterTargets
+                  - autoscaling:*
+                  - ec2:*
+                  - elasticloadbalancing:*
                   - s3:Get*
                   - s3:List*
                   - sns:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
+                  - secretsmanager:GetSecretValue
+                  - ssm:GetParameter*
                 Resource: "*"
 
   # Create CodeDeploy Role Policy
@@ -664,27 +682,17 @@ Resources:
         Statement:
           - Effect: Allow
             Action:
-              - autoscaling:CompleteLifecycleAction
-              - autoscaling:DeleteLifecycleHook
-              - autoscaling:DescribeAutoScalingGroups
-              - autoscaling:DescribeLifecycleHooks
-              - autoscaling:PutLifecycleHook
-              - autoscaling:RecordLifecycleActionHeartbeat
-              - autoscaling:PutInstanceInStandby
-              - autoscaling:PutInstanceInService
-              - autoscaling:TerminateInstanceInAutoScalingGroup
-              - ec2:Describe*
-              - elasticloadbalancing:DeregisterInstancesFromLoadBalancer
-              - elasticloadbalancing:DeregisterTargets
-              - elasticloadbalancing:Describe*
-              - elasticloadbalancing:RegisterInstancesWithLoadBalancer
-              - elasticloadbalancing:RegisterTargets
+              - autoscaling:*
+              - ec2:*
+              - elasticloadbalancing:*
               - s3:Get*
               - s3:List*
               - sns:*
               - cloudwatch:*
               - cloudformation:*
               - codedeploy:*
+              - secretsmanager:GetSecretValue
+              - ssm:GetParameter*
             Resource: "*"
       Roles:
         - !Ref CodeDeployRole
