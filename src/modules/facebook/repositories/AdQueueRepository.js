@@ -1,10 +1,14 @@
-const _ = require("lodash");
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const AdQueue = require("../entities/AdQueue"); // Assuming you have a corresponding entity for AdQueue
+const _ = require('lodash');
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const AdQueue = require('../entities/AdQueue'); // Assuming you have a corresponding entity for AdQueue
+
+// TODO: Rename table from ad_queue to ad_launcher_queue (or better name)
+// TODO: Rename table from content to ad_launcher_media
+// TODO: Add new field to ad_launcher_queue: traffic_source (e.g. facebook, instagram, twitter, etc.)
 
 class AdQueueRepository {
   constructor(database) {
-    this.tableName = "ad_queue";
+    this.tableName = 'ad_queue';
     this.database = database || new DatabaseRepository();
   }
 
@@ -47,21 +51,19 @@ class AdQueueRepository {
   }
   // Convert database object to AdQueue domain entity
   toDomainEntity(dbObject) {
-    return new AdQueue(
-      dbObject
-    );
+    return new AdQueue(dbObject);
   }
 
   async saveOne(adQueue, contentIds = []) {
     const dbObject = this.toDatabaseDTO(adQueue);
-    console.log({dbObject})
+    console.log({ dbObject });
     try {
       // Start a transaction
       const trx = await this.database.startTransaction();
       try {
         // Insert the AdQueue entry
-        const insertedAdQueues = await trx(this.tableName).insert(dbObject).returning('*')
-        console.log({insertedAdQueues})
+        const insertedAdQueues = await trx(this.tableName).insert(dbObject).returning('*');
+        console.log({ insertedAdQueues });
         const adQueueId = insertedAdQueues[0].id;
 
         // Insert into the junction table for each contentId
@@ -70,7 +72,7 @@ class AdQueueRepository {
             ad_queue_id: adQueueId,
             content_id: contentId,
           }));
-          await trx("ad_queue_content").insert(junctionEntries);
+          await trx('ad_queue_content').insert(junctionEntries);
         }
 
         // Commit the transaction
@@ -107,32 +109,32 @@ class AdQueueRepository {
     return await this.database.update(this.tableName, dbObject, criteria);
   }
 
-  async fetchAdQueues(fields = ["*"], filters = {}, limit) {
+  async fetchAdQueues(fields = ['*'], filters = {}, limit) {
     try {
       let baseQuery = `
-      SELECT 
+      SELECT
           ad_queue.*,
           json_agg(content.*) as contents
-      FROM 
+      FROM
           ad_queue
-      LEFT JOIN 
+      LEFT JOIN
           ad_queue_content ON ad_queue.id = ad_queue_content.ad_queue_id
-      LEFT JOIN 
+      LEFT JOIN
           content ON ad_queue_content.content_id = content.id
-      GROUP BY 
+      GROUP BY
           ad_queue.id
   `;
       // Apply filters
       let whereClauses = [];
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
-          whereClauses.push(`"${this.tableName}".${key} IN (${value.join(", ")})`);
+          whereClauses.push(`"${this.tableName}".${key} IN (${value.join(', ')})`);
         } else {
           whereClauses.push(`"${this.tableName}".${key} = '${value}'`);
         }
       }
       if (whereClauses.length > 0) {
-        baseQuery += ` WHERE ${whereClauses.join(" AND ")}`;
+        baseQuery += ` WHERE ${whereClauses.join(' AND ')}`;
       }
 
       // Apply limit
@@ -144,7 +146,7 @@ class AdQueueRepository {
       return results.rows.map((result) => {
         // Convert to domain entity and include contents
         const adQueue = this.toDomainEntity(result);
-        console.log({adQueue})
+        console.log({ adQueue });
         adQueue.contents = result.contents; // Adjust based on your actual result field names
         return adQueue;
       });

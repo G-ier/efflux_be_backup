@@ -1,14 +1,14 @@
 // Local application imports
-const AdLauncherService = require("../services/AdLauncherService"); // Make sure to create this service
-const { parseJsonOrDefault } = require("../helpers");
-const AdsetsService = require("../services/AdsetsService");
-const AdAccountService = require("../services/AdAccountService");
-const CampaignService = require("../services/CampaignsService");
-const UserAccountService = require("../services/UserAccountService");
-const ContentService = require("../services/ContentService");
-const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
-const _ = require("lodash");
-const AdQueueRepository = require("../repositories/AdQueueRepository");
+const AdLauncherService = require('../services/AdLauncherService'); // Make sure to create this service
+const { parseJsonOrDefault } = require('../helpers');
+const AdsetsService = require('../services/AdsetsService');
+const AdAccountService = require('../services/AdAccountService');
+const CampaignService = require('../services/CampaignsService');
+const UserAccountService = require('../services/UserAccountService');
+const ContentService = require('../services/ContentService');
+const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
+const _ = require('lodash');
+const AdQueueRepository = require('../repositories/AdQueueRepository');
 
 class AdLauncherController {
   constructor() {
@@ -18,7 +18,7 @@ class AdLauncherController {
     this.campaignService = new CampaignService();
     this.userAccountService = new UserAccountService();
     this.contentService = new ContentService();
-    this.adQueueRepository = new AdQueueRepository()
+    this.adQueueRepository = new AdQueueRepository();
   }
 
   async sendAdLaunchToQueue(req, res) {
@@ -29,32 +29,40 @@ class AdLauncherController {
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
       const firstKey = await this.getFirstKeyFromAdAccounts(adAccountId);
 
-      FacebookLogger.info("Extracting data for Ad Launch");
+      FacebookLogger.info('Extracting data for Ad Launch');
       const { campaignData, adsetData, adData } = this.extractAllData(req);
       const adQueueData = { ...campaignData, ...adsetData, ...adData, ad_account_id: firstKey };
 
-      FacebookLogger.info("Handling media uploads for Ad Launch");
-      const { uploadedMedia, createdMediaObjects } = await this.contentService.handleMediaUploads(req, firstKey, token, req.body.existingContentIds);
-      
+      FacebookLogger.info('Handling media uploads for Ad Launch');
+      const { uploadedMedia, createdMediaObjects } = await this.contentService.handleMediaUploads(
+        req,
+        firstKey,
+        token,
+        req.body.existingContentIds,
+      );
+
+      // TODO: Create media objects asynchrously
       FacebookLogger.info(`Media objects created: ${JSON.stringify(createdMediaObjects)}`);
       // Extract content IDs from createdMediaObjects
-      const contentIds = createdMediaObjects?.map(media => media.id);
-      console.log({contentIds})
+      const contentIds = createdMediaObjects?.map((media) => media.id);
+      console.log({ contentIds });
 
-      FacebookLogger.info("Saving AdQueue instance with content IDs");
+      FacebookLogger.info('Saving AdQueue instance with content IDs');
       const adQueueId = await this.adQueueRepository.saveOne(adQueueData, contentIds, adAccountId);
 
       const adCreationResult = { id: adQueueId, ...adQueueData };
       FacebookLogger.info(`Ad successfully sent to queue with ID: ${adQueueId}`);
 
-      res.json({ success: true, message: "Ad successfully sent to queue.", data: adCreationResult });
+      res.json({
+        success: true,
+        message: 'Ad successfully sent to queue.',
+        data: adCreationResult,
+      });
     } catch (error) {
       FacebookLogger.error(`Error during Ad Launch: ${error.message}`);
       this.respondWithError(res, error);
     }
-}
-
-  
+  }
 
   extractAllData(req) {
     const campaignData = this.extractCampaignData(req.body.campaignData, req.body.adAccountId);
@@ -64,10 +72,9 @@ class AdLauncherController {
     return {
       campaignData,
       adsetData,
-      adData
+      adData,
     };
   }
-
 
   extractAdData(adData) {
     adData = parseJsonOrDefault(adData);
@@ -81,7 +88,6 @@ class AdLauncherController {
     };
   }
 
-
   extractCampaignData(campaignData, adAccountId) {
     campaignData = parseJsonOrDefault(campaignData);
     return {
@@ -90,7 +96,7 @@ class AdLauncherController {
       campaign_name: campaignData.name,
       campaign_objective: campaignData.objective,
       campaign_special_ad_categories: campaignData.special_ad_categories,
-      campaign_special_ad_categorie_country: campaignData.special_ad_categorie_country || null
+      campaign_special_ad_categorie_country: campaignData.special_ad_categorie_country || null,
     };
   }
 
@@ -122,7 +128,7 @@ class AdLauncherController {
 
   async launchAd(req, res) {
     try {
-      FacebookLogger.info("Ad launch process initiated.");
+      FacebookLogger.info('Ad launch process initiated.');
       this.validateRequiredParameters(req);
       const token = await this.getToken();
       const adAccountId = this.getAdAccountId(req);
@@ -131,26 +137,36 @@ class AdLauncherController {
       const firstKey = Object.keys(adAccountsDataMap)[0];
 
       // Log the start of campaign creation
-      FacebookLogger.info("Starting campaign creation.");
+      FacebookLogger.info('Starting campaign creation.');
       const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
       FacebookLogger.info(`Campaign created with ID: ${campaignId}`);
 
       // Log the start of ad set creation
-      FacebookLogger.info("Starting ad set creation.");
-      const adSetId = await this.handleAdsetCreation(req, token, firstKey, campaignId, adAccountsDataMap);
+      FacebookLogger.info('Starting ad set creation.');
+      const adSetId = await this.handleAdsetCreation(
+        req,
+        token,
+        firstKey,
+        campaignId,
+        adAccountsDataMap,
+      );
       FacebookLogger.info(`Ad Set created with ID: ${adSetId}`);
 
       // Utilize handleMediaUploads from ContentService
-      FacebookLogger.info("Starting media uploads.");
+      FacebookLogger.info('Starting media uploads.');
       const uploadedMedia = await this.contentService.handleMediaUploads(req, firstKey, token);
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
 
       // Log the start of ad data preparation
-      FacebookLogger.info("Preparing ad data.");
+      FacebookLogger.info('Preparing ad data.');
       const adData = this.prepareAdData(req, uploadedMedia, adSetId);
       // Log the start of ad creation
-      FacebookLogger.info("Starting ad creation.");
-      const adCreationResult = await this.compositeService.createAd({ token, adAccountId: firstKey, adData });
+      FacebookLogger.info('Starting ad creation.');
+      const adCreationResult = await this.compositeService.createAd({
+        token,
+        adAccountId: firstKey,
+        adData,
+      });
 
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
@@ -163,28 +179,31 @@ class AdLauncherController {
   validateRequiredParameters(req) {
     const { files, body } = req;
     const { adData, campaignData, adsetData, adAccountId, existingContentIds } = body;
-  
+
     const missingParameters = [];
-  
+
     // Check for files only if existingContentIds are not provided or empty
-    if ((!existingContentIds || existingContentIds.length === 0) && (!files || (!files.video && !files.images))) {
-      missingParameters.push("files or existingContentIds");
+    if (
+      (!existingContentIds || existingContentIds.length === 0) &&
+      (!files || (!files.video && !files.images))
+    ) {
+      missingParameters.push('files or existingContentIds');
     }
     if (!adData) {
-      missingParameters.push("adData");
+      missingParameters.push('adData');
     }
     if (!campaignData) {
-      missingParameters.push("campaignData");
+      missingParameters.push('campaignData');
     }
     if (!adsetData) {
-      missingParameters.push("adsetData");
+      missingParameters.push('adsetData');
     }
     if (!adAccountId) {
-      missingParameters.push("adAccountId");
+      missingParameters.push('adAccountId');
     }
-  
+
     if (missingParameters.length > 0) {
-      throw new Error(`Missing required parameters: ${missingParameters.join(", ")}`);
+      throw new Error(`Missing required parameters: ${missingParameters.join(', ')}`);
     }
   }
   async getToken(adminsOnly = true) {
@@ -198,20 +217,20 @@ class AdLauncherController {
   async getAdAccountsDataMap(adAccountId) {
     // First try to match using provider_id
     let adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ["id", "provider_id", "user_id", "account_id"],
+      ['id', 'provider_id', 'user_id', 'account_id'],
       { provider_id: adAccountId },
     );
 
     // If no accounts found using provider_id, try to match using id
     if (!adAccounts || adAccounts.length === 0) {
       adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-        ["id", "provider_id", "user_id", "account_id"],
+        ['id', 'provider_id', 'user_id', 'account_id'],
         { id: adAccountId },
       );
     }
 
     // Key the results by provider_id for easy lookup later
-    return _(adAccounts).keyBy("provider_id").value();
+    return _(adAccounts).keyBy('provider_id').value();
   }
 
   async handleCampaignCreation(req, token, adAccountId, adAccountsDataMap) {
@@ -247,7 +266,12 @@ class AdLauncherController {
     }
 
     // Create the ad set with the provided data
-    const adSetCreationResult = await this.adsetsService.createAdset(token, adAccountId, adsetData, adAccountsDataMap);
+    const adSetCreationResult = await this.adsetsService.createAdset(
+      token,
+      adAccountId,
+      adsetData,
+      adAccountsDataMap,
+    );
 
     // Return the ID of the newly created ad set
     return adSetCreationResult.id;
@@ -268,7 +292,7 @@ class AdLauncherController {
     } catch (error) {
       // Handle any errors that occur during the process
       console.error(`Error in handleMediaUploads: ${error.message}`, error);
-      res.status(500).json({ success: false, message: error.message || "Internal Server Error" });
+      res.status(500).json({ success: false, message: error.message || 'Internal Server Error' });
     }
   }
 
@@ -279,25 +303,27 @@ class AdLauncherController {
     adData = parseJsonOrDefault(adData);
 
     // Check if adData is an object now
-    if (typeof adData !== "object" || adData === null) {
-      throw new Error("Invalid adData format. adData should be an object.");
+    if (typeof adData !== 'object' || adData === null) {
+      throw new Error('Invalid adData format. adData should be an object.');
     }
 
     // Parse adData.creative if it's a string
-    if (typeof adData.creative === "string") {
+    if (typeof adData.creative === 'string') {
       try {
         adData.creative = JSON.parse(adData.creative);
       } catch (error) {
-        throw new Error("Invalid adData format. Unable to parse adData.creative to JSON.");
+        throw new Error('Invalid adData format. Unable to parse adData.creative to JSON.');
       }
     }
 
     // Now that we know adData.creative is an object, check for asset_feed_spec
-    if (typeof adData.creative.asset_feed_spec === "string") {
+    if (typeof adData.creative.asset_feed_spec === 'string') {
       try {
         adData.creative.asset_feed_spec = JSON.parse(adData.creative.asset_feed_spec);
       } catch (error) {
-        throw new Error("Invalid adData format. Unable to parse adData.creative.asset_feed_spec to JSON.");
+        throw new Error(
+          'Invalid adData format. Unable to parse adData.creative.asset_feed_spec to JSON.',
+        );
       }
     }
 
@@ -313,12 +339,12 @@ class AdLauncherController {
 
     // Add image hashes to the asset_feed_spec.images array
     uploadedMedia.forEach((media) => {
-      if (media.type === "image") {
+      if (media.type === 'image') {
         adData.creative.asset_feed_spec.images.push({ hash: media.hash });
       } else {
         adData.creative.asset_feed_spec.videos.push({
           video_id: media.video_id,
-          url_tags: "video=video1",
+          url_tags: 'video=video1',
         });
       }
     });
@@ -331,16 +357,20 @@ class AdLauncherController {
 
   respondWithResult(res, adCreationResult) {
     if (adCreationResult.success) {
-      res.json({ success: true, message: "Ad successfully launched in Facebook.", id: adCreationResult.id });
+      res.json({
+        success: true,
+        message: 'Ad successfully launched in Facebook.',
+        id: adCreationResult.id,
+      });
     } else {
-      res.status(400).json({ success: false, message: "Failed to create the ad." });
+      res.status(400).json({ success: false, message: 'Failed to create the ad.' });
     }
   }
 
   async uploadVideoToFacebook(req, res) {
     try {
       if (!req.file) {
-        throw new Error("No video file uploaded.");
+        throw new Error('No video file uploaded.');
       }
 
       // Retrieve the adAccountId from the request, user session, or however it is provided.
@@ -358,14 +388,14 @@ class AdLauncherController {
       );
       res.status(200).json(uploadResult);
     } catch (error) {
-      res.status(500).send(error.message || "Internal Server Error");
+      res.status(500).send(error.message || 'Internal Server Error');
     }
   }
 
   async uploadImageToFacebook(req, res) {
     try {
       if (!req.file) {
-        throw new Error("No image file uploaded.");
+        throw new Error('No image file uploaded.');
       }
 
       const adAccountId = req.body.adAccountId; // You can pass adAccountId in the form data
@@ -382,16 +412,18 @@ class AdLauncherController {
 
       res.status(200).json({ imageHash });
     } catch (error) {
-      res.status(500).send(error.message || "Internal Server Error");
+      res.status(500).send(error.message || 'Internal Server Error');
     }
   }
 
   respondWithError(res, error) {
     // Log any errors encountered during the ad launch process
-    FacebookLogger.error(`Error during ad launch: ${error.error_user_msg || error.message}`, { error });
+    FacebookLogger.error(`Error during ad launch: ${error.error_user_msg || error.message}`, {
+      error,
+    });
     res.status(500).json({
       success: false,
-      message: "An error occurred while launching the ad.",
+      message: 'An error occurred while launching the ad.',
       error: error.error_user_msg || error.message,
     });
   }
