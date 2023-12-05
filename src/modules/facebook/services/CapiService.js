@@ -2,6 +2,7 @@
 const _                     = require("lodash");
 const sha256                = require('js-sha256');
 const moment                = require('moment-timezone');
+const { v4: uuidv4 }        = require('uuid');
 
 // Local Imports
 const { usStates }          = require('../../../shared/constants/states');
@@ -11,9 +12,14 @@ const { CapiLogger }        = require("../../../shared/lib/WinstonLogger");
 const { FB_API_URL }        = require('../constants');
 const DatabaseRepository    = require('../../../shared/lib/DatabaseRepository')
 
+// Function to generate a unique event_id
+function generateEventId() {
+  return uuidv4();
+}
+
 class CapiService extends BaseService{
 
-    constructor(){
+    constructor() {
         super(CapiLogger);
         this.database = new DatabaseRepository();
     }
@@ -119,6 +125,7 @@ class CapiService extends BaseService{
           const eventPayload = {
             event_name: 'Purchase',
             event_time: Number(event.timestamp),
+            event_id: `${event.external}-${i}-${generateEventId()}`,
             action_source: "website",
             user_data: {
               // Finished

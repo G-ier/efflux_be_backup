@@ -8,7 +8,7 @@ const {todayHH, todayYMD} = require("../../shared/helpers/calendar");
 const PROVIDERS = require('../constants/providers');
 const DatabaseRepository = require('../lib/DatabaseRepository');
 const { sendSlackNotification } = require("../lib/SlackNotificationService")
-const { PostbackLogger } = require('../../shared/lib/WinstonLogger');
+const { PostbackLogger, PostbackTestLogger } = require('../../shared/lib/WinstonLogger');
 const {PostbackQueue} = require('../helpers/Queue');
 
 const db = new DatabaseRepository()
@@ -251,5 +251,41 @@ route.get('/sedo', async (req, res) => {
 
 });
 
+// @route     /trk/pb_test
+// @desc     Get track
+// @Access   Private
+route.get('/pb_test', async(req, res) =>{
+  try{
+    const headers = req.headers;
+    const data = req.query;
+    PostbackTestLogger.info(`Get Request Header: ${JSON.stringify(headers)}`);
+    PostbackTestLogger.info(`Get Request Query: ${JSON.stringify(data)}`);
+    res.status(200).json({message: 'success'});
+    PostbackTestLogger.info(`SUCCESS`)
+  }catch(err){
+    PostbackTestLogger.info(`ERROR during GET request`);
+    PostbackTestLogger.error(`ERROR: ${err}`);
+    res.status(500).json(err.message);
+  }
+});
+
+// @route     /trk/pb_test
+// @desc     post track
+// @Access   Private
+route.post('/pb_test', async(req, res) =>{
+  try{
+    const headers = req.headers;
+    const data = req.body;
+    PostbackTestLogger.info(`Post Request Header: ${JSON.stringify(headers)}`);
+    PostbackTestLogger.info(`Post Request Body: ${JSON.stringify(data)}`);
+    res.status(200).json({message: 'success'});
+    PostbackTestLogger.info(`SUCCESS`)
+  }
+  catch(err){
+    PostbackTestLogger.info(`ERROR during POST request`);
+    PostbackTestLogger.error(`ERROR: ${err}`);
+    res.status(500).json(err.message);
+  }
+});
 
 module.exports = route;
