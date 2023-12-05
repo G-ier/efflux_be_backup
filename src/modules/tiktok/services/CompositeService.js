@@ -86,32 +86,60 @@ class CompositeService {
 
     // Sync ad accounts
     await this.adAccountService.syncAdAccounts(token, id, user_id);
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {provider: "tiktok"});
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {provider: "tiktok", account_id: id});
     const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
     const adAccountIds = adAccountIdsLimitation ? adAccountIdsLimitation : Object.keys(adAccountsMap);
 
     // Sync pixels
-    if(uPixels) await this.pixelService.syncPixels(token, adAccountIds, adAccountsMap);
+    if(uPixels) {
+      try {
+        await this.pixelService.syncPixels(token, adAccountIds, adAccountsMap)
+      }
+      catch (e) {this.logger.error(`Error syncing pixels for account ${name}: ${e.message}`)}
+    }
 
     // Sync campaigns
-    if(uCampaigns) await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date, endDate);
+    if(uCampaigns) {
+      try {
+        try {await this.campaignService.syncCampaigns(token, adAccountIds, adAccountsMap, date, endDate)}
+        catch (e) {this.logger.error(`Error syncing campaigns for account ${name}: ${e.message}`)}
+      } catch (e) {
+        this.logger.error(`Error syncing campaigns for account ${name}: ${e.message}`);
+      }
+    }
 
     // Sync adsets
     const campaignIdsObjects = await this.campaignService.fetchCampaignsFromDatabase(["id", "ad_account_id"], {traffic_source: "tiktok"});
     if(uAdsets){
-    const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
-    await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date, endDate);
+      const campaignIds = campaignIdsObjects.map((campaign) => campaign.id);
+      try {
+        await this.adsetService.syncAdsets(token, adAccountIds, adAccountsMap, campaignIds, date, endDate);
+      } catch (e) {
+        this.logger.error(`Error syncing adsets for account ${name}: ${e.message}`);
+      }
     }
 
     // Sync ads
-    if (uAds) await this.adsService.syncAds(token,adAccountIds,adAccountsMap, date, endDate);
+    if (uAds) {
+      try {
+        await this.adsService.syncAds(token,adAccountIds,adAccountsMap, date, endDate)
+      }
+      catch (e) {this.logger.error(`Error syncing ads for account ${name}: ${e.message}`)}
+    }
 
     // Sync ad insights
     if (uInsights){
-    const campaignIdsMap = _(campaignIdsObjects).keyBy("id").value();
-    await this.adInsightsService.syncAdInsights(token, adAccountIds, campaignIdsMap, date, endDate);
+      const campaignIdsMap = _(campaignIdsObjects).keyBy("id").value();
+      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
+      const adAccountsIds = adAccounts.map(({ provider_id }) => `${provider_id}`);
+      try {
+        await this.adInsightsService.syncAdInsights(token, adAccountsIds, campaignIdsMap, date, endDate);
+      } catch (e) {
+        this.logger.error(`Error syncing ad insights for account ${name}: ${e.message}`);
+      }
     }
 
+    return true;
   }
 
   async updateTikTokData(date, endDate = null, adAccountIdsLimitation = null, uPixels=true, uCampaigns = true, uAdsets = true, uAds = true, uInsights = true) {

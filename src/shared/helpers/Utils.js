@@ -35,8 +35,24 @@ function offsetHourByShift(dateString, hour, hourShift) {
   return [newDateString, String(newHour).padStart(2, '0')];
 }
 
+function getDatesBetween(startDate, endDate) {
+
+  let dates = [];
+  let currentDate = new Date(startDate);
+  let end = new Date(endDate);
+
+  while (currentDate <= end) {
+
+      dates.push(currentDate.toISOString().split('T')[0]);
+      currentDate.setDate(currentDate.getDate() + 1);
+  }
+
+  return dates;
+}
+
 module.exports = {
   isNotNumeric,
   calculateAccumulated,
-  offsetHourByShift
+  offsetHourByShift,
+  getDatesBetween
 }
