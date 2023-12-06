@@ -139,7 +139,7 @@ class CapiService extends BaseService{
                 sha256(event.city.toLowerCase().replace(" ", ""))
               ],
               fbc: `fb.1.${event.timestamp}.${event.external}`,
-              fbp: `fb.1.${event.timestamp}.${event.ip.replace(/\.|\:/g, '')}`,
+              fbp: `fb.1.${event.timestamp}.${generateEventId()}`,
               // Finished
               st: [
                 sha256(
