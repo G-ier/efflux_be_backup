@@ -7,6 +7,7 @@ const UserAccountService = require("./UserAccountService");
 const AdAccountService = require("./AdAccountsService");
 const CampaignService = require("./CampaignsService");
 const _ = require("lodash");
+const { getDatesBetween } = require("../../../shared/helpers/Utils")
 
 class AdInsightsService extends BaseService {
 
@@ -19,14 +20,26 @@ class AdInsightsService extends BaseService {
   }
 
   async getTikTokAdInsights(access_token, adAccountIds, date, endDate) {
+
     const endpoint = "report/integrated";
-    const additionalParams = {
-      ...TIKTOK_INSIGHTS_ADDITIONAL_PARAMS,
-      start_date: date,
-      end_date: endDate === null ? date : endDate,
-    };
-    this.logger.info("Fetching Ad Insights from API");
-    return await getTikTokEndpointData(endpoint, access_token, adAccountIds, additionalParams);
+    const dates = endDate ? getDatesBetween(date, endDate) : [date];
+    this.logger.info(`Fetching ad insights for dates: ${dates.join(",")}`);
+    const data = [];
+    for (const date of dates) {
+      this.logger.info(`Fetching ad insights for date: ${date}`);
+      const additionalParams = {
+        ...TIKTOK_INSIGHTS_ADDITIONAL_PARAMS,
+        start_date: date,
+        end_date: date,
+      };
+      try {
+        const adInsights = await getTikTokEndpointData(endpoint, access_token, adAccountIds, additionalParams);
+        data.push(...adInsights);
+      } catch (error) {
+        this.logger.error(`Failed to fetch ad insights for date: ${date} : ${error.message}`);
+      }
+    }
+    return _.flatten(data);
   }
 
   async syncAdInsights(access_token, adAccountIds, campaignIdsMap, date, endDate) {

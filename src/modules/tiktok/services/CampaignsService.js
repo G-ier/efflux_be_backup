@@ -85,6 +85,11 @@ class CampaignService extends BaseService {
     }
   }
 
+  async fetchUserAccountsEarliestCampaign(userAccountId) {
+    const results = await this.campaignRepository.fetchAccountsEarliestCampaign(userAccountId);
+    return results[0] ? results[0].date_in_utc : null;
+  }
+
   async fetchCampaignsFromDatabase(fields = ["*"], filters = {}, limit, joins=[]) {
     const results = await this.campaignRepository.fetchCampaigns(fields, filters, limit, joins);
     return results;
