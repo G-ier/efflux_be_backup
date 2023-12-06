@@ -560,6 +560,18 @@ Resources:
         - !Ref CodeDeployRole
       InstanceProfileName: Efflux-Staging
 
+  # An S3 bucket to store uploaded media files (images, videos, etc.)
+  MediaGalleryBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: efflux-staging-media-gallery
+      AccessControl: Private
+      VersioningConfiguration:
+        Status: Enabled
+      Tags:
+        - Key: project
+          Value: efflux
+
 ####################
 # Outputs
 ####################
