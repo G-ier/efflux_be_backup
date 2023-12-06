@@ -16,7 +16,7 @@ const postbackQueue = new PostbackQueue();
 
 // @route     /trk
 // @desc     GET track
-// @Access   Private
+// @Access   Public
 route.get("/", async (req, res) => {
   try {
     const client_ip_address = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
@@ -102,7 +102,7 @@ route.get("/", async (req, res) => {
 
 // @route     /trk
 // @desc     POST track
-// @Access   Private
+// @Access   Public
 route.post("/", async (req, res) => {
   try {
     const client_ip_address = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
@@ -253,7 +253,7 @@ route.get('/sedo', async (req, res) => {
 
 // @route     /trk/pb_test
 // @desc     Get track
-// @Access   Private
+// @Access   Public
 route.get('/pb_test', async(req, res) =>{
   try{
     const headers = req.headers;
@@ -271,7 +271,7 @@ route.get('/pb_test', async(req, res) =>{
 
 // @route     /trk/pb_test
 // @desc     post track
-// @Access   Private
+// @Access   Public
 route.post('/pb_test', async(req, res) =>{
   try{
     const headers = req.headers;
@@ -286,6 +286,45 @@ route.post('/pb_test', async(req, res) =>{
     PostbackTestLogger.error(`ERROR: ${err}`);
     res.status(500).json(err.message);
   }
+});
+
+// @route     /trk/collect
+// @desc     Get tracking data from GTM
+// @Access   Public
+route.get('/collect', async(req, res) => {
+
+  // Deconstruct query params
+  const {
+    session_id,
+    fbc,
+    fbp
+  } = req.query;
+  PostbackLogger.info(`GTM FB TRACKING: ${JSON.stringify(req.query)}`)
+
+  // Handle invalid requests
+  if (!session_id || !fbc || !fbp) {
+    res.status(400).json({message: 'Bad Request - Missing required query params'});
+    return;
+  }
+
+  // Store request data
+  const trackingData = {
+    session_id,
+    fbc,
+    fbp
+  };
+
+  // Upsert into database
+  try {
+    await db.upsert('gtm_fb_cookie_values', [trackingData], 'session_id');
+    res.status(200).contentType('application/javascript').send('console.log("Operation successful");');
+    PostbackLogger.info(`SUCCESS`)
+  } catch (err) {
+    PostbackLogger.error(`POSTBACK GTM FB TRACKING ERROR ${err}`)
+    sendSlackNotification(`Postback Update Error: ${err.message}`)
+    res.status(500).json(err.message);
+  }
+
 });
 
 module.exports = route;
