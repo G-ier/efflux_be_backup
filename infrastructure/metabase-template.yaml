@@ -27,7 +27,7 @@ Resources:
     Properties:
       AllocatedStorage: 50
       DeletionProtection: false
-      DBInstanceClass: db.t3.micro
+      DBInstanceClass: db.t3.small
       Engine: postgres
       EngineVersion: 15.4
       DBInstanceIdentifier: metabase
