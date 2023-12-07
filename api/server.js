@@ -33,7 +33,7 @@ const initializeAPI = async () => {
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
 
-  server.listen(port, async () => {
+  server.listen(4999, async () => {
 
     console.log(`🔥 ---------- Server started ------------ 🔥`)
 
