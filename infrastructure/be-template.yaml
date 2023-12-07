@@ -765,3 +765,8 @@ Outputs:
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
     Export:
       Name: EffluxRDSPostgresEndpoint
+  MediaGalleryBucket:
+    Description: S3 Bucket for Media Gallery
+    Value: !Ref MediaGalleryBucket
+    Export:
+      Name: EffluxMediaGalleryBucket
