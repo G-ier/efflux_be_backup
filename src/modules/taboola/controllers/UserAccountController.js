@@ -8,7 +8,7 @@ class UserAccountController {
 
   async addAccountFromAuthToken(req, res){
     const { auth_code } = req.body;
-    const user_id = req.user.id;
+    const user_id = req.user_id;
 
     // Check if the auth code is provided.
     if (!auth_code) throw new Error("Auth code is required");
@@ -18,16 +18,15 @@ class UserAccountController {
     console.log(response);
   }
 
-  async addAccount(req, res){
+  async refreshNetworkAccount(req, res){
     try {
       const response = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
+      await this.userAccountService.syncTaboolaNetworkAccount(response.access_token);
 
-      console.log(response);
       // Return the response to the user.
       res.status(200).json({
-        message: "Successfully added TikTok user account",
-        auth_code: auth_code,
-        userId: user_id
+        message: "Successfully refreshed network Account Data",
+        access_token: response.access_token,
       });    
     }
     catch(error){

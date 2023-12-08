@@ -25,17 +25,18 @@ class UserAccountService extends BaseService {
     }
 
     async upsertAccountToDB(account) {
+      this.logger.info("Upserting account");
       return await this.userAccountRepostiory.upsert([account]);
 
     }
 
-    async getFetchingAccounts() {
+    async getFetchingAccount() {
       const filters = { provider: "taboola", fetching: true };
       const accounts = await this.userAccountRepostiory.fetchUserAccounts(
         ["id", "name", "provider_id", "user_id", "token"],
         filters
       );
-      return accounts;
+      return accounts[0];
     }
 
     async getTaboolaAdvertiserTokenFromAuthCode(auth_code) {
@@ -75,7 +76,33 @@ class UserAccountService extends BaseService {
 
       const res = await this.postToApi(finalURL, {}, "Error getting Taboola Access token", headers);
 
+      this.logger.info("DONE Fetching access token from API");
       return res;
+    }
+
+    async syncTaboolaNetworkAccount(access_token){
+      this.logger.info("Fetching network account details from API");
+      const url = `${TABOOLA_URL}/api/1.0/users/current/account`;
+      const header = {
+        "Authorization": `Bearer ${access_token}`,
+        "Content-Type": "application/json"
+      }
+      const res = await this.fetchFromApi(url, {}, "Error getting Taboola Network Account", header);
+
+      const mappedRes = {
+        name: res.name,
+        provider: 'taboola',
+        provider_id: res.account_id,
+        status: res.is_active ===true ? 'active': '',
+        token: access_token,
+        user_id: 3,
+        fetching: 't',
+        backup: 'false',
+        role: 'admin',
+      } 
+      await this.upsertAccountToDB(mappedRes);
+      this.logger.info("Successfully synced network account details from API");
+      return mappedRes;
     }
 }
 

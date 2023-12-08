@@ -2,7 +2,7 @@ const _ = require("lodash");
 const AdAccount = require("../../../shared/entities/AdAccount");
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 
-class AdAccountsRepository {
+class AdAccountRepository {
   constructor(database) {
     this.tableName = "ad_accounts";
     this.database = database || new DatabaseRepository();
@@ -21,8 +21,8 @@ class AdAccountsRepository {
     }
   }
 
-  async upsert(adAccounts, account_id, user_id, chunkSize = 500) {
-    const dbObjects = adAccounts.map((adAccount) => this.toDatabaseDTO(adAccount, account_id, user_id));
+  async upsert(adAccounts, user_id, user_account_id, chunkSize = 500) {
+    const dbObjects = adAccounts.map((adAccount) => this.toDatabaseDTO(adAccount, user_id, user_account_id));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
       await this.database.upsert(this.tableName, chunk, "provider, provider_id, account_id", ["user_id", "account_id"]);
@@ -35,21 +35,17 @@ class AdAccountsRepository {
     return results;
   }
 
-  toDatabaseDTO(adAccount, account_id, user_id) {
+  toDatabaseDTO(adAccount, user_id, user_account_id) {
     return {
       name: adAccount.name,
-      provider: "tiktok",
-      provider_id: adAccount.advertiser_id,
-      status: "active",
+      provider: "taboola",
+      provider_id: adAccount.account_id,
+      status: adAccount.is_active ===true ? "active": "disabled",
       user_id: user_id,
-      account_id: account_id,
+      account_id: user_account_id,
       fb_account_id: adAccount.advertiser_id,
-      amount_spent: adAccount.amount_spent ?? 0,
-      balance: adAccount.balance,
-      spend_cap: adAccount?.amount_spent?.spend_cap ?? 0,
-      currency: "USD",
-      tz_name: adAccount.display_timezone,
-      tz_offset: adAccount.timezone.replace(/^\D+/g, ""),
+      currency: adAccount.currency,
+      tz_name: adAccount.time_zone_name,
     };
   }
 
@@ -67,3 +63,5 @@ class AdAccountsRepository {
     );
   }
 }
+
+module.exports = AdAccountRepository;
