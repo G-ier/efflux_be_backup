@@ -526,7 +526,7 @@ Resources:
                   - ssm:GetParameter*
                 Resource: "*"
 
-  # # Create CodeDeploy Role Policy
+  # Create CodeDeploy Role Policy
   CodeDeployRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -560,18 +560,6 @@ Resources:
         - !Ref CodeDeployRole
       InstanceProfileName: Efflux-Staging
 
-  # An S3 bucket to store uploaded media files (images, videos, etc.)
-  MediaGalleryBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: efflux-staging-media-gallery
-      AccessControl: Private
-      VersioningConfiguration:
-        Status: Enabled
-      Tags:
-        - Key: project
-          Value: efflux
-
 ####################
 # Outputs
 ####################
@@ -586,9 +574,9 @@ Outputs:
   ElasticFileSystem:
     Description: Elastic File System ID
     Value: !Ref ElasticFileSystem
-  # RDSPostgresDB:
-  #   Description: RDS Postgres Database ID
-  #   Value: !Ref RDSPostgresDB
-  # RDSPostgresEndpoint:
-  #   Description: RDS Postgres Database Endpoint
-  #   Value: !GetAtt RDSPostgresDB.Endpoint.Address
+  RDSPostgresDB:
+    Description: RDS Postgres Database ID
+    Value: !Ref RDSPostgresDB
+  RDSPostgresEndpoint:
+    Description: RDS Postgres Database Endpoint
+    Value: !GetAtt RDSPostgresDB.Endpoint.Address
