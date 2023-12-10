@@ -96,7 +96,7 @@ const initializeTikTokCron = async () => {
     updateYesterdayDataAfterMidnightPST.start();
     updateYesterdayDataAfterMidnightPST2.start();
     updateTodayDataRegular.start()
-    if (CRON_ENVIRONMENT === 'production') reportTikTokConversionsRegular.start();
+    // if (CRON_ENVIRONMENT === 'production') reportTikTokConversionsRegular.start();
 }
 
 module.exports = initializeTikTokCron;
