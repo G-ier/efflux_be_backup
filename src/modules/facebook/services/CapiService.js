@@ -25,11 +25,17 @@ class CapiService extends BaseService{
     }
 
     async createCapiLogEntry(data) {
+
       this.logger.info(`Adding CAPI Logs to the database`);
+
       const logEntries = data.map((event) => {
         const session_id = event.id.split('-')[0];
         const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
-        return {
+
+        const constructed_fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? false: true;
+        const constructed_fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? false: true;
+
+        const eventPayload = {
           traffic_source: 'facebook',
           reported_date: todayYMD(),
           reported_hour: todayHH(),
@@ -40,13 +46,17 @@ class CapiService extends BaseService{
           campaign_name: event.campaign_name,
           campaign_id: event.campaign_id,
           conversions_reported: event.purchase_event_count,
-          revenue_reported: event.purchase_event_value
+          revenue_reported: event.purchase_event_value,
+          constructed_fbc: constructed_fbc,
+          constructed_fbp: constructed_fbp,
+          unique_identifier: `${event.id}-${event.timestamp}-${todayYMD()}-${todayHH()}`,
         }
+        return eventPayload;
       })
 
       const dataChunks = _.chunk(logEntries, 1000);
       for (const chunk of dataChunks) {
-        await this.database.insert('capi_logs', chunk);
+        await this.database.upsert('capi_logs', chunk, 'unique_identifier');
       }
 
       this.logger.info(`Done adding CAPI Logs to the database`);
@@ -115,6 +125,9 @@ class CapiService extends BaseService{
         if (['', null, undefined].includes(event.timestamp) || ['', null, undefined].includes(event.external))
           return;
 
+        const fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? event.fbc : `fb.1.${event.timestamp * 1000}.${event.external}`;
+        const fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? event.fbp : `fb.1.${event.timestamp * 1000}.${generateEventId()}`;
+
         for ( let i = 0; i < event.purchase_event_count; i++ ) {
 
           if ( currentPayload.data.length === MAX_EVENTS ) {
@@ -138,8 +151,8 @@ class CapiService extends BaseService{
               ct: [
                 sha256(event.city.toLowerCase().replace(" ", ""))
               ],
-              fbc: `fb.1.${event.timestamp}.${event.external}`,
-              fbp: `fb.1.${event.timestamp}.${generateEventId()}`,
+              fbc: fbc,
+              fbp: fbp,
               // Finished
               st: [
                 sha256(
