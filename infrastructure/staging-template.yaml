@@ -351,7 +351,7 @@ Resources:
       DeletionProtection: false
       DBInstanceClass: db.t3.small
       Engine: postgres
-      EngineVersion: 15.4
+      EngineVersion: 16.1
       DBInstanceIdentifier: efflux-staging
       DBName: efflux
       MasterUsername: effluxapp
