@@ -37,11 +37,14 @@ class UserAccountController {
         throw new Error("Error upserting account to database");
       }
 
+      const account = await this.userAccountService.fetchAccountFromDatabase(['id'], {provider_id: userInfo.data.core_user_id});
+      const accountId = account[0].id;
+
       // Return the response to the user.
       res.status(200).json({
         message: "Successfully added TikTok user account",
         auth_code: auth_code,
-        userId: user_id
+        userId: accountId
       });
 
     } catch(error) {

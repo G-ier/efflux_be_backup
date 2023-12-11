@@ -30,10 +30,14 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
       split_part(tg9, '-', 1) as pixel_id,
       split_part(tg9, '-', 2) as timestamp,
       tg10 as external,
+      gtmtr.fbc as fbc,
+      gtmtr.fbp as fbp,
       revenue_clicks as purchase_event_count,
       publisher_revenue_amount as purchase_event_value
     FROM
       raw_crossroads_data
+    FULL OUTER JOIN
+    	gtm_fb_cookie_values gtmtr ON raw_crossroads_data.tg3 = gtmtr.session_id
     WHERE
       revenue_clicks > 0
       AND reported_to_ts = false

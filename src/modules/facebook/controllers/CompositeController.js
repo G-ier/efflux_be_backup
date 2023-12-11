@@ -294,7 +294,7 @@ class CompositeController {
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
       const adCreationResult = await this.compositeService.createAd({token, adAccountId:firstKey, adData});
-      
+
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
@@ -304,6 +304,227 @@ class CompositeController {
     }
   }
 
+  validateRequiredParameters(req) {
+    const { files, body } = req;
+    const { adData, campaignData, adsetData, adAccountId } = body;
+
+        const missingParameters = [];
+
+    if (!files || (!files.video && !files.images)) {
+      missingParameters.push('files');
+    }
+    if (!adData) {
+      missingParameters.push('adData');
+    }
+    if (!campaignData) {
+      missingParameters.push('campaignData');
+    }
+    if (!adsetData) {
+      missingParameters.push('adsetData');
+    }
+    if (!adAccountId) {
+      missingParameters.push('adAccountId');
+    }
+
+    if (missingParameters.length > 0) {
+      throw new Error(`Missing required parameters: ${missingParameters.join(', ')}`);
+    }
+  }
+
+  async getToken(adminsOnly = true) {
+    return (await this.userAccountService.getFetchingAccount(adminsOnly)).token;
+  }
+
+  getAdAccountId(req) {
+    return req.body.adAccountId;
+  }
+
+  async getAdAccountsDataMap(adAccountId) {
+    // First try to match using provider_id
+    let adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+      ["id", "provider_id", "user_id", "account_id"],
+      { provider_id: adAccountId }
+    );
+
+    // If no accounts found using provider_id, try to match using id
+    if (!adAccounts || adAccounts.length === 0) {
+      adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+        ["id", "provider_id", "user_id", "account_id"],
+        { id: adAccountId }
+      );
+    }
+
+    // Key the results by provider_id for easy lookup later
+    return _(adAccounts).keyBy("provider_id").value();
+  }
+
+  async handleCampaignCreation(req, token, adAccountId, adAccountsDataMap) {
+    let campaignData = req.body.campaignData;
+
+    // Check if campaignData is a string and parse it
+    if (typeof campaignData === 'string') {
+      try {
+        campaignData = JSON.parse(campaignData);
+      } catch (error) {
+        throw new Error("Failed to parse campaignData: " + error.message);
+      }
+    }
+
+    if (campaignData.existingId) {
+      return campaignData.existingId;
+    }
+
+    const campaignCreationResult = await this.campaignService.createCampaign(
+      token,
+      adAccountId,
+      campaignData,
+      adAccountsDataMap,
+    );
+
+    return campaignCreationResult.data.id;
+  }
+
+  async handleAdsetCreation(req, token, adAccountId, campaignId, adAccountsDataMap) {
+    let adsetData = req.body.adsetData;
+
+    // Check if adsetData is a string and parse it
+    if (typeof adsetData === "string") {
+      try {
+        adsetData = JSON.parse(adsetData);
+      } catch (error) {
+        throw new Error("Failed to parse adsetData: " + error.message);
+      }
+    }
+
+    // Add the campaignId to the adsetData object
+    adsetData.campaign_id = campaignId;
+
+    // If adsetData has an existingId, return it and skip creation
+    if (adsetData.existingId) {
+      return adsetData.existingId;
+    }
+
+    // Create the ad set with the provided data
+    const adSetCreationResult = await this.adsetsService.createAdset(token, adAccountId, adsetData, adAccountsDataMap);
+
+    // Return the ID of the newly created ad set
+    return adSetCreationResult.id;
+  }
+
+  async handleMediaUploads(req, adAccountId, token) {
+    const uploadedMedia = [];
+
+    if (req.files) {
+      let firstImageBuffer = null;
+      let firstImageName = null;
+
+      // Process Images
+      if (req.files["images"]) {
+        for (const [index, file] of req.files["images"].entries()) {
+          const imageHash = await this.compositeService.uploadImage(file.buffer, file.originalname, adAccountId, token);
+          uploadedMedia.push({ type: "image", hash: imageHash["images"][file.originalname].hash });
+
+          // Store the first image to be used as a thumbnail
+          if (index === 0) {
+            firstImageBuffer = file.buffer;
+            firstImageName = file.originalname;
+          }
+        }
+      }
+
+      // Process Videos
+      if (req.files["video"]) {
+        for (const file of req.files["video"]) {
+          let videoHash;
+            videoHash = await this.compositeService.uploadVideo(file.buffer, file.originalname, adAccountId, token);
+
+          uploadedMedia.push({ type: "video", video_id: videoHash });
+        }
+      }
+    }
+    return uploadedMedia;
+  }
+
+  prepareAdData(req, uploadedMedia, adSetId) {
+    // Parse adData if it's a string
+    let adData = req.body.adData;
+    if (typeof adData === "string") {
+      try {
+        adData = JSON.parse(adData);
+      } catch (error) {
+        throw new Error("Invalid adData format. Unable to parse adData to JSON.");
+      }
+    }
+
+    // Check if adData is an object now
+    if (typeof adData !== "object" || adData === null) {
+      throw new Error("Invalid adData format. adData should be an object.");
+    }
+
+    // Parse adData.creative if it's a string
+    if (typeof adData.creative === "string") {
+      try {
+        adData.creative = JSON.parse(adData.creative);
+      } catch (error) {
+        throw new Error("Invalid adData format. Unable to parse adData.creative to JSON.");
+      }
+    }
+
+    // Now that we know adData.creative is an object, check for asset_feed_spec
+    if (typeof adData.creative.asset_feed_spec === "string") {
+      try {
+        adData.creative.asset_feed_spec = JSON.parse(adData.creative.asset_feed_spec);
+      } catch (error) {
+        throw new Error("Invalid adData format. Unable to parse adData.creative.asset_feed_spec to JSON.");
+      }
+    }
+
+    // // Initialize images array if not already present
+    if (!Array.isArray(adData.creative.asset_feed_spec.images)) {
+      adData.creative.asset_feed_spec.images = [];
+    }
+
+    // Initialize videos array if not already present
+    if (!Array.isArray(adData.creative.asset_feed_spec.videos)) {
+      adData.creative.asset_feed_spec.videos = [];
+    }
+
+    // Add image hashes to the asset_feed_spec.images array
+    uploadedMedia.forEach((media) => {
+
+      if (media.type === "image") {
+        adData.creative.asset_feed_spec.images.push({ hash: media.hash });
+      } else {
+        adData.creative.asset_feed_spec.videos.push({
+          video_id: media.video_id,
+          url_tags: "video=video1",
+        });
+      }
+    });
+
+    // Set the adset_id
+    adData.adset_id = adSetId;
+
+    return adData;
+  }
+
+  respondWithResult(res, adCreationResult) {
+    if (adCreationResult.success) {
+      res.json({ success: true, message: "Ad successfully launched in Facebook.", id: adCreationResult.id });
+    } else {
+      res.status(400).json({ success: false, message: "Failed to create the ad." });
+    }
+  }
+
+  respondWithError(res, error) {
+    // Log any errors encountered during the ad launch process
+    FacebookLogger.error(`Error during ad launch: ${error.error_user_msg || error.message}`, { error });
+    res.status(500).json({
+      success: false,
+      message: "An error occurred while launching the ad.",
+      error: error.error_user_msg || error.message,
+    });
+  }
 }
 
 module.exports = CompositeController;

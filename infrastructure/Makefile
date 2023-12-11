@@ -29,7 +29,7 @@ deploy-staging:
 		--parameter-overrides \
 			ProjectName=efflux-staging \
 			OperatorEmail=ilyas@ad.roi\
-			RDSPostgresClusterPassword=eapsU6KlwrnUWswdZ9BWnY \
+			RDSPostgresClusterPassword=47h9RGv2BwP3KwdzH5zg \
 		--tags \
 			project=efflux-staging \
 		--profile $(AWS_PROFILE) \

@@ -27,7 +27,7 @@ Resources:
     Properties:
       AllocatedStorage: 50
       DeletionProtection: false
-      DBInstanceClass: db.t3.micro
+      DBInstanceClass: db.t3.small
       Engine: postgres
       EngineVersion: 15.4
       DBInstanceIdentifier: metabase
@@ -174,11 +174,25 @@ Resources:
       ListenerArn: !Ref MetaBaseALBListener
       Priority: "1"
 
+  # Add a MetaBase ALB Listener for HTTPS
+  MetaBaseALBListenerHTTPS:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      Certificates:
+        - CertificateArn: arn:aws:acm:us-east-1:524744845066:certificate/cf8d550c-373a-459a-87a7-60088a191b5e
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref MetaBaseALBTargetGroup
+      LoadBalancerArn: !Ref MetaBaseALB
+      Port: "443"
+      Protocol: HTTPS
+      SslPolicy: ELBSecurityPolicy-2016-08
+
   # Create a MetaBase Security Group
   MetaBaseSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: Metabase
+      GroupName: Metabase-SG
       GroupDescription: Enable Metabase and Portainer access
       VpcId: !ImportValue Efflux-VPC
       SecurityGroupIngress:
@@ -204,11 +218,23 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: Metabase
+          Value: Metabase-SG
         - Key: project
           Value: metabase
         - Key: operation
           Value: analytics
+
+  # Route 53 Record A for Metabase
+  # MetaBaseDNSRecord:
+  #   Type: AWS::Route53::RecordSet
+  #   Properties:
+  #     HostedZoneName: "efflux.com."
+  #     Comment: "DNS name for Metabase"
+  #     Name: "mb.efflux.com"
+  #     Type: A
+  #     AliasTarget:
+  #       DNSName: !GetAtt MetaBaseALB.DNSName
+  #       HostedZoneId: "Z05961063BF8N2FNAH79L"
 
 ####################
 # Outputs

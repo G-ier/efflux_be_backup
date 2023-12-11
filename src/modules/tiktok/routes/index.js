@@ -12,6 +12,13 @@ route.get("/refresh", async (req, res) => {
   compositeController.updateData(req, res);
 });
 
+// @route    /api/tiktok/sync-account-data
+// @desc     GET TIKTOK Sync Account Data
+// @Access   Private
+route.get("/sync-account-data", async (req, res) => {
+  compositeController.syncAccountData(req, res);
+});
+
 route.use("/pixels", pixels);
 route.use("/user_accounts", userAccounts);
 

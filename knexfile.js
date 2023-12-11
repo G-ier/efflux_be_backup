@@ -27,7 +27,7 @@ module.exports = {
   },
   staging: {
     client: "pg",
-    connection: process.env.DATABASE_URL_STAGING, //EnvironmentVariablesManager.getEnvVariable("DATABASE_URL_STAGING"),
+    connection: EnvironmentVariablesManager.getEnvVariable("DATABASE_URL_STAGING"),
     pool: {
       min: 2,
       max: 20,

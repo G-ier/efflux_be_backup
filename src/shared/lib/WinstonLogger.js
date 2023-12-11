@@ -135,7 +135,12 @@ const PostbackLogger = new CustomLogger({
   filePath: filePath('postback'),
   pattern: '[{timestamp}]:[{level}] - {message}'
 });
-
+const PostbackTestLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('postback_test'),
+  pattern: '[{timestamp}]:[{level}] - {message}'
+});
 // Requests Logger
 const RequestsLogger = new CustomLogger({
   destination: 'file',
@@ -173,6 +178,7 @@ module.exports = {
   AggregatesLogger,
   FunnelFluxLogger,
   PostbackLogger,
+  PostbackTestLogger,
   RequestsLogger,
   AnalysisLogger,
   dataUpdatesLogger,

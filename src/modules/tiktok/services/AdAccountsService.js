@@ -25,14 +25,17 @@ class AdAccountService extends BaseService {
     const params = { advertiser_ids: JSON.stringify(adAccountIds), fields: JSON.stringify(availableFields)}
     const headers = { "Access-Token": access_token };
 
-    const data = await this.fetchFromApi(
-      url,
-      params,
-      "Error fetching ad acccounts from API",
-      headers
-    )
-    if (data.code !== 0) {
-      throw new Error("Error getting ad accounts info");
+    let data = { data: { list: [] } };
+    try {
+      data = await this.fetchFromApi(
+        url,
+        params,
+        "Error fetching ad acccounts from API",
+        headers
+      )
+    } catch (error) {
+      this.logger.error(`Error fetching ad account data from API: ${error}`);
+      return [];
     }
 
     return data.data.list;
