@@ -5,7 +5,7 @@ exports.up = function(knex) {
       table.increments('id').primary();
       table.string('name');
       table.string('objective');
-      table.text('special_ad_category'); // Storing as JSON string
+      table.text('special_ad_category');
       table.string('special_ad_category_country');
       table.integer('campaign_id').unsigned().nullable();
       table.foreign('campaign_id').references('id').inTable('campaign_table');

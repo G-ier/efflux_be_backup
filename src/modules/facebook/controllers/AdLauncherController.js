@@ -29,11 +29,9 @@ class AdLauncherController {
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
       const firstKey = await this.getFirstKeyFromAdAccounts(adAccountId);
 
-      FacebookLogger.info('Extracting data for Ad Launch');
       const { campaignData, adsetData, adData } = this.extractAllData(req);
       const adQueueData = { ...campaignData, ...adsetData, ...adData, ad_account_id: firstKey };
 
-      FacebookLogger.info('Handling media uploads for Ad Launch');
       const { uploadedMedia, createdMediaObjects } = await this.contentService.handleMediaUploads(
         req,
         firstKey,
@@ -42,16 +40,12 @@ class AdLauncherController {
       );
 
       // TODO: Create media objects asynchrously
-      FacebookLogger.info(`Media objects created: ${JSON.stringify(createdMediaObjects)}`);
-      // Extract content IDs from createdMediaObjects
       const contentIds = createdMediaObjects?.map((media) => media.id);
       console.log({ contentIds });
 
-      FacebookLogger.info('Saving AdQueue instance with content IDs');
       const adQueueId = await this.adQueueRepository.saveOne(adQueueData, contentIds, adAccountId);
 
       const adCreationResult = { id: adQueueId, ...adQueueData };
-      FacebookLogger.info(`Ad successfully sent to queue with ID: ${adQueueId}`);
 
       res.json({
         success: true,

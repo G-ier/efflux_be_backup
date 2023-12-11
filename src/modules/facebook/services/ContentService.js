@@ -29,7 +29,7 @@ class ContentService extends BaseService {
   // TODO: rename to UploadToFacebook
   // TODO: add a new function to upload the media to S3 bucket
 
-  async uploadImage(imageBuffer, filename, adAccountId, token) {
+  async UploadToFacebook(imageBuffer, filename, adAccountId, token) {
     const formData = new FormData();
     formData.append("file", imageBuffer, filename);
     const url = `${FB_API_URL}act_${adAccountId}/adimages`;
