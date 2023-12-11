@@ -38,7 +38,6 @@ class CompositeService {
         const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
         const updatedAdAccountsIds = _.map(adAccounts, "provider_id");
         if (!adAccounts.length) throw new Error("No ad accounts to update");
-
         //const conversionRules = await this.conversionRuleService.syncConversionRules(updatedAdAccountsIds, access_token);
 
         // Sync Campaigns
@@ -47,7 +46,7 @@ class CompositeService {
         await this.insightService.syncInsights(updatedAdAccountsIds, access_token,
           start_date, end_date);
 
-        //Sync Ads
+        // Sync Ads
         await this.adService.syncAds(access_token, campaigns, updatedAdAccountsDataMap);
     }
 

@@ -34,17 +34,20 @@ class InsightService  extends BaseService{
             let url = `${TABOOLA_URL}/api/1.0/${ad_account}/reports/campaign-summary/dimensions/campaign_hour_breakdown`;
             const params = {
               start_date: start_date,
-              end_date: end_date
+              end_date: end_date,
+              exclude_empty_campaigns: true,
+              // include_multi_conversions: true // returns additional data about conversions.
             };
             do {
               if (paging?.next) {
                 url = paging.next;
                 params = {};
               }
-              const { data = [] } = //await axios.get(
-                // finalURL, { header })
-                await this.fetchFromApi(url, params, "Error", headers).catch((err) => {
-                  console.log(err);
+              const { data = [] } = await axios
+              .get(url, {
+                params,
+                headers,
+              }).catch((err) => {
                   results.error.push(ad_account);
                   return {};
                 });

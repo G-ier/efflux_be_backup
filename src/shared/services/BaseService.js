@@ -24,7 +24,6 @@ class BaseService {
     }
 
     const baseUrl = constructApiUrl(url, params);
-
     const fetch = async () => {
       const { data } = await axios.get(baseUrl, { headers });
       return data;

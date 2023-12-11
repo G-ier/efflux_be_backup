@@ -62,7 +62,23 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
         GROUP BY tt.date, tt.hour, tt.adset_id
       )
     `
-  } else {
+  } 
+  else if (trafficSource === 'taboola'){
+    return `traffic_source AS (
+    SELECT tbl.date,
+    tbl.hour,
+    tbl.campaign as campaign_id,
+    CAST(ROUND(SUM(tbl.spent)::decimal, 2) AS FLOAT) as spend,
+    CAST(ROUND(SUM(tbl.impressions)::decimal, 2) AS FLOAT) as impressions,
+    CAST(ROUND(SUM(tbl.clicks)::decimal, 2) AS FLOAT) as clicks,
+    CAST(ROUND(SUM(tbl.cpa_actions_num)::decimal, 2) AS FLOAT) as ts_conversions,
+    MAX(tbl.updated_at) as ts_last_updated,
+    null as adset_id
+    FROM taboola tbl 
+    GROUP BY tbl.date, tbl.hour, tbl.campaign
+    )`
+  }
+  else {
     throw new Error('Invalid traffic source')
   }
 }
@@ -190,6 +206,15 @@ function RETURN_FIELDS(network, traffic_source) {
       ELSE 0 END as spend_plus_fee
       `
     }
+    else if (trafficSource === 'taboola'){
+      return `
+      CASE WHEN network.date IS NULL THEN traffic_source.spend 
+      ELSE 0 END as unallocated_spend_plus_fee,
+      CASE WHEN network.date IS NOT NULL THEN
+      traffic_source.spend
+      ELSE 0 END as spend_plus_fee
+      `
+    }
     else {
       throw new Error('Invalid traffic source')
     }
@@ -268,7 +293,11 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       agg_adsets_data.ad_account_id as ad_account_id,
       ${RETURN_FIELDS(network, trafficSource)}
     FROM network
-    FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND network.hour = traffic_source.hour
+    FULL OUTER JOIN traffic_source ON
+    ${
+      trafficSource === 'taboola' ? `traffic_source.campaign_id = network.campaign_id`: ` traffic_source.adset_id = network.adset_id`
+    }
+    AND traffic_source.date = network.date AND network.hour = traffic_source.hour
     FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
     ${
       network === 'crossroads' ? `

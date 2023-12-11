@@ -1,6 +1,6 @@
 exports.up = function (knex) {
     return knex.schema.createTable('taboola', function (table) {
-      table.string('campaign_id').primary();
+      table.string("campaign");
       table.string('campaign_name');
       table.date('date');
       table.integer('hour');
@@ -15,7 +15,6 @@ exports.up = function (knex) {
       table.decimal('cpm', 14, 2);
       table.decimal('vcpm', 14, 2);
       table.decimal('cpc', 10, 3);
-      table.integer('campaigns_num');
       table.decimal('cpa', 10, 3);
       table.decimal('cpa_clicks', 10, 3);
       table.decimal('cpa_views', 10, 3);
@@ -27,6 +26,8 @@ exports.up = function (knex) {
       table.decimal('cpa_conversion_rate_views', 5, 2);
       table.string('currency');
       table.string('unique_id');
+      table.timestamp('created_at').defaultTo(knex.fn.now());
+      table.timestamp('updated_at').defaultTo(knex.fn.now());
     });
   };
   

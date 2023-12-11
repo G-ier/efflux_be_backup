@@ -82,6 +82,7 @@ class AggregatesRepository {
   }
 
   async compileAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
+    console.log("HEY");
     return await compileAggregates(this.database, network, trafficSource, startDate, endDate, campaignIdsRestriction);
   }
 

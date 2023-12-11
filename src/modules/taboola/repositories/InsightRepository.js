@@ -37,15 +37,15 @@ class InsightRepository {
   }
 
   toDatabaseDTO(insight) {
-    return {
-      date: insight.date,
-      hour: insight.hour,
-      campaign: insight.campaign_id,
+    return {      
+      campaign: insight.campaign,
       campaign_name: insight.campaign_name,
-      clicks: insight.link_clicks,
+      date: insight.date,
+      hour: new Date(insight.date).getHours(),
+      clicks: insight.clicks,
       impressions: insight.impressions,
       visible_impressions: insight.visible_impressions,
-      spent: insight.total_spent,
+      spent: insight.spent,
       conversions_value: insight.conversions_value,
       roas: insight.roas,
       ctr: insight.ctr,
@@ -53,18 +53,17 @@ class InsightRepository {
       cpm: insight.cpm,
       vcpm: insight.vcpm,
       cpc: insight.cpc,
-      campaigns_num: insight.campaigns_num,
       cpa: insight.cpa,
       cpa_clicks: insight.cpa_clicks,
       cpa_views: insight.cpa_views,
-      cpa_actions_num: insight.conversions,
+      cpa_actions_num: insight.cpa_actions_num,
       cpa_actions_num_from_clicks: insight.cpa_actions_num_from_clicks,
       cpa_actions_num_from_views: insight.cpa_actions_num_from_views,
       cpa_conversion_rate: insight.cpa_conversion_rate,
       cpa_conversion_rate_clicks: insight.cpa_conversion_rate_clicks,
       cpa_conversion_rate_views: insight.cpa_conversion_rate_views,
-      currency: insight.reporting_currency,
-      unique_id: `${insight.campaign_id}-${insight.date}-${insight.hour}`,
+      currency: insight.currency,
+      unique_id: `${insight.campaign}-${insight.date.split(" ")[0]}-${new Date(insight.date).getHours()}`,
     };
   }
 

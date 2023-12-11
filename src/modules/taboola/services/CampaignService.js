@@ -29,7 +29,7 @@ class CampaignService extends BaseService {
           let url = `${TABOOLA_URL}/api/1.0/${adAccountId}/campaigns/`;
           let params = {
             access_token,
-            fetch_level: fetch_level
+            // fetch_level: fetch_level
           };
     
           do {
