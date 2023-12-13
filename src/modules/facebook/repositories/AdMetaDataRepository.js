@@ -8,19 +8,21 @@ class AdMetaDataRepository {
     this.database = database || new DatabaseRepository();
   }
 
-  toDatabaseDTO(adMetadata) {
+  toDatabaseDTO(adData) {
+    // Extracting properties from 'creative' object
+    let creativeName = adData.creative?.name;
+    let pageId = adData.creative?.object_story_spec?.page_id;
+    let assetFeedSpec = adData.creative?.asset_feed_spec;
+
     return {
-      id: adMetadata.id,
-      name: adMetadata.name,
-      status: adMetadata.status,
-      creative_name: adMetadata.creative_name,
-      page_id: adMetadata.page_id,
-      asset_feed_spec: JSON.stringify(adMetadata.asset_feed_spec),
-      ad_id: adMetadata.ad_id,
-      created_at: adMetadata.created_at,
-      updated_at: adMetadata.updated_at
+        name: adData.name,
+        status: adData.status,
+        creative_name: creativeName || adData.name,
+        page_id: pageId || adData.pageId,
+        asset_feed_spec: JSON.stringify(assetFeedSpec),
+        ad_id: adData.ad_id,
     };
-  }
+}
 
   toDomainEntity(dbObject) {
     return new AdMetadata(

@@ -57,8 +57,9 @@ class CampaignMetaDataRepository {
       "id",
       "name",
       "objective",
-      "special_ad_category",
+      "special_ad_categories",
       "special_ad_category_country",
+      "campaign_id"
     ]);
 
     return dbObject;

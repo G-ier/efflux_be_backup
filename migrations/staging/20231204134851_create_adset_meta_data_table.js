@@ -4,7 +4,7 @@ exports.up = function (knex) {
     table.string('name').defaultTo('');
     table.string('status');
     table.decimal('daily_budget').defaultTo(20);
-    table.text('special_ad_category').defaultTo('NONE');
+    table.text('special_ad_categories').defaultTo('NONE');
     table.string('special_ad_category_country').defaultTo('');
     table.string('dsa_beneficiary').defaultTo('');
     table.string('dsa_payor').defaultTo('');
@@ -26,7 +26,7 @@ exports.up = function (knex) {
     // New column for pixelId
     table.string('pixel_id').defaultTo('');
 
-    table.integer('adset_id').unsigned().references('provider_id').inTable(''); // Adjust as needed
+    table.string('adset_id')
     table.timestamps(true, true); // Creates created_at and updated_at columns
   });
 };

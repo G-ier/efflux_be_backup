@@ -1,7 +1,7 @@
 // Local application imports
-const AdQueueRepository = require("../repositories/AdQueueRepository");
-const BaseService = require("../../../shared/services/BaseService");
-const { FacebookLogger } = require("../../../shared/lib/WinstonLogger"); // Replace with your actual logger
+const AdQueueRepository = require('../repositories/AdQueueRepository');
+const BaseService = require('../../../shared/services/BaseService');
+const { FacebookLogger } = require('../../../shared/lib/WinstonLogger'); // Replace with your actual logger
 
 class AdQueueService extends BaseService {
   constructor() {
@@ -9,10 +9,25 @@ class AdQueueService extends BaseService {
     this.adQueueRepository = new AdQueueRepository();
   }
 
-  async fetchAdQueueFromDB(fields = ['*'], filters = {}, limit) {
-    const results = await this.adQueueRepository.fetchAdQueues(fields, filters, limit);
-    return results;
+  async saveToQueueFromLaunch({ adAccountId, existingMedia, data, campaignId, adsetId, adId }) {
+  return await  this.adQueueRepository.saveOne({
+      adAccountId,
+      existingMedia,
+      data,
+      campaignId,
+      adsetId,
+      adId,
+    });
   }
+
+  async fetchAdQueueFromDB(fields = ['*'], filters = '{}', limit) {
+    // Parse the JSON string to an object
+    const filterObject = JSON.parse(filters);
+
+    // Pass the parsed filter object to your repository method
+    const results = await this.adQueueRepository.fetchAdQueues(fields, filterObject, limit);
+    return results;
+}
 
 }
 

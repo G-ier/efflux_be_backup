@@ -1,8 +1,8 @@
 // Third party imports
 const _ = require("lodash");
-
+const axios = require("axios")
 // Local application imports
-const ContentRepository = require("../repositories/ContentRepository"); // Adjust the path as necessary
+const ContentRepository = require("../repositories/AdLauncherMediaRepository"); // Adjust the path as necessary
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { FB_API_URL } = require("../constants");
 
@@ -13,16 +13,13 @@ class AdLauncherService extends BaseService {
     super(FacebookLogger);
     this.contentRepository = new ContentRepository();
   }
-  sendAdLaunchToQueue(){
-        
-  }
 
   async createAd({ token, adAccountId, adData }) {
     const url = `${FB_API_URL}act_${adAccountId}/ads`;
     // Construct the request payload according to the Facebook API specifications
     const payload = {
       ...adData,
-      access_token: token, // Assuming the token is passed directly, could be managed differently
+      access_token: token,
     };
 
     // Dont include the images and videos sent for processing to get hashes and id-s
@@ -42,15 +39,12 @@ class AdLauncherService extends BaseService {
         id: createdAdId,
       };
     } catch (error) {
+      console.log({error})
       // Log the error and throw it to be handled by the caller
       this.logger.error(`Error creating ad: ${error.response}`);
       throw error?.response?.data?.error;
     }
   }
-
-
-  
-
 
 }
 

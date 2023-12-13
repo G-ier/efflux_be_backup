@@ -5,10 +5,10 @@ const AdsetsService = require('../services/AdsetsService');
 const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
-const ContentService = require('../services/ContentService');
+const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const _ = require('lodash');
-const AdQueueRepository = require('../repositories/AdQueueRepository');
+const AdQueueService = require('../services/AdQueueService');
 
 class AdLauncherController {
   constructor() {
@@ -17,107 +17,12 @@ class AdLauncherController {
     this.adAccountService = new AdAccountService();
     this.campaignService = new CampaignService();
     this.userAccountService = new UserAccountService();
-    this.contentService = new ContentService();
-    this.adQueueRepository = new AdQueueRepository();
+    this.adLauncherMedia = new AdLauncherMedia();
+    this.adQueueService = new AdQueueService();
   }
 
-  async sendAdLaunchToQueue(req, res) {
-    try {
-      this.validateRequiredParameters(req);
-      const token = await this.getToken();
-      const adAccountId = this.getAdAccountId(req);
-      const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
-      const firstKey = await this.getFirstKeyFromAdAccounts(adAccountId);
-
-      const { campaignData, adsetData, adData } = this.extractAllData(req);
-      const adQueueData = { ...campaignData, ...adsetData, ...adData, ad_account_id: firstKey };
-
-      const { uploadedMedia, createdMediaObjects } = await this.contentService.handleMediaUploads(
-        req,
-        firstKey,
-        token,
-        req.body.existingContentIds,
-      );
-
-      // TODO: Create media objects asynchrously
-      const contentIds = createdMediaObjects?.map((media) => media.id);
-      console.log({ contentIds });
-
-      const adQueueId = await this.adQueueRepository.saveOne(adQueueData, contentIds, adAccountId);
-
-      const adCreationResult = { id: adQueueId, ...adQueueData };
-
-      res.json({
-        success: true,
-        message: 'Ad successfully sent to queue.',
-        data: adCreationResult,
-      });
-    } catch (error) {
-      FacebookLogger.error(`Error during Ad Launch: ${error.message}`);
-      this.respondWithError(res, error);
-    }
-  }
-
-  extractAllData(req) {
-    const campaignData = this.extractCampaignData(req.body.campaignData, req.body.adAccountId);
-    const adsetData = this.extractAdsetData(req.body.adsetData);
-    const adData = this.extractAdData(req.body.adData);
-
-    return {
-      campaignData,
-      adsetData,
-      adData,
-    };
-  }
-
-  extractAdData(adData) {
-    adData = parseJsonOrDefault(adData);
-
-    // Assuming adData contains all the necessary fields
-    return {
-      ad_name: adData.name,
-      ad_status: adData.status,
-      creative_name: adData.creative_name,
-      asset_feed_spec: adData.asset_feed_spec, // Ensure this is an object or parsed if a string
-    };
-  }
-
-  extractCampaignData(campaignData, adAccountId) {
-    campaignData = parseJsonOrDefault(campaignData);
-    return {
-      ad_account_id: adAccountId,
-      campaign_id: campaignData.id || null,
-      campaign_name: campaignData.name,
-      campaign_objective: campaignData.objective,
-      campaign_special_ad_categories: campaignData.special_ad_categories,
-      campaign_special_ad_categorie_country: campaignData.special_ad_categorie_country || null,
-    };
-  }
-
-  extractAdsetData(adsetData) {
-    adsetData = parseJsonOrDefault(adsetData);
-
-    // Assuming adsetData contains all the necessary fields
-    return {
-      adset_name: adsetData.name,
-      adset_status: adsetData.status,
-      adset_daily_budget: adsetData.daily_budget,
-      adset_special_ad_categories: adsetData.special_ad_categories,
-      adset_special_ad_categorie_country: adsetData.special_ad_categorie_country,
-      dsa_beneficiary: adsetData.dsa_beneficiary,
-      dsa_payor: adsetData.dsa_payor,
-      adset_optimization_goal: adsetData.optimization_goal,
-      adset_billing_event: adsetData.billing_event,
-      is_dynamic_creative: adsetData.is_dynamic_creative,
-      promoted_object: adsetData.promoted_object, // Ensure this is an object or parsed if a string
-      adset_targeting: adsetData.targeting, // Ensure this is an object or parsed if a string
-      attribution_spec: adsetData.attribution_spec, // Ensure this is an array or parsed if a string
-    };
-  }
-
-  async getFirstKeyFromAdAccounts(adAccountId) {
-    const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
-    return Object.keys(adAccountsDataMap)[0];
+  getAdAccountId(req) {
+    return req.body.adAccountId;
   }
 
   async launchAd(req, res) {
@@ -129,7 +34,6 @@ class AdLauncherController {
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
       // Get the first key from the adAccountsDataMap
       const firstKey = Object.keys(adAccountsDataMap)[0];
-
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');
       const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
@@ -148,24 +52,39 @@ class AdLauncherController {
 
       // Utilize handleMediaUploads from ContentService
       FacebookLogger.info('Starting media uploads.');
-      const uploadedMedia = await this.contentService.handleMediaUploads(req, firstKey, token);
+      const { uploadedMedia, createdMediaObjects } = await this.adLauncherMedia.handleMediaUploads(
+        req,
+        firstKey,
+        token,
+      );
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
 
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
       const adData = this.prepareAdData(req, uploadedMedia, adSetId);
+      
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
-      const adCreationResult = await this.compositeService.createAd({
+      const adCreationResult = await this.adLauncherService.createAd({
         token,
         adAccountId: firstKey,
         adData,
+      });
+
+      await this.adQueueService.saveToQueueFromLaunch({
+        adAccountId: firstKey,
+        existingMedia: createdMediaObjects,
+        data: req.body,
+        campaignId:campaignId,
+        adsetId:adSetId,
+        adId:adCreationResult.id
       });
 
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
     } catch (error) {
+      console.log({ error });
       this.respondWithError(res, error);
     }
   }
@@ -412,13 +331,13 @@ class AdLauncherController {
 
   respondWithError(res, error) {
     // Log any errors encountered during the ad launch process
-    FacebookLogger.error(`Error during ad launch: ${error.error_user_msg || error.message}`, {
+    FacebookLogger.error(`Error during ad launch: ${error?.error_user_msg || error.message}`, {
       error,
     });
     res.status(500).json({
       success: false,
       message: 'An error occurred while launching the ad.',
-      error: error.error_user_msg || error.message,
+      error: error?.error_user_msg || error.message,
     });
   }
 }

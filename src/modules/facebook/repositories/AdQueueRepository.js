@@ -1,100 +1,103 @@
 const _ = require('lodash');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const AdQueue = require('../entities/AdQueue'); // Assuming you have a corresponding entity for AdQueue
-
-// TODO: Rename table from ad_queue to ad_launcher_queue (or better name)
-// TODO: Rename table from content to ad_launcher_media
-// TODO: Add new field to ad_launcher_queue: traffic_source (e.g. facebook, instagram, twitter, etc.)
+const AdMetaDataRepository = require('./AdMetaDataRepository');
+const CampaignMetaDataRepository = require('./CampaignMetaDataRepository');
+const AdsetMetadataRepository = require('./AdsetMetaDataRepository');
 
 class AdQueueRepository {
   constructor(database) {
-    this.tableName = 'ad_queue';
+    this.tableName = 'ad_launcher_queue';
     this.database = database || new DatabaseRepository();
+    this.adMetadataRepository = new AdMetaDataRepository();
+    this.adsetMetadataRepository = new AdsetMetadataRepository();
+    this.campaignMetadataRepository = new CampaignMetaDataRepository();
   }
 
-  toDatabaseDTO(adQueue) {
-    return {
-      // Existing fields
-      ad_account_id: adQueue.ad_account_id,
-
-      // Fields from campaignData
-      campaign_name: adQueue.campaign_name,
-      campaign_objective: adQueue.campaign_objective,
-      campaign_special_ad_categories: JSON.stringify(adQueue.campaign_special_ad_categories),
-      campaign_special_ad_categorie_country: adQueue.campaign_special_ad_categorie_country,
-
-      // Fields from adsetData
-      adset_name: adQueue.adset_name,
-      adset_status: adQueue.adset_status,
-      adset_daily_budget: adQueue.adset_daily_budget,
-      adset_special_ad_categories: JSON.stringify(adQueue.adset_special_ad_categories),
-      adset_special_ad_categorie_country: adQueue.adset_special_ad_categorie_country,
-      dsa_beneficiary: adQueue.dsa_beneficiary,
-      dsa_payor: adQueue.dsa_payor,
-      adset_optimization_goal: adQueue.adset_optimization_goal,
-      adset_billing_event: adQueue.adset_billing_event,
-      is_dynamic_creative: adQueue.is_dynamic_creative,
-      promoted_object: JSON.stringify(adQueue.promoted_object),
-      adset_targeting: JSON.stringify(adQueue.adset_targeting),
-      attribution_spec: JSON.stringify(adQueue.attribution_spec),
-
-      // Fields from adData
-      ad_name: adQueue.ad_name,
-      ad_status: adQueue.ad_status,
-      creative_name: adQueue.creative_name,
-      asset_feed_spec: JSON.stringify(adQueue.asset_feed_spec),
-
-      // Other fields
-      created_at: adQueue.created_at,
-      updated_at: adQueue.updated_at,
-    };
-  }
   // Convert database object to AdQueue domain entity
   toDomainEntity(dbObject) {
     return new AdQueue(dbObject);
   }
-
-  async saveOne(adQueue, contentIds = []) {
-    const dbObject = this.toDatabaseDTO(adQueue);
-    console.log({ dbObject });
+  async saveOne({ data, adAccountId, campaignId, adsetId, adId, existingMedia }) {
     try {
-      // Start a transaction
+      // Parse the JSON data
+      const campaignData = data.campaignData ? JSON.parse(data.campaignData) : null;
+      const adsetData = data.adsetData ? JSON.parse(data.adsetData) : null;
+      const adData = data.adData ? JSON.parse(data.adData) : null;
+      console.log('Starting transaction');
       const trx = await this.database.startTransaction();
-      try {
-        // Insert the AdQueue entry
-        const insertedAdQueues = await trx(this.tableName).insert(dbObject).returning('*');
-        console.log({ insertedAdQueues });
-        const adQueueId = insertedAdQueues[0].id;
 
-        // Insert into the junction table for each contentId
-        if (contentIds && contentIds.length > 0) {
-          const junctionEntries = contentIds.map((contentId) => ({
-            ad_queue_id: adQueueId,
-            content_id: contentId,
-          }));
-          await trx('ad_queue_content').insert(junctionEntries);
+      try {
+        let campaignMetadataId, adsetMetadataId, adMetadataId;
+
+        if (campaignData) {
+          console.log('Handling campaign data');
+          const campaignDbObject = this.campaignMetadataRepository.toDatabaseDTO({
+            ...campaignData,
+            campaign_id: campaignId,
+          });
+          [campaignMetadataId] = await trx(this.campaignMetadataRepository.tableName)
+            .insert(campaignDbObject)
+            .returning('id');
+          console.log('Campaign data inserted with ID:', campaignMetadataId);
         }
 
-        // Commit the transaction
-        await trx.commit();
+        if (adsetData) {
+          console.log('Handling adset data');
+          const adsetDbObject = this.adsetMetadataRepository.toDatabaseDTO({
+            ...adsetData,
+            adset_id: adsetId,
+          });
+          [adsetMetadataId] = await trx(this.adsetMetadataRepository.tableName)
+            .insert(adsetDbObject)
+            .returning('id');
+          console.log('Adset data inserted with ID:', adsetMetadataId);
+        }
 
-        return adQueueId;
+        if (adData) {
+          console.log('Handling ad data');
+          const adDbObject = this.adMetadataRepository.toDatabaseDTO({ ...adData, ad_id: adId });
+          [adMetadataId] = await trx(this.adMetadataRepository.tableName)
+            .insert(adDbObject)
+            .returning('id');
+          console.log('Ad data inserted with ID:', adMetadataId);
+        }
+
+        console.log('Inserting into ad_launcher_queue');
+        const [adLauncherQueueId] = await trx(this.tableName)
+          .insert({
+            traffic_source: 'facebook',
+            ad_account_id: adAccountId,
+            campaign_metadata_id: campaignMetadataId,
+            ad_metadata_id: adMetadataId,
+            adset_metadata_id: adsetMetadataId,
+          })
+          .returning('id');
+        console.log('Inserted into ad_launcher_queue with ID:', adLauncherQueueId);
+
+        const mediaIds = existingMedia?.map((media) => media.id);
+        if (mediaIds && mediaIds.length > 0) {
+          console.log('Handling media data');
+          const mediaQueueLinks = mediaIds.map((mediaId) => ({
+            media_id: mediaId,
+            ad_launcher_queue_id: adLauncherQueueId,
+          }));
+
+          await trx('ad_media_queue_link').insert(mediaQueueLinks);
+          console.log('Media data linked');
+        }
+
+        console.log('Committing transaction');
+        await trx.commit();
+        console.log('Transaction committed successfully');
       } catch (error) {
-        // Rollback in case of an error
+        console.error('Error during transaction, rolling back', error);
         await trx.rollback();
         throw error;
       }
     } catch (error) {
-      console.error(`Error in transaction when saving AdQueue: ${error.message}`);
+      console.error('Error starting transaction', error);
       throw error;
-    }
-  }
-
-  async saveInBulk(adQueues, chunkSize = 500) {
-    let data = adQueues.map((adQueue) => this.toDatabaseDTO(adQueue));
-    let dataChunks = _.chunk(data, chunkSize);
-    for (let chunk of dataChunks) {
-      await this.database.insert(this.tableName, chunk);
     }
   }
 
@@ -111,50 +114,65 @@ class AdQueueRepository {
 
   async fetchAdQueues(fields = ['*'], filters = {}, limit) {
     try {
-      let baseQuery = `
-      SELECT
-          ad_queue.*,
-          json_agg(content.*) as contents
-      FROM
-          ad_queue
-      LEFT JOIN
-          ad_queue_content ON ad_queue.id = ad_queue_content.ad_queue_id
-      LEFT JOIN
-          content ON ad_queue_content.content_id = content.id
-      GROUP BY
-          ad_queue.id
-  `;
-      // Apply filters
-      let whereClauses = [];
-      for (const [key, value] of Object.entries(filters)) {
-        if (Array.isArray(value)) {
-          whereClauses.push(`"${this.tableName}".${key} IN (${value.join(', ')})`);
-        } else {
-          whereClauses.push(`"${this.tableName}".${key} = '${value}'`);
+        let baseQuery = `
+            SELECT
+                ad_launcher_queue.*,
+                row_to_json(campaign_metadata.*) as "campaignData",
+                row_to_json(ad_metadata.*) as "adData",
+                row_to_json(adset_metadata.*) as "adsetData",
+                json_agg(ad_launcher_media.*) as media_contents
+            FROM
+                ad_launcher_queue
+            LEFT JOIN
+                campaign_metadata ON ad_launcher_queue.campaign_metadata_id = campaign_metadata.id
+            LEFT JOIN
+                ad_metadata ON ad_launcher_queue.ad_metadata_id = ad_metadata.id
+            LEFT JOIN
+                adset_metadata ON ad_launcher_queue.adset_metadata_id = adset_metadata.id
+            LEFT JOIN
+                ad_media_queue_link ON ad_launcher_queue.id = ad_media_queue_link.ad_launcher_queue_id
+            LEFT JOIN
+                ad_launcher_media ON ad_media_queue_link.media_id = ad_launcher_media.id`;
+
+        let queryParams = [];
+        let whereClauses = [];
+        for (const [key, value] of Object.entries(filters)) {
+            if (Array.isArray(value)) {
+                whereClauses.push(`"${this.tableName}".${key} IN (${value.map(() => `?`).join(', ')})`);
+                queryParams.push(...value);
+            } else {
+                whereClauses.push(`"${this.tableName}".${key} = ?`);
+                queryParams.push(value);
+            }
         }
-      }
-      if (whereClauses.length > 0) {
-        baseQuery += ` WHERE ${whereClauses.join(' AND ')}`;
-      }
 
-      // Apply limit
-      if (limit) {
-        baseQuery += ` LIMIT ${limit}`;
-      }
+        if (whereClauses.length > 0) {
+            baseQuery += ` WHERE ${whereClauses.join(' AND ')}`;
+        }
 
-      const results = await this.database.connection.raw(baseQuery);
-      return results.rows.map((result) => {
-        // Convert to domain entity and include contents
-        const adQueue = this.toDomainEntity(result);
-        console.log({ adQueue });
-        adQueue.contents = result.contents; // Adjust based on your actual result field names
-        return adQueue;
-      });
+        baseQuery += ` GROUP BY ad_launcher_queue.id, campaign_metadata.id, ad_metadata.id, adset_metadata.id`;
+
+        if (limit) {
+            baseQuery += ` LIMIT ?`;
+            queryParams.push(limit);
+        }
+
+        console.log(baseQuery);
+        
+        const results = await this.database.connection.raw(baseQuery, queryParams);
+        return results.rows.map((result) => {
+            // Convert to domain entity and include contents
+            // const adQueue = this.toDomainEntity(result);
+            const adQueue = result;
+            // adQueue.contents = result.contents; // Adjust based on your actual result field names
+            return adQueue;
+        });
     } catch (error) {
-      console.error(`Error executing raw query for table ${this.tableName}:`, error);
-      throw error;
+        console.error(`Error executing raw query for table ${this.tableName}:`, error);
+        throw error;
     }
-  }
 }
+
+}  
 
 module.exports = AdQueueRepository;

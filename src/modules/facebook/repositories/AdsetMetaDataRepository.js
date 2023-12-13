@@ -56,11 +56,18 @@ class AdsetMetadataRepository {
 
 
   toDatabaseDTO(adset) {
+    let mappedAdset = {
+      ...adset,
+      countries: adset.targeting?.geo_locations?.countries || adset.countries,
+      click_through: adset.attribution_spec?.find(spec => spec.event_type === "CLICK_THROUGH")?.window_days,
+      view_through: adset.attribution_spec?.find(spec => spec.event_type === "VIEW_THROUGH")?.window_days,
+      pixel_id: adset.promoted_object?.pixel_id
+    }
+    console.log({mappedAdset})
 
-    let dbObject = this.pickDefinedProperties(adset, ["name",
-      "status",
+    let dbObject = this.pickDefinedProperties(mappedAdset, ["name",
       "daily_budget",
-      "special_ad_category",
+      "special_ad_categories",
       "special_ad_category_country",
       "dsa_beneficiary",
       "dsa_payor",
@@ -85,7 +92,6 @@ class AdsetMetadataRepository {
     return new AdsetMetadata(
       dbObject.id,
       dbObject.name,
-      dbObject.status,
       dbObject.daily_budget,
       dbObject.special_ad_category,
       dbObject.special_ad_category_country,

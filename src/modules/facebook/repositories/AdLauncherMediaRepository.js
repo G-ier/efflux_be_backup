@@ -2,9 +2,9 @@ const _ = require("lodash");
 const Content = require("../entities/Content"); // Assuming you have a Content entity
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 
-class ContentRepository {
+class AdLauncherMediaRepository {
   constructor(database) {
-    this.tableName = "content";
+    this.tableName = "ad_launcher_media";
     this.database = database || new DatabaseRepository();
   }
 
@@ -73,7 +73,6 @@ class ContentRepository {
 
   // Convert Content entity to database object
   toDatabaseDTO(content) {
-    console.log({content})
     return {
       type: content.type,
       url: content.url,
@@ -97,4 +96,4 @@ class ContentRepository {
   }
 }
 
-module.exports = ContentRepository;
+module.exports = AdLauncherMediaRepository;
