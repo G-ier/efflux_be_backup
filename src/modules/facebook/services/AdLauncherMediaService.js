@@ -26,7 +26,31 @@ class AdLauncherMedia extends BaseService {
     }
   }
 
-  // TODO: add a new function to upload the media to S3 bucket
+  // function to upload the media to S3 bucket
+  async uploadToMediaLibrary(imageBuffer, filename, adAccountId, token) {
+    const formData = new FormData();
+
+    formData.append('media_file', imageBuffer, filename);
+    formData.append('ad_account_id', adAccountId);
+    formData.append('user_id', '123456789'); // TODO: Replace with actual user ID
+
+    const url = `https://des78tc1jb.execute-api.us-east-1.amazonaws.com/upload`;
+
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error uploading image to media library: ', error);
+      throw error;
+    }
+  }
 
   async uploadToFacebook(imageBuffer, filename, adAccountId, token) {
     const formData = new FormData();
@@ -183,6 +207,13 @@ class AdLauncherMedia extends BaseService {
 
   async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects) {
     for (const file of images) {
+      const imageId = await this.uploadToMediaLibrary(
+        file.buffer,
+        file.originalname,
+        adAccountId,
+        token,
+      );
+
       const imageHash = await this.uploadToFacebook(
         file.buffer,
         file.originalname,
