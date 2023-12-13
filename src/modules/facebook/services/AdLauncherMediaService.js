@@ -32,7 +32,7 @@ class AdLauncherMedia extends BaseService {
 
     formData.append('media_file', imageBuffer, filename);
     formData.append('ad_account_id', adAccountId);
-    formData.append('user_id', '123456789'); // TODO: Replace with actual user ID
+    formData.append('user_id', '123456789'); // TODO: Replace with actual user ID from session
 
     const url = `https://des78tc1jb.execute-api.us-east-1.amazonaws.com/upload`;
 
