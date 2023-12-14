@@ -32,6 +32,11 @@ class AdLauncherMedia extends BaseService {
 
     formData.append('media_file', imageBuffer, filename);
     formData.append('ad_account_id', adAccountId);
+    formData.append('ad_id', '123456789'); // TODO: Replace with actual ad ID
+    formData.append('country_code', 'CA'); // TODO: Replace with actual country code
+    formData.append('language_code', 'FR'); // TODO: Replace with actual language code
+    formData.append('vertical', 'ecommerce'); // TODO: Replace with actual vertical
+    formData.append('industry', 'ecommerce'); // TODO: Replace with actual industry
     formData.append('user_id', '123456789'); // TODO: Replace with actual user ID from session
 
     const url = 'https://u1yua8b7cf.execute-api.us-east-1.amazonaws.com/upload';
