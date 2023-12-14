@@ -48,6 +48,8 @@ class CompositeService {
 
         // Sync Ads
         await this.adService.syncAds(access_token, campaigns, updatedAdAccountsDataMap);
+
+        return true;
     }
 
     async sendS2SEvents(date) {
