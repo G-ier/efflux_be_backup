@@ -1,5 +1,5 @@
 
-const detectPurchaseEvents = async (database, date, traffic_source) => {
+const detectCrossroadsPurchaseEvents = async (database, date, traffic_source) => {
 
   const QUERY = `
     SELECT
@@ -50,4 +50,4 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
   return result.rows
 }
 
-module.exports = detectPurchaseEvents
+module.exports = detectCrossroadsPurchaseEvents

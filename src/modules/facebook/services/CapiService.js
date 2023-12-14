@@ -181,19 +181,34 @@ class CapiService extends BaseService{
       return payloads;
     };
 
-    async updateInvalidEvents(brokenEvents){
+    async updateInvalidEvents(brokenEvents, network='crossroads'){
       const eventIds        = brokenEvents.map((event) => event.id)
       this.logger.info(`Updating Broken Events in DB`);
-      const updatedCount = await this.database.update('raw_crossroads_data', {valid_pixel: false}, {unique_identifier: eventIds});
+      const tableName = network === 'crossroads' ? 'raw_crossroads_data' : 'tonic_raw_insights';
+      const updatedCount = await this.database.update(tableName, {valid_pixel: false}, {unique_identifier: eventIds});
       this.logger.info(`Updated ${updatedCount} Broken events to Facebook CAPI`)
     }
 
-    async updateReportedEvents(eventIds){
-      this.logger.info(`Updating Reported Session in DB`);
-      const updatedCount = await this.database.update('raw_crossroads_data', {reported_to_ts: true}, {unique_identifier: eventIds})
-      this.logger.info(`Reported ${updatedCount} session to Facebook CAPI`);
-    }
+    async updateReportedEvents(eventIds, network='crossroads') {
 
+      this.logger.info(`Updating Reported Session in DB`);
+
+      let updatedCount;
+      if (network === 'crossroads') {
+        updatedCount = await this.database.update('raw_crossroads_data', {reported_to_capi: true}, {unique_identifier: eventIds})
+      } else if (network === 'tonic') {
+        updatedCount = await this.database.update('tonic_raw_insights',
+          {
+            reported_conversions: this.database.connection.ref('conversions'),
+            reported_amount: this.database.connection.ref('revenue')
+          },
+          {
+            unique_identifier: eventIds
+          }
+       )
+      }
+      this.logger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
+    }
 }
 
 module.exports = CapiService;
