@@ -207,6 +207,7 @@ class AdLauncherMedia extends BaseService {
 
   async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects) {
     for (const file of images) {
+      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
       const imageId = await this.uploadToMediaLibrary(
         file.buffer,
         file.originalname,
