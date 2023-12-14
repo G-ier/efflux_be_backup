@@ -9,8 +9,17 @@ class AdQueueService extends BaseService {
     this.adQueueRepository = new AdQueueRepository();
   }
 
-  async saveToQueueFromLaunch({ adAccountId, existingMedia, data, campaignId, adsetId, adId }) {
-  return await  this.adQueueRepository.saveOne({
+  async saveToQueueFromLaunch({
+    adAccountId,
+    existingMedia,
+    data,
+    campaignId,
+    adsetId,
+    adId,
+    existingLaunchId,
+  }) {
+    return await this.adQueueRepository.saveOne({
+      existingLaunchId,
       adAccountId,
       existingMedia,
       data,
@@ -27,8 +36,7 @@ class AdQueueService extends BaseService {
     // Pass the parsed filter object to your repository method
     const results = await this.adQueueRepository.fetchAdQueues(fields, filterObject, limit);
     return results;
-}
-
+  }
 }
 
 module.exports = AdQueueService;

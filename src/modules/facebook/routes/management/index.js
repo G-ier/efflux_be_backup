@@ -80,7 +80,7 @@ route.post("/upload-video", upload.single('video'), (req, res) => adLauncherCont
 route.post("/upload-image", upload.single('file'), (req, res) => adLauncherController.uploadImageToFacebook(req, res));
 
 route.post("/launch-ad", upload.fields([{ name: 'video', maxCount: 5 }, { name: 'images', maxCount: 10 }]), (req, res) => adLauncherController.launchAd(req, res));
-route.post("/queue-ad", upload.fields([{ name: 'video', maxCount: 5 }, { name: 'images', maxCount: 10 }]), (req, res) => adLauncherController.sendAdLaunchToQueue(req, res));
+route.post("/queue-ad", upload.fields([{ name: 'video', maxCount: 5 }, { name: 'images', maxCount: 10 }]), (req, res) => adQueueController.sendLaunchToQueue(req, res));
 route.get("/ad-queues",(req, res) => adQueueController.fetchAdQueue(req, res))
 
 

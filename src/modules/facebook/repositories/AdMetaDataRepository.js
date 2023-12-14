@@ -7,6 +7,25 @@ class AdMetaDataRepository {
     this.tableName = "ad_metadata";
     this.database = database || new DatabaseRepository();
   }
+    
+  async upsert(adData, adId, adMetadataId, trx) {
+    if (!adData) {
+      return adMetadataId;
+    }
+    let adDbObject = this.toDatabaseDTO({
+      ...adData,
+      ad_id: adId,
+      id: adMetadataId // Include ID only if it exists
+    });
+  
+    return await this.database.upsert(
+      this.tableName,
+      [adDbObject],
+      'id',
+      [],
+      trx
+    );
+  }
 
   toDatabaseDTO(adData) {
     // Extracting properties from 'creative' object
@@ -14,7 +33,8 @@ class AdMetaDataRepository {
     let pageId = adData.creative?.object_story_spec?.page_id;
     let assetFeedSpec = adData.creative?.asset_feed_spec;
 
-    return {
+    // Initialize the database object with required properties
+    let databaseDTO = {
         name: adData.name,
         status: adData.status,
         creative_name: creativeName || adData.name,
@@ -22,6 +42,13 @@ class AdMetaDataRepository {
         asset_feed_spec: JSON.stringify(assetFeedSpec),
         ad_id: adData.ad_id,
     };
+
+    // Add 'id' to the object if it exists
+    if (adData.id) {
+        databaseDTO.id = adData.id;
+    }
+
+    return databaseDTO;
 }
 
   toDomainEntity(dbObject) {

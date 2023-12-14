@@ -27,6 +27,9 @@ class AdLauncherController {
 
   async launchAd(req, res) {
     try {
+
+      const existingLaunchId = req?.body?.existinLaunchId
+
       FacebookLogger.info('Ad launch process initiated.');
       this.validateRequiredParameters(req);
       const token = await this.getToken();
@@ -58,7 +61,7 @@ class AdLauncherController {
         token,
       );
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
-
+      console.log({uploadedMedia, createdMediaObjects})
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
       const adData = this.prepareAdData(req, uploadedMedia, adSetId);
@@ -72,6 +75,7 @@ class AdLauncherController {
       });
 
       await this.adQueueService.saveToQueueFromLaunch({
+        existingLaunchId,
         adAccountId: firstKey,
         existingMedia: createdMediaObjects,
         data: req.body,

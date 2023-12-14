@@ -26,13 +26,26 @@ class CampaignMetaDataRepository {
     }
   }
 
-  async upsert(campaigns, adAccountsMap, chunkSize = 500) {
-    const dbObjects = campaigns.map((campaign) => this.toDatabaseDTO(campaign, adAccountsMap));
-    const dataChunks = _.chunk(dbObjects, chunkSize);
-    for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "id");
+  
+  async upsert(campaignData, campaignId, campaignMetadataId, trx) {
+    if (!campaignData) {
+      return campaignMetadataId;
     }
+    let campaignDbObject = this.toDatabaseDTO({
+      ...campaignData,
+      campaign_id: campaignId,
+      id: campaignMetadataId
+    });
+  
+    return await this.database.upsert(
+      this.tableName,
+      [campaignDbObject],
+      'id',
+      [],
+      trx
+    );
   }
+  
 
   async update(updateFields, criterion) {
     return await this.database.update(this.tableName, updateFields, criterion);

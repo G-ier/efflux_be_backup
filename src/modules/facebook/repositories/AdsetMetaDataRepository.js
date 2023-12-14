@@ -1,11 +1,10 @@
-const _ = require("lodash");
-const AdsetMetadata = require("../entities/AdsetMetadata");
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+const _ = require('lodash');
+const AdsetMetadata = require('../entities/AdsetMetadata');
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 
 class AdsetMetadataRepository {
-
   constructor(database) {
-    this.tableName = "adset_metadata";
+    this.tableName = 'adset_metadata';
     this.database = database || new DatabaseRepository();
   }
 
@@ -27,19 +26,11 @@ class AdsetMetadataRepository {
     }
   }
 
-  async upsert(adsets, adAccountsMap, chunkSize = 500) {
-    const dbObjects = adsets.map((adset) => this.toDatabaseDTO(adset, adAccountsMap));
-    const dataChunks = _.chunk(dbObjects, chunkSize);
-    for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "provider_id");
-    }
-  }
-
   async update(updateFields, criterion) {
     return await this.database.update(this.tableName, updateFields, criterion);
   }
 
-  async fetchAdsetMetadata(fields = ["*"], filters = {}, limit, joins=[]) {
+  async fetchAdsetMetadata(fields = ['*'], filters = {}, limit, joins = []) {
     const results = await this.database.query(this.tableName, fields, filters, limit, joins);
     return results;
   }
@@ -53,36 +44,56 @@ class AdsetMetadataRepository {
     }, {});
   }
 
+  async upsert(adsetData, adsetId, adsetMetadataId, trx) {
+    if (!adsetData) {
+      return adsetMetadataId;
+    }
+    let adsetDbObject = this.toDatabaseDTO({
+      ...adsetData,
+      adset_id: adsetId,
+      id: adsetMetadataId, // Include ID only if it exists
+    });
 
+    return await this.database.upsert(
+      this.tableName,
+      [adsetDbObject],
+      'id',
+      [],
+      trx,
+    );
+  }
 
   toDatabaseDTO(adset) {
     let mappedAdset = {
       ...adset,
       countries: adset.targeting?.geo_locations?.countries || adset.countries,
-      click_through: adset.attribution_spec?.find(spec => spec.event_type === "CLICK_THROUGH")?.window_days,
-      view_through: adset.attribution_spec?.find(spec => spec.event_type === "VIEW_THROUGH")?.window_days,
-      pixel_id: adset.promoted_object?.pixel_id
-    }
-    console.log({mappedAdset})
+      click_through: adset.attribution_spec?.find((spec) => spec.event_type === 'CLICK_THROUGH')
+        ?.window_days,
+      view_through: adset.attribution_spec?.find((spec) => spec.event_type === 'VIEW_THROUGH')
+        ?.window_days,
+      pixel_id: adset.promoted_object?.pixel_id,
+    };
 
-    let dbObject = this.pickDefinedProperties(mappedAdset, ["name",
-      "daily_budget",
-      "special_ad_categories",
-      "special_ad_category_country",
-      "dsa_beneficiary",
-      "dsa_payor",
-      "optimization_goal",
-      "billing_event",
-      "is_dynamic_creative",
-      "age_min",
-      "age_max",
-      "countries",
-      "user_os",
-      "gender",
-      "click_through",
-      "view_through",
-      "pixel_id",
-      "adset_id",
+    let dbObject = this.pickDefinedProperties(mappedAdset, [
+      'id',
+      'name',
+      'daily_budget',
+      'special_ad_categories',
+      'special_ad_category_country',
+      'dsa_beneficiary',
+      'dsa_payor',
+      'optimization_goal',
+      'billing_event',
+      'is_dynamic_creative',
+      'age_min',
+      'age_max',
+      'countries',
+      'user_os',
+      'gender',
+      'click_through',
+      'view_through',
+      'pixel_id',
+      'adset_id',
     ]);
 
     return dbObject;
@@ -110,10 +121,9 @@ class AdsetMetadataRepository {
       dbObject.pixel_id,
       dbObject.adset_id,
       dbObject.created_at,
-      dbObject.updated_at
+      dbObject.updated_at,
     );
   }
-  
 }
 
 module.exports = AdsetMetadataRepository;
