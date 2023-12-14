@@ -67,7 +67,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
     return `traffic_source AS (
     SELECT tbl.date,
     tbl.hour,
-    tbl.campaign as campaign_id,
+    tbl.campaign_id as campaign_id,
     CAST(ROUND(SUM(tbl.spent)::decimal, 2) AS FLOAT) as spend,
     CAST(ROUND(SUM(tbl.impressions)::decimal, 2) AS FLOAT) as impressions,
     CAST(ROUND(SUM(tbl.clicks)::decimal, 2) AS FLOAT) as clicks,
