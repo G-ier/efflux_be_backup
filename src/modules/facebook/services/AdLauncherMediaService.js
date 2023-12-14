@@ -145,10 +145,10 @@ class AdLauncherMedia extends BaseService {
 
     // Process new uploads (Images and Videos)
     if (req.files) {
-      console.log("ASd")
+      console.log('ASd');
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
-    console.log({asd:uploadedMedia})
+    console.log({ asd: uploadedMedia });
     return { uploadedMedia, createdMediaObjects };
   }
 
@@ -213,15 +213,12 @@ class AdLauncherMedia extends BaseService {
 
   async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects) {
     for (const file of images) {
-
-
       const imageHash = await this.uploadToFacebook(
         file.buffer,
         file.originalname,
         adAccountId,
         token,
       );
-
 
       // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
       const imageId = await this.uploadToMediaLibrary(
@@ -230,7 +227,6 @@ class AdLauncherMedia extends BaseService {
         adAccountId,
         imageHash['images'][file.originalname].hash,
       );
-
 
       const createdImage = await this.createContent({
         type: 'image',
@@ -261,7 +257,6 @@ class AdLauncherMedia extends BaseService {
     const results = await this.pageRepository.fetchPages(fields, filters, limit);
     return results;
   }
-  
 }
 
 module.exports = AdLauncherMedia;
