@@ -214,6 +214,8 @@ class AdLauncherMedia extends BaseService {
         token,
       );
 
+      console.log({ imageId });
+
       const imageHash = await this.uploadToFacebook(
         file.buffer,
         file.originalname,
