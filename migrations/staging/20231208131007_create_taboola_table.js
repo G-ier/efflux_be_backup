@@ -2,7 +2,7 @@ exports.up = function (knex) {
     return knex.schema.createTable('taboola', function (table) {
       table.string("campaign_id");
       table.string('campaign_name');
-      table.date('date');
+      table.string('date');
       table.integer('hour');
       table.integer('clicks');
       table.integer('impressions');
