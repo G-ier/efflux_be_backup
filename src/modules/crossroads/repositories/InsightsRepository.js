@@ -65,8 +65,9 @@ class InsightsRepository {
       })
     }
 
-    data = data.filter((item) => item.tg3 !== "{{fbclid}}" && item.tg3 !== '');
+    data = data.filter((item) => item.tg3 !== "{{fbclid}}" && item.tg3 !== '' && item.tg10.includes("_|_"));
 
+    // We will change this from campaign id restrictions to a specigic tg2 value.
     if (campaignIdRestrictions && campaignIdRestrictions.length > 0) {
       data = data.filter((item) => campaignIdRestrictions.includes(item.tg2));
     }
@@ -78,6 +79,7 @@ class InsightsRepository {
       const parsedChunk = _.uniqBy(chunk, "unique_identifier");
       await this.database.upsert("raw_crossroads_data", parsedChunk, "unique_identifier", ['reported_to_ts']);
     }
+
   }
 
   async fetchInsights(fields = ["*"], filters = {}, limit) {
