@@ -62,7 +62,7 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
         GROUP BY tt.date, tt.hour, tt.adset_id
       )
     `
-  } 
+  }
   else if (trafficSource === 'taboola'){
     return `traffic_source AS (
     SELECT tbl.date,
@@ -74,8 +74,8 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
     CAST(ROUND(SUM(tbl.cpa_actions_num)::decimal, 2) AS FLOAT) as ts_conversions,
     MAX(tbl.updated_at) as ts_last_updated,
     null as adset_id
-    FROM taboola tbl 
-    GROUP BY tbl.date, tbl.hour, tbl.campaign
+    FROM taboola tbl
+    GROUP BY tbl.date, tbl.hour, tbl.campaign_id
     )`
   }
   else {
@@ -238,7 +238,7 @@ function RETURN_FIELDS(network, traffic_source) {
     }
     else if (trafficSource === 'taboola'){
       return `
-      CASE WHEN network.date IS NULL THEN traffic_source.spend 
+      CASE WHEN network.date IS NULL THEN traffic_source.spend
       ELSE 0 END as unallocated_spend_plus_fee,
       CASE WHEN network.date IS NOT NULL THEN
       traffic_source.spend

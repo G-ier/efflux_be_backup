@@ -10,9 +10,10 @@ const AdService = require("./AdService");
 const InsightService = require("./InsightService");
 const S2SService = require("./S2SService");
 const { TaboolaLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
-const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents");
+const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents");
 
 class CompositeService {
+
     constructor() {
         this.userAccountService = new UserAccountService();
         this.adAccountService = new AdAccountService();
@@ -28,7 +29,7 @@ class CompositeService {
         await this.userAccountService.syncTaboolaNetworkAccount(access_token);
         const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
         TaboolaLogger.info(`Syncing data for account ${name}`);
-        
+
         //Sync Ad Accounts
         await this.adAccountService.syncAdAccounts(provider_id, access_token, user_id, id);
         const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
@@ -42,7 +43,7 @@ class CompositeService {
 
         // Sync Campaigns
         const campaigns = await this.campaignService.syncCampaigns(access_token, updatedAdAccountsIds, updatedAdAccountsDataMap);
-        
+
         await this.insightService.syncInsights(updatedAdAccountsIds, access_token,
           start_date, end_date);
 
@@ -56,13 +57,13 @@ class CompositeService {
         // Retrieve the data
         CapiLogger.info(`Fetching session from DB.`);
         // To be replaced
-        const data = await detectPurchaseEvents(this.capiService.database, date, 'taboola');
+        const data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'taboola');
         if (data.length === 0) {
         CapiLogger.info(`No events found for date ${date}.`);
         return;
         }
         CapiLogger.info(`Done fetching ${data.length} session from DB.`);
-        
+
         const tblProcessedPayloads = await this.s2SService.constructTaboolaS2SPayload(data);
 
         CapiLogger.info(`Posting events to FB CAPI in batches.`);

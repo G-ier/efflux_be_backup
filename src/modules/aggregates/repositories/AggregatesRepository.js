@@ -27,7 +27,7 @@ class AggregatesRepository {
 
   async campaignAdsets(params) {
     const { startDate, endDate, campaignId } = params;
-  
+
     // Check if campaignId is an array
     if (Array.isArray(campaignId)) {
       return await adsetsByCampaignId(this.database, startDate, endDate,campaignId);
@@ -82,7 +82,6 @@ class AggregatesRepository {
   }
 
   async compileAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
-    console.log("HEY");
     return await compileAggregates(this.database, network, trafficSource, startDate, endDate, campaignIdsRestriction);
   }
 
