@@ -166,13 +166,14 @@ class InsightsRepository {
       stat.campaign__name.includes("FB")
     )
       return PROVIDERS.FACEBOOK;
-    if (
+    else if (
       stat.tg1.startsWith(PROVIDERS.OUTBRAIN) ||
       stat.referrer.includes(PROVIDERS.OUTBRAIN) ||
       stat.campaign__name.includes("OUTB")
     )
       return PROVIDERS.OUTBRAIN;
-    if (stat.campaign__name.includes("TT") || stat.referrer.includes(PROVIDERS.TIKTOK)) return PROVIDERS.TIKTOK;
+    else if (stat.campaign__name.includes("TT") || stat.referrer.includes(PROVIDERS.TIKTOK)) return PROVIDERS.TIKTOK;
+    else if (stat.campaign__name.includes("TB")) return PROVIDERS.TABOOLA;
     else {
       return PROVIDERS.UNKNOWN;
     }
@@ -234,6 +235,20 @@ class InsightsRepository {
         campaign_name: stat.tg1,
         adset_name: stat.tg4,
       };
+    }
+    else if (traffic_source === PROVIDERS.TABOOLA){
+      return{
+        ...stat,
+        traffic_source,
+        campaign_id: stat.tg2,
+        fbclid: stat.tg10,
+        gclid: null,
+        pixel_id: null, // ? recheck
+        adset_id: null,
+        ad_id: stat.tg5,
+        campaign_name: stat.tg1,
+        adset_name: null
+      }
     }
     return {
       ...stat,

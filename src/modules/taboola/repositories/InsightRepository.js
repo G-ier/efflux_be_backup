@@ -26,7 +26,7 @@ class InsightRepository {
     const dbObjects = adInsights.map((adInsight) => this.toDatabaseDTO(adInsight));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-        await this.database.upsert(this.tableName, chunk, "unique_id");
+        await this.database.upsert(this.tableName, chunk, "unique_identifier");
     }
     return dbObjects;
   }
@@ -38,9 +38,9 @@ class InsightRepository {
 
   toDatabaseDTO(insight) {
     return {      
-      campaign: insight.campaign,
+      campaign_id: insight.campaign,
       campaign_name: insight.campaign_name,
-      date: insight.date,
+      date: insight.date.split(' ')[0],
       hour: new Date(insight.date).getHours(),
       clicks: insight.clicks,
       impressions: insight.impressions,
@@ -63,7 +63,7 @@ class InsightRepository {
       cpa_conversion_rate_clicks: insight.cpa_conversion_rate_clicks,
       cpa_conversion_rate_views: insight.cpa_conversion_rate_views,
       currency: insight.currency,
-      unique_id: `${insight.campaign}-${insight.date.split(" ")[0]}-${new Date(insight.date).getHours()}`,
+      unique_identifier: `${insight.campaign}-${insight.date.split(" ")[0]}-${new Date(insight.date).getHours()}`,
     };
   }
 

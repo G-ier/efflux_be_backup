@@ -1,6 +1,6 @@
 exports.up = function (knex) {
     return knex.schema.createTable('taboola', function (table) {
-      table.string("campaign");
+      table.string("campaign_id");
       table.string('campaign_name');
       table.date('date');
       table.integer('hour');
@@ -25,7 +25,7 @@ exports.up = function (knex) {
       table.decimal('cpa_conversion_rate_clicks', 5, 2);
       table.decimal('cpa_conversion_rate_views', 5, 2);
       table.string('currency');
-      table.string('unique_id');
+      table.string('unique_identifier');
       table.timestamp('created_at').defaultTo(knex.fn.now());
       table.timestamp('updated_at').defaultTo(knex.fn.now());
     });
