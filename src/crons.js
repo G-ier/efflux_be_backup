@@ -5,7 +5,8 @@ const initializeTaboolaCron               = require("./modules/taboola/crons");
 const initializeSedoCron                  = require("./modules/sedo/crons");
 const initializeAggregatesUpdateCron      = require("./modules/aggregates/crons/aggregates");
 const initializeRevealBotSheetsUpdateCron = require("./modules/aggregates/crons/revealBotSheets");
-const initializeTemporaryCron            = require("./modules/temp/crons");
+const initializeTonicCron                 = require("./modules/tonic/crons");
+const initializeTemporaryCron             = require("./modules/temp/crons");
 
 
 const initializeCronJobs = () => {
@@ -16,6 +17,7 @@ const initializeCronJobs = () => {
   initializeTaboolaCron();
   initializeAggregatesUpdateCron();
   initializeRevealBotSheetsUpdateCron();
+  initializeTonicCron();
   // initializeTemporaryCron();
 };
 

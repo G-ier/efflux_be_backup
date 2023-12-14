@@ -1,0 +1,12 @@
+{
+  "id": "1",
+  "name": "First Campaign Test",
+  "type": "display",
+  "country": "US",
+  "imprint": "no",
+  "offer_id": "3",
+  "offer": "Test Offer",
+  "vertical": "Test Vertical",
+  "link": "123456.track.com",
+  "target": "test-target.bond"
+}
