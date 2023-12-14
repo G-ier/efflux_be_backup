@@ -1,7 +1,7 @@
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 const environment = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT') === 'production' ? 'prod' : 'staging'
 
-const TIKTOK_UPDATE_TODAY_REGULAR_CRON              = environment === 'prod' ?  '*/15 * * * *' : '55 * * * *'
+const TIKTOK_UPDATE_TODAY_REGULAR_CRON              = environment === 'prod' ?  '*/15 * * * *' : '0 * * * *'
 const TIKTOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON  = '5 8 * * *'
 const TIKTOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON   = '4 11 * * *'
 const TIKTOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON = '5 12 * * *'

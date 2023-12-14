@@ -16,7 +16,7 @@ const initializeCronJobs = () => {
   initializeTaboolaCron();
   initializeAggregatesUpdateCron();
   initializeRevealBotSheetsUpdateCron();
-  initializeTemporaryCron();
+  // initializeTemporaryCron();
 };
 
 module.exports = { initializeCronJobs };

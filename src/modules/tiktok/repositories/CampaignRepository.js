@@ -3,6 +3,7 @@ const Campaign = require("../entities/Campaign");
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 
 class CampaignRepository {
+
   constructor(database) {
     this.tableName = "campaigns";
     this.database = database || new DatabaseRepository();
@@ -28,6 +29,7 @@ class CampaignRepository {
       await this.database.upsert(this.tableName, chunk, "id");
     }
   }
+
   async updateOne(campaign, criteria) {
     const data = this.toDatabaseDTO(campaign)
     const dbObject = Object.keys(data).reduce((acc, key) => {
@@ -39,9 +41,25 @@ class CampaignRepository {
 
     return await this.database.update(this.tableName, dbObject, criteria);
   }
+
   async fetchCampaigns(fields = ["*"], filters = {}, limit, joins=[]) {
     const results = await this.database.query(this.tableName, fields, filters, limit, joins);
     return results;
+  }
+
+  async fetchAccountsEarliestCampaign(userAccountId) {
+    const results = await this.database.raw(`
+      SELECT
+          TO_CHAR((created_time::timestamptz AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS date_in_utc
+      FROM
+          campaigns
+      WHERE
+          account_id = ${userAccountId}
+      ORDER BY
+          created_time::timestamptz
+      LIMIT 1;
+    `)
+    return results.rows;
   }
 
   toDatabaseDTO(campaign, adAccountsMap) {

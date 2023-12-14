@@ -132,6 +132,12 @@ class AggregatesService {
     }
   }
 
+  async updateTikTokUserAccountAggregates(startDate, endDate, campaignIdsRestriction) {
+    for (const network of AVAILABLE_NETWORKS) {
+      await this.updateAggregates(network, 'tiktok', startDate, endDate, campaignIdsRestriction);
+    }
+  }
+
 }
 
 

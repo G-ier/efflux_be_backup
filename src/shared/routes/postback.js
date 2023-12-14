@@ -8,7 +8,7 @@ const {todayHH, todayYMD} = require("../../shared/helpers/calendar");
 const PROVIDERS = require('../constants/providers');
 const DatabaseRepository = require('../lib/DatabaseRepository');
 const { sendSlackNotification } = require("../lib/SlackNotificationService")
-const { PostbackLogger } = require('../../shared/lib/WinstonLogger');
+const { PostbackLogger, PostbackTestLogger } = require('../../shared/lib/WinstonLogger');
 const {PostbackQueue} = require('../helpers/Queue');
 
 const db = new DatabaseRepository()
@@ -16,7 +16,7 @@ const postbackQueue = new PostbackQueue();
 
 // @route     /trk
 // @desc     GET track
-// @Access   Private
+// @Access   Public
 route.get("/", async (req, res) => {
   try {
     const client_ip_address = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
@@ -102,7 +102,7 @@ route.get("/", async (req, res) => {
 
 // @route     /trk
 // @desc     POST track
-// @Access   Private
+// @Access   Public
 route.post("/", async (req, res) => {
   try {
     const client_ip_address = req.headers["x-forwarded-for"] || req.socket.remoteAddress;
@@ -251,5 +251,80 @@ route.get('/sedo', async (req, res) => {
 
 });
 
+// @route     /trk/pb_test
+// @desc     Get track
+// @Access   Public
+route.get('/pb_test', async(req, res) =>{
+  try{
+    const headers = req.headers;
+    const data = req.query;
+    PostbackTestLogger.info(`Get Request Header: ${JSON.stringify(headers)}`);
+    PostbackTestLogger.info(`Get Request Query: ${JSON.stringify(data)}`);
+    res.status(200).json({message: 'success'});
+    PostbackTestLogger.info(`SUCCESS`)
+  }catch(err){
+    PostbackTestLogger.info(`ERROR during GET request`);
+    PostbackTestLogger.error(`ERROR: ${err}`);
+    res.status(500).json(err.message);
+  }
+});
+
+// @route     /trk/pb_test
+// @desc     post track
+// @Access   Public
+route.post('/pb_test', async(req, res) =>{
+  try{
+    const headers = req.headers;
+    const data = req.body;
+    PostbackTestLogger.info(`Post Request Header: ${JSON.stringify(headers)}`);
+    PostbackTestLogger.info(`Post Request Body: ${JSON.stringify(data)}`);
+    res.status(200).json({message: 'success'});
+    PostbackTestLogger.info(`SUCCESS`)
+  }
+  catch(err){
+    PostbackTestLogger.info(`ERROR during POST request`);
+    PostbackTestLogger.error(`ERROR: ${err}`);
+    res.status(500).json(err.message);
+  }
+});
+
+// @route     /trk/collect
+// @desc     Get tracking data from GTM
+// @Access   Public
+route.get('/collect', async(req, res) => {
+
+  // Deconstruct query params
+  const {
+    session_id,
+    fbc,
+    fbp
+  } = req.query;
+  PostbackLogger.info(`GTM FB TRACKING: ${JSON.stringify(req.query)}`)
+
+  // Handle invalid requests
+  if (!session_id || !fbc || !fbp) {
+    res.status(400).json({message: 'Bad Request - Missing required query params'});
+    return;
+  }
+
+  // Store request data
+  const trackingData = {
+    session_id,
+    fbc,
+    fbp
+  };
+
+  // Upsert into database
+  try {
+    await db.upsert('gtm_fb_cookie_values', [trackingData], 'session_id');
+    res.status(200).contentType('application/javascript').send('console.log("Operation successful");');
+    PostbackLogger.info(`SUCCESS`)
+  } catch (err) {
+    PostbackLogger.error(`POSTBACK GTM FB TRACKING ERROR ${err}`)
+    sendSlackNotification(`Postback Update Error: ${err.message}`)
+    res.status(500).json(err.message);
+  }
+
+});
 
 module.exports = route;

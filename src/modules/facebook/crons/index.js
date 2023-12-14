@@ -19,6 +19,7 @@ const EnvironmentVariablesManager                                = require('../.
 
 const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
 const DISABLE_FACEBOOK_CRON       = EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_CRON')
+const CRON_ENVIRONMENT            = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT')
 const disableGeneralCron          = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
 const disableFacebookCron         = DISABLE_FACEBOOK_CRON === 'true' || DISABLE_FACEBOOK_CRON !== 'false';
 const compositeService            = new CompositeService();
@@ -127,7 +128,7 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
   updatePagesRegular.start();
-  reportFacebookConversionsRegular.start();
+  if (CRON_ENVIRONMENT === 'production') reportFacebookConversionsRegular.start();
 }
 
 module.exports = initializeFacebookCron;

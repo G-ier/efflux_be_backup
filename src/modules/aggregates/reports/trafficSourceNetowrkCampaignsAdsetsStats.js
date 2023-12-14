@@ -26,6 +26,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     ad.campaign_id,
     MAX(ad.campaign_name) as campaign_name,
     MAX(c.status) as status,
+    MAX(c.created_at) as created_at,
     ${castSum("ad.spend", "FLOAT")} as spend,
     ${castSum("ad.spend_plus_fee", "FLOAT")} as spend_plus_fee,
     ${castSum("ad.revenue", "FLOAT")} as revenue,

@@ -107,6 +107,9 @@ class EventsService extends BaseService {
 
       events.forEach((event) => {
 
+        if (['', null, undefined].includes(event.timestamp) || ['', null, undefined].includes(event.external))
+          return;
+
         for ( let i = 0; i < event.purchase_event_count; i++ ) {
 
           if ( currentPayload.data.length === MAX_EVENTS ) {
