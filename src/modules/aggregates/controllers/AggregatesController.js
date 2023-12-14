@@ -117,7 +117,7 @@ class AggregatesController {
 
   async syncData(req, res) {
     try {
-      const { startDate, endDate, trafficSource, network, campaignIdsRestriction } = await this.extractRequestDataWithUser(req);
+      const { startDate, endDate, trafficSource, network, campaignIdsRestriction } = req.query
       const data = await this.aggregatesService.updateAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction);
       return res.json(data);
     } catch (e) {

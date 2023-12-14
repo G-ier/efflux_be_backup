@@ -28,6 +28,9 @@ class InsightsRepository {
     delete cleansedCopy.city;
     delete cleansedCopy.session_id;
     delete cleansedCopy.keyword_clicked;
+    delete cleansedCopy.external;
+    delete cleansedCopy.timestamp;
+    delete cleansedCopy.user_agent;
     cleansedCopy.unique_identifier = `${insight.campaign_id}-${insight.adset_id}-${insight.ad_id}-${insight.hour}-${insight.date}`;
     return cleansedCopy;
   }
@@ -52,14 +55,17 @@ class InsightsRepository {
     const hour = insight.timestamp.split(' ')[1].split(':')[0];
 
     let [campaign_name, adset_name, ad_name] = insight.subid1 ? (insight.subid1).replace(" ", "").split('_|_') : ['Unknown', 'Unknown', 'Unknown'];
-    let [campaign_id, adset_id, ad_id, traffic_source] = insight.subid2 ? (insight.subid2).replace(" ", "").split('|') : ['Unknown', 'Unknown', 'Unknown', 'Unknown'];
+    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source] = insight.subid2 ? (insight.subid2).replace(" ", "").split('|') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
 
     if (isNotNumeric(campaign_id)) campaign_id = 'Unknown';
     if (isNotNumeric(adset_id)) adset_id = 'Unknown';
     if (isNotNumeric(ad_id)) ad_id = 'Unknown';
     if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
 
-    let [ip, country_code, region, city] = insight.subid4 ? (insight.subid4).replace(" ", "").split('-') : ['Unknown', 'Unknown', 'Unknown', 'Unknown'];
+    let [ip, country_code, region, city, user_agent, timestamp, external] = insight.subid4
+      ? (insight.subid4).replace(" ", "").split('_|_')
+      : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+
     const session_id = insight.subid3 ? insight.subid3 : 'Unknown';
 
     return {
@@ -76,6 +82,7 @@ class InsightsRepository {
       template: insight.template,
 
       // Traffic Source Data
+      pixel_id: pixel_id,
       campaign_id: campaign_id,
       campaign_name: campaign_name,
       adset_id: adset_id,
@@ -90,6 +97,9 @@ class InsightsRepository {
       country_code: country_code,
       region: region,
       city: city,
+      external: external,
+      timestamp: timestamp,
+      user_agent: user_agent,
 
       // Conversion Data
       conversions: insight.clicks ? parseInt(insight.clicks) : 0,
