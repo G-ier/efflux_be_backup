@@ -34,7 +34,7 @@ class AdLauncherMedia extends BaseService {
     formData.append('ad_account_id', adAccountId);
     formData.append('user_id', '123456789'); // TODO: Replace with actual user ID from session
 
-    const url = `https://des78tc1jb.execute-api.us-east-1.amazonaws.com/upload`;
+    const url = 'https://u1yua8b7cf.execute-api.us-east-1.amazonaws.com/upload';
 
     try {
       const response = await axios.post(url, formData, {
@@ -207,14 +207,6 @@ class AdLauncherMedia extends BaseService {
 
   async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects) {
     for (const file of images) {
-      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
-      const imageId = await this.uploadToMediaLibrary(
-        file.buffer,
-        file.originalname,
-        adAccountId,
-        token,
-      );
-
       console.log({ imageId });
 
       const imageHash = await this.uploadToFacebook(
@@ -223,6 +215,15 @@ class AdLauncherMedia extends BaseService {
         adAccountId,
         token,
       );
+
+      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
+      const imageId = await this.uploadToMediaLibrary(
+        file.buffer,
+        file.originalname,
+        adAccountId,
+        imageHash['images'][file.originalname].hash,
+      );
+
       const createdImage = await this.createContent({
         type: 'image',
         hash: imageHash['images'][file.originalname].hash,
