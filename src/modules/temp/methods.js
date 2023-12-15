@@ -27,7 +27,6 @@ class TemporaryService {
     if (filters.user_id && filters.user_id === 'admin') {
       delete filters.user_id;
     }
-    console.log({filters})
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
     return results;
   }
@@ -105,7 +104,6 @@ class TemporaryController {
   async fetchAdAccountsFromDatabase(req, res) {
     try {
       let { fields, filters, limit } = req.query;
-      console.log({limit})
       if (fields) fields = JSON.parse(fields);
       if (filters) filters = JSON.parse(filters);
       const adAccounts = await this.temporaryService.fetchAdAccountsFromDatabase(fields, filters, limit);

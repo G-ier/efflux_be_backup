@@ -148,7 +148,6 @@ class AdLauncherMedia extends BaseService {
       console.log('ASd');
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
-    console.log({ asd: uploadedMedia });
     return { uploadedMedia, createdMediaObjects };
   }
 
