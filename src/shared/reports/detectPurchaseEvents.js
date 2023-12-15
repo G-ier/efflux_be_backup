@@ -29,7 +29,7 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
       tg8 as user_agent,
       split_part(tg9, '-', 1) as pixel_id,
       split_part(tg9, '-', 2) as timestamp,
-      tg10 as external,
+      split_part(tg10, '_|_', 1) as external,
       gtmtr.fbc as fbc,
       gtmtr.fbp as fbp,
       revenue_clicks as purchase_event_count,

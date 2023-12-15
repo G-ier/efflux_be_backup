@@ -29,7 +29,7 @@ const updateCrossroadsForAllAccounts = async (request_date) => {
   try {
 
     dataUpdatesLogger.info(`STARTED | CROSSROADS | ${request_date}`)
-    const saveAggregated = true; const saveRawData = true; const saveRawDataToFile = false; const campaignIdRestrictions = ParsedTestCampaignIds;
+    const saveAggregated = true; const saveRawData = true; const saveRawDataToFile = false; const campaignIdRestrictions = [];
 
     await compositeService.updateData(account, request_date,
       saveAggregated, saveRawData, saveRawDataToFile, campaignIdRestrictions

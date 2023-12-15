@@ -98,6 +98,7 @@ class InsightsService extends BaseService {
   async getBulkData(url) {
     CrossroadsLogger.info("Fetching bulk data from crossroads")
     const { data } = await axios.get(url);
+    console.log({data})
     return data;
   }
 
