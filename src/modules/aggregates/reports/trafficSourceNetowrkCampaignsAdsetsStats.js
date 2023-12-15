@@ -46,7 +46,6 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     JOIN campaigns c ON ad.campaign_id = c.id
     GROUP BY ad.campaign_id, ad.campaign_name;
   `;
-
   const { rows } = await database.raw(query);
   return rows;
 }

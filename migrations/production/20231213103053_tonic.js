@@ -1,12 +1,11 @@
 exports.up = function(knex) {
-    return knex.schema.createTable('tonic_raw_insights', function(table) {
+    return knex.schema.createTable('tonic', function(table) {
       // Identifier
       table.string('unique_identifier').primary();
   
       // Date and Time Data
       table.string('date');
       table.smallint('hour');
-      table.string('click_timestamp');
   
       // Tonic Data
       table.integer('tonic_campaign_id').references('id').inTable('tonic_campaigns').onDelete('CASCADE');
@@ -24,17 +23,9 @@ exports.up = function(knex) {
       table.string('ad_name');
       table.string('traffic_source');
   
-      // User Data
-      table.string('session_id');
-      table.string('ip');
-      table.string('country_code');
-      table.string('region');
-      table.string('city');
-  
       // Conversion Data
       table.integer('conversions');
       table.float('revenue');
-      table.string('keyword_clicked');
       table.string('revenue_type');
   
       // Timestamps
@@ -45,7 +36,7 @@ exports.up = function(knex) {
       // Creating the Trigger
       return knex.raw(`
         CREATE TRIGGER updated_at
-        BEFORE UPDATE ON tonic_raw_insights
+        BEFORE UPDATE ON tonic
         FOR EACH ROW
         EXECUTE FUNCTION updated_at_column();
       `);
@@ -53,5 +44,5 @@ exports.up = function(knex) {
   };
   
   exports.down = function(knex) {
-    return knex.schema.dropTable('tonic_raw_insights');
+    return knex.schema.dropTable('tonic');
   };
