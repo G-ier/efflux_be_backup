@@ -238,7 +238,6 @@ class CompositeService {
       }
       return response.data?.success ?? false;
     } catch ({ response }) {
-      console.log(response.data);
       return false;
     }
   }

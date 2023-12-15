@@ -70,7 +70,6 @@ class AdLauncherMedia extends BaseService {
         },
       });
 
-      console.log(response.data);
       // Create content record for the uploaded image
 
       const imageContentData = {
