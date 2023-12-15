@@ -5,7 +5,8 @@ AWS_PROFILE ?= efflux
 EFFLUX_PROD ?= Efflux-BE
 EFFLUX_STAGING ?= Efflux-BE-Staging
 METABASE_PROD ?= Metabase-BE
-DUS_PROD ?= Efflux-DUS
+EFFLUX_DUS_PROD ?= Efflux-DUS-Prod
+EFFLUX_DUS_STAGING ?= Efflux-DUS-Staging
 
 deploy-prod:
 	@aws cloudformation deploy \
@@ -48,11 +49,20 @@ deploy-metabase:
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
 
-deploy-dus:
+deploy-dus-prod:
 	@aws cloudformation deploy \
-		--stack-name $(DUS_PROD) \
+		--stack-name $(EFFLUX_DUS_PROD) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file dus-template.yaml \
+		--template-file dus-prod-template.yaml \
+		--tags project=efflux \
+		--profile $(AWS_PROFILE) \
+		--region $(AWS_REGION)
+
+deploy-dus-staging:
+	@aws cloudformation deploy \
+		--stack-name $(EFFLUX_DUS_STAGING) \
+		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
+		--template-file dus-staging-template.yaml \
 		--tags project=efflux \
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
