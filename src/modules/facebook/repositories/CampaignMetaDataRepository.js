@@ -29,24 +29,52 @@ class CampaignMetaDataRepository {
   
   async upsert(campaignData, campaignId, campaignMetadataId, trx) {
     if (!campaignData) {
-      return campaignMetadataId;
+      return null;
     }
+  
     let campaignDbObject = this.toDatabaseDTO({
       ...campaignData,
-      campaign_id: campaignId,
-      id: campaignMetadataId
+      campaign_id: campaignId
     });
   
-    return await this.database.upsert(
-      this.tableName,
-      [campaignDbObject],
-      'id',
-      [],
-      trx
-    );
+    // If campaignMetadataId is provided, check if the record exists
+    let isNewRecord = false;
+    if (campaignMetadataId) {
+      const existingRecord = await this.database.connection
+        .select('*')
+        .from(this.tableName)
+        .where('id', campaignMetadataId)
+        .first()
+        .transacting(trx);
+  
+      if (existingRecord) {
+        // If the record exists, update it
+        await await this.database.connection
+          .update(campaignDbObject)
+          .from(this.tableName)
+          .where('id', campaignMetadataId)
+          .transacting(trx);
+      } else {
+        isNewRecord = true;
+      }
+    } else {
+      isNewRecord = true;
+    }
+  
+    // If the record does not exist, insert it and get the new ID
+    if (isNewRecord) {
+      const [newId] = await this.database.connection
+        .insert(campaignDbObject)
+        .into(this.tableName)
+        .transacting(trx)
+        .returning('id'); // Assuming 'id' is the primary key
+  
+      return newId;
+    }
+  
+    return campaignMetadataId;
   }
   
-
   async update(updateFields, criterion) {
     return await this.database.update(this.tableName, updateFields, criterion);
   }
