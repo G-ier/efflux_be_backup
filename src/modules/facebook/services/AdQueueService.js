@@ -17,6 +17,8 @@ class AdQueueService extends BaseService {
     adsetId,
     adId,
     existingLaunchId,
+    status,
+    existingContentIds,
   }) {
     return await this.adQueueRepository.saveOne({
       existingLaunchId,
@@ -26,6 +28,8 @@ class AdQueueService extends BaseService {
       campaignId,
       adsetId,
       adId,
+      status,
+      existingContentIds
     });
   }
 

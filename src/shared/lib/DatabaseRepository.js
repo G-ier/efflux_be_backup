@@ -21,14 +21,19 @@ class DatabaseRepository {
     try {
       const insert = this.connection(tableName).insert(data).toString();
       
+      // Add a RETURNING clause to get the ID of the inserted/updated row
+      const returningClause = 'RETURNING id'; // Assuming 'id' is the primary key column
+  
       // If conflictTarget is not provided, simply execute the insert query
       if (!conflictTarget) {
+        const query = `${insert} ${returningClause}`;
+        let result;
         if (trx) {
-          await trx.raw(insert);
+          result = await trx.raw(query);
         } else {
-          await this.connection.raw(insert);
+          result = await this.connection.raw(query);
         }
-        return;
+        return result.rows[0].id; // Adapt based on how your query returns data
       }
   
       const conflictKeys = Object.keys(data[0])
@@ -40,13 +45,15 @@ class DatabaseRepository {
         throw new Error("No fields left to update after excluding.");
       }
   
-      const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
-  
+      const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys} ${returningClause}`;
+      
+      let result;
       if (trx) {
-        await trx.raw(query);
+        result = await trx.raw(query);
       } else {
-        await this.connection.raw(query);
+        result = await this.connection.raw(query);
       }
+      return result.rows[0].id; // Adapt based on how your query returns data
     } catch (error) {
       console.error("Error upserting row/s: ", error);
       throw error;

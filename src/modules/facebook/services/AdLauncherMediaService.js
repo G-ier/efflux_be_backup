@@ -254,7 +254,7 @@ class AdLauncherMedia extends BaseService {
   }
 
   async fetchContentFromDB(fields = ['*'], filters = {}, limit) {
-    const results = await this.pageRepository.fetchPages(fields, filters, limit);
+    const results = await this.adLauncherMediaRepository.fetchContents(fields, filters, limit);
     return results;
   }
 }

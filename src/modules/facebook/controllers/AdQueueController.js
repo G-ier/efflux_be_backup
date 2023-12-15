@@ -17,38 +17,33 @@ class AdQueueController {
   getAdAccountId(req) {
     return req.body.adAccountId;
   }
+  
   async sendLaunchToQueue(req, res) {
     try {
       this.validateRequiredParameters(req);
-      console.log("ASDASD")
       const token = await this.getToken() ;
       const adAccountId = this.getAdAccountId(req);
-      console.log("ASD")
       const firstKey = await this.getFirstKeyFromAdAccounts(adAccountId);
-      
-      console.log({token,adAccountId,firstKey})
-
-
+      const existingContentIds =req.body.existingContentIds
+      const contentIds = Array.isArray(existingContentIds) ? existingContentIds : [existingContentIds];
       const { createdMediaObjects } = await this.adLauncherMedia.handleMediaUploads(
         req,
         firstKey,
         token,
-        req.body.existingContentIds,
+        contentIds
       );
-
-      await this.adQueueService.saveToQueueFromLaunch({
+      
+      const response = await this.adQueueService.saveToQueueFromLaunch({
         adAccountId: firstKey,
         existingMedia: createdMediaObjects,
         data: req.body,
+        status:"queued",
+        existingContentIds:contentIds,
       });
-
-
-      const adCreationResult = { id: adQueueId, ...adQueueData };
 
       res.json({
         success: true,
         message: 'Ad successfully sent to queue.',
-        data: adCreationResult,
       });
     } catch (error) {
       FacebookLogger.error(`Error during Ad Launch: ${error.message}`);

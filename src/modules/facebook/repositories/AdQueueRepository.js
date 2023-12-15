@@ -18,7 +18,17 @@ class AdQueueRepository {
     return new AdQueue(dbObject);
   }
 
-  async saveOne({ data, adAccountId, campaignId, adsetId, adId, existingMedia, existingLaunchId }) {
+  async saveOne({
+    data,
+    adAccountId,
+    campaignId,
+    adsetId,
+    adId,
+    existingMedia,
+    existingLaunchId,
+    status,
+    existingContentIds,
+  }) {
     try {
       const trx = await this.database.startTransaction();
       try {
@@ -32,15 +42,17 @@ class AdQueueRepository {
             trx,
           });
 
-        const adLauncherQueueId = await this.insertAdLauncherQueue({
+        const adLauncherQueueId = await this.insertOrUpdateAdLauncherQueue({
           adAccountId,
           campaignMetadataId,
           adMetadataId,
           adsetMetadataId,
+          status,
           trx,
+          existingLaunchId,
         });
 
-        await this.handleMediaData(existingMedia, adLauncherQueueId, trx);
+        await this.handleMediaData(existingMedia, existingContentIds, adLauncherQueueId, trx);
 
         await trx.commit();
         console.log('Transaction committed successfully');
@@ -94,38 +106,67 @@ class AdQueueRepository {
     };
   }
 
-  async insertAdLauncherQueue({
+  async insertOrUpdateAdLauncherQueue({
+    existingLaunchId,
     adAccountId,
     campaignMetadataId,
     adMetadataId,
     adsetMetadataId,
+    status,
     trx,
   }) {
-    const [adLauncherQueueId] = await trx(this.tableName)
-      .insert({
-        traffic_source: 'facebook',
-        ad_account_id: adAccountId,
-        campaign_metadata_id: campaignMetadataId,
-        ad_metadata_id: adMetadataId,
-        adset_metadata_id: adsetMetadataId,
-      })
-      .returning('id');
-    console.log('Inserted into ad_launcher_queue with ID:', adLauncherQueueId);
-    return adLauncherQueueId;
+    if (existingLaunchId) {
+      // If existingLaunchId is provided, update the status of the existing record
+      await trx(this.tableName).where('id', existingLaunchId).update({
+        status: 'launched', // Assuming you want to set the status to 'launched'
+      });
+      return existingLaunchId;
+    } else {
+      // If existingLaunchId is not provided, insert a new record
+      const [adLauncherQueueId] = await trx(this.tableName)
+        .insert({
+          traffic_source: 'facebook',
+          ad_account_id: adAccountId,
+          campaign_metadata_id: campaignMetadataId,
+          ad_metadata_id: adMetadataId,
+          adset_metadata_id: adsetMetadataId,
+          status: status,
+        })
+        .returning('id');
+      return adLauncherQueueId;
+    }
   }
 
-  async handleMediaData(existingMedia, adLauncherQueueId, trx) {
-    if (!existingMedia || existingMedia.length === 0) {
+  async handleMediaData(existingMedia, existingContentIds, adLauncherQueueId, trx) {
+    if (
+      (!existingMedia || existingMedia.length === 0) &&
+      (!existingContentIds || existingContentIds.length === 0)
+    ) {
       return;
     }
 
-    const mediaQueueLinks = existingMedia.map((media) => ({
+    // First, remove old media connections for the adLauncherQueueId
+    await trx('ad_media_queue_link').where('ad_launcher_queue_id', adLauncherQueueId).delete();
+    console.log('Old media connections removed for ad_launcher_queue_id:', adLauncherQueueId);
+
+    // Map existingMedia to the required format
+    const mediaQueueLinksFromExistingMedia = existingMedia.map((media) => ({
       media_id: media.id,
       ad_launcher_queue_id: adLauncherQueueId,
     }));
 
+    // Transform existingContentIds to the required format
+    const mediaQueueLinksFromContentIds = existingContentIds.map((id) => ({
+      media_id: id,
+      ad_launcher_queue_id: adLauncherQueueId,
+    }));
+
+    // Combine the two arrays
+    const mediaQueueLinks = mediaQueueLinksFromExistingMedia.concat(mediaQueueLinksFromContentIds);
+
+    // Insert new media connections
     await trx('ad_media_queue_link').insert(mediaQueueLinks);
-    console.log('Media data linked');
+    console.log('New media data linked for ad_launcher_queue_id:', adLauncherQueueId);
   }
 
   // async saveOne({ data, adAccountId, campaignId, adsetId, adId, existingMedia, existingLaunchId }) {
@@ -306,8 +347,6 @@ class AdQueueRepository {
         baseQuery += ` LIMIT ?`;
         queryParams.push(limit);
       }
-
-      console.log(baseQuery);
 
       const results = await this.database.connection.raw(baseQuery, queryParams);
       return results.rows.map((result) => {

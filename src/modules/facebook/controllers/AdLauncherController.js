@@ -28,7 +28,9 @@ class AdLauncherController {
   async launchAd(req, res) {
     try {
 
-      const existingLaunchId = req?.body?.existinLaunchId
+      const existingLaunchId = req?.body?.existingLaunchId
+      const existingContentIds =req.body.existingContentIds
+      const contentIds = Array.isArray(existingContentIds) ? existingContentIds : [existingContentIds];
 
       FacebookLogger.info('Ad launch process initiated.');
       this.validateRequiredParameters(req);
@@ -59,9 +61,10 @@ class AdLauncherController {
         req,
         firstKey,
         token,
+        contentIds
       );
+
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
-      console.log({uploadedMedia, createdMediaObjects})
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
       const adData = this.prepareAdData(req, uploadedMedia, adSetId);
@@ -78,10 +81,12 @@ class AdLauncherController {
         existingLaunchId,
         adAccountId: firstKey,
         existingMedia: createdMediaObjects,
+        existingContentIds:contentIds,
         data: req.body,
         campaignId:campaignId,
         adsetId:adSetId,
-        adId:adCreationResult.id
+        adId:adCreationResult.id,
+        status:"launched"
       });
 
       // Log the successful creation of an ad
@@ -203,7 +208,7 @@ class AdLauncherController {
 
       // Call handleMediaUploads from ContentService
       const uploadedMedia = await this.contentService.handleMediaUploads(req, firstKey, token);
-
+      
       // Return the uploaded media data as a response
       res.json({ success: true, uploadedMedia });
     } catch (error) {
