@@ -3,13 +3,13 @@ exports.up = function(knex) {
       table.string('pixel_id');
       table.string('external');
       table.string('timestamp');
-      table.string('user_agent');
+      table.text('user_agent');
       table.boolean('valid_pixel').defaultTo(true);
       table.integer('reported_conversions').defaultTo(0);
       table.float('reported_amount').defaultTo(0);
     });
   };
-  
+
   exports.down = function(knex) {
     return knex.schema.alterTable('tonic_raw_insights', function(table) {
       table.dropColumn('pixel_id');

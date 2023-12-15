@@ -20,46 +20,39 @@ class DatabaseRepository {
   async upsert(tableName, data, conflictTarget = null, excludeFields = [], trx = null) {
     try {
       const insert = this.connection(tableName).insert(data).toString();
-      
-      // Add a RETURNING clause to get the ID of the inserted/updated row
-      const returningClause = 'RETURNING id'; // Assuming 'id' is the primary key column
-  
+
       // If conflictTarget is not provided, simply execute the insert query
       if (!conflictTarget) {
-        const query = `${insert} ${returningClause}`;
-        let result;
         if (trx) {
-          result = await trx.raw(query);
+          await trx.raw(insert);
         } else {
-          result = await this.connection.raw(query);
+          await this.connection.raw(insert);
         }
-        return result.rows[0].id; // Adapt based on how your query returns data
+        return;
       }
-  
+
       const conflictKeys = Object.keys(data[0])
         .filter((key) => !excludeFields.includes(key))
         .map((key) => `${key} = EXCLUDED.${key}`)
         .join(", ");
-  
+
       if (!conflictKeys) {
         throw new Error("No fields left to update after excluding.");
       }
-  
-      const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys} ${returningClause}`;
-      
-      let result;
+
+      const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
+
       if (trx) {
-        result = await trx.raw(query);
+        await trx.raw(query);
       } else {
-        result = await this.connection.raw(query);
+        await this.connection.raw(query);
       }
-      return result.rows[0].id; // Adapt based on how your query returns data
     } catch (error) {
       console.error("Error upserting row/s: ", error);
       throw error;
     }
   }
-  
+
   async query(
     tableName,
     fields = ["*"],
