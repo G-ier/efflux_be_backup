@@ -5,7 +5,7 @@ AWSTemplateFormatVersion: 2010-09-09
 #####################
 
 Resources:
-  DusInstance:
+  DusInstanceProd:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
@@ -25,21 +25,60 @@ Resources:
       SubnetId: !ImportValue Efflux-PublicSubnet1
       Tags:
         - Key: Name
-          Value: Efflux-DUS Instance
+          Value: DUS-BE Instance
         - Key: project
           Value: efflux
         - Key: component
           Value: dus
 
-  # add an elastic IP to the MetaBase instance
-  DusEIP:
+  DusInstanceStaging:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+      InstanceType: t3.small
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 93
+            VolumeType: gp3
+            DeleteOnTermination: yes
+            Encrypted: false
+      EbsOptimized: true
+      Monitoring: false
+      KeyName: efflux-dus
+      SecurityGroupIds:
+        - !Ref DusSecurityGroup
+      SubnetId: !ImportValue Efflux-PublicSubnet1
+      Tags:
+        - Key: Name
+          Value: DUS-Staging Instance
+        - Key: project
+          Value: efflux
+        - Key: component
+          Value: dus
+
+  # add an elastic IP to the DUS instance
+  DusProdEIP:
     Type: AWS::EC2::EIP
     Properties:
-      InstanceId: !Ref DusInstance
+      InstanceId: !Ref DusInstanceProd
       Domain: standard
       Tags:
         - Key: Name
-          Value: EffluxDusIP
+          Value: Efflux-DUS-IP
+        - Key: project
+          Value: efflux
+        - Key: component
+          Value: dus
+
+  DusStagingEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      InstanceId: !Ref DusInstanceStaging
+      Domain: standard
+      Tags:
+        - Key: Name
+          Value: Efflux-DUS-Staging-IP
         - Key: project
           Value: efflux
         - Key: component
@@ -82,17 +121,24 @@ Resources:
           Value: Efflux-DUS
         - Key: project
           Value: efflux
-        - Key: operation
-          Value: analytics
+        - Key: component
+          Value: dus
 
 ####################
 # Outputs
 ####################
 
 Outputs:
-  DusInstance:
+  DusInstanceProd:
     Description: Efflux DUS Instance
-    Value: !Ref DusInstance
-  DusEIP:
+    Value: !Ref DusInstanceProd
+  DusProdEIP:
     Description: Efflux DUS Elastic IP
-    Value: !Ref DusEIP
+    Value: !Ref DusProdEIP
+
+  DusInstanceStaging:
+    Description: Efflux DUS Staging Instance
+    Value: !Ref DusInstanceStaging
+  DusStagingEIP:
+    Description: Efflux DUS Staging Elastic IP
+    Value: !Ref DusStagingEIP

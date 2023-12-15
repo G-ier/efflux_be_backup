@@ -5,7 +5,7 @@ AWS_PROFILE ?= efflux
 EFFLUX_PROD ?= Efflux-BE
 EFFLUX_STAGING ?= Efflux-BE-Staging
 METABASE_PROD ?= Metabase-BE
-DUS_PROD ?= Efflux-DUS-BE
+DUS_PROD ?= Efflux-DUS
 
 deploy-prod:
 	@aws cloudformation deploy \
