@@ -1,0 +1,16 @@
+{
+  "date": "2017-01-01",
+  "campaign_id": "140",
+  "campaign_name": "test display campaign",
+  "clicks": "10",
+  "revenueUsd": "10.5500",
+  "subid1": "first-subid-1",
+  "subid2": "second-subid",
+  "subid3": "third-subid",
+  "subid4": "fourth-subid",
+  "keyword": "example keyword 1",
+  "timestamp": "2017-01-01 12:34:56",
+  "adtype": "email",
+  "advertiser": "PremiumRate",
+  "template": null
+}

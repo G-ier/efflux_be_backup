@@ -135,6 +135,7 @@ const PostbackLogger = new CustomLogger({
   filePath: filePath('postback'),
   pattern: '[{timestamp}]:[{level}] - {message}'
 });
+
 const PostbackTestLogger = new CustomLogger({
   destination:streamDestination,
   level: 'info',
@@ -154,6 +155,13 @@ const SedoLogger = new CustomLogger({
   destination:streamDestination,
   level: 'info',
   filePath: filePath('sedo')
+});
+
+// Tonic Logger
+const TonicLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('tonic')
 });
 
 // Analysis Logger
@@ -182,5 +190,6 @@ module.exports = {
   RequestsLogger,
   AnalysisLogger,
   dataUpdatesLogger,
-  SedoLogger
+  SedoLogger,
+  TonicLogger
 };

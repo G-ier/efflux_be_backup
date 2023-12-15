@@ -53,14 +53,14 @@ async function updateFacebookData(day) {
   }
 }
 
-async function reportFacebookConversions(date) {
-  dataUpdatesLogger.info(`STARTED | FACEBOOK | ${date} | REPORTING CONVERSIONS`);
+async function reportFacebookConversions(date, network) {
+  dataUpdatesLogger.info(`STARTED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS`);
   try {
-    await compositeService.sendCapiEvents(date);
-    dataUpdatesLogger.info(`COMPLETED | FACEBOOK | ${date} | REPORTING CONVERSIONS`);
+    await compositeService.sendCapiEvents(date, network);
+    dataUpdatesLogger.info(`COMPLETED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS`);
   } catch (error) {
-    dataUpdatesLogger.warn(`FAILED | FACEBOOK | ${date} | REPORTING CONVERSIONS | ${error}`);
-    await sendSlackNotification(`FAILED | FACEBOOK | ${date} | REPORTING CONVERSIONS`)
+    dataUpdatesLogger.warn(`FAILED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS | ${error}`);
+    await sendSlackNotification(`FAILED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS`)
     console.log(error);
   }
 }
@@ -93,10 +93,17 @@ const updateTodayDataRegular = new CronJob(
   }
 ));
 
-const reportFacebookConversionsRegular = new CronJob(
+const reportFacebookConversionsToCrossroadsRegular = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
   (async () => {
-    await reportFacebookConversions(todayYMD());
+    await reportFacebookConversions(todayYMD(), 'crossroads');
+  }
+));
+
+const reportFacebookConversionsToTonicRegular = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
+  (async () => {
+    await reportFacebookConversions(todayYMD(), 'tonic');
   }
 ));
 
@@ -128,7 +135,10 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
   updatePagesRegular.start();
-  if (CRON_ENVIRONMENT === 'production') reportFacebookConversionsRegular.start();
+  // LEAVE ONLY IN PRODUCTION POST-PRODUCTION MERGE
+  reportFacebookConversionsToTonicRegular.start();
+  if (CRON_ENVIRONMENT === 'production') reportFacebookConversionsToCrossroadsRegular.start();
+
 }
 
 module.exports = initializeFacebookCron;

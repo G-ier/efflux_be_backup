@@ -14,19 +14,22 @@ const AuthUser = require("./authUser");
 const isBot = require("./isBot");
 
 // Postback route
-const postback = require("../src/shared/routes/postback");
+const postback              = require("../src/shared/routes/postback");
 
 // New routes
-const temp = require("../src/modules/temp/routes");
-const facebook = require("../src/modules/facebook/routes");
-const tiktok = require("../src/modules/tiktok/routes");
-const scrappedAds = require("../src/modules/scrappedAds/routes");
-const aggregations = require("../src/modules/aggregates/routes");
-const sedo = require("../src/modules/sedo/routes");
-const crossroadsRoutes = require("../src/modules/crossroads/routes");
-const auth = require("../src/modules/auth/routes");
-const funnelFlux = require("../src/modules/funnelFlux/routes");
-const management = require("../src/shared/routes/management");
+const temp                  = require("../src/modules/temp/routes");
+const facebook              = require("../src/modules/facebook/routes");
+const tiktok                = require("../src/modules/tiktok/routes");
+const scrappedAds           = require("../src/modules/scrappedAds/routes");
+const aggregations          = require("../src/modules/aggregates/routes");
+const sedo                  = require("../src/modules/sedo/routes");
+const crossroadsRoutes      = require("../src/modules/crossroads/routes");
+const auth                  = require("../src/modules/auth/routes");
+const funnelFlux            = require("../src/modules/funnelFlux/routes");
+const tonic                 = require("../src/modules/tonic/routes");
+const management            = require("../src/shared/routes/management");
+
+
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
 const EnvironmentVariablesManager = require("../src/shared/services/EnvironmentVariablesManager");
@@ -83,6 +86,7 @@ function configureMiddleware(server) {
   server.use("/api/sedo", sedo);
   server.use("/api/management", management);
   server.use("/api/ff", funnelFlux);
+  server.use("/api/tonic", tonic);
 
   server.use(ErrorHandler);
 }
