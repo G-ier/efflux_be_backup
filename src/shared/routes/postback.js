@@ -10,6 +10,7 @@ const DatabaseRepository = require('../lib/DatabaseRepository');
 const { sendSlackNotification } = require("../lib/SlackNotificationService")
 const { PostbackLogger, PostbackTestLogger } = require('../../shared/lib/WinstonLogger');
 const {PostbackQueue} = require('../helpers/Queue');
+const { isNotNumeric }            = require("../helpers/Utils");
 
 const db = new DatabaseRepository()
 const postbackQueue = new PostbackQueue();
@@ -250,6 +251,92 @@ route.get('/sedo', async (req, res) => {
   }
 
 });
+
+route.get('/tonic', async (req, res) => {
+  try {
+    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
+    const client_user_agent = req.headers['user-agent'];
+    const referrer_url =  `https://${req.get('host')}${req.originalUrl}`;
+    const ua = parser(client_user_agent);
+
+    // MAPPING
+    // subid1: user-agent
+    // subid2: pixel_id_|_campaign_id_|_adset_id_|_ad_id_|_traffic_source_|_external
+    // subid3: hit_id
+    // subid4: ip_|_country_code_|_region_|_city_|_timestamp_|_campaign_name
+
+    PostbackLogger.info(`TONIC PBQP: ${JSON.stringify(req.query)}`)
+    const {
+      subid1,
+      subid2,
+      subid3,
+      subid4,
+      txid,
+      revenue,
+      kwp,
+      type
+    } = req.query;
+
+    // New Extracted Fields
+    const user_agent = subid1 || 'Unknown';
+    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = subid2 ? subid2.split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+    const session_id = subid3 || 'Unknown';
+    let [ip, country_code, region, city, timestamp, campaign_name] = subid4 ? (subid4).split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+
+    if (isNotNumeric(campaign_id)) campaign_id = 'Unknown';
+    if (isNotNumeric(adset_id)) adset_id = 'Unknown';
+    if (isNotNumeric(ad_id)) ad_id = 'Unknown';
+    if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
+
+    // maybe + keyword for eventId since we dont get eventType, to recheck
+    const event_id = md5(timestamp + kwp + session_id + type);
+    if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
+
+    const pb_conversion ={
+      date: todayYMD(),
+      hour: todayHH(),
+      event_timestamp: timestamp,
+      event_type: type,
+      pixel_id: pixel_id,
+      campaign_id: campaign_id,
+      adset_id: adset_id,
+      ad_id: ad_id,
+      step: 2,
+      searchterm: kwp,
+      referrer_url: referrer_url,
+      pb_value: revenue,
+      city: city,
+      country: country_code,
+      state: region,
+      zipcode: '',
+      traffic_source: traffic_source,
+      running_direct: false,
+      fbclid: external,
+      posted_to_fb: false,
+      os: `${ua.os.name} - ${ua.os.version}`,
+      ip: ip,
+      device: ua.device.name,
+      browser: ua.browser.name,
+      test_event_code: '',
+      network: 'tonic',
+      kwp: kwp,
+      campaign_name: campaign_name,
+      event_id: event_id
+    };
+    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`);
+
+    // Upsert into database
+    postbackQueue.push(pb_conversion);
+    await postbackQueue.processQueue(db);
+
+    res.status(200).json({message: 'success'});
+    PostbackLogger.info(`SUCCESS`);
+  }
+  catch (err){
+    PostbackLogger.error(`POSTBACK TONIC ERROR ${err}`);
+    res.status(500).json(err.message);
+  }
+} )
 
 // @route     /trk/pb_test
 // @desc     Get track

@@ -1,10 +1,12 @@
 // Local application imports
+const { TonicLogger }             = require("../../../shared/lib/WinstonLogger");
 const CampaignsService            = require('../services/CampaignsService');
 
 class CampaignsController {
 
     constructor() {
       this.service = new CampaignsService();
+      this.logger = TonicLogger;
     }
 
     async syncCampaigns(req, res) {
@@ -14,6 +16,17 @@ class CampaignsController {
       } catch (error) {
         this.logger.error(`Error syncing Tonic Campaigns: ${error.message}`);
         res.status(500).send('Error syncing Tonic Campaigns');
+      }
+    }
+
+    async getCampaignCallback(req, res) {
+      try {
+        const { campaign_id } = req.query;
+        const callback = await this.service.fetchCampaignCallback(campaign_id);
+        res.status(200).json(callback);
+      } catch (error) {
+        this.logger.error(`Error fetching Tonic Campaign Callback: ${error.message}`);
+        res.status(500).send('Error fetching Tonic Campaign Callback');
       }
     }
 

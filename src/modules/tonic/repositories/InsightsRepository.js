@@ -50,23 +50,26 @@ class InsightsRepository {
   }
 
   parseTonicAPIData(insight) {
+
+    // MAPPING
+    // subid1: user-agent
+    // subid2: pixel_id_|_campaign_id_|_adset_id_|_ad_id_|_traffic_source_|_external
+    // subid3: hit_id
+    // subid4: ip_|_country_code_|_region_|_city_|_timestamp_|_campaign_name
+
+    // New Extracted Fields
+    const user_agent = insight.subid1 || 'Unknown';
+    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = insight.subid2 ? insight.subid2.split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+    const session_id = insight.subid3 || 'Unknown';
+    let [ip, country_code, region, city, timestamp, campaign_name] = insight.subid4 ? (insight.subid4).split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+
     // Extract meaningful data from the raw API response of our parameter mapping
-
     const hour = insight.timestamp.split(' ')[1].split(':')[0];
-
-    let [campaign_name, adset_name, ad_name] = insight.subid1 ? (insight.subid1).replace(" ", "").split('_|_') : ['Unknown', 'Unknown', 'Unknown'];
-    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source] = insight.subid2 ? (insight.subid2).replace(" ", "").split('|') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
 
     if (isNotNumeric(campaign_id)) campaign_id = 'Unknown';
     if (isNotNumeric(adset_id)) adset_id = 'Unknown';
     if (isNotNumeric(ad_id)) ad_id = 'Unknown';
     if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
-
-    let [ip, country_code, region, city, user_agent, timestamp, external] = insight.subid4
-      ? (insight.subid4).replace(" ", "").split('_|_')
-      : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
-
-    const session_id = insight.subid3 ? insight.subid3 : 'Unknown';
 
     return {
 
@@ -86,9 +89,9 @@ class InsightsRepository {
       campaign_id: campaign_id,
       campaign_name: campaign_name,
       adset_id: adset_id,
-      adset_name: adset_name,
+      adset_name: '',
       ad_id: ad_id,
-      ad_name: ad_name,
+      ad_name: '',
       traffic_source: traffic_source,
 
       // User Data
