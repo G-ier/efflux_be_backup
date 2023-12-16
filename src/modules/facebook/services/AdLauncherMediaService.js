@@ -144,7 +144,6 @@ class AdLauncherMedia extends BaseService {
 
     // Process new uploads (Images and Videos)
     if (req.files) {
-      console.log('ASd');
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
     return { uploadedMedia, createdMediaObjects };

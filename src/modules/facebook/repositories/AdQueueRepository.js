@@ -148,19 +148,21 @@ class AdQueueRepository {
     // First, remove old media connections for the adLauncherQueueId
     await trx('ad_media_queue_link').where('ad_launcher_queue_id', adLauncherQueueId).delete();
     console.log('Old media connections removed for ad_launcher_queue_id:', adLauncherQueueId);
+    // Filter out undefined values and then map existingMedia
+    const mediaQueueLinksFromExistingMedia = existingMedia
+      .filter((media) => media !== undefined && media.id !== undefined)
+      .map((media) => ({
+        media_id: media.id,
+        ad_launcher_queue_id: adLauncherQueueId,
+      }));
 
-    // Map existingMedia to the required format
-    const mediaQueueLinksFromExistingMedia = existingMedia.map((media) => ({
-      media_id: media.id,
-      ad_launcher_queue_id: adLauncherQueueId,
-    }));
-
-    // Transform existingContentIds to the required format
-    const mediaQueueLinksFromContentIds = existingContentIds.map((id) => ({
-      media_id: id,
-      ad_launcher_queue_id: adLauncherQueueId,
-    }));
-
+    // Filter out undefined values and then map existingContentIds
+    const mediaQueueLinksFromContentIds = existingContentIds
+      .filter((id) => id !== undefined)
+      .map((id) => ({
+        media_id: id,
+        ad_launcher_queue_id: adLauncherQueueId,
+      }));
     // Combine the two arrays
     const mediaQueueLinks = mediaQueueLinksFromExistingMedia.concat(mediaQueueLinksFromContentIds);
 
