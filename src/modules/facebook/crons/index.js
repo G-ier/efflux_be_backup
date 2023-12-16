@@ -97,7 +97,7 @@ const updateTodayDataRegular = new CronJob(
 const reportFacebookConversionsToCrossroadsRegular = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
   (async () => {
-    for (const network in ['tonic', 'crossroads']) {
+    for (const network of ['tonic', 'crossroads']) {
       await reportFacebookConversions(todayYMD(), network);
     }
   }
@@ -106,7 +106,7 @@ const reportFacebookConversionsToCrossroadsRegular = new CronJob(
 const reportYesterdayFacebookConversions = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_YESTERDAY,
   (async () => {
-    for (const network in ['tonic', 'crossroads']) {
+    for (const network of ['tonic', 'crossroads']) {
       await reportFacebookConversions(yesterdayYMD(), network);
     }
   }
