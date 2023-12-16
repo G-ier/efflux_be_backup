@@ -132,8 +132,6 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
         0 AS lander_visits,
         SUM(tonic.conversions) AS cr_conversions,
         MAX(tonic.updated_at) as network_updated_at,
-        0 AS pb_lander_conversions,
-        0 AS pb_conversions,
         0 AS visitors,
         0 AS uniq_conversions,
         0 AS tracked_visitors
@@ -152,7 +150,7 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
 }
 
 function POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
-  if (network === 'crossroads') {
+  if (network === 'crossroads' || network === 'tonic') {
     return `
     , postback_events AS (
       SELECT
@@ -170,9 +168,6 @@ function POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestri
     )`
   }
   else if (network === 'sedo') {
-    return ``
-  }
-  else if (network === 'tonic') {
     return ``
   }
   else {
@@ -240,12 +235,12 @@ function RETURN_FIELDS(network, traffic_source) {
     network.cr_conversions as nw_conversions,
     network.uniq_conversions as nw_uniq_conversions,
     ${
-      network === 'crossroads' ? `
+      network === 'crossroads' || network === 'tonic' ? `
         postback_events.pb_lander_conversions as pb_lander_conversions,
         postback_events.pb_serp_conversions as pb_serp_conversions,
         postback_events.pb_conversions as pb_conversions,
       `:
-      network === 'sedo' || network === 'tonic' ? `
+      network === 'sedo' ? `
         network.pb_lander_conversions as pb_lander_conversions,
         0 as pb_serp_conversions,
         network.pb_conversions as pb_conversions,
@@ -291,7 +286,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       COALESCE(traffic_source.hour, network.hour) as hour,
       COALESCE(agg_adsets_data.campaign_id, traffic_source.campaign_id, network.campaign_id) as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
-      COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id ${network === 'sedo' || network === 'tonic' ? '' : ', postback_events.adset_id'}) as adset_id,
+      COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id ${network === 'sedo' ? '' : ', postback_events.adset_id'}) as adset_id,
       agg_adsets_data.adset_name as adset_name,
       agg_adsets_data.user_id as user_id,
       agg_adsets_data.ad_account_id as ad_account_id,
@@ -300,7 +295,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
     FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND network.hour = traffic_source.hour
     FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
     ${
-      network === 'crossroads' ? `
+      network === 'crossroads' || network === 'tonic' ? `
         FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
       `: ``
     }

@@ -341,8 +341,6 @@ class CompositeService {
     }
   }
 
-  
-
   async sendCapiEvents(date, network='crossroads') {
 
     // Retrieve the data
@@ -389,6 +387,7 @@ class CompositeService {
     CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
 
     await this.capiService.updateReportedEvents(eventIds, network);
+    CapiLogger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
   }
 
 }

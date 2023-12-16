@@ -12,7 +12,8 @@ const {
   FACEBOOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON,
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
-  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
+  FACEBOOK_REPORT_CONVERSIONS_YESTERDAY
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
@@ -96,16 +97,21 @@ const updateTodayDataRegular = new CronJob(
 const reportFacebookConversionsToCrossroadsRegular = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
   (async () => {
-    await reportFacebookConversions(todayYMD(), 'crossroads');
+    for (const network in ['tonic', 'crossroads']) {
+      await reportFacebookConversions(todayYMD(), network);
+    }
   }
 ));
 
-const reportFacebookConversionsToTonicRegular = new CronJob(
-  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
+const reportYesterdayFacebookConversions = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_YESTERDAY,
   (async () => {
-    await reportFacebookConversions(todayYMD(), 'tonic');
+    for (const network in ['tonic', 'crossroads']) {
+      await reportFacebookConversions(yesterdayYMD(), network);
+    }
   }
 ));
+
 
 const updatePagesRegular = new CronJob(
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
@@ -135,9 +141,12 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
   updatePagesRegular.start();
+
   // LEAVE ONLY IN PRODUCTION POST-PRODUCTION MERGE
-  reportFacebookConversionsToTonicRegular.start();
-  if (CRON_ENVIRONMENT === 'production') reportFacebookConversionsToCrossroadsRegular.start();
+  if (CRON_ENVIRONMENT === 'production') {
+    reportYesterdayFacebookConversions.start();
+    reportFacebookConversionsToCrossroadsRegular.start()
+  }
 
 }
 

@@ -6,6 +6,7 @@ const detectTonicPurchaseEvents = async (database, date, traffic_source) => {
       campaign_name,
       campaign_id,
       unique_identifier as id,
+      session_id,
       traffic_source,
       country_code,
       region AS state,
@@ -19,7 +20,7 @@ const detectTonicPurchaseEvents = async (database, date, traffic_source) => {
     FROM
       tonic_raw_insights
     WHERE
-      conversions > 0 AND reported_conversions < conversions
+      conversions > 0 AND reported_conversions < conversions AND revenue > 0
       AND date = '${date}'
       AND traffic_source = '${traffic_source}'
       AND valid_pixel = true

@@ -17,7 +17,7 @@ function generateEventId() {
   return uuidv4();
 }
 
-class CapiService extends BaseService{
+class CapiService extends BaseService {
 
     constructor() {
         super(CapiLogger);
@@ -29,7 +29,6 @@ class CapiService extends BaseService{
       this.logger.info(`Adding CAPI Logs to the database`);
 
       const logEntries = data.map((event) => {
-        const session_id = event.id.split('-')[0];
         const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
 
         const constructed_fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? false: true;
@@ -42,7 +41,7 @@ class CapiService extends BaseService{
           event_unix_timestamp: event.timestamp,
           isos_timestamp: pst_timestamp,
           tz: 'America/Los_Angeles',
-          session_id: session_id,
+          session_id: event.session_id,
           campaign_name: event.campaign_name,
           campaign_id: event.campaign_id,
           conversions_reported: event.purchase_event_count,
@@ -135,31 +134,28 @@ class CapiService extends BaseService{
             currentPayload = { data: [] }
           }
 
+          const state = event.country_code === 'US' && usStates[event.state.toUpperCase()] !== undefined
+            ? usStates[event.state.toUpperCase()].toLowerCase()
+            : event.state.toLowerCase().replace(" ", "")
+
           const eventPayload = {
             event_name: 'Purchase',
             event_time: Number(event.timestamp),
             event_id: `${event.external}-${i}-${generateEventId()}`,
             action_source: "website",
             user_data: {
-              // Finished
               country: [
                 sha256(event.country_code.toLowerCase())
               ],
               client_ip_address: event.ip,
               client_user_agent: event.user_agent,
-              // Finished
               ct: [
                 sha256(event.city.toLowerCase().replace(" ", ""))
               ],
               fbc: fbc,
               fbp: fbp,
-              // Finished
               st: [
-                sha256(
-                  event.country_code === 'US' || event.country_code === 'United States' // The second condition is temporary until the update on FF takes place.
-                  ? usStates[event.state.toUpperCase()].toLowerCase()
-                  : event.state.toLowerCase().replace(" ", "")
-                )
+                sha256(state)
               ],
             },
             opt_out: false,
@@ -192,22 +188,19 @@ class CapiService extends BaseService{
     async updateReportedEvents(eventIds, network='crossroads') {
 
       this.logger.info(`Updating Reported Session in DB`);
-
-      let updatedCount;
-      if (network === 'crossroads') {
-        updatedCount = await this.database.update('raw_crossroads_data', {reported_to_capi: true}, {unique_identifier: eventIds})
-      } else if (network === 'tonic') {
-        updatedCount = await this.database.update('tonic_raw_insights',
-          {
-            reported_conversions: this.database.connection.ref('conversions'),
-            reported_amount: this.database.connection.ref('revenue')
-          },
-          {
-            unique_identifier: eventIds
-          }
-       )
-      }
-      this.logger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
+      const tableName = network === 'crossroads' ? 'raw_crossroads_data' : 'tonic_raw_insights';
+      const conversionsColumnName = network === 'crossroads' ? 'revenue_clicks' : 'conversions';
+      const revenueColumnName = network === 'crossroads' ? 'publisher_revenue_amount' : 'revenue';
+      const updatedCount = await this.database.update(tableName,
+        {
+          reported_conversions: this.database.connection.ref(conversionsColumnName),
+          reported_amount: this.database.connection.ref(revenueColumnName)
+        },
+        {
+          unique_identifier: eventIds
+        }
+      )
+      this.logger.info(`Updated ${updatedCount} session on ${tableName}`)
     }
 }
 
