@@ -1,21 +1,11 @@
 exports.up = function(knex) {
-  return knex.raw(`
-    DO $$
-    BEGIN
-      IF NOT EXISTS (
-        SELECT constraint_name
-        FROM information_schema.constraint_column_usage
-        WHERE table_name = 'funnel_flux_auth_token' AND column_name = 'user_id'
-      ) THEN
-        ALTER TABLE funnel_flux_auth_token ADD CONSTRAINT user_id_unique UNIQUE (user_id);
-      END IF;
-    END
-    $$;
-  `);
+  return knex.schema.table('funnel_flux_auth_token', function(table) {
+    table.unique('user_id'); // This adds a unique constraint to the user_id column
+  });
 };
 
 exports.down = function(knex) {
   return knex.schema.table('funnel_flux_auth_token', function(table) {
-    table.dropUnique('user_id');
+    table.dropUnique('user_id'); // This removes the unique constraint from the user_id column
   });
 };

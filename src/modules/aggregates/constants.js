@@ -1,4 +1,4 @@
-const AVAILABLE_NETWORKS = ['crossroads', 'sedo', 'tonic']
+const AVAILABLE_NETWORKS = ['crossroads', 'sedo']
 const AVAILABLE_TRAFFIC_SOURCES = ['tiktok', 'facebook']
 
 module.exports = {

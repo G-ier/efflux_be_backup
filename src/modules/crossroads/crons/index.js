@@ -38,7 +38,7 @@ const updateCrossroadsForAllAccounts = async (request_date) => {
     dataUpdatesLogger.info(`COMPLETED | CROSSROADS | ${request_date}`)
   } catch (error) {
     dataUpdatesLogger.warn(`FAILED | CROSSROADS | ${request_date} | ${error}`)
-    await sendSlackNotification(`FAILED | CROSSROADS | ${request_date}`)
+    //await sendSlackNotification(`FAILED | CROSSROADS | ${request_date}`)
     console.log(error);
   }
 }

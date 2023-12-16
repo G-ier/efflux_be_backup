@@ -17,17 +17,13 @@ class DatabaseRepository {
     }
   }
 
-  async upsert(tableName, data, conflictTarget = null, excludeFields = [], trx = null) {
+  async upsert(tableName, data, conflictTarget = null, excludeFields = []) {
     try {
       const insert = this.connection(tableName).insert(data).toString();
 
       // If conflictTarget is not provided, simply execute the insert query
       if (!conflictTarget) {
-        if (trx) {
-          await trx.raw(insert);
-        } else {
-          await this.connection.raw(insert);
-        }
+        await this.connection.raw(insert);
         return;
       }
 
@@ -41,12 +37,7 @@ class DatabaseRepository {
       }
 
       const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
-
-      if (trx) {
-        await trx.raw(query);
-      } else {
-        await this.connection.raw(query);
-      }
+      await this.connection.raw(query);
     } catch (error) {
       console.error("Error upserting row/s: ", error);
       throw error;
@@ -185,10 +176,6 @@ class DatabaseRepository {
         throw error;
     }
 }
-
-  async startTransaction() {
-    return this.connection.transaction();
-  }
 
   async raw(query) {
     try {

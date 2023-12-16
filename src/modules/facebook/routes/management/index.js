@@ -11,15 +11,11 @@ const AdCreativesController = require("../../controllers/AdCreativeController");
 const CompositeController = require("../../controllers/CompositeController");
 const CampaignsController = require("../../controllers/CampaignsController");
 const AdsetsController = require("../../controllers/AdsetsController");
-const AdLauncherController = require("../../controllers/AdLauncherController");
-const AdQueueController = require("../../controllers/AdQueueController");
 
 const campaignsController = new CampaignsController();
 const adsetsController = new AdsetsController();
 const adCreativesController = new AdCreativesController();
 const compositeController = new CompositeController();
-const adLauncherController = new AdLauncherController()
-const adQueueController = new AdQueueController()
 
 // @route     /api/facebook/management/update-entity
 // @desc     GET update-entity data
@@ -75,13 +71,10 @@ route.post("/create-adset",(req, res) => compositeController.createAdset(req, re
 
 route.post("/create-ad",(req, res) => compositeController.createAd(req, res));
 
-route.post("/upload-video", upload.single('video'), (req, res) => adLauncherController.uploadVideoToFacebook(req, res));
+route.post("/upload-video", upload.single('video'), (req, res) => compositeController.uploadVideoToFacebook(req, res));
 
-route.post("/upload-image", upload.single('file'), (req, res) => adLauncherController.uploadImageToFacebook(req, res));
+route.post("/upload-image", upload.single('file'), (req, res) => compositeController.uploadImageToFacebook(req, res));
 
-route.post("/launch-ad", upload.fields([{ name: 'video', maxCount: 5 }, { name: 'images', maxCount: 10 }]), (req, res) => adLauncherController.launchAd(req, res));
-route.post("/queue-ad", upload.fields([{ name: 'video', maxCount: 5 }, { name: 'images', maxCount: 10 }]), (req, res) => adQueueController.sendLaunchToQueue(req, res));
-route.get("/ad-queues",(req, res) => adQueueController.fetchAdQueue(req, res))
-
+route.post("/launch-ad", upload.fields([{ name: 'video', maxCount: 5 }, { name: 'images', maxCount: 10 }]), (req, res) => compositeController.launchAd(req, res));
 
 module.exports = route;

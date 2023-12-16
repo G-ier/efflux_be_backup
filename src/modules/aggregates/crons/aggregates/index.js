@@ -9,8 +9,7 @@ const { AVAILABLE_NETWORKS, AVAILABLE_TRAFFIC_SOURCES }          = require('../.
 const {
   AGGREGATES_UPDATE_TODAY_REGULAR_CRON,
   SEDO_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
-  CROSSROADS_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
-  TONIC_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON
+  CROSSROADS_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require("../../../../shared/lib/WinstonLogger");
 const EnvironmentVariablesManager                                = require('../../../../shared/services/EnvironmentVariablesManager');
@@ -62,15 +61,6 @@ const updateSedoDataYesterday = new CronJob(
   }
 ));
 
-const updateTonicDataYesterday = new CronJob(
-  TONIC_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
-  (async () => {
-    for (const trafficSource of AVAILABLE_TRAFFIC_SOURCES) {
-      await updateCompiledAggregates("yesterday", "tonic", trafficSource);
-    }
-  }
-));
-
 const updateCrossroadsDataYesterday = new CronJob(
   CROSSROADS_AGGREGATES_UPDATE_YESTERDAY_AFTER_MIDNIGHT_AND_NOON,
   (async () => {
@@ -88,7 +78,6 @@ const initializeAggregatesUpdateCron = async () => {
 
   updateTodayDataRegular.start();
   updateSedoDataYesterday.start();
-  updateTonicDataYesterday.start();
   updateCrossroadsDataYesterday.start();
 
 };

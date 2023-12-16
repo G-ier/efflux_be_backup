@@ -1,34 +1,35 @@
-const AggregatesService = require("../services/AggregatesService");
-const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
+const AggregatesService = require('../services/AggregatesService');
 
 class AggregatesController {
+
   constructor() {
     this.aggregatesService = new AggregatesService();
   }
 
   async extractRequestDataWithUser(req) {
     try {
-      const user = req.user;
-      let { mediaBuyer, ...otherParams } = req.query;
-      if (EnvironmentVariablesManager.getEnvVariable("DISABLE_AUTH_DEADLOCK") !== "true") {
-        if (!user) {
-          throw new Error("User information not available in the request");
-        }
-
-        // Check if the user has 'admin' permission
-        const isAdmin = user.permissions && user.permissions.includes("admin");
-
-        // If the user is not an admin, enforce mediaBuyer to be the user's ID
-        if (!isAdmin) {
-          mediaBuyer = user.id; // Assuming 'id' is the user's identifier
-        }
+      const user = req.user; 
+      if (!user) {
+        throw new Error('User information not available in the request');
       }
+  
+      // Check if the user has 'admin' permission
+      const isAdmin = user.permissions && user.permissions.includes("admin");
+  
+      let { mediaBuyer, ...otherParams } = req.query;
+  
+      // If the user is not an admin, enforce mediaBuyer to be the user's ID
+      if (!isAdmin) {
+        mediaBuyer = user.id; // Assuming 'id' is the user's identifier
+      }
+  
       return { ...otherParams, mediaBuyer, user };
     } catch (e) {
-      console.error("Error in extracting user:", e);
+      console.error('Error in extracting user:', e);
       throw e;
     }
   }
+  
 
   async generateCampaignAdsetsReport(req, res) {
     try{
@@ -117,7 +118,7 @@ class AggregatesController {
 
   async syncData(req, res) {
     try {
-      const { startDate, endDate, trafficSource, network, campaignIdsRestriction } = req.query
+      const { startDate, endDate, trafficSource, network, campaignIdsRestriction } = await this.extractRequestDataWithUser(req);
       const data = await this.aggregatesService.updateAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction);
       return res.json(data);
     } catch (e) {

@@ -14,8 +14,7 @@ const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
 const PageService = require("./PageService");
 const CapiService = require("./CapiService");
-const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents")
-const detectTonicPurchaseEvents = require("../../../shared/reports/detectTonicPurchaseEvents")
+const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
 const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 const { validateInput } = require("../helpers");
@@ -238,6 +237,7 @@ class CompositeService {
       }
       return response.data?.success ?? false;
     } catch ({ response }) {
+      console.log(response.data);
       return false;
     }
   }
@@ -341,19 +341,42 @@ class CompositeService {
     }
   }
 
-  async sendCapiEvents(date, network='crossroads') {
+  async createAd({ token, adAccountId, adData }) {
+    const url = `${FB_API_URL}act_${adAccountId}/ads`;
+    // Construct the request payload according to the Facebook API specifications
+    const payload = {
+      ...adData,
+      access_token: token, // Assuming the token is passed directly, could be managed differently
+    };
+
+    // Dont include the images and videos sent for processing to get hashes and id-s
+    delete payload["images"];
+    delete payload["videos"];
+
+    try {
+      // Make the post request to the Facebook API
+      const response = await axios.post(url, payload);
+
+      // Handle the response. Assuming the API returns a JSON with the created ad's ID
+      const createdAdId = response.data.id;
+
+      // Return a success response, or the ad ID, depending on what is needed
+      return {
+        success: true,
+        id: createdAdId,
+      };
+    } catch (error) {
+      // Log the error and throw it to be handled by the caller
+      FacebookLogger.error(`Error creating ad: ${error.response}`);
+      throw error?.response?.data?.error;
+    }
+  }
+
+  async sendCapiEvents(date) {
 
     // Retrieve the data
     CapiLogger.info(`Fetching session from DB.`);
-    let data = [];
-
-    if (network === 'crossroads') {
-      data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'facebook');
-    }
-    else if (network === 'tonic') {
-      data = await detectTonicPurchaseEvents(this.capiService.database, date, 'facebook');
-    }
-
+    const data = await detectPurchaseEvents(this.capiService.database, date, 'facebook');
     if (data.length === 0) {
       CapiLogger.info(`No events found for date ${date}.`);
       return;
@@ -367,7 +390,7 @@ class CompositeService {
     const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents(data, pixels);
 
     // Flag incorrect Data
-    await this.capiService.updateInvalidEvents(brokenPixelEvents, network);
+    await this.capiService.updateInvalidEvents(brokenPixelEvents);
 
     // If no valid events, return
     if (validPixelEvents.length === 0) {
@@ -386,8 +409,7 @@ class CompositeService {
     }
     CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
 
-    await this.capiService.updateReportedEvents(eventIds, network);
-    CapiLogger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
+    await this.capiService.updateReportedEvents(eventIds);
   }
 
 }

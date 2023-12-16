@@ -12,8 +12,7 @@ const {
   FACEBOOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON,
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
-  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
-  FACEBOOK_REPORT_CONVERSIONS_YESTERDAY
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON
 }                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
@@ -54,14 +53,14 @@ async function updateFacebookData(day) {
   }
 }
 
-async function reportFacebookConversions(date, network) {
-  dataUpdatesLogger.info(`STARTED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS`);
+async function reportFacebookConversions(date) {
+  dataUpdatesLogger.info(`STARTED | FACEBOOK | ${date} | REPORTING CONVERSIONS`);
   try {
-    await compositeService.sendCapiEvents(date, network);
-    dataUpdatesLogger.info(`COMPLETED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS`);
+    await compositeService.sendCapiEvents(date);
+    dataUpdatesLogger.info(`COMPLETED | FACEBOOK | ${date} | REPORTING CONVERSIONS`);
   } catch (error) {
-    dataUpdatesLogger.warn(`FAILED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS | ${error}`);
-    await sendSlackNotification(`FAILED | FACEBOOK - ${network} | ${date} | REPORTING CONVERSIONS`)
+    dataUpdatesLogger.warn(`FAILED | FACEBOOK | ${date} | REPORTING CONVERSIONS | ${error}`);
+    await sendSlackNotification(`FAILED | FACEBOOK | ${date} | REPORTING CONVERSIONS`)
     console.log(error);
   }
 }
@@ -94,24 +93,12 @@ const updateTodayDataRegular = new CronJob(
   }
 ));
 
-const reportFacebookConversionsToCrossroadsRegular = new CronJob(
+const reportFacebookConversionsRegular = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
   (async () => {
-    for (const network in ['tonic', 'crossroads']) {
-      await reportFacebookConversions(todayYMD(), network);
-    }
+    await reportFacebookConversions(todayYMD());
   }
 ));
-
-const reportYesterdayFacebookConversions = new CronJob(
-  FACEBOOK_REPORT_CONVERSIONS_YESTERDAY,
-  (async () => {
-    for (const network in ['tonic', 'crossroads']) {
-      await reportFacebookConversions(yesterdayYMD(), network);
-    }
-  }
-));
-
 
 const updatePagesRegular = new CronJob(
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
@@ -141,13 +128,7 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
   updatePagesRegular.start();
-
-  // LEAVE ONLY IN PRODUCTION POST-PRODUCTION MERGE
-  if (CRON_ENVIRONMENT === 'production') {
-    reportYesterdayFacebookConversions.start();
-    reportFacebookConversionsToCrossroadsRegular.start()
-  }
-
+  if (CRON_ENVIRONMENT === 'production') reportFacebookConversionsRegular.start();
 }
 
 module.exports = initializeFacebookCron;

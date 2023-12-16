@@ -27,16 +27,5 @@ function listDatesBetween(startDateStr, endDateStr) {
   return dateArray;
 }
 
-function parseJsonOrDefault(jsonString, defaultValue = {}) {
-  try {
-    if(typeof jsonString=="string"){
-      return JSON.parse(jsonString);
-    }
-    return jsonString
-  } catch (error) {
-    return defaultValue;
-  }
-}
-
-module.exports = { validateInput, listDatesBetween,parseJsonOrDefault };
+module.exports = { validateInput, listDatesBetween };
 

@@ -4,8 +4,7 @@ const initializeTikTokCron                = require("./modules/tiktok/crons");
 const initializeSedoCron                  = require("./modules/sedo/crons");
 const initializeAggregatesUpdateCron      = require("./modules/aggregates/crons/aggregates");
 const initializeRevealBotSheetsUpdateCron = require("./modules/aggregates/crons/revealBotSheets");
-const initializeTonicCron                 = require("./modules/tonic/crons");
-const initializeTemporaryCron             = require("./modules/temp/crons");
+const initializeTemporaryCron            = require("./modules/temp/crons");
 
 const initializeCronJobs = () => {
   initializeCrossroadsCron();
@@ -14,7 +13,6 @@ const initializeCronJobs = () => {
   initializeTikTokCron();
   initializeAggregatesUpdateCron();
   initializeRevealBotSheetsUpdateCron();
-  initializeTonicCron();
   // initializeTemporaryCron();
 };
 

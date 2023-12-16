@@ -9,7 +9,7 @@ const AdInsightsService = require("./AdInsightsService");
 const PixelService = require("./PixelsService")
 const EventsApiService = require("./EventsApiService")
 const { TiktokLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
-const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents")
+const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
 
 class CompositeService {
 
@@ -247,7 +247,7 @@ class CompositeService {
 
     // Retrieve the data
     CapiLogger.info(`Fetching sessions from DB.`);
-    const data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'tiktok');
+    const data = await detectPurchaseEvents(this.capiService.database, date, 'tiktok');
     if (data.length === 0) {
       CapiLogger.info(`No sessions found for date ${date}.`);
       return;

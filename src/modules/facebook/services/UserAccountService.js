@@ -114,7 +114,7 @@ class UserAccountService {
 
     // We need to get a admin account and all the other fetching accounts here.
     const adminAccounts = await this.fetchUserAccounts(fetchingFields,
-      { provider: "facebook", role: 'admin', fetching: true, backup: false,id:6 }
+      { provider: "facebook", role: 'admin', fetching: true, backup: false }
     );
 
     // Attemp to get the admin account/try backup accounts. If none work, throw error.
