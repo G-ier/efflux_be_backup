@@ -119,13 +119,38 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
         GROUP BY sedo.date, sedo.hour, sedo.adset_id
       )
     `
-  } else {
+  } else if (network === 'tonic') {
+    return `
+    network AS (
+      SELECT
+        tonic.hour as hour,
+        tonic.date as date,
+        tonic.adset_id,
+        MAX(tonic.campaign_id) as campaign_id,
+        SUM(tonic.revenue) as revenue,
+        0 AS searches,
+        0 AS lander_visits,
+        SUM(tonic.conversions) AS cr_conversions,
+        MAX(tonic.updated_at) as network_updated_at,
+        0 AS visitors,
+        0 AS uniq_conversions,
+        0 AS tracked_visitors
+      FROM tonic tonic
+      WHERE tonic.date > '${startDate}'
+      AND   tonic.date <= '${endDate}'
+      AND   tonic.traffic_source = '${trafficSource}'
+      ${campaignIdsRestriction ? `AND tonic.campaign_id IN ${campaignIdsRestriction}` : ''}
+      GROUP BY tonic.date, tonic.hour, tonic.adset_id
+    )
+    `
+  }
+  else {
     throw new Error('Invalid network')
   }
 }
 
 function POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
-  if (network === 'crossroads') {
+  if (network === 'crossroads' || network === 'tonic') {
     return `
     , postback_events AS (
       SELECT
@@ -137,7 +162,7 @@ function POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestri
         CAST(COUNT(CASE WHEN pb.event_type = 'ViewContent' THEN 1 ELSE null END) AS INTEGER) as pb_serp_conversions,
         CAST(COUNT(CASE WHEN pb.event_type = 'Purchase' THEN 1 ELSE null END) AS INTEGER) as pb_conversions
       FROM postback_events pb
-      WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}' AND pb.traffic_source = '${trafficSource}'
+      WHERE pb.date > '${startDate}' AND pb.date <= '${endDate}' AND pb.traffic_source = '${trafficSource}' AND pb.network = '${network}'
       ${campaignIdsRestriction ? `AND pb.campaign_id IN ${campaignIdsRestriction}` : ''}
       GROUP BY pb.date, pb.hour, pb.adset_id
     )`
@@ -210,7 +235,7 @@ function RETURN_FIELDS(network, traffic_source) {
     network.cr_conversions as nw_conversions,
     network.uniq_conversions as nw_uniq_conversions,
     ${
-      network === 'crossroads' ? `
+      network === 'crossroads' || network === 'tonic' ? `
         postback_events.pb_lander_conversions as pb_lander_conversions,
         postback_events.pb_serp_conversions as pb_serp_conversions,
         postback_events.pb_conversions as pb_conversions,
@@ -233,7 +258,6 @@ function RETURN_FIELDS(network, traffic_source) {
 }
 
 async function compileAggregates(database, network, trafficSource, startDate, endDate, campaignIdsRestriction=null) {
-
   const query = `
     WITH restriction AS (
       SELECT DISTINCT campaign_id, adset_id
@@ -271,7 +295,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
     FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND network.hour = traffic_source.hour
     FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
     ${
-      network === 'crossroads' ? `
+      network === 'crossroads' || network === 'tonic' ? `
         FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
       `: ``
     }

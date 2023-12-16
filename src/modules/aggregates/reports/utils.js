@@ -53,3 +53,4 @@ module.exports = {
   buildSelectionColumns,
   buildConditionsInsights
 };
+

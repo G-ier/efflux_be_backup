@@ -1,7 +1,7 @@
 // Load the AWS SDK
 const { SecretsManagerClient, GetSecretValueCommand }   = require("@aws-sdk/client-secrets-manager");
 const { SSMClient, GetParameterCommand }                = require("@aws-sdk/client-ssm");
-
+const fs                                                = require('fs');
 class EnvironmentVariablesManager {
 
   static instance = null;
@@ -25,7 +25,7 @@ class EnvironmentVariablesManager {
   static parameters = [
 
     // CRONS
-    'DISABLE_CRON', 'DISABLE_CROSSROADS_CRON', 'DISABLE_SEDO_CRON', 'DISABLE_FACEBOOK_CRON', 'DISABLE_TIKTOK_CRON',
+    'DISABLE_CRON', 'DISABLE_CROSSROADS_CRON', 'DISABLE_TONIC_CRON', 'DISABLE_SEDO_CRON', 'DISABLE_FACEBOOK_CRON', 'DISABLE_TIKTOK_CRON',
     'DISABLE_FUNNEL_FLUX_CRON', 'DISABLE_AGGREGATES_UPDATE_CRON', 'DISABLE_REVEALBOT_SHEET_CRON',
     'DISABLE_TIKTOK_CROSSROADS_REVEALBOT_SHEET_CRON', 'DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON', 'DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON',
     'DISABLE_FACEBOOK_SEDO_REVEALBOT_SHEET_CRON',
@@ -123,11 +123,39 @@ class EnvironmentVariablesManager {
         this.cachedValues[secretName] = process.env[secretName];
       }
     } else {
+
+      const requiredEnvVariables = ['CRON_ENVIRONMENT', 'DATABASE_ENVIRONMENT'];
+
       for (const secretName of EnvironmentVariablesManager.secrets) {
         await this.retrieveSecret(secretName, secretName !== 'GOOGLE_API_KEY_FILE');
       }
-      for (const parameterName of EnvironmentVariablesManager.parameters) {
+      for (const parameterName of EnvironmentVariablesManager.parameters.filter(p => !requiredEnvVariables.includes(p))) {
         await this.retrieveParameter(parameterName);
+      }
+
+      // Overwritting the env variables with the ones from the file
+      const dotenv = require('dotenv');
+      const envFilePath = '/etc/profile.d/efflux-backend.env';
+
+      const fileExists = fs.existsSync(envFilePath);
+      const fileContent = fileExists ? fs.readFileSync(envFilePath, 'utf8').trim() : '';
+      const envConfig = fileContent ? dotenv.parse(fileContent) : {};
+
+      const missingVariables = requiredEnvVariables.filter(key => !envConfig[key]);
+
+      if (missingVariables.length > 0) {
+        throw new Error(`
+          Missing required environment variables: ${missingVariables.join(', ')}.
+          Please ensure they are set in ${envFilePath}.
+
+          Example:
+          CRON_ENVIRONMENT=staging
+          DATABASE_ENVIRONMENT=staging
+        `);
+      }
+
+      for (const [key, value] of Object.entries(envConfig)) {
+        this.cachedValues[key] = value;
       }
     }
     EnvironmentVariablesManager.initialized = true;
