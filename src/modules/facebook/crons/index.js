@@ -94,24 +94,43 @@ const updateTodayDataRegular = new CronJob(
   }
 ));
 
-const reportFacebookConversionsToCrossroadsRegular = new CronJob(
+// TONIC CONVERSION REPORTING
+const reportFacebookConversionsToTonicRegular = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
   (async () => {
-    for (const network in ['tonic', 'crossroads']) {
+    for (const network of ['tonic']) {
       await reportFacebookConversions(todayYMD(), network);
     }
   }
 ));
 
-const reportYesterdayFacebookConversions = new CronJob(
+const reportYesterdayTonicFacebookConversions = new CronJob(
   FACEBOOK_REPORT_CONVERSIONS_YESTERDAY,
   (async () => {
-    for (const network in ['tonic', 'crossroads']) {
+    for (const network of ['tonic']) {
       await reportFacebookConversions(yesterdayYMD(), network);
     }
   }
 ));
 
+// CROSSROADS CONVERSION REPORTING
+const reportFacebookConversionsToCrossroadsRegular = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
+  (async () => {
+    for (const network of ['crossroads']) {
+      await reportFacebookConversions(todayYMD(), network);
+    }
+  }
+));
+
+const reportYesterdayCrossroadsFacebookConversions = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_YESTERDAY,
+  (async () => {
+    for (const network of ['crossroads']) {
+      await reportFacebookConversions(yesterdayYMD(), network);
+    }
+  }
+));
 
 const updatePagesRegular = new CronJob(
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
@@ -142,10 +161,13 @@ const initializeFacebookCron = () => {
   updateTodayDataRegular.start();
   updatePagesRegular.start();
 
+  reportFacebookConversionsToTonicRegular.start()
+  reportYesterdayTonicFacebookConversions.start()
+
   // LEAVE ONLY IN PRODUCTION POST-PRODUCTION MERGE
   if (CRON_ENVIRONMENT === 'production') {
-    reportYesterdayFacebookConversions.start();
     reportFacebookConversionsToCrossroadsRegular.start()
+    reportYesterdayCrossroadsFacebookConversions.start()
   }
 
 }
