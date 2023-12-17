@@ -17,7 +17,7 @@ function generateEventId() {
   return uuidv4();
 }
 
-class CapiService extends BaseService{
+class CapiService extends BaseService {
 
     constructor() {
         super(CapiLogger);
@@ -29,9 +29,8 @@ class CapiService extends BaseService{
       this.logger.info(`Adding CAPI Logs to the database`);
 
       const logEntries = data.map((event) => {
-        const session_id = event.id.split('-')[0];
-        const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
 
+        const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
         const constructed_fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? false: true;
         const constructed_fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? false: true;
 
@@ -42,7 +41,7 @@ class CapiService extends BaseService{
           event_unix_timestamp: event.timestamp,
           isos_timestamp: pst_timestamp,
           tz: 'America/Los_Angeles',
-          session_id: session_id,
+          session_id: event.session_id,
           campaign_name: event.campaign_name,
           campaign_id: event.campaign_id,
           conversions_reported: event.purchase_event_count,
@@ -127,6 +126,9 @@ class CapiService extends BaseService{
 
         const fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? event.fbc : `fb.1.${event.timestamp * 1000}.${event.external}`;
         const fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? event.fbp : `fb.1.${event.timestamp * 1000}.${generateEventId()}`;
+        const state = event.country_code === 'US' && usStates[event.state.toUpperCase()] !== undefined
+          ? usStates[event.state.toUpperCase()].toLowerCase()
+          : event.state.toLowerCase().replace(" ", "")
 
         for ( let i = 0; i < event.purchase_event_count; i++ ) {
 
@@ -155,11 +157,7 @@ class CapiService extends BaseService{
               fbp: fbp,
               // Finished
               st: [
-                sha256(
-                  event.country_code === 'US' || event.country_code === 'United States' // The second condition is temporary until the update on FF takes place.
-                  ? usStates[event.state.toUpperCase()].toLowerCase()
-                  : event.state.toLowerCase().replace(" ", "")
-                )
+                sha256(state)
               ],
             },
             opt_out: false,

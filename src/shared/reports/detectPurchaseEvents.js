@@ -5,6 +5,7 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
     SELECT
       tg1 as campaign_name,
       tg2 as campaign_id,
+      tg3 as session_id,
       unique_identifier as id,
       traffic_source,
       tg4 as ip,
