@@ -90,8 +90,12 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
         SELECT
           cr.hour as hour,
           cr.request_date as date,
-          cr.adset_id,
-          MAX(cr.campaign_id) as campaign_id,
+          ${
+            trafficSource === 'taboola' ? `MAX(cr.adset_id) as adset_id,
+            cr.campaign_id as campaign_id `:
+             `cr.adset_id,
+              MAX(cr.campaign_id) as campaign_id`
+          },
           CAST(ROUND(SUM(cr.total_revenue)::decimal, 2) AS FLOAT) as revenue,
           CAST(SUM(cr.total_searches) AS INTEGER) as searches,
           CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
@@ -105,7 +109,9 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
         AND   cr.request_date <= '${endDate}'
         AND   cr.traffic_source = '${trafficSource}'
         ${campaignIdsRestriction ? `AND cr.campaign_id IN ${campaignIdsRestriction}` : ''}
-        GROUP BY cr.request_date, cr.hour, cr.adset_id
+        GROUP BY cr.request_date, cr.hour, cr.adset_id,  ${
+          trafficSource === 'taboola' ? `cr.campaign_id`: `cr.adset_id`
+        }
       )
     `
   } else if (network === 'sedo') {
@@ -335,6 +341,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
     }
     WHERE COALESCE(traffic_source.date, network.date) > '${startDate}' AND COALESCE(traffic_source.date, network.date) <= '${endDate}';
   `
+  console.log(query);
   const { rows } = await database.raw(query)
   return rows
 }
