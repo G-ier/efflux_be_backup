@@ -27,7 +27,7 @@ class UserAccountController {
       res.status(200).json({
         message: "Successfully refreshed network Account Data",
         access_token: response.access_token,
-      });    
+      });
     }
     catch(error){
       console.error(error);

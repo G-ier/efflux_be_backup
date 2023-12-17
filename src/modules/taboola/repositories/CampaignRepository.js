@@ -98,7 +98,6 @@ class CampaignRepository {
     console.log(`successfully copied campaign on db with id: ${newCampaignId}`);
   }
 
-
   pickDefinedProperties(obj, keys, propertyMap) {
     return keys.reduce((acc, key, index) => {
       const mappedKey = propertyMap[index];

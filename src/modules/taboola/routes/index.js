@@ -9,10 +9,8 @@ const compositeController = new CompositeController();
 // @desc     GET facebook refresh data
 // @Access   Private
 route.get("/refresh", async (req, res) => {
-    compositeController.updateTaboolaData(req, res);
-  });
-  
-
+  compositeController.updateTaboolaData(req, res);
+});
 
 route.use("/user_accounts", userAccounts);
 

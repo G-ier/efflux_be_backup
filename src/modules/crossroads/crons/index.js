@@ -25,13 +25,13 @@ const TESTING_CAMPAIGN_IDS = EnvironmentVariablesManager.getEnvVariable('TESTING
 const ParsedTestCampaignIds = TESTING_CAMPAIGN_IDS ? JSON.parse(TESTING_CAMPAIGN_IDS.replace(/'/g, '"')) : []
 
 const updateCrossroadsForAllAccounts = async (request_date) => {
-  const account = CROSSROADS_ACCOUNTS[0];
+  const accounts = CROSSROADS_ACCOUNTS;
   try {
 
     dataUpdatesLogger.info(`STARTED | CROSSROADS | ${request_date}`)
     const saveAggregated = true; const saveRawData = true; const saveRawDataToFile = false; const campaignIdRestrictions = ParsedTestCampaignIds;
 
-    await compositeService.updateData(account, request_date,
+    await compositeService.updateData(accounts, request_date,
       saveAggregated, saveRawData, saveRawDataToFile, campaignIdRestrictions
     );
 
