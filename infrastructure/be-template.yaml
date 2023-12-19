@@ -235,6 +235,9 @@ Resources:
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
 
+            # Define environment
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
@@ -509,6 +512,7 @@ Resources:
       ClusterName: Efflux-BE
       CacheNodeType: cache.t3.medium
       Engine: redis
+      EngineVersion: 7.1
       NumCacheNodes: 1
       Port: 6379
       VpcSecurityGroupIds:
