@@ -124,14 +124,7 @@ class EnvironmentVariablesManager {
       }
     } else {
 
-      const requiredEnvVariables = ['CRON_ENVIRONMENT', 'DATABASE_ENVIRONMENT'];
-
-      for (const secretName of EnvironmentVariablesManager.secrets) {
-        await this.retrieveSecret(secretName, secretName !== 'GOOGLE_API_KEY_FILE');
-      }
-      for (const parameterName of EnvironmentVariablesManager.parameters.filter(p => !requiredEnvVariables.includes(p))) {
-        await this.retrieveParameter(parameterName);
-      }
+      const requiredEnvVariables = ['CRON_ENVIRONMENT', 'DATABASE_ENVIRONMENT', 'STACK'];
 
       // Overwritting the env variables with the ones from the file
       const dotenv = require('dotenv');
@@ -143,19 +136,43 @@ class EnvironmentVariablesManager {
 
       const missingVariables = requiredEnvVariables.filter(key => !envConfig[key]);
 
+      // Throw an error if any of the required env variables are missing
       if (missingVariables.length > 0) {
         throw new Error(`
           Missing required environment variables: ${missingVariables.join(', ')}.
-          Please ensure they are set in ${envFilePath}.
+          Please ensure it's/they are set in ${envFilePath}.
 
           Example:
           CRON_ENVIRONMENT=staging
           DATABASE_ENVIRONMENT=staging
+          STACK=BE
         `);
       }
 
+      // Throw an error if any of the required env variables is invalid
+      if (!['staging', 'production'].includes(envConfig['CRON_ENVIRONMENT']))
+        throw new Error(`CRON_ENVIRONMENT must be either 'staging' or 'production'`);
+      if (!['staging', 'production', 'development'].includes(envConfig['DATABASE_ENVIRONMENT']))
+        throw new Error(`DATABASE_ENVIRONMENT must be either 'staging', 'production' or 'development'`);
+      if (!['BE', 'DUS'].includes(envConfig['STACK']))
+        throw new Error(`STACK must be either 'BE' or 'DUS'`);
       for (const [key, value] of Object.entries(envConfig)) {
         this.cachedValues[key] = value;
+      }
+
+      for (const secretName of EnvironmentVariablesManager.secrets) {
+        await this.retrieveSecret(secretName, secretName !== 'GOOGLE_API_KEY_FILE');
+      }
+      for (const parameterName of EnvironmentVariablesManager.parameters.filter(p => !requiredEnvVariables.includes(p))) {
+        await this.retrieveParameter(parameterName);
+      }
+
+      // If the STACK is BE, disable all CRONs, since this is the User Serving Stack, and for the moment disable all CRONs in production
+      if (envConfig['STACK'] === 'BE') {
+        Object.entries(this.cachedValues).forEach(([key, value]) => {
+          if (key.includes('CRON') && !key.includes('ENVIRONMENT'))
+            this.cachedValues[key] = 'true';
+        });
       }
     }
     EnvironmentVariablesManager.initialized = true;
