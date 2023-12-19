@@ -29,8 +29,8 @@ class CapiService extends BaseService {
       this.logger.info(`Adding CAPI Logs to the database`);
 
       const logEntries = data.map((event) => {
-        const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
 
+        const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
         const constructed_fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? false: true;
         const constructed_fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? false: true;
 
@@ -126,6 +126,9 @@ class CapiService extends BaseService {
 
         const fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? event.fbc : `fb.1.${event.timestamp * 1000}.${event.external}`;
         const fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? event.fbp : `fb.1.${event.timestamp * 1000}.${generateEventId()}`;
+        const state = event.country_code === 'US' && usStates[event.state.toUpperCase()] !== undefined
+          ? usStates[event.state.toUpperCase()].toLowerCase()
+          : event.state.toLowerCase().replace(" ", "")
 
         for ( let i = 0; i < event.purchase_event_count; i++ ) {
 
