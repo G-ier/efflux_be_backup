@@ -386,7 +386,7 @@ class CompositeService {
     }
     CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
 
-    await this.capiService.updateReportedEvents(eventIds, network);
+    const updatedCount = await this.capiService.updateReportedEvents(eventIds, network);
     CapiLogger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
   }
 
