@@ -204,6 +204,7 @@ class CapiService extends BaseService {
         }
       )
       this.logger.info(`Updated ${updatedCount} session on ${tableName}`)
+      return updatedCount;
     }
 }
 
