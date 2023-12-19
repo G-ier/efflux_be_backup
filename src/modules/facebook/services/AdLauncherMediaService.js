@@ -138,16 +138,20 @@ class AdLauncherMedia extends BaseService {
   async handleMediaUploads(req, adAccountId, token, existingContentIds = []) {
     const uploadedMedia = [];
     const createdMediaObjects = [];
-
+    // Remove undefined elements from existingContentIds
+    const filteredExistingContentIds = existingContentIds.filter(id => id !== undefined);
+  
     // Process existing content IDs
-    await this.processExistingContentIds(existingContentIds, uploadedMedia);
-
+    await this.processExistingContentIds(filteredExistingContentIds, uploadedMedia);
+  
     // Process new uploads (Images and Videos)
     if (req.files) {
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
+  
     return { uploadedMedia, createdMediaObjects };
   }
+  
 
   async processExistingContentIds(existingContentIds, uploadedMedia) {
     if (existingContentIds && existingContentIds.length > 0) {
@@ -217,13 +221,13 @@ class AdLauncherMedia extends BaseService {
         token,
       );
 
-      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
-      const imageId = await this.uploadToMediaLibrary(
-        file.buffer,
-        file.originalname,
-        adAccountId,
-        imageHash['images'][file.originalname].hash,
-      );
+      // // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
+      // const imageId = await this.uploadToMediaLibrary(
+      //   file.buffer,
+      //   file.originalname,
+      //   adAccountId,
+      //   imageHash['images'][file.originalname].hash,
+      // );
 
       const createdImage = await this.createContent({
         type: 'image',

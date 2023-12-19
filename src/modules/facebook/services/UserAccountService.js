@@ -108,13 +108,13 @@ class UserAccountService {
     return accounts.filter((account) => accountValidity[account.id] === true);
   }
 
-  async getFetchingAccount(admins_only=false, clients_only=false) {
+async getFetchingAccount(admins_only = false, clients_only = false, specificId = null) {
 
     const fetchingFields = ["id", "name", "provider_id", "user_id", "token"];
 
     // We need to get a admin account and all the other fetching accounts here.
     const adminAccounts = await this.fetchUserAccounts(fetchingFields,
-      { provider: "facebook", role: 'admin', fetching: true, backup: false,id:6 }
+      { provider: "facebook", role: 'admin', fetching: true, backup: false,id:specificId||6 }
     );
 
     // Attemp to get the admin account/try backup accounts. If none work, throw error.
@@ -139,7 +139,7 @@ class UserAccountService {
         throw new Error("No valid admin accounts found");
       }
     }
-
+    console.log({adminAccount})
     adminAccount.business = true;
     if (admins_only) return adminAccount;
 

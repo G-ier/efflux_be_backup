@@ -129,7 +129,7 @@ class AdLauncherController {
     }
   }
   async getToken(adminsOnly = true) {
-    return (await this.userAccountService.getFetchingAccount(adminsOnly)).token;
+    return (await this.userAccountService.getFetchingAccount(adminsOnly,false,20)).token;
   }
 
   getAdAccountId(req) {
