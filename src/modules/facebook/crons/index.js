@@ -161,11 +161,10 @@ const initializeFacebookCron = () => {
   updateTodayDataRegular.start();
   updatePagesRegular.start();
 
-  reportFacebookConversionsToTonicRegular.start()
-  reportYesterdayTonicFacebookConversions.start()
-
   // LEAVE ONLY IN PRODUCTION POST-PRODUCTION MERGE
   if (CRON_ENVIRONMENT === 'production') {
+    reportFacebookConversionsToTonicRegular.start()
+    reportYesterdayTonicFacebookConversions.start()
     reportFacebookConversionsToCrossroadsRegular.start()
     reportYesterdayCrossroadsFacebookConversions.start()
   }
