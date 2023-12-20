@@ -16,4 +16,9 @@ route.get('/column-presets', async (req, res) => await temporaryController.getCo
 route.post('/column-presets', async (req, res) => await temporaryController.createColumnPreset(req, res));
 route.delete('/column-presets', async (req, res) => await temporaryController.deleteColumnPreset(req, res));
 
+route.post('/update-password', async (req, res) => await temporaryController.updatePassword(req, res));
+
+route.post('/update-details', async (req, res) => await temporaryController.updateUserDetails(req, res));
+
+
 module.exports = route;
