@@ -115,18 +115,10 @@ class AdLauncherMedia extends BaseService {
       // Check video status until it's ready
       let videoStatus = await this.checkVideoStatus(videoId, token);
       while (videoStatus !== 'ready') {
-        await new Promise((resolve) => setTimeout(resolve, 30000)); // Wait 30 seconds before checking again
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 30 seconds before checking again
         videoStatus = await this.checkVideoStatus(videoId, token);
       }
 
-      // Create content record for the uploaded video
-      const videoContentData = {
-        type: 'video',
-        url: response.data.someVideoUrlField, // Adjust according to actual response
-        adAccountId,
-        // other relevant data
-      };
-      await this.createContent(videoContentData);
 
       return videoId;
     } catch (error) {
@@ -245,11 +237,11 @@ class AdLauncherMedia extends BaseService {
       const videoHash = await this.uploadVideo(file.buffer, file.originalname, adAccountId, token);
       const createdVideo = await this.createContent({
         type: 'video',
-        video_id: videoHash,
-        url: imageHash['videos'][file.originalname].url,
+        hash: videoHash,
+        url: "empty",
         ad_account_id: adAccountId,
       });
-      uploadedMedia.push({ type: 'video', video_id: createdVideo.video_id });
+      uploadedMedia.push({ type: 'video', video_id: videoHash });
       createdMediaObjects.push(createdVideo);
     }
   }
