@@ -108,8 +108,7 @@ class TemporaryService {
   }
 
   async  createPasswordChangeTicket(email) {
-    EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')
-    const url = `https://${process.env.AUTH0_DOMAIN}/dbconnections/change_password`;
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/dbconnections/change_password`;
     
     const body = {
       client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
