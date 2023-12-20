@@ -9,7 +9,7 @@ const AdAccountRepository       = require('../facebook/repositories/AdAccountRep
 const AdsetsRepository          = require('../facebook/repositories/AdsetsRepository');
 const CampaignRepository        = require('../facebook/repositories/CampaignRepository');
 const DatabaseConnection        = require('../../shared/lib/DatabaseConnection');
-
+const  EnvironmentVariablesManager = require("../../shared/services/EnvironmentVariablesManager")
 class TemporaryService {
 
   constructor() {
@@ -94,11 +94,11 @@ class TemporaryService {
   }
 
   async getAuth0ManagementApiToken() {
-    const url = `https://${process.env.AUTH0_DOMAIN}/oauth/token`;
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/oauth/token`;
     const payload = {
-      client_id: process.env.AUTH0_CLIENT_ID,
-      client_secret: process.env.AUTH0_CLIENT_SECRET,
-      audience: `https://${process.env.AUTH0_DOMAIN}/api/v2/`,
+      client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
+      client_secret: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_SECRET'),
+      audience: `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/api/v2/`,
       grant_type: 'client_credentials',
       scope: 'create:user_tickets' // Add other required scopes if necessary
     };
@@ -108,10 +108,11 @@ class TemporaryService {
   }
 
   async  createPasswordChangeTicket(email) {
+    EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')
     const url = `https://${process.env.AUTH0_DOMAIN}/dbconnections/change_password`;
     
     const body = {
-      client_id: process.env.AUTH0_CLIENT_ID,
+      client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
       email: email,
       connection: "Username-Password-Authentication"
     };
@@ -129,7 +130,7 @@ class TemporaryService {
   async updateUserDetails(userId, name) {
     const auth0Token = await this.getAuth0ManagementApiToken(); // Retrieve your Auth0 Management API token
     
-    const url = `https://${process.env.AUTH0_DOMAIN}/api/v2/users/${userId}`;
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/api/v2/users/${userId}`;
     
     const headers = {
       'Authorization': `Bearer ${auth0Token}`,
