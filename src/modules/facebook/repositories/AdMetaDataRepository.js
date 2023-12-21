@@ -10,23 +10,52 @@ class AdMetaDataRepository {
     
   async upsert(adData, adId, adMetadataId, trx) {
     if (!adData) {
-      return adMetadataId;
+      return null; // Return null if no data is provided
     }
+  
     let adDbObject = this.toDatabaseDTO({
       ...adData,
-      ad_id: adId,
-      id: adMetadataId // Include ID only if it exists
+      ad_id: adId
     });
   
-    return await this.database.upsert(
-      this.tableName,
-      [adDbObject],
-      'id',
-      [],
-      trx
-    );
+    // If adMetadataId is provided, check if the record exists
+    let isNewRecord = false;
+    if (adMetadataId) {
+      const existingRecord = await this.database.connection
+        .select('*')
+        .from(this.tableName)
+        .where('id', adMetadataId)
+        .first()
+        .transacting(trx);
+  
+      if (existingRecord) {
+        // If the record exists, update it
+        await this.database.connection
+          .update(adDbObject)
+          .from(this.tableName)
+          .where('id', adMetadataId)
+          .transacting(trx);
+      } else {
+        isNewRecord = true;
+      }
+    } else {
+      isNewRecord = true;
+    }
+  
+    // If adMetadataId is not provided or no existing record is found, insert a new record
+    if (isNewRecord) {
+      const [newId] = await this.database.connection
+        .insert(adDbObject)
+        .into(this.tableName)
+        .transacting(trx)
+        .returning('id'); // Make sure your DB supports the 'returning' method
+  
+      return newId;
+    }
+  
+    return adMetadataId;
   }
-
+  
   toDatabaseDTO(adData) {
     // Extracting properties from 'creative' object
     let creativeName = adData.creative?.name;

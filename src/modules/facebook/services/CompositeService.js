@@ -14,7 +14,8 @@ const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
 const PageService = require("./PageService");
 const CapiService = require("./CapiService");
-const detectPurchaseEvents = require("../../../shared/reports/detectPurchaseEvents")
+const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents")
+const detectTonicPurchaseEvents = require("../../../shared/reports/detectTonicPurchaseEvents")
 const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 const { validateInput } = require("../helpers");
@@ -237,7 +238,6 @@ class CompositeService {
       }
       return response.data?.success ?? false;
     } catch ({ response }) {
-      console.log(response.data);
       return false;
     }
   }
@@ -341,13 +341,19 @@ class CompositeService {
     }
   }
 
-  
-
-  async sendCapiEvents(date) {
+  async sendCapiEvents(date, network='crossroads') {
 
     // Retrieve the data
     CapiLogger.info(`Fetching session from DB.`);
-    const data = await detectPurchaseEvents(this.capiService.database, date, 'facebook');
+    let data = [];
+
+    if (network === 'crossroads') {
+      data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'facebook');
+    }
+    else if (network === 'tonic') {
+      data = await detectTonicPurchaseEvents(this.capiService.database, date, 'facebook');
+    }
+
     if (data.length === 0) {
       CapiLogger.info(`No events found for date ${date}.`);
       return;
@@ -361,7 +367,7 @@ class CompositeService {
     const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents(data, pixels);
 
     // Flag incorrect Data
-    await this.capiService.updateInvalidEvents(brokenPixelEvents);
+    await this.capiService.updateInvalidEvents(brokenPixelEvents, network);
 
     // If no valid events, return
     if (validPixelEvents.length === 0) {
@@ -380,7 +386,8 @@ class CompositeService {
     }
     CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
 
-    await this.capiService.updateReportedEvents(eventIds);
+    const updatedCount = await this.capiService.updateReportedEvents(eventIds, network);
+    CapiLogger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
   }
 
 }

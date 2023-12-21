@@ -525,6 +525,18 @@ class CompositeController {
       error: error.error_user_msg || error.message,
     });
   }
+
+  async reportConversions(req, res) {
+    try {
+      const { date, network } = req.body;
+      const result = await this.compositeService.sendCapiEvents(date, network);
+      res.json(result);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Internal Server Error");
+    }
+  }
+
 }
 
 module.exports = CompositeController;

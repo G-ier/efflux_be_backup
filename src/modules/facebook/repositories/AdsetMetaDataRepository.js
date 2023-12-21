@@ -46,23 +46,52 @@ class AdsetMetadataRepository {
 
   async upsert(adsetData, adsetId, adsetMetadataId, trx) {
     if (!adsetData) {
-      return adsetMetadataId;
+      return null; // Return null if no data is provided
     }
+  
     let adsetDbObject = this.toDatabaseDTO({
       ...adsetData,
-      adset_id: adsetId,
-      id: adsetMetadataId, // Include ID only if it exists
+      adset_id: adsetId
     });
-
-    return await this.database.upsert(
-      this.tableName,
-      [adsetDbObject],
-      'id',
-      [],
-      trx,
-    );
+  
+    // Check if adsetMetadataId is provided and if the record exists
+    let isNewRecord = false;
+    if (adsetMetadataId) {
+      const existingRecord = await this.database.connection
+        .select('*')
+        .from(this.tableName)
+        .where('id', adsetMetadataId)
+        .first()
+        .transacting(trx);
+  
+      if (existingRecord) {
+        // If the record exists, update it
+        await this.database.connection
+          .update(adsetDbObject)
+          .from(this.tableName)
+          .where('id', adsetMetadataId)
+          .transacting(trx);
+      } else {
+        isNewRecord = true;
+      }
+    } else {
+      isNewRecord = true;
+    }
+  
+    // If adsetMetadataId is not provided or no existing record is found, insert a new record
+    if (isNewRecord) {
+      const [newId] = await this.database.connection
+        .insert(adsetDbObject)
+        .into(this.tableName)
+        .transacting(trx)
+        .returning('id'); // Make sure your DB supports the 'returning' method
+  
+      return newId;
+    }
+  
+    return adsetMetadataId;
   }
-
+  
   toDatabaseDTO(adset) {
     let mappedAdset = {
       ...adset,

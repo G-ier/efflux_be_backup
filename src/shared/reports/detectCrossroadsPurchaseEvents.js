@@ -1,10 +1,11 @@
 
-const detectPurchaseEvents = async (database, date, traffic_source) => {
+const detectCrossroadsPurchaseEvents = async (database, date, traffic_source) => {
 
   const QUERY = `
     SELECT
       tg1 as campaign_name,
       tg2 as campaign_id,
+      tg3 as session_id,
       unique_identifier as id,
       traffic_source,
       tg4 as ip,
@@ -32,15 +33,14 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
       split_part(tg10, '_|_', 1) as external,
       gtmtr.fbc as fbc,
       gtmtr.fbp as fbp,
-      revenue_clicks as purchase_event_count,
-      publisher_revenue_amount as purchase_event_value
+      revenue_clicks - reported_conversions AS purchase_event_count,
+      publisher_revenue_amount - reported_amount AS purchase_event_value
     FROM
       raw_crossroads_data
     FULL OUTER JOIN
     	gtm_fb_cookie_values gtmtr ON raw_crossroads_data.tg3 = gtmtr.session_id
     WHERE
-      revenue_clicks > 0
-      AND reported_to_ts = false
+      revenue_clicks > 0 AND reported_conversions < revenue_clicks AND publisher_revenue_amount > 0
       AND date = '${date}'
       AND traffic_source = '${traffic_source}'
       AND valid_pixel = true
@@ -50,4 +50,4 @@ const detectPurchaseEvents = async (database, date, traffic_source) => {
   return result.rows
 }
 
-module.exports = detectPurchaseEvents
+module.exports = detectCrossroadsPurchaseEvents

@@ -26,7 +26,7 @@ exports.up = function (knex) {
     // New column for pixelId
     table.string('pixel_id').defaultTo('');
 
-    table.integer('adset_id').unsigned().references('provider_id').inTable('adsets'); // Adjust as needed
+    table.text('adset_id').unsigned().references('provider_id').inTable('adsets'); // Adjust as needed
     table.timestamps(true, true); // Creates created_at and updated_at columns
   });
 };

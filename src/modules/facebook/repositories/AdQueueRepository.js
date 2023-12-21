@@ -148,19 +148,21 @@ class AdQueueRepository {
     // First, remove old media connections for the adLauncherQueueId
     await trx('ad_media_queue_link').where('ad_launcher_queue_id', adLauncherQueueId).delete();
     console.log('Old media connections removed for ad_launcher_queue_id:', adLauncherQueueId);
+    // Filter out undefined values and then map existingMedia
+    const mediaQueueLinksFromExistingMedia = existingMedia
+      .filter((media) => media !== undefined && media.id !== undefined)
+      .map((media) => ({
+        media_id: media.id,
+        ad_launcher_queue_id: adLauncherQueueId,
+      }));
 
-    // Map existingMedia to the required format
-    const mediaQueueLinksFromExistingMedia = existingMedia.map((media) => ({
-      media_id: media.id,
-      ad_launcher_queue_id: adLauncherQueueId,
-    }));
-
-    // Transform existingContentIds to the required format
-    const mediaQueueLinksFromContentIds = existingContentIds.map((id) => ({
-      media_id: id,
-      ad_launcher_queue_id: adLauncherQueueId,
-    }));
-
+    // Filter out undefined values and then map existingContentIds
+    const mediaQueueLinksFromContentIds = existingContentIds
+      .filter((id) => id !== undefined)
+      .map((id) => ({
+        media_id: id,
+        ad_launcher_queue_id: adLauncherQueueId,
+      }));
     // Combine the two arrays
     const mediaQueueLinks = mediaQueueLinksFromExistingMedia.concat(mediaQueueLinksFromContentIds);
 
@@ -168,129 +170,6 @@ class AdQueueRepository {
     await trx('ad_media_queue_link').insert(mediaQueueLinks);
     console.log('New media data linked for ad_launcher_queue_id:', adLauncherQueueId);
   }
-
-  // async saveOne({ data, adAccountId, campaignId, adsetId, adId, existingMedia, existingLaunchId }) {
-  //   try {
-  //     // Parse the JSON data
-  //     const campaignData = data.campaignData ? JSON.parse(data.campaignData) : null;
-  //     const adsetData = data.adsetData ? JSON.parse(data.adsetData) : null;
-  //     const adData = data.adData ? JSON.parse(data.adData) : null;
-
-  //     // Starting the transaction
-  //     const trx = await this.database.startTransaction();
-
-  //     try {
-  //       let campaignMetadataId, adsetMetadataId, adMetadataId;
-
-  //       // Check if existingLaunchId is provided for updating
-  //       if (existingLaunchId) {
-  //         // Fetch existing IDs from ad_launcher_queue
-  //         const existingRecords = await trx(this.tableName).where({ id: existingLaunchId }).first();
-
-  //         campaignMetadataId = existingRecords?.campaign_metadata_id;
-  //         adsetMetadataId = existingRecords?.adset_metadata_id;
-  //         adMetadataId = existingRecords?.ad_metadata_id;
-  //       }
-  //       // Upsert Campaign Data
-  //       if (campaignData) {
-  //         let campaignDbObject = this.campaignMetadataRepository.toDatabaseDTO({
-  //           ...campaignData,
-  //           campaign_id: campaignId,
-  //         });
-
-  //         // If updating an existing record, include the ID
-  //         if (existingLaunchId && campaignMetadataId) {
-  //           campaignDbObject.id = campaignMetadataId;
-  //         }
-
-  //         campaignMetadataId = await this.database.upsert(
-  //           this.campaignMetadataRepository.tableName,
-  //           [campaignDbObject],
-  //           'id',
-  //           [],
-  //           trx,
-  //         );
-  //       }
-
-  //       // Upsert Adset Data
-  //       if (adsetData) {
-  //         let adsetDbObject = this.adsetMetadataRepository.toDatabaseDTO({
-  //           ...adsetData,
-  //           adset_id: adsetId,
-  //         });
-
-  //         // If updating an existing record, include the ID
-  //         if (existingLaunchId && adsetMetadataId) {
-  //           adsetDbObject.id = adsetMetadataId;
-  //         }
-
-  //         adsetMetadataId = await this.database.upsert(
-  //           this.adsetMetadataRepository.tableName,
-  //           [adsetDbObject],
-  //           'id',
-  //           [],
-  //           trx,
-  //         );
-  //       }
-
-  //       // Upsert Ad Data
-  //       if (adData) {
-  //         let adDbObject = this.adMetadataRepository.toDatabaseDTO({
-  //           ...adData,
-  //           ad_id: adId,
-  //         });
-
-  //         // If updating an existing record, include the ID
-  //         if (existingLaunchId && adMetadataId) {
-  //           adDbObject.id = adMetadataId;
-  //         }
-
-  //         adMetadataId = await this.database.upsert(
-  //           this.adMetadataRepository.tableName,
-  //           [adDbObject],
-  //           'id',
-  //           [],
-  //           trx,
-  //         );
-  //       }
-
-  //       console.log('Inserting into ad_launcher_queue');
-  //       const [adLauncherQueueId] = await trx(this.tableName)
-  //         .insert({
-  //           traffic_source: 'facebook',
-  //           ad_account_id: adAccountId,
-  //           campaign_metadata_id: campaignMetadataId,
-  //           ad_metadata_id: adMetadataId,
-  //           adset_metadata_id: adsetMetadataId,
-  //         })
-  //         .returning('id');
-  //       console.log('Inserted into ad_launcher_queue with ID:', adLauncherQueueId);
-
-  //       const mediaIds = existingMedia?.map((media) => media.id);
-  //       if (mediaIds && mediaIds.length > 0) {
-  //         console.log('Handling media data');
-  //         const mediaQueueLinks = mediaIds.map((mediaId) => ({
-  //           media_id: mediaId,
-  //           ad_launcher_queue_id: adLauncherQueueId,
-  //         }));
-
-  //         await trx('ad_media_queue_link').insert(mediaQueueLinks);
-  //         console.log('Media data linked');
-  //       }
-
-  //       console.log('Committing transaction');
-  //       await trx.commit();
-  //       console.log('Transaction committed successfully');
-  //     } catch (error) {
-  //       console.error('Error during transaction, rolling back', error);
-  //       await trx.rollback();
-  //       throw error;
-  //     }
-  //   } catch (error) {
-  //     console.error('Error starting transaction', error);
-  //     throw error;
-  //   }
-  // }
 
   async updateOne(adQueue, criteria) {
     const data = this.toDatabaseDTO(adQueue);
