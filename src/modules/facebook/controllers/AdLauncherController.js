@@ -95,7 +95,7 @@ class AdLauncherController {
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
       this.notifyUser(
         'Ad Launch Succesful',
-        `Ad successfully created with ID: ${adCreationResult.id}`,
+        `Ad ${adData.name} created with ID: ${adCreationResult.id}`,
         req.user.id,
       );
     } catch (error) {
