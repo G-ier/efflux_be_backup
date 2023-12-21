@@ -93,7 +93,11 @@ class AdLauncherController {
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
-      this.notifyUser();
+      this.notifyUser(
+        'Ad Launch Succesful',
+        `Ad successfully created with ID: ${adCreationResult.id}`,
+        req.user.id,
+      );
     } catch (error) {
       console.log({ error });
       this.respondWithError(res, error);
@@ -101,12 +105,12 @@ class AdLauncherController {
   }
 
   // Use Axios to call the notifications service
-  async notifyUser() {
+  async notifyUser(title, message, userId) {
     const formData = new FormData();
 
-    formData.append('user_id', '12345'); // TODO: Replace with actual user ID from session
-    formData.append('title', 'Ad Launch Successful');
-    formData.append('message', 'Your ad has been successfully launched in Facebook.');
+    formData.append('user_id', userId); // TODO: Replace with actual user ID from session
+    formData.append('title', title);
+    formData.append('message', message);
 
     const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
 
