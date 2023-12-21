@@ -109,6 +109,8 @@ class AdLauncherMedia extends BaseService {
           ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
           Authorization: `Bearer ${token}`,
         },
+        maxBodyLength: Infinity, 
+        maxContentLength: Infinity, 
       });
       const videoId = response.data.id;
 
