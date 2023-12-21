@@ -93,7 +93,7 @@ class AdLauncherController {
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
-      this.notifyUser(adAccountId, adCreationResult.id, token);
+      this.notifyUser();
     } catch (error) {
       console.log({ error });
       this.respondWithError(res, error);
