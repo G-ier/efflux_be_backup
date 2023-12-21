@@ -27,10 +27,11 @@ class AdLauncherController {
 
   async launchAd(req, res) {
     try {
-
-      const existingLaunchId = req?.body?.existingLaunchId
-      const existingContentIds =req.body.existingContentIds
-      const contentIds = Array.isArray(existingContentIds) ? existingContentIds : [existingContentIds];
+      const existingLaunchId = req?.body?.existingLaunchId;
+      const existingContentIds = req.body.existingContentIds;
+      const contentIds = Array.isArray(existingContentIds)
+        ? existingContentIds
+        : [existingContentIds];
 
       FacebookLogger.info('Ad launch process initiated.');
       this.validateRequiredParameters(req);
@@ -61,14 +62,14 @@ class AdLauncherController {
         req,
         firstKey,
         token,
-        contentIds
+        contentIds,
       );
 
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
       const adData = this.prepareAdData(req, uploadedMedia, adSetId);
-      
+
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
       const adCreationResult = await this.adLauncherService.createAd({
@@ -81,20 +82,46 @@ class AdLauncherController {
         existingLaunchId,
         adAccountId: firstKey,
         existingMedia: createdMediaObjects,
-        existingContentIds:contentIds,
+        existingContentIds: contentIds,
         data: req.body,
-        campaignId:campaignId,
-        adsetId:adSetId,
-        adId:adCreationResult.id,
-        status:"launched"
+        campaignId: campaignId,
+        adsetId: adSetId,
+        adId: adCreationResult.id,
+        status: 'launched',
       });
 
       // Log the successful creation of an ad
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
+      this.notifyUser(adAccountId, adCreationResult.id, token);
     } catch (error) {
       console.log({ error });
       this.respondWithError(res, error);
+    }
+  }
+
+  // Use Axios to call the notifications service
+  async notifyUser() {
+    const formData = new FormData();
+
+    formData.append('user_id', '12345'); // TODO: Replace with actual user ID from session
+    formData.append('title', 'Ad Launch Successful');
+    formData.append('message', 'Your ad has been successfully launched in Facebook.');
+
+    const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
+
+    try {
+      const response = await axios.post(url, formData, {
+        headers: {
+          ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
+        },
+      });
+
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error sending notification:', error);
+      throw error;
     }
   }
 
@@ -208,7 +235,7 @@ class AdLauncherController {
 
       // Call handleMediaUploads from ContentService
       const uploadedMedia = await this.contentService.handleMediaUploads(req, firstKey, token);
-      
+
       // Return the uploaded media data as a response
       res.json({ success: true, uploadedMedia });
     } catch (error) {
