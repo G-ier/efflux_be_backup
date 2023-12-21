@@ -9,7 +9,7 @@ const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const _ = require('lodash');
 const AdQueueService = require('../services/AdQueueService');
-
+const axios =require("axios")
 class AdLauncherController {
   constructor() {
     this.adLauncherService = new AdLauncherService();
@@ -99,35 +99,34 @@ class AdLauncherController {
         req.user.id,
       );
     } catch (error) {
-      console.log({ error });
       this.respondWithError(res, error);
     }
   }
+// Use Axios to call the notifications service
+async notifyUser(title, message, userId) {
+  const data = {
+    user_id: userId,
+    title: title,
+    message: message,
+  };
 
-  // Use Axios to call the notifications service
-  async notifyUser(title, message, userId) {
-    const formData = new FormData();
+  const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
 
-    formData.append('user_id', userId); // TODO: Replace with actual user ID from session
-    formData.append('title', title);
-    formData.append('message', message);
+  try {
+    const response = await axios.post(url, data, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
-    const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
-
-    try {
-      const response = await axios.post(url, formData, {
-        headers: {
-          ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
-        },
-      });
-
-      console.log(response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error sending notification:', error);
-      throw error;
-    }
+    console.log(response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Error sending notification:', error.response.data);
+    throw error;
   }
+}
+
 
   validateRequiredParameters(req) {
     const { files, body } = req;
