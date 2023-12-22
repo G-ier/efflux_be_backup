@@ -1,5 +1,5 @@
 // Local application imports
-const UserRepository = require("../repositories/UserRepository");
+const UserRepository = require('../repositories/UserRepository');
 
 class UserService {
   constructor() {
@@ -14,6 +14,11 @@ class UserService {
   // Save multiple users to the database in bulk
   async saveUsersInBulk(users, chunkSize = 500) {
     return await this.userRepository.saveInBulk(users, chunkSize);
+  }
+
+  // Fetch user's ad accounts from the database
+  async fetchUserAdAccounts(id) {
+    return await this.userRepository.fetchUserAdAccounts(id);
   }
 
   // Update a user or users based on given criteria
@@ -32,14 +37,13 @@ class UserService {
   }
 
   // Fetch users from the database based on given fields, filters, and limit
-  async fetchUsers(fields = ["*"], filters = {}, limit) {
+  async fetchUsers(fields = ['*'], filters = {}, limit) {
     return await this.userRepository.fetchUsers(fields, filters, limit);
   }
 
-  async fetchOne(fields = ["*"], filters = {}) {
+  async fetchOne(fields = ['*'], filters = {}) {
     return await this.userRepository.fetchOne(fields, filters);
   }
-
 }
 
 module.exports = UserService;

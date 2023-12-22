@@ -21,6 +21,12 @@ class UserRepository {
     }
   }
 
+  // TODO: Implement this method
+  async fetchUserAdAccounts(id) {
+    // Step 1: Fetch user associated ad accounts. campaign, adset, ads
+    // Step 2: Store the fetched data in the session
+  }
+
   async update(data, criteria) {
     return await this.database.update(this.tableName, data, criteria);
   }
