@@ -27,25 +27,26 @@ class AdLauncherMedia extends BaseService {
   }
 
   // function to upload the media to S3 bucket
-  async uploadToMediaLibrary(imageBuffer, filename, adAccountId, token) {
+  async uploadToMediaLibrary(type, imageBuffer, filename, adAccountId, mediaUrlOnNetwork, userId) {
     const formData = new FormData();
 
     formData.append('media_file', imageBuffer, filename);
     formData.append('ad_account_id', adAccountId);
+    formData.append('type', type);
     formData.append('ad_id', '123456789'); // TODO: Replace with actual ad ID
     formData.append('country_code', 'CA'); // TODO: Replace with actual country code
     formData.append('language_code', 'FR'); // TODO: Replace with actual language code
     formData.append('vertical', 'ecommerce'); // TODO: Replace with actual vertical
     formData.append('industry', 'ecommerce'); // TODO: Replace with actual industry
-    formData.append('user_id', '123456789'); // TODO: Replace with actual user ID from session
+    formData.append('media_url_on_network', mediaUrlOnNetwork);
+    formData.append('user_id', userId);
 
-    const url = 'https://u1yua8b7cf.execute-api.us-east-1.amazonaws.com/upload';
+    const url = process.env.MEDIA_LIBRARY_SERVICE_ENDPOINT + '/upload';
 
     try {
       const response = await axios.post(url, formData, {
         headers: {
           ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
-          Authorization: `Bearer ${token}`,
         },
       });
 
@@ -109,8 +110,8 @@ class AdLauncherMedia extends BaseService {
           ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
           Authorization: `Bearer ${token}`,
         },
-        maxBodyLength: Infinity, 
-        maxContentLength: Infinity, 
+        maxBodyLength: Infinity,
+        maxContentLength: Infinity,
       });
       const videoId = response.data.id;
 
@@ -120,7 +121,6 @@ class AdLauncherMedia extends BaseService {
         await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 30 seconds before checking again
         videoStatus = await this.checkVideoStatus(videoId, token);
       }
-
 
       return videoId;
     } catch (error) {
@@ -133,19 +133,18 @@ class AdLauncherMedia extends BaseService {
     const uploadedMedia = [];
     const createdMediaObjects = [];
     // Remove undefined elements from existingContentIds
-    const filteredExistingContentIds = existingContentIds.filter(id => id !== undefined);
-  
+    const filteredExistingContentIds = existingContentIds.filter((id) => id !== undefined);
+
     // Process existing content IDs
     await this.processExistingContentIds(filteredExistingContentIds, uploadedMedia);
-  
+
     // Process new uploads (Images and Videos)
     if (req.files) {
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
-  
+
     return { uploadedMedia, createdMediaObjects };
   }
-  
 
   async processExistingContentIds(existingContentIds, uploadedMedia) {
     if (existingContentIds && existingContentIds.length > 0) {
@@ -191,6 +190,7 @@ class AdLauncherMedia extends BaseService {
         token,
         uploadedMedia,
         createdMediaObjects,
+        req.user,
       );
     }
 
@@ -202,11 +202,12 @@ class AdLauncherMedia extends BaseService {
         token,
         uploadedMedia,
         createdMediaObjects,
+        req.user,
       );
     }
   }
 
-  async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects) {
+  async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects, user) {
     for (const file of images) {
       const imageHash = await this.uploadToFacebook(
         file.buffer,
@@ -214,14 +215,6 @@ class AdLauncherMedia extends BaseService {
         adAccountId,
         token,
       );
-
-      // // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
-      // const imageId = await this.uploadToMediaLibrary(
-      //   file.buffer,
-      //   file.originalname,
-      //   adAccountId,
-      //   imageHash['images'][file.originalname].hash,
-      // );
 
       const createdImage = await this.createContent({
         type: 'image',
@@ -231,20 +224,39 @@ class AdLauncherMedia extends BaseService {
       });
       uploadedMedia.push({ type: 'image', hash: createdImage.hash });
       createdMediaObjects.push(createdImage);
+
+      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
+      const imageId = await this.uploadToMediaLibrary(
+        'image',
+        file.buffer,
+        file.originalname,
+        adAccountId,
+        imageHash['images'][file.originalname].url,
+        user.id,
+      );
     }
   }
 
-  async processVideos(videos, adAccountId, token, uploadedMedia, createdMediaObjects) {
+  async processVideos(videos, adAccountId, token, uploadedMedia, createdMediaObjects, user) {
     for (const file of videos) {
       const videoHash = await this.uploadVideo(file.buffer, file.originalname, adAccountId, token);
       const createdVideo = await this.createContent({
         type: 'video',
         hash: videoHash,
-        url: "empty",
+        url: 'empty',
         ad_account_id: adAccountId,
       });
       uploadedMedia.push({ type: 'video', video_id: videoHash });
       createdMediaObjects.push(createdVideo);
+
+      const imageId = await this.uploadToMediaLibrary(
+        'video',
+        file.buffer,
+        file.originalname,
+        adAccountId,
+        'empty',
+        user.id,
+      );
     }
   }
 
