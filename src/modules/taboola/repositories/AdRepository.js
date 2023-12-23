@@ -23,6 +23,7 @@ class AdRepository {
 
   async upsert(ads, chunkSize = 500) {
     const dbObjects = ads.map((ad) => this.toDatabaseDTO(ad));
+    console.log(dbObjects);
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
       await this.database.upsert(this.tableName, chunk, "id");
@@ -44,6 +45,7 @@ class AdRepository {
       thumbnail_url: ad.thumbnail_url,
       campaign_id: ad.campaign_id,
       account_id: ad.account_id,
+      provider_id: ad.provider_id,
     };
   }
 

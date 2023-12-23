@@ -1,0 +1,65 @@
+exports.up = function(knex) {
+    return knex.schema.createTable('crossroads_raw_insights', function(table) {
+        // Identifier
+        table.string('unique_identifier').primary();
+  
+        // Date and Time Data
+        table.string('date');
+        table.smallint('hour');
+  
+        // Crossroads Data
+        table.integer("crossroads_campaign_id");
+        table.string("crossroads_campaign_name");
+        table.string("crossroads_campaign_type");
+        table.string("keyword");
+
+        // Traffic Source Data
+        table.string("campaign_id");
+        table.string("campaign_name");
+        table.string('adset_id');
+        table.string('adset_name');
+        table.string('ad_id');
+        table.string('traffic_source');
+  
+        // User Data
+        table.string("user_agent")
+        table.string("ip");
+        table.string("country_code");
+        table.string("region");
+        table.string("city");
+        table.string("session_id");
+
+        // Conversion Data
+        table.integer('conversions');
+        table.float('revenue');
+        table.string('click_id');
+        table.string("timestamp");
+        table.integer('lander_searches');
+        table.integer('lander_visitors');
+        table.integer('tracked_visitors');
+        table.integer('total_visitors');
+
+        // Reporting Data
+        table.string("pixel_id");
+        table.string("reported_conversions");
+        table.string("reported_amount");
+
+        // Timestamps
+        table.timestamp('created_at').defaultTo(knex.fn.now());
+        table.timestamp('updated_at').defaultTo(knex.fn.now());
+    })
+    .then(() => {
+      // Creating the Trigger
+      return knex.raw(`
+        CREATE TRIGGER updated_at
+        BEFORE UPDATE ON crossroads_raw_insights
+        FOR EACH ROW
+        EXECUTE FUNCTION updated_at_column();
+      `);
+    });
+  };
+  
+  exports.down = function(knex) {
+    return knex.schema.dropTable('crossroads_raw_insights');
+  };
+  

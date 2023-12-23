@@ -49,6 +49,9 @@ class UserAccountService extends BaseService {
       return accounts[0];
     }
 
+    /**
+     * Unused, gets refresh token through a sign in popup. Getting it from client removes this step for users.
+    */
     async getTaboolaAdvertiserTokenFromAuthCode(auth_code) {
       const url = `${TABOOLA_URL}/oauth/token`;
       const headers = {
@@ -85,9 +88,6 @@ class UserAccountService extends BaseService {
       const finalURL = `${url}?${queryParams}`;
 
       const res = await this.postToApi(finalURL, {}, "Error getting Taboola Access token", headers);
-
-      console.log("Taboola Token Fetching Response", res);
-
       this.logger.info("DONE Fetching access token from API");
       return res;
     }
@@ -101,7 +101,7 @@ class UserAccountService extends BaseService {
       return this.token;
     }
 
-    async syncTaboolaNetworkAccount(access_token) {
+    async syncTaboolaNetworkAccount(access_token, expires_in) {
 
       // The function that sync Taboola Network Accounts (parent entity of advertiser accounts)
 
@@ -113,7 +113,11 @@ class UserAccountService extends BaseService {
       }
       const res = await this.fetchFromApi(url, {}, "Error getting Taboola Network Account", header);
 
-      console.log("Taboola User Accounts Fetching Response", res);
+      const currentTimeInMilliseconds = new Date().getTime();
+      // Calculate the expiration time in milliseconds
+      const expirationTimeInMilliseconds = currentTimeInMilliseconds + expires_in * 1000;
+      // Create a Date object for the expiration time
+      const expirationDate = new Date(expirationTimeInMilliseconds);
 
       const mappedRes = {
         name: res.name,
@@ -125,7 +129,9 @@ class UserAccountService extends BaseService {
         fetching: 't',
         backup: 'false',
         role: 'admin',
+        expires_in: expirationDate
       }
+
       await this.upsertAccountToDB(mappedRes);
       this.logger.info("Successfully synced network account details from API");
       return mappedRes;

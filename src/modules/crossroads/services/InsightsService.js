@@ -139,7 +139,7 @@ class InsightsService extends BaseService {
       // Save the aggregated data to the database
       CrossroadsLogger.info("Upserting crossroads data to the database");
       await this.executeWithLogging(
-          () => this.repository.upsert(crossroadsData, account.id, request_date),
+          () => this.repository.testUpsert(crossroadsData, account.id, request_date),
           "Error processing and upserting bulk data"
       );
     }

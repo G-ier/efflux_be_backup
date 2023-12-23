@@ -36,8 +36,173 @@ class InsightsRepository {
     return await this.database.delete(this.partitionedTableName, criteria);
   }
 
+  aggregateInsights(aggregate, insight) {
+
+    Object.keys(insight).forEach((key) => {
+      if (key === 'hour' || key === 'crossroads_campaign_id') {
+        aggregate[key] = insight[key];
+      } else if (_.isNumber(insight[key])) {
+        aggregate[key] = (aggregate[key] || 0) + insight[key];
+      } else {
+        aggregate[key] = insight[key];  // for other non-numeric fields
+      }
+    });
+  }
+
+  parseData(insight, account, request_date){
+    const regex = new RegExp("^{.*}");
+    const parsedInsight = this.parseTGParams(insight, regex);
+    return {
+      // identifier
+      unique_identifier: `${parsedInsight.timestamp}-${parsedInsight.keyword}-${parsedInsight.session_id}`,
+      hour: parsedInsight.hour,
+
+      // crossroads data
+      crossroads_campaign_id: parsedInsight.crossroads_campaign_id || null,
+      cr_camp_name: parsedInsight.campaign__name || null,
+      crossroads_campaign_type: parsedInsight.campaign__type || null,
+
+      // user data
+      user_agent: parsedInsight.user_agent || null,
+      city: parsedInsight.city || null,
+      country_code: parsedInsight.country_code || null,
+      region: parsedInsight.region || null,
+      ip: parsedInsight.ip || null,
+
+      // traffic source Data
+      campaign_id: parsedInsight.campaign_id || null,
+      campaign_name: parsedInsight.campaign_name || null,
+      adset_name: parsedInsight.adset_name || null,
+      adset_id: parsedInsight.adset_id || null,
+      ad_id: parsedInsight.ad_id || null,
+      traffic_source: parsedInsight.traffic_source || PROVIDERS.UNKNOWN,
+
+      // conversion Data
+      session_id: parsedInsight.session_id || null,
+      conversions: parsedInsight.revenue_clicks || 0,
+      revenue: parsedInsight.publisher_revenue_amount || 0,
+      timestamp: parsedInsight.timestamp || null,
+      click_id: parsedInsight.click_id || null,
+      keyword: parsedInsight.keyword || null,
+
+      // Reporting Data
+      pixel_id: parsedInsight.pixel_id || null,
+      account: account,
+      // section_id: parsedInsight.section_id || null,
+      // ad_id: parsedInsight.ad_id || null,
+      // pixel_id: parsedInsight.pixel_id || null,
+
+      // date: request_date,
+      // hour: parsedInsight.hour,
+
+      // browser: !parsedInsight.browser || parsedInsight.browser === "0" ? null : parsedInsight.browser,
+      // device_type: parsedInsight.device_type || null,
+      // keyword: parsedInsight.lander_keyword || null,
+      // fbclid: parsedInsight.fbclid || null,
+      // cid: parsedInsight.cid || null,
+      // gclid: parsedInsight.gclid && parsedInsight.gclid !== "null" ? parsedInsight.gclid : null,
+      // platform: !parsedInsight.platform || parsedInsight.platform === "0" ? null : parsedInsight.platform,
+      // revenue_parsedInsights: parsedInsight.revenue_parsedInsights || 0,
+
+      // revenue: parsedInsight.publisher_revenue_amount || 0,
+      // revenue_clicks: parsedInsight.revenue_clicks || 0,
+      lander_searches: parsedInsight.lander_searches || 0,
+      lander_visitors: parsedInsight.lander_visitors || 0,
+      tracked_visitors: parsedInsight.tracked_visitors || 0,
+      total_visitors: parsedInsight.total_visitors || 0,
+
+      // account: account,
+      // request_date: request_date,
+
+      // // identifier
+      // unique_identifier: `${parsedInsight.campaign_id}-${parsedInsight.adset_id}-${parsedInsight.ad_id}-${request_date}-${parsedInsight.hour}`
+    };
+  }
+
+  cleanseData(insight) {
+    // Remove user specific data from the insight
+    const cleansedCopy = {
+      crossroads_campaign_id: insight.crossroads_campaign_id,
+      campaign_id: insight.campaign_id,
+      campaign_name: insight.campaign_name,
+      cr_camp_name: insight.cr_camp_name,
+      adset_name: insight.adset_name,
+      adset_id: insight.adset_id,
+      pixel_id: insight.pixel_id,
+      traffic_source: insight.traffic_source,
+      ad_id: insight.ad_id,
+      hour: insight.hour,
+      date: insight.date,
+      hour_fetched: todayHH(),
+      request_date: insight.date,
+      account: insight.account,
+      unique_identifier: `${insight.campaign_id}-${insight.adset_id}-${insight.ad_id}-${insight.date}-${insight.hour}`,
+      
+
+      total_revenue: insight.revenue,
+      total_searches : insight.lander_searches,
+      total_lander_visits : insight.lander_visitors,
+      total_revenue_clicks : insight.conversions,
+      total_visitors : insight.total_visitors,
+      total_tracked_visitors : insight.tracked_visitors,
+    }
+    return cleansedCopy;
+  }
+
+  async processData(data, account, request_date){
+      // Process raw data and aggregated data in a single loop
+    const hourlyAdsets = {}; 
+    const rawData = [];
+    let hourKey;
+    data.forEach((insight) => {
+
+      const parsedInsight = this.parseData(insight, account, request_date);
+      console.log(parsedInsight);
+      if(parsedInsight.traffic_source === 'taboola'){
+        rawData.push(parsedInsight);
+        
+        const cleansedInsight = this.cleanseData(parsedInsight);
+        if (cleansedInsight.traffic_source === 'taboola'){
+          hourKey = `${cleansedInsight.crossroads_campaign_id}-${cleansedInsight.hour}`;
+        }
+        else{
+          hourKey = `${cleansedInsight.adset_id}-${cleansedInsight.hour}`;
+        }
+        // Aggregate data
+        if (hourlyAdsets[hourKey]) {
+          this.aggregateInsights(hourlyAdsets[hourKey], cleansedInsight);
+        } 
+        else {
+          hourlyAdsets[hourKey] = cleansedInsight;
+        }
+    }
+  });
+
+  return [rawData, Object.values(hourlyAdsets)]
+}
+
+
+
+  async testUpsert(insights, id, request_date, chunkSize = 500) {
+    const [rawData, AggregatedData] = await this.processData(insights, id, request_date);
+
+    console.log(rawData);
+    console.log(AggregatedData);
+        // Upsert raw user session data
+    const dataChunks = _.chunk(rawData, chunkSize);
+    for (const chunk of dataChunks) {
+      await this.database.upsert("crossroads_raw_insights", chunk, "unique_identifier");
+    }
+
+    const aggregateChunks = _.chunk(AggregatedData, chunkSize);
+    for (const chunk of aggregateChunks) {
+      await this.database.upsert(this.tableName, chunk, "unique_identifier");
+    }
+  }
+
   async upsert(insights, id, request_date, chunkSize = 500) {
     const dbObjects = this.toDatabaseDTO(insights, id, request_date);
+
     const dataChunks = _.chunk(dbObjects, chunkSize);
     let insrt_total = { cr: 0, cr_p: 0 };
 
@@ -132,8 +297,8 @@ class InsightsRepository {
   }
 
   aggregateCrossroadsData(data) {
-    const chainAdset = _(data).groupBy("adset_id");
-
+    const chainAdset = _(data).groupBy(item => ( item.traffic_source === 'taboola' ? item.campaign_id : item.adset_id));
+    
     return chainAdset
       .map((adsets) => {
         return this.processHourlyData(adsets);
@@ -173,7 +338,10 @@ class InsightsRepository {
     )
       return PROVIDERS.OUTBRAIN;
     else if (stat.campaign__name.includes("TT") || stat.referrer.includes(PROVIDERS.TIKTOK)) return PROVIDERS.TIKTOK;
-    else if (stat.campaign__name.includes("TB")) return PROVIDERS.TABOOLA;
+    else if (stat.campaign__name.includes("TB")) {
+      // console.log(stat);
+      return PROVIDERS.TABOOLA;
+    }
     else {
       return PROVIDERS.UNKNOWN;
     }
@@ -237,17 +405,23 @@ class InsightsRepository {
       };
     }
     else if (traffic_source === PROVIDERS.TABOOLA){
+      const [country, city, region] = stat.tg6.split('-');
       return{
         ...stat,
-        traffic_source,
-        campaign_id: stat.tg2,
-        fbclid: stat.tg10,
-        gclid: null,
-        pixel_id: null, // ? recheck
-        adset_id: null,
-        ad_id: stat.tg5,
         campaign_name: stat.tg1,
-        adset_name: null
+        campaign_id: stat.tg2,
+        session_id: stat.tg3,
+        ip: stat.tg4,
+        ad_id: stat.tg5,
+        country_code: country,
+        city: city,
+        region: region,
+        traffic_source,
+        user_agent: stat.tg7,
+        timestamp: stat.tg8,
+        click_id: stat.tg10,
+        traffic_source: traffic_source,
+        unique_identifier: `${stat.timestamp}-${stat.keyword}-${stat.tg3}`
       }
     }
     return {

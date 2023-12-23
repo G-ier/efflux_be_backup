@@ -1,0 +1,14 @@
+{
+    "id": 1306,
+    "name": "Demo Account 1",
+    "account_id": "demo-account-001",
+    "partner_types": [
+       "ADVERTISER"
+    ],
+    "type": "PARTNER",
+    "campaign_types": [
+       "PAID"
+    ],
+    "currency": "USD",
+    "time_zone_name": "US/Eastern"
+ }

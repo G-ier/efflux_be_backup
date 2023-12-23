@@ -20,13 +20,13 @@ class UserAccountController {
 
   async refreshNetworkAccount(req, res){
     try {
-      const response = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
-      await this.userAccountService.syncTaboolaNetworkAccount(response.access_token);
+      const { access_token, expires_in } = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
+      await this.userAccountService.syncTaboolaNetworkAccount(access_token, expires_in);
 
       // Return the response to the user.
       res.status(200).json({
         message: "Successfully refreshed network Account Data",
-        access_token: response.access_token,
+        access_token: access_token,
       });
     }
     catch(error){

@@ -301,7 +301,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       WHERE
         date > '${startDate}' AND date <= '${endDate}'
       AND traffic_source = '${trafficSource}'
-    ), agg_adsets_data AS (
+    ), ${ trafficSource != 'taboola' ? `agg_adsets_data AS (
       SELECT
         c.id as campaign_id,
         MAX(c.name) as campaign_name,
@@ -313,7 +313,20 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
         ${campaignIdsRestriction ? `WHERE c.id IN ${campaignIdsRestriction}` : ''}
       GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
-    )
+    )` : 
+    `agg_adsets_data AS (
+      SELECT
+      id as campaign_id,
+      MAX(name) as campaign_name,
+      '' as adset_id,
+      '' as adset_name,
+      user_id,
+      ad_account_id
+      FROM campaigns
+      ${campaignIdsRestriction ? `WHERE id IN ${campaignIdsRestriction}` : ''}
+      GROUP BY id, user_id, ad_account_id
+    )` 
+  }
     , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
     , ${NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
       ${POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
@@ -333,7 +346,9 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       trafficSource === 'taboola' ? `traffic_source.campaign_id = network.campaign_id`: ` traffic_source.adset_id = network.adset_id`
     }
     AND traffic_source.date = network.date AND network.hour = traffic_source.hour
-    FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
+    FULL OUTER JOIN agg_adsets_data ON ${
+      trafficSource === 'taboola' ? `traffic_source.campaign_id = agg_adsets_data.campaign_id` : `traffic_source.adset_id = agg_adsets_data.adset_id`
+    }
     ${
       network === 'crossroads' ? `
         FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
@@ -341,7 +356,6 @@ async function compileAggregates(database, network, trafficSource, startDate, en
     }
     WHERE COALESCE(traffic_source.date, network.date) > '${startDate}' AND COALESCE(traffic_source.date, network.date) <= '${endDate}';
   `
-  console.log(query);
   const { rows } = await database.raw(query)
   return rows
 }

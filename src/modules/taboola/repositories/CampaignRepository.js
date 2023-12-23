@@ -127,8 +127,8 @@ class CampaignRepository {
       "status",
       "daily_budget",
       "lifetime_budget",
-      "created_time",
-      "updated_time",
+      "start_time",
+      "stop_time",
       "user_id",
       "account_id",
       "ad_account_id",
@@ -136,6 +136,11 @@ class CampaignRepository {
 
     dbObject.network = "unkown";
     dbObject.traffic_source = "taboola";
+    
+    // Set endDate to null if its value is like 9999
+    if (dbObject.stop_time && dbObject.stop_time.includes('9999')) {
+      dbObject.stop_time = null;
+    }
 
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;

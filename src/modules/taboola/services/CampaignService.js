@@ -68,10 +68,14 @@ class CampaignService extends BaseService {
       "Error Upserting Campaigns",
     );
     this.logger.info(`Done upserting campaigns`);
-    const result = campaigns.map(campaign => ({
-      campaignId: campaign.id,
-      adAccountId: campaign.advertiser_id
-    }));
+    const result = campaigns.map(campaign => {
+      const adAccount = adAccountsMap[campaign.advertiser_id];
+        return {
+          campaignId: campaign.id,
+          adAccountId: adAccount.account_id,
+          providerId: campaign.advertiser_id // Replace 'additionalField' with the actual field you want to add
+        };
+    });
     return result;
   }
 

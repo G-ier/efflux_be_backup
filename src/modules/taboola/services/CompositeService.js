@@ -25,8 +25,8 @@ class CompositeService {
     }
 
     async syncUserAccountsData(start_date, end_date){
-        const { access_token } = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
-        await this.userAccountService.syncTaboolaNetworkAccount(access_token);
+        const { access_token, expires_in } = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
+        await this.userAccountService.syncTaboolaNetworkAccount(access_token, expires_in);
         const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
         TaboolaLogger.info(`Syncing data for account ${name}`);
 
@@ -39,11 +39,12 @@ class CompositeService {
         const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
         const updatedAdAccountsIds = _.map(adAccounts, "provider_id");
         if (!adAccounts.length) throw new Error("No ad accounts to update");
-        //const conversionRules = await this.conversionRuleService.syncConversionRules(updatedAdAccountsIds, access_token);
+        // //const conversionRules = await this.conversionRuleService.syncConversionRules(updatedAdAccountsIds, access_token);
 
         // Sync Campaigns
         const campaigns = await this.campaignService.syncCampaigns(access_token, updatedAdAccountsIds, updatedAdAccountsDataMap);
 
+        // Sync Insights
         await this.insightService.syncInsights(updatedAdAccountsIds, access_token,
           start_date, end_date);
 

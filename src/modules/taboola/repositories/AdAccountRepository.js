@@ -35,7 +35,17 @@ class AdAccountRepository {
     return results;
   }
 
+
+
+
   toDatabaseDTO(adAccount, user_id, user_account_id) {
+
+    const getOffset = (timeZone = 'UTC', date = new Date()) => {
+      const utcDate = new Date(date.toLocaleString('en-US', { timeZone: 'UTC' }));
+      const tzDate = new Date(date.toLocaleString('en-US', { timeZone }));
+      return (tzDate - utcDate) / 3.6e6;
+    }
+
     return {
       name: adAccount.name,
       provider: "taboola",
@@ -46,6 +56,7 @@ class AdAccountRepository {
       fb_account_id: adAccount.advertiser_id,
       currency: adAccount.currency,
       tz_name: adAccount.time_zone_name,
+      tz_offset: getOffset(adAccount.time_zone_name)
     };
   }
 

@@ -31,7 +31,7 @@ class AdService extends BaseService {
     const allAds = await async.mapLimit(campaigns, 100, async (campaign) => {
         let paging = {};
         const ads = [];
-        const url = `${TABOOLA_URL}/api/1.0/${campaign.adAccountId}/campaigns/${campaign.campaignId}/items/`;
+        const url = `${TABOOLA_URL}/api/1.0/${campaign.providerId}/campaigns/${campaign.campaignId}/items/`;
         do {
           if (paging?.next) {
             url = paging.next;
@@ -51,6 +51,7 @@ class AdService extends BaseService {
             const modifiedAds = data.results.map(ad => ({
               ...ad,  // Copy existing properties
               account_id: campaign.adAccountId,  
+              provider_id: campaign.providerId
             }));
           
             ads.push(...modifiedAds);
