@@ -57,9 +57,24 @@ class TemporaryService {
     let users = await this.userRepository.fetchUsers(['id', 'name', 'nickname'], userFilters);
     const userIds = users.map(user => user.id);
 
-    let adAccountFilters = {};
-    if (!isAdmin) adAccountFilters = { user_id: userIds };
-    const adAccounts = await this.adAccountRepository.fetchAdAccounts(['id', 'provider_id' ,'user_id', 'name', 'provider'], adAccountFilters, 1000);
+    // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
+    const whereClause = { "ua.backup": false };
+    if (!isAdmin) whereClause["ad_accounts.user_id"] = userIds;
+
+    const adAccounts = await this.adAccountRepository.fetchAdAccounts(
+      ['ad_accounts.id', 'ad_accounts.provider_id' ,'ad_accounts.user_id', 'ad_accounts.name', 'ad_accounts.provider'],
+      whereClause,
+      1000,
+      [
+        {
+          type: "inner",
+          table: "user_accounts AS ua",
+          first: `ad_accounts.account_id`,
+          operator: "=",
+          second: "ua.id",
+        },
+      ]
+    )
 
     users = users.map(user => {
       user.ad_accounts = adAccounts.filter(adAccount => adAccount.user_id === user.id);
@@ -102,49 +117,49 @@ class TemporaryService {
       grant_type: 'client_credentials',
       scope: 'create:user_tickets' // Add other required scopes if necessary
     };
-  
+
     const response = await axios.post(url, payload);
     return response.data.access_token;
   }
 
   async  createPasswordChangeTicket(email) {
     const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/dbconnections/change_password`;
-    
+
     const body = {
       client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
       email: email,
       connection: "Username-Password-Authentication"
     };
-    
+
     // Note that we're not using an Auth0 Management API token here
     const response = await axios.post(url, body, {
       headers: {
         'Content-Type': 'application/json'
       }
     });
-  
+
     return response.data;
   }
 
   async updateUserDetails(userId, name) {
     const auth0Token = await this.getAuth0ManagementApiToken(); // Retrieve your Auth0 Management API token
-    
+
     const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/api/v2/users/${userId}`;
-    
+
     const headers = {
       'Authorization': `Bearer ${auth0Token}`,
       'Content-Type': 'application/json'
     };
-  
+
     const body = {};
     if (name) body.name = name;
-    
+
     const response = await axios.patch(url, body, { headers });
     return response.data;
   }
-  
+
 }
-  
+
 class TemporaryController {
 
   constructor() {
@@ -241,7 +256,7 @@ class TemporaryController {
   async updatePassword(req, res) {
     try {
       const { email } = req.body;
-      
+
       const ticketUrl = await this.temporaryService.createPasswordChangeTicket(email);
       res.status(200).json({ message: 'Password reset email sent successfully', ticketUrl: ticketUrl });
     } catch (error) {
@@ -266,7 +281,7 @@ async updateUserDetails(req, res) {
     // Construct a response message based on what was updated
     let message = 'User details updated successfully: ';
     if (name) message += 'Name ';
-    
+
     res.status(200).json({ message: message.trim(), updateResult });
   } catch (error) {
     console.log('ERROR', error);
