@@ -222,11 +222,7 @@ class AdLauncherMedia extends BaseService {
         url: imageHash['images'][file.originalname].url,
         ad_account_id: adAccountId,
       });
-      uploadedMedia.push({ type: 'image', hash: createdImage.hash });
-      createdMediaObjects.push(createdImage);
-
-      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
-      const imageId = await this.uploadToMediaLibrary(
+      await this.uploadToMediaLibrary(
         'image',
         file.buffer,
         file.originalname,
@@ -234,6 +230,10 @@ class AdLauncherMedia extends BaseService {
         imageHash['images'][file.originalname].url,
         user.id,
       );
+      uploadedMedia.push({ type: 'image', hash: createdImage.hash });
+      createdMediaObjects.push(createdImage);
+
+      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
     }
   }
 
@@ -246,10 +246,7 @@ class AdLauncherMedia extends BaseService {
         url: 'empty',
         ad_account_id: adAccountId,
       });
-      uploadedMedia.push({ type: 'video', video_id: videoHash });
-      createdMediaObjects.push(createdVideo);
-
-      const imageId = await this.uploadToMediaLibrary(
+      await this.uploadToMediaLibrary(
         'video',
         file.buffer,
         file.originalname,
@@ -257,6 +254,8 @@ class AdLauncherMedia extends BaseService {
         'empty',
         user.id,
       );
+      uploadedMedia.push({ type: 'video', video_id: videoHash });
+      createdMediaObjects.push(createdVideo);
     }
   }
 
