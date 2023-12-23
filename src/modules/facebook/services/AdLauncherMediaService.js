@@ -109,24 +109,18 @@ class AdLauncherMedia extends BaseService {
           ...formData.getHeaders(), // form-data handles the Content-Type multipart/form-data header
           Authorization: `Bearer ${token}`,
         },
+        maxBodyLength: Infinity, 
+        maxContentLength: Infinity, 
       });
       const videoId = response.data.id;
 
       // Check video status until it's ready
       let videoStatus = await this.checkVideoStatus(videoId, token);
       while (videoStatus !== 'ready') {
-        await new Promise((resolve) => setTimeout(resolve, 30000)); // Wait 30 seconds before checking again
+        await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 30 seconds before checking again
         videoStatus = await this.checkVideoStatus(videoId, token);
       }
 
-      // Create content record for the uploaded video
-      const videoContentData = {
-        type: 'video',
-        url: response.data.someVideoUrlField, // Adjust according to actual response
-        adAccountId,
-        // other relevant data
-      };
-      await this.createContent(videoContentData);
 
       return videoId;
     } catch (error) {
@@ -138,16 +132,20 @@ class AdLauncherMedia extends BaseService {
   async handleMediaUploads(req, adAccountId, token, existingContentIds = []) {
     const uploadedMedia = [];
     const createdMediaObjects = [];
-
+    // Remove undefined elements from existingContentIds
+    const filteredExistingContentIds = existingContentIds.filter(id => id !== undefined);
+  
     // Process existing content IDs
-    await this.processExistingContentIds(existingContentIds, uploadedMedia);
-
+    await this.processExistingContentIds(filteredExistingContentIds, uploadedMedia);
+  
     // Process new uploads (Images and Videos)
     if (req.files) {
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
+  
     return { uploadedMedia, createdMediaObjects };
   }
+  
 
   async processExistingContentIds(existingContentIds, uploadedMedia) {
     if (existingContentIds && existingContentIds.length > 0) {
@@ -217,13 +215,13 @@ class AdLauncherMedia extends BaseService {
         token,
       );
 
-      // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
-      const imageId = await this.uploadToMediaLibrary(
-        file.buffer,
-        file.originalname,
-        adAccountId,
-        imageHash['images'][file.originalname].hash,
-      );
+      // // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
+      // const imageId = await this.uploadToMediaLibrary(
+      //   file.buffer,
+      //   file.originalname,
+      //   adAccountId,
+      //   imageHash['images'][file.originalname].hash,
+      // );
 
       const createdImage = await this.createContent({
         type: 'image',
@@ -241,11 +239,11 @@ class AdLauncherMedia extends BaseService {
       const videoHash = await this.uploadVideo(file.buffer, file.originalname, adAccountId, token);
       const createdVideo = await this.createContent({
         type: 'video',
-        video_id: videoHash,
-        url: imageHash['videos'][file.originalname].url,
+        hash: videoHash,
+        url: "empty",
         ad_account_id: adAccountId,
       });
-      uploadedMedia.push({ type: 'video', video_id: createdVideo.video_id });
+      uploadedMedia.push({ type: 'video', video_id: videoHash });
       createdMediaObjects.push(createdVideo);
     }
   }

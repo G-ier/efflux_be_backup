@@ -1,7 +1,7 @@
 // Third party imports
 const _                         = require('lodash');
 const assert                    = require('assert');
-
+const axios = require("axios")
 // Local imports
 const UserRepository            = require('../auth/repositories/UserRepository');
 const UserAccountRepository     = require('../facebook/repositories/UserAccountRepository');
@@ -9,7 +9,7 @@ const AdAccountRepository       = require('../facebook/repositories/AdAccountRep
 const AdsetsRepository          = require('../facebook/repositories/AdsetsRepository');
 const CampaignRepository        = require('../facebook/repositories/CampaignRepository');
 const DatabaseConnection        = require('../../shared/lib/DatabaseConnection');
-
+const  EnvironmentVariablesManager = require("../../shared/services/EnvironmentVariablesManager")
 class TemporaryService {
 
   constructor() {
@@ -93,8 +93,58 @@ class TemporaryService {
     return response;
   }
 
-}
+  async getAuth0ManagementApiToken() {
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/oauth/token`;
+    const payload = {
+      client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
+      client_secret: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_SECRET'),
+      audience: `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/api/v2/`,
+      grant_type: 'client_credentials',
+      scope: 'create:user_tickets' // Add other required scopes if necessary
+    };
+  
+    const response = await axios.post(url, payload);
+    return response.data.access_token;
+  }
 
+  async  createPasswordChangeTicket(email) {
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/dbconnections/change_password`;
+    
+    const body = {
+      client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
+      email: email,
+      connection: "Username-Password-Authentication"
+    };
+    
+    // Note that we're not using an Auth0 Management API token here
+    const response = await axios.post(url, body, {
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    });
+  
+    return response.data;
+  }
+
+  async updateUserDetails(userId, name) {
+    const auth0Token = await this.getAuth0ManagementApiToken(); // Retrieve your Auth0 Management API token
+    
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/api/v2/users/${userId}`;
+    
+    const headers = {
+      'Authorization': `Bearer ${auth0Token}`,
+      'Content-Type': 'application/json'
+    };
+  
+    const body = {};
+    if (name) body.name = name;
+    
+    const response = await axios.patch(url, body, { headers });
+    return response.data;
+  }
+  
+}
+  
 class TemporaryController {
 
   constructor() {
@@ -187,6 +237,42 @@ class TemporaryController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  async updatePassword(req, res) {
+    try {
+      const { email } = req.body;
+      
+      const ticketUrl = await this.temporaryService.createPasswordChangeTicket(email);
+      res.status(200).json({ message: 'Password reset email sent successfully', ticketUrl: ticketUrl });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+async updateUserDetails(req, res) {
+  try {
+    const { name } = req.body;
+    const userId = req.user.sub; // Ensure that the user's ID is available, typically through authentication middleware
+
+    // Validate the input as necessary
+    if ( !name) {
+      return res.status(400).json({ message: 'No update parameters provided.' });
+    }
+
+    // Call a service method to update the user details
+    const updateResult = await this.temporaryService.updateUserDetails(userId, name);
+    console.log({updateResult})
+    // Construct a response message based on what was updated
+    let message = 'User details updated successfully: ';
+    if (name) message += 'Name ';
+    
+    res.status(200).json({ message: message.trim(), updateResult });
+  } catch (error) {
+    console.log('ERROR', error);
+    res.status(500).json({ message: error.message });
+  }
+}
 
 }
 
