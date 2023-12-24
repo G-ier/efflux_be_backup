@@ -27,21 +27,39 @@ class AdLauncherMedia extends BaseService {
   }
 
   // function to upload the media to S3 bucket
-  async uploadToMediaLibrary(type, imageBuffer, filename, adAccountId, mediaUrlOnNetwork, userId) {
+  async uploadToMediaLibrary(
+    type,
+    imageBuffer,
+    filename,
+    adAccountId,
+    mediaUrlOnNetwork,
+    userId,
+    adsetData,
+  ) {
     const formData = new FormData();
+
+    const parsedAdsetData = JSON.parse(adsetData);
+    console.debug('ILYAS-TEST: country_code');
+    console.debug(parsedAdsetData.targeting.geo_locations.countries[0]);
+
+    console.debug('ILYAS-TEST: platform');
+    console.debug(parsedAdsetData.targeting.publisher_platforms[0]);
 
     formData.append('media_file', imageBuffer, filename);
     formData.append('ad_account_id', adAccountId);
     formData.append('type', type);
-    formData.append('ad_id', '123456789'); // TODO: Replace with actual ad ID
-    formData.append('country_code', 'CA'); // TODO: Replace with actual country code
+    formData.append(
+      'country_code',
+      parsedAdsetData.targeting.geo_locations.countries[0].toUpperCase(),
+    );
+    formData.append('platform', parsedAdsetData.targeting.publisher_platforms[0]);
     formData.append('language_code', 'FR'); // TODO: Replace with actual language code
-    formData.append('vertical', 'ecommerce'); // TODO: Replace with actual vertical
-    formData.append('industry', 'ecommerce'); // TODO: Replace with actual industry
     formData.append('media_url_on_network', mediaUrlOnNetwork);
     formData.append('user_id', userId);
 
-    const url = process.env.MEDIA_LIBRARY_SERVICE_ENDPOINT + '/upload';
+    const url =
+      process.env.MEDIA_LIBRARY_SERVICE_ENDPOINT + '/upload' ||
+      'https://3j31rv1m1m.execute-api.us-east-1.amazonaws.com/upload';
 
     try {
       const response = await axios.post(url, formData, {
@@ -121,7 +139,6 @@ class AdLauncherMedia extends BaseService {
         await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 30 seconds before checking again
         videoStatus = await this.checkVideoStatus(videoId, token);
       }
-
       return videoId;
     } catch (error) {
       console.error('Error uploading video:', error);
@@ -182,6 +199,10 @@ class AdLauncherMedia extends BaseService {
   }
 
   async processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects) {
+    console.log('Processing new uploads...');
+    console.log(req.body.adsetData);
+    console.log(req.body.adData);
+
     // Process Images
     if (req.files['images']) {
       await this.processImages(
@@ -191,6 +212,7 @@ class AdLauncherMedia extends BaseService {
         uploadedMedia,
         createdMediaObjects,
         req.user,
+        req.body.adsetData,
       );
     }
 
@@ -207,7 +229,15 @@ class AdLauncherMedia extends BaseService {
     }
   }
 
-  async processImages(images, adAccountId, token, uploadedMedia, createdMediaObjects, user) {
+  async processImages(
+    images,
+    adAccountId,
+    token,
+    uploadedMedia,
+    createdMediaObjects,
+    user,
+    adsetData,
+  ) {
     for (const file of images) {
       const imageHash = await this.uploadToFacebook(
         file.buffer,
@@ -222,6 +252,9 @@ class AdLauncherMedia extends BaseService {
         url: imageHash['images'][file.originalname].url,
         ad_account_id: adAccountId,
       });
+
+      uploadedMedia.push({ type: 'image', hash: createdImage.hash });
+
       await this.uploadToMediaLibrary(
         'image',
         file.buffer,
@@ -229,15 +262,24 @@ class AdLauncherMedia extends BaseService {
         adAccountId,
         imageHash['images'][file.originalname].url,
         user.id,
+        adsetData,
       );
-      uploadedMedia.push({ type: 'image', hash: createdImage.hash });
+
       createdMediaObjects.push(createdImage);
 
       // Calls the media-library microservice to upload the image to S3 and store the metadata in dynamodb
     }
   }
 
-  async processVideos(videos, adAccountId, token, uploadedMedia, createdMediaObjects, user) {
+  async processVideos(
+    videos,
+    adAccountId,
+    token,
+    uploadedMedia,
+    createdMediaObjects,
+    user,
+    adsetData,
+  ) {
     for (const file of videos) {
       const videoHash = await this.uploadVideo(file.buffer, file.originalname, adAccountId, token);
       const createdVideo = await this.createContent({
@@ -246,6 +288,9 @@ class AdLauncherMedia extends BaseService {
         url: 'empty',
         ad_account_id: adAccountId,
       });
+
+      uploadedMedia.push({ type: 'video', video_id: videoHash });
+
       await this.uploadToMediaLibrary(
         'video',
         file.buffer,
@@ -253,8 +298,9 @@ class AdLauncherMedia extends BaseService {
         adAccountId,
         'empty',
         user.id,
+        adsetData,
       );
-      uploadedMedia.push({ type: 'video', video_id: videoHash });
+
       createdMediaObjects.push(createdVideo);
     }
   }
