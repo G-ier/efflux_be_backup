@@ -106,12 +106,7 @@ class InsightsService extends BaseService {
     return await this.fetchFromApi(`${CROSSROADS_URL}get-traffic-sources`, { key, campaign_id }, "Error getting traffic source naked links");
   }
 
-  async updateCrossroadsData(account, request_date, saveAggregated=true, saveRawData = false, saveRawDataToFile = false, campaignIdRestrictions = []) {
-
-    if (!saveAggregated && !saveRawData) {
-      CrossroadsLogger.info("No data to save. Skipping crossroads data update");
-      return;
-    }
+  async updateCrossroadsData(account, request_date, saveRawDataToFile = false) {
 
     const available_fields = await this.getAvailableFields(account.key);
     const fields = available_fields.join(",");
@@ -126,23 +121,12 @@ class InsightsService extends BaseService {
       CrossroadsLogger.info(`Saved crossroads data to ${filePath}`);
     }
 
-    if (saveRawData) {
-      // Save the raw data to the database
-      CrossroadsLogger.info("Saving raw data to the database");
-      await this.executeWithLogging(
-        () => this.repository.saveRawData(crossroadsData, account.id, request_date, campaignIdRestrictions),
-        "Error saving raw data"
-      );
-    }
-
-    if (saveAggregated) {
-      // Save the aggregated data to the database
-      CrossroadsLogger.info("Upserting crossroads data to the database");
-      await this.executeWithLogging(
-          () => this.repository.testUpsert(crossroadsData, account.id, request_date),
-          "Error processing and upserting bulk data"
-      );
-    }
+    // Save the aggregated data to the database
+    CrossroadsLogger.info("Upserting crossroads data to the database");
+    await this.executeWithLogging(
+        () => this.repository.upsert(crossroadsData, account.id, request_date),
+        "Error processing and upserting bulk data"
+    );
 
     CrossroadsLogger.info("Finished crossroads data update");
   }
