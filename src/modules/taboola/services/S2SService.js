@@ -13,10 +13,9 @@ const DatabaseRepository    = require('../../../shared/lib/DatabaseRepository')
 
 class S2SService extends BaseService{
 
-    constructor(){
-        super(CapiLogger);
-        this.database = new DatabaseRepository();
-        
+    constructor() {
+      super(CapiLogger);
+      this.database = new DatabaseRepository();
     }
 
     async createS2SLogEntry(data) {
@@ -72,7 +71,7 @@ class S2SService extends BaseService{
       // 3. Construct facebook conversion payloads
 
       const tblProcessedPayloads = []
-      
+
       Object.entries(tblAccountGrouped).forEach(([account_id, events]) => {
         const tblS2SPayloads  = this.constructTaboolaConversionEvents(events)
         tblProcessedPayloads.push({
@@ -130,7 +129,7 @@ class S2SService extends BaseService{
     //     this.logger.info(
     //       `Events Parsing Telemetry: SUCCESS(${validPixelEvents.length}) | ERROR(${brokenPixelEvents.length})`,
     //     );
-  
+
     //     return { brokenPixelEvents, validPixelEvents };
     // }
 

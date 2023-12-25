@@ -1,0 +1,24 @@
+      
+    SELECT
+    campaign_name,
+    campaign_id,
+    unique_identifier as id,
+    traffic_source,
+    country_code,
+    region AS state,
+    city,
+    user_agent,
+    pixel_id,
+    timestamp,
+    external,
+    conversions,
+    revenue
+      FROM
+    crossroads_raw_insights
+      WHERE
+    conversions > 0
+    --AND reported_conversions < conversions
+    --AND valid_pixel = true
+    AND date = '2023-12-24'
+    AND traffic_source = 'facebook'
+      LIMIT 1;

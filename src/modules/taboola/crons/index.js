@@ -45,5 +45,5 @@ const initializeTaboolaCron = () => {
     updateTodayDataRegular.start();
 
 }
-  
+
  module.exports = initializeTaboolaCron;

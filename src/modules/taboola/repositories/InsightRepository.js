@@ -37,11 +37,14 @@ class InsightRepository {
   }
 
   toDatabaseDTO(insight) {
-    return {      
+    const date = insight.date.split(' ')[0]
+    const hour = insight.date.split(' ')[1].split(':')[0]
+
+    return {
       campaign_id: insight.campaign,
       campaign_name: insight.campaign_name,
-      date: insight.date.split(' ')[0],
-      hour: new Date(insight.date).getHours(),
+      date: date,
+      hour: +hour,
       clicks: insight.clicks,
       impressions: insight.impressions,
       visible_impressions: insight.visible_impressions,

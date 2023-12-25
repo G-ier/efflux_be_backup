@@ -9,11 +9,9 @@ class CompositeService {
   }
   async updateData(accounts, request_date, saveRawDataToFile=false) {
 
-    for(const account of accounts){
+    for(const account of accounts) {
       CrossroadsLogger.info(`Starting to sync Crossroads data for date ${request_date} and ${account.id}`);
       await this.campaignService.updateCampaigns(account.key);
-    }
-    for(const account of accounts){
       await this.insightsService.updateCrossroadsData(account, request_date, saveRawDataToFile);
     }
     CrossroadsLogger.info(`Done syncing Crossroads data for date ${request_date}`);

@@ -1,11 +1,7 @@
-const axios = require("axios");
-
 // Local applications import
 const UserAccountRepository = require("../repositories/UserAccountRepository");
 const { TaboolaLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
-const { sendSlackNotification }  = require("../../../shared/lib/SlackNotificationService");
-const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
 const { TABOOLA_URL,
   TABOOLA_CLIENT_ID,
   TABOOLA_CLIENT_SECRET
@@ -32,12 +28,6 @@ class UserAccountService extends BaseService {
     async fetchAccountFromDatabase(fields = ["*"], filters = {}, limit) {
         const accounts = await this.userAccountRepostiory.fetchUserAccounts(fields, filters, limit);
         return accounts;
-    }
-
-    async upsertAccountToDB(account) {
-      this.logger.info("Upserting account");
-      return await this.userAccountRepostiory.upsert([account]);
-
     }
 
     async getFetchingAccount() {
@@ -113,6 +103,8 @@ class UserAccountService extends BaseService {
       }
       const res = await this.fetchFromApi(url, {}, "Error getting Taboola Network Account", header);
 
+      console.log("User Account Res", res)
+
       const currentTimeInMilliseconds = new Date().getTime();
       // Calculate the expiration time in milliseconds
       const expirationTimeInMilliseconds = currentTimeInMilliseconds + expires_in * 1000;
@@ -132,7 +124,7 @@ class UserAccountService extends BaseService {
         expires_in: expirationDate
       }
 
-      await this.upsertAccountToDB(mappedRes);
+      await this.userAccountRepostiory.upsert([mappedRes]);
       this.logger.info("Successfully synced network account details from API");
       return mappedRes;
     }

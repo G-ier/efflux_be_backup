@@ -24,59 +24,57 @@ class CompositeService {
         this.conversionRuleService = new ConversionRuleService();
     }
 
-    async syncUserAccountsData(start_date, end_date){
-        const { access_token, expires_in } = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
-        await this.userAccountService.syncTaboolaNetworkAccount(access_token, expires_in);
-        const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
-        TaboolaLogger.info(`Syncing data for account ${name}`);
+    async syncUserAccountsData(start_date, end_date) {
+      const { access_token, expires_in } = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
+      await this.userAccountService.syncTaboolaNetworkAccount(access_token, expires_in);
+      const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
+      TaboolaLogger.info(`Syncing data for account ${name}`);
 
-        //Sync Ad Accounts
-        await this.adAccountService.syncAdAccounts(provider_id, access_token, user_id, id);
-        const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-            ["id", "provider_id", "user_id", "account_id"],
-            { account_id: id },
-          );
-        const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
-        const updatedAdAccountsIds = _.map(adAccounts, "provider_id");
-        if (!adAccounts.length) throw new Error("No ad accounts to update");
-        // //const conversionRules = await this.conversionRuleService.syncConversionRules(updatedAdAccountsIds, access_token);
+      //Sync Ad Accounts
+      await this.adAccountService.syncAdAccounts(provider_id, access_token, user_id, id);
+      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+          ["id", "provider_id", "user_id", "account_id"],
+          { account_id: id },
+        );
+      const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
+      const updatedAdAccountsIds = _.map(adAccounts, "provider_id");
+      if (!adAccounts.length) throw new Error("No ad accounts to update");
 
-        // Sync Campaigns
-        const campaigns = await this.campaignService.syncCampaigns(access_token, updatedAdAccountsIds, updatedAdAccountsDataMap);
+      // Sync Campaigns
+      const campaigns = await this.campaignService.syncCampaigns(access_token, updatedAdAccountsIds, updatedAdAccountsDataMap);
 
-        // Sync Insights
-        await this.insightService.syncInsights(updatedAdAccountsIds, access_token,
-          start_date, end_date);
+      // Sync Insights
+      await this.insightService.syncInsights(updatedAdAccountsIds, access_token,
+        start_date, end_date);
 
-        // Sync Ads
-        await this.adService.syncAds(access_token, campaigns, updatedAdAccountsDataMap);
+      // Sync Ads
+      await this.adService.syncAds(access_token, campaigns, updatedAdAccountsDataMap);
 
-        return true;
+      return true;
     }
 
     async sendS2SEvents(date) {
-        // Retrieve the data
-        CapiLogger.info(`Fetching session from DB.`);
-        // To be replaced
-        const data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'taboola');
-        if (data.length === 0) {
-        CapiLogger.info(`No events found for date ${date}.`);
-        return;
-        }
-        CapiLogger.info(`Done fetching ${data.length} session from DB.`);
+      // Retrieve the data
+      CapiLogger.info(`Fetching session from DB.`);
+      // To be replaced
+      const data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'taboola');
+      if (data.length === 0) {
+      CapiLogger.info(`No events found for date ${date}.`);
+      return;
+      }
+      CapiLogger.info(`Done fetching ${data.length} session from DB.`);
 
-        const tblProcessedPayloads = await this.s2SService.constructTaboolaS2SPayload(data);
+      const tblProcessedPayloads = await this.s2SService.constructTaboolaS2SPayload(data);
 
-        CapiLogger.info(`Posting events to FB CAPI in batches.`);
-        for(const batch of tblProcessedPayloads){
-          const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
-            for(const payload of batch.payloads){
-              const jsonPayload = JSON.stringify(payload);
-              await this.s2SService.postS2SEvents(account, jsonPayload);
-            }
-        }
-        CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
-
+      CapiLogger.info(`Posting events to FB CAPI in batches.`);
+      for(const batch of tblProcessedPayloads){
+        const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
+          for(const payload of batch.payloads){
+            const jsonPayload = JSON.stringify(payload);
+            await this.s2SService.postS2SEvents(account, jsonPayload);
+          }
+      }
+      CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
     }
 }
 
