@@ -15,6 +15,11 @@ class CompositeController {
 
     }
 
+    async CapiTest(req, res){
+        const { date } = req.query;
+
+        await this.compositeService.sendS2SEvents(date);
+    }
 }
 
 module.exports = CompositeController;

@@ -5,6 +5,7 @@ const moment                = require('moment-timezone');
 
 // Local Imports
 const { usStates }          = require('../../../shared/constants/states');
+const { todayYMD, todayHH } = require('../../../shared/helpers/calendar');
 // const { todayYMD, todayHH } = require('../../../shared/helpers/calendar');
 const BaseService           = require("../../../shared/services/BaseService");
 const { CapiLogger }        = require("../../../shared/lib/WinstonLogger");
@@ -38,7 +39,6 @@ class S2SService extends BaseService{
           revenue_reported: event.purchase_event_value
         }
       })
-      console.log(logEntries);
     //   const dataChunks = _.chunk(logEntries, 1000);
     //   for (const chunk of dataChunks) {
     //     await this.database.insert('capi_logs', chunk);
@@ -47,15 +47,17 @@ class S2SService extends BaseService{
       this.logger.info(`Done adding S2S Logs to the database`);
     }
 
-    async postS2SEvents(account_id, data){
+    async postS2SEvents(data){
 
-        const url = `https://trc.taboola.com/${account_id}/log/3/bulk-s2s-action`;
-        this.logger.info(`Sending ${data.data.length} events to Taboola S2S for account ${account_id}`);
-        const response = await this.postToApi(url, {
-            data,
-          }, "Error posting events"
-        );
-        this.logger.info(`Response from Taboola S2S: ${JSON.stringify(response)}`)
+        //const url = `https://trc.taboola.com/${account_id}/log/3/bulk-s2s-action`;
+        //this.logger.info(`Sending ${data.data.length} events to Taboola S2S for account ${account_id}`);
+        console.log("SIKE \n");
+        console.log(data);
+        // const response = await this.postToApi(url, {
+        //     data,
+        //   }, "Error posting events"
+        // );
+        // this.logger.info(`Response from Taboola S2S: ${JSON.stringify(response)}`)
         return response;
     }
 

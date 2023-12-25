@@ -40,6 +40,8 @@ class InsightsRepository {
     const traffic_source = this.getTrafficSource(insight);
 
     const [country_code, region, city] = insight.tg7 ? (insight.tg7).replace(" ", "").split('-') : ['Unknown', 'Unknown', 'Unknown'];
+    console.log("Traffic source: ", traffic_source);
+    console.log("Location data: ", country_code, region, city);
     let [pixel_id, timestamp] = insight.tg9
       ? (insight.tg9).replace(" ", "").split('-')
       : ['Unknown', 'Unknown'];

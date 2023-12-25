@@ -141,6 +141,7 @@ class CampaignRepository {
     if (dbObject.stop_time && dbObject.stop_time.includes('9999')) {
       dbObject.stop_time = null;
     }
+    if (dbObject.status = 'RUNNING') dbObject.status = 'ACTIVE';
 
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;

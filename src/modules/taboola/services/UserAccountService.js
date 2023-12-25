@@ -42,23 +42,23 @@ class UserAccountService extends BaseService {
     /**
      * Unused, gets refresh token through a sign in popup. Getting it from client removes this step for users.
     */
-    async getTaboolaAdvertiserTokenFromAuthCode(auth_code) {
-      const url = `${TABOOLA_URL}/oauth/token`;
-      const headers = {
-        "Host": "https://backstage.taboola.com",
-        "Content-Type": "application/x-www-form-urlencoded"
-      };
-      const params = {
-        // client_id: [client_id],
-        // client_secret: [client_secret],
-        code: auth_code,
-        // redirect_uri: [redirect_uri],
-        // grant_type: authorization_code
-      };
-      res = this.postToApi(url, params, "Error getting Taboola Access token", headers);
+    // async getTaboolaAdvertiserTokenFromAuthCode(auth_code) {
+    //   const url = `${TABOOLA_URL}/oauth/token`;
+    //   const headers = {
+    //     "Host": "https://backstage.taboola.com",
+    //     "Content-Type": "application/x-www-form-urlencoded"
+    //   };
+    //   const params = {
+    //     // client_id: [client_id],
+    //     // client_secret: [client_secret],
+    //     code: auth_code,
+    //     // redirect_uri: [redirect_uri],
+    //     // grant_type: authorization_code
+    //   };
+    //   res = this.postToApi(url, params, "Error getting Taboola Access token", headers);
 
-      return res;
-    }
+    //   return res;
+    // }
 
     async getTaboolaAdvertiserTokenFromClient() {
 
@@ -80,15 +80,6 @@ class UserAccountService extends BaseService {
       const res = await this.postToApi(finalURL, {}, "Error getting Taboola Access token", headers);
       this.logger.info("DONE Fetching access token from API");
       return res;
-    }
-
-    async getAccessToken() {
-      if (!this.token || !this.expires_in) {
-        // 1. Try to fetch the token from the database
-        // 2. Check if the token is still valid
-        // 3. If the token is not valid, fetch a new token from the API
-      }
-      return this.token;
     }
 
     async syncTaboolaNetworkAccount(access_token, expires_in) {
@@ -127,6 +118,24 @@ class UserAccountService extends BaseService {
       await this.userAccountRepostiory.upsert([mappedRes]);
       this.logger.info("Successfully synced network account details from API");
       return mappedRes;
+    }
+
+    async getAccessToken() {
+      
+      this.logger.info("Checking if token is still valid.");
+      if (!this.token || this.expires_in < new Date()) {
+        // 1. Try to fetch the token from the database
+        // 2. Check if the token is still valid
+        // 3. If the token is not valid, fetch a new token from the API
+        const { access_token, expires_in } = await this.getTaboolaAdvertiserTokenFromClient();
+        const res = await this.syncTaboolaNetworkAccount(access_token, expires_in);
+        this.token =res.token;
+        this.expires_in = res.expires_in;
+      }
+      else{
+        this.logger.info("Using available stored token");
+      }
+      return this.token;
     }
 }
 

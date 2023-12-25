@@ -10,7 +10,7 @@ const AdService = require("./AdService");
 const InsightService = require("./InsightService");
 const S2SService = require("./S2SService");
 const { TaboolaLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
-const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents");
+const newDetectCrossroadsPurchaseEvents = require("../../../shared/reports/newCrossroadsPurchasEventsFetching");
 
 class CompositeService {
 
@@ -24,11 +24,10 @@ class CompositeService {
         this.conversionRuleService = new ConversionRuleService();
     }
 
-    async syncUserAccountsData(start_date, end_date) {
-      const { access_token, expires_in } = await this.userAccountService.getTaboolaAdvertiserTokenFromClient();
-      await this.userAccountService.syncTaboolaNetworkAccount(access_token, expires_in);
-      const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
-      TaboolaLogger.info(`Syncing data for account ${name}`);
+    async syncUserAccountsData(start_date, end_date){
+        const access_token = await this.userAccountService.getAccessToken();
+        const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
+        TaboolaLogger.info(`Syncing data for account ${name}`);
 
       //Sync Ad Accounts
       await this.adAccountService.syncAdAccounts(provider_id, access_token, user_id, id);
@@ -57,7 +56,8 @@ class CompositeService {
       // Retrieve the data
       CapiLogger.info(`Fetching session from DB.`);
       // To be replaced
-      const data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'taboola');
+      const data = await newDetectCrossroadsPurchaseEvents(this.s2SService.database, date, 'taboola');
+
       if (data.length === 0) {
       CapiLogger.info(`No events found for date ${date}.`);
       return;
@@ -66,12 +66,14 @@ class CompositeService {
 
       const tblProcessedPayloads = await this.s2SService.constructTaboolaS2SPayload(data);
 
+      console.log(tblProcessedPayloads);
       CapiLogger.info(`Posting events to FB CAPI in batches.`);
+
       for(const batch of tblProcessedPayloads){
-        const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
+        // const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
           for(const payload of batch.payloads){
             const jsonPayload = JSON.stringify(payload);
-            await this.s2SService.postS2SEvents(account, jsonPayload);
+            await this.s2SService.postS2SEvents(jsonPayload);
           }
       }
       CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
