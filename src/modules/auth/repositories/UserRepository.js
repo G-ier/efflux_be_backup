@@ -42,10 +42,17 @@ class UserRepository {
     return results.map(this.toDomainEntity);
   }
 
-  // TODO: Implement this method
   async fetchUserOrganization(id) {
-    // Step 1: Fetch the user from the database using the id parameter and the fetchOne method
-    // Step 2: Fetch the organization from the database using the user's organization id
+    // Step 1: Fetch the user from the database
+    const user = await this.fetchOne(['*'], { id });
+
+    // Step 2: Fetch the organization from the database using the user's org_id
+    const organization = await this.database.queryOne('organizations', ['*'], {
+      id: user.org_id,
+    });
+
+    // Step 3: Return the organization
+    return organization;
   }
 
   async fetchOne(fields = ['*'], filters = {}) {
@@ -62,7 +69,7 @@ class UserRepository {
       nickname: user.nickname,
       sub: user.sub,
       acct_type: user.acct_type,
-      account_parent: user.account_parent,
+      org_id: user.org_id,
       phone: user.phone,
       token: user.token,
       fbID: user.fbID,
@@ -76,7 +83,7 @@ class UserRepository {
   toDomainEntity(dbObject) {
     return new User(
       dbObject.id,
-      dbObject.account_parent,
+      dbObject.org_id,
       dbObject.name,
       dbObject.email,
       dbObject.image_url,
