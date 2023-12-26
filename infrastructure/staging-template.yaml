@@ -558,7 +558,7 @@ Resources:
                   - ssm:GetParameter*
                 Resource: "*"
 
-  # # Create CodeDeploy Role Policy
+  # Create CodeDeploy Role Policy
   CodeDeployRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -606,9 +606,9 @@ Outputs:
   ElasticFileSystem:
     Description: Elastic File System ID
     Value: !Ref ElasticFileSystem
-  # RDSPostgresDB:
-  #   Description: RDS Postgres Database ID
-  #   Value: !Ref RDSPostgresDB
-  # RDSPostgresEndpoint:
-  #   Description: RDS Postgres Database Endpoint
-  #   Value: !GetAtt RDSPostgresDB.Endpoint.Address
+  RDSPostgresDB:
+    Description: RDS Postgres Database ID
+    Value: !Ref RDSPostgresDB
+  RDSPostgresEndpoint:
+    Description: RDS Postgres Database Endpoint
+    Value: !GetAtt RDSPostgresDB.Endpoint.Address

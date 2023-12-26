@@ -26,7 +26,7 @@ class UserAccountService {
     return userAccount;
   }
 
-  async debug(admin_token, access_token, expire_warning_sent = 0, max_expire_warning_sent = 1) {
+  async debug(accountName, admin_token, access_token, expire_warning_sent = 0, max_expire_warning_sent = 1) {
 
     const url = `${FB_API_URL}debug_token?access_token=${admin_token}&input_token=${access_token}`;
     let res = null;
@@ -42,22 +42,18 @@ class UserAccountService {
       const diffTime = Math.abs(new Date() - new Date(res.expires_at * 1000));
       const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-      const providerId = res.user_id;
-      const account = await this.fetchUserAccounts(["name"], { provider_id: providerId });
-      const { name } = account[0];
-
       if (diffDays < 4) {
         if (this.tokenExpireNotificationSent < this.tokenExpireNotificationMax) {
           await sendSlackNotification(
-            `URGENT: Facebook API Token of user ${name} is about to expire in ${diffDays} days, please refresh it.`
+            `URGENT: Facebook API Token of user ${accountName} is about to expire in ${diffDays} days, please refresh it.`
           );
           this.tokenExpireNotificationSent++;
         }
       }
 
-      return [name, res.is_valid];
+      return [accountName, res.is_valid];
     } else {
-      console.log("Token is not valid");
+      console.log(`Token is not valid for ${accountName}`);
       return ["", false];
     }
   }
@@ -96,7 +92,7 @@ class UserAccountService {
     let accountValidity = {};
 
     for (const account of accounts) {
-      let [username, isValid] = await this.debug(admin_token ? admin_token : account.token, account.token);
+      let [username, isValid] = await this.debug(account.name, admin_token ? admin_token : account.token, account.token);
       accountValidity[account.id] = isValid;
     }
 
@@ -108,13 +104,15 @@ class UserAccountService {
     return accounts.filter((account) => accountValidity[account.id] === true);
   }
 
-  async getFetchingAccount(admins_only=false, clients_only=false) {
+  async getFetchingAccount(admins_only = false, clients_only = false, specificId = null) {
 
     const fetchingFields = ["id", "name", "provider_id", "user_id", "token"];
 
     // We need to get a admin account and all the other fetching accounts here.
+    const whereClause = { provider: "facebook", role: 'admin', fetching: true, backup: false };
+    if (specificId) whereClause.id = specificId;
     const adminAccounts = await this.fetchUserAccounts(fetchingFields,
-      { provider: "facebook", role: 'admin', fetching: true, backup: false,id:6 }
+      whereClause
     );
 
     // Attemp to get the admin account/try backup accounts. If none work, throw error.
@@ -139,7 +137,6 @@ class UserAccountService {
         throw new Error("No valid admin accounts found");
       }
     }
-
     adminAccount.business = true;
     if (admins_only) return adminAccount;
 
