@@ -42,6 +42,7 @@ class UserRepository {
     return results.map(this.toDomainEntity);
   }
 
+  // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
   async fetchUserOrganization(id) {
     // Step 1: Fetch the user from the database
     const user = await this.fetchOne(['*'], { id });
