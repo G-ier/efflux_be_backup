@@ -16,9 +16,9 @@ class UserService {
     return await this.userRepository.saveInBulk(users, chunkSize);
   }
 
-  // Fetch user's ad accounts from the database
-  async fetchUserAdAccounts(id) {
-    return await this.userRepository.fetchUserAdAccounts(id);
+  // Fetch the organization the user belongs to
+  async fetchUserOrganization(userId) {
+    return await this.userRepository.fetchUserOrganization(userId);
   }
 
   // Update a user or users based on given criteria

@@ -43,9 +43,9 @@ class UserRepository {
   }
 
   // TODO: Implement this method
-  async fetchUserAdAccounts(id) {
-    // Step 1: Fetch user associated ad accounts. campaign, adset, ads
-    // Step 2: Store the fetched data in the session
+  async fetchUserOrganization(id) {
+    // Step 1: Fetch the user from the database using the id parameter and the fetchOne method
+    // Step 2: Fetch the organization from the database using the user's organization id
   }
 
   async fetchOne(fields = ['*'], filters = {}) {

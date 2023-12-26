@@ -1,11 +1,13 @@
 exports.up = function (knex) {
-  return knex.schema.alterTable('users', function (table) {
-    table.integer('account_parent').nullable().defaultTo(null).after('id');
+  return knex.schema.createTable('organizations', function (table) {
+    table.increments('id');
+    table.string('name').notNullable();
+    table.timestamp('created_at').notNullable().defaultTo(knex.fn.now());
+    table.timestamp('updated_at').notNullable().defaultTo(knex.fn.now());
+    table.boolean('is_active').notNullable().defaultTo(true);
   });
 };
 
 exports.down = function (knex) {
-  return knex.schema.alterTable('users', function (table) {
-    table.dropColumn('account_parent');
-  });
+  return knex.schema.dropTable('organizations');
 };

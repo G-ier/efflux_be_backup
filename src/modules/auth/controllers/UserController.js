@@ -18,9 +18,9 @@ class UsersController {
     res.json(result);
   }
 
-  async fetchUserAdAccounts(req, res) {
-    const { id } = req.params;
-    const result = await this.userService.fetchUserAdAccounts(id);
+  async fetchUserOrganization(req, res) {
+    const { userId } = req.params;
+    const result = await this.userService.fetchUserOrganization(userId);
     res.json(result);
   }
 
