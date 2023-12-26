@@ -1,17 +1,15 @@
-const route                   = require("express").Router();
-const Auth0Controller         = require("../controllers/Auth0Controller");
+const route = require('express').Router();
+const OrganizationController = require('../controllers/OrganizationController');
 
-const auth0Controller = new Auth0Controller();
+const organizationController = new OrganizationController();
 
-// @route     /api/auth/login
-// @desc      POST The function authenticates a user and returns a JWT token to the Front End
-// @Access    Public
-route.post("/login", async (req, res) => await auth0Controller.login(req, res));
+route.post('/', organizationController.saveOrganization.bind(organizationController));
 
-// @route     /api/auth/users
-// @desc      POST The function creates a user in Auth0
-// @Access    Public
-route.post("/users", async (req, res) => await auth0Controller.createUser(req, res));
+route.get(
+  '/:organizationId',
+  organizationController.fetchOrganization.bind(organizationController),
+);
 
+route.delete('/', organizationController.deleteOrganization.bind(organizationController));
 
 module.exports = route;
