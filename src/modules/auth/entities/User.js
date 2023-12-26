@@ -2,6 +2,7 @@ class User {
   constructor(
     id,
     org_id,
+    role_id,
     name,
     email,
     image_url,
@@ -18,6 +19,7 @@ class User {
   ) {
     this.id = id;
     this.org_id = org_id;
+    this.role_id = role_id;
     this.name = name;
     this.email = email;
     this.image_url = image_url;
