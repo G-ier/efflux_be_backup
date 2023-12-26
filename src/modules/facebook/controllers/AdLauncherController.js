@@ -9,7 +9,7 @@ const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const _ = require('lodash');
 const AdQueueService = require('../services/AdQueueService');
-const axios =require("axios")
+const axios = require('axios');
 class AdLauncherController {
   constructor() {
     this.adLauncherService = new AdLauncherService();
@@ -102,31 +102,30 @@ class AdLauncherController {
       this.respondWithError(res, error);
     }
   }
-// Use Axios to call the notifications service
-async notifyUser(title, message, userId) {
-  const data = {
-    user_id: userId,
-    title: title,
-    message: message,
-  };
+  // Use Axios to call the notifications service
+  async notifyUser(title, message, userId) {
+    const data = {
+      user_id: userId,
+      title: title,
+      message: message,
+    };
 
-  const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
+    const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
 
-  try {
-    const response = await axios.post(url, data, {
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
+    try {
+      const response = await axios.post(url, data, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-    console.log(response.data);
-    return response.data;
-  } catch (error) {
-    console.error('Error sending notification:', error.response.data);
-    throw error;
+      console.log(response.data);
+      return response.data;
+    } catch (error) {
+      console.error('Error sending notification:', error.response.data);
+      throw error;
+    }
   }
-}
-
 
   validateRequiredParameters(req) {
     const { files, body } = req;
@@ -159,7 +158,7 @@ async notifyUser(title, message, userId) {
     }
   }
   async getToken(adminsOnly = true) {
-    return (await this.userAccountService.getFetchingAccount(adminsOnly,false,20)).token;
+    return (await this.userAccountService.getFetchingAccount(adminsOnly, false, 20)).token;
   }
 
   getAdAccountId(req) {
@@ -279,7 +278,7 @@ async notifyUser(title, message, userId) {
       }
     }
 
-    // // Initialize images array if not already present
+    // Initialize images array if not already present
     if (!Array.isArray(adData.creative.asset_feed_spec.images)) {
       adData.creative.asset_feed_spec.images = [];
     }
