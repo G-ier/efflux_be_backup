@@ -72,8 +72,25 @@ class UserRepository {
   }
 
   async fetchOne(fields = ['*'], filters = {}) {
+    // Check if user is in cache
+    const cacheKey = `user:${JSON.stringify({ fields, filters })}`;
+
+    const cachedUser = await getAsync(cacheKey);
+    if (cachedUser) {
+      console.log('Fetching user from cache');
+      return JSON.parse(cachedUser);
+    }
+
+    // If not in cache, fetch from the database
     const result = await this.database.queryOne(this.tableName, fields, filters);
-    if (!fields.includes('*')) return result;
+
+    // Set cache
+    console.log('Setting user in cache');
+    await setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+
+    if (!fields.includes('*')) {
+      return result;
+    }
     return result;
   }
 
