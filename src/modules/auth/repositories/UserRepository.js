@@ -1,9 +1,9 @@
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const User = require("../entities/User");
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const User = require('../entities/User');
 
 class UserRepository {
   constructor(database) {
-    this.tableName = "users";
+    this.tableName = 'users';
     this.database = database || new DatabaseRepository();
   }
 
@@ -15,6 +15,7 @@ class UserRepository {
   async saveInBulk(users, chunkSize = 500) {
     let data = users.map((user) => this.toDatabaseDTO(user));
     let dataChunks = _.chunk(data, chunkSize);
+
     for (let chunk of dataChunks) {
       await this.database.insert(this.tableName, chunk);
     }
@@ -32,18 +33,32 @@ class UserRepository {
     const dbObjects = users.map((user) => this.toDatabaseDTO(user));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "id");
+      await this.database.upsert(this.tableName, chunk, 'id');
     }
   }
 
-  async fetchUsers(fields = ["*"], filters = {}, limit) {
+  async fetchUsers(fields = ['*'], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results.map(this.toDomainEntity);
   }
 
-  async fetchOne(fields = ["*"], filters = {}) {
+  // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
+  async fetchUserOrganization(id) {
+    // Step 1: Fetch the user from the database
+    const user = await this.fetchOne(['*'], { id });
+
+    // Step 2: Fetch the organization from the database using the user's org_id
+    const organization = await this.database.queryOne('organizations', ['*'], {
+      id: user.org_id,
+    });
+
+    // Step 3: Return the organization
+    return organization;
+  }
+
+  async fetchOne(fields = ['*'], filters = {}) {
     const result = await this.database.queryOne(this.tableName, fields, filters);
-    if (!fields.includes("*")) return result;
+    if (!fields.includes('*')) return result;
     return result;
   }
 
@@ -55,6 +70,7 @@ class UserRepository {
       nickname: user.nickname,
       sub: user.sub,
       acct_type: user.acct_type,
+      org_id: user.org_id,
       phone: user.phone,
       token: user.token,
       fbID: user.fbID,
@@ -68,6 +84,7 @@ class UserRepository {
   toDomainEntity(dbObject) {
     return new User(
       dbObject.id,
+      dbObject.org_id,
       dbObject.name,
       dbObject.email,
       dbObject.image_url,
@@ -80,10 +97,9 @@ class UserRepository {
       dbObject.created_at,
       dbObject.updated_at,
       dbObject.provider,
-      dbObject.providerId
+      dbObject.providerId,
     );
   }
-
 }
 
 module.exports = UserRepository;
