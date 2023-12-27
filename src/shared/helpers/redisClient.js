@@ -1,7 +1,12 @@
 const redis = require('redis');
 
+const redisUrl =
+  process.env.DATABASE_ENVIRONMENT === 'production'
+    ? process.env.REDIS_CLUSTER_URL
+    : process.env.REDIS_CLUSTER_URL_STAGING;
+
 const client = redis.createClient({
-  url: process.env.REDIS_CLUSTER_URL_LOCAL,
+  url: redisUrl,
 });
 
 client.connect();
