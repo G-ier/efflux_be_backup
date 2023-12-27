@@ -218,6 +218,34 @@ const AdsetLogger = new CustomLogger({
   filePath: filePath('./logs/adset'),
 });
 
+// Ads Logger
+const AdsLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'debug',
+  filePath: filePath('./logs/ads'),
+});
+
+// Campaigns Logger
+const CampaignsLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'debug',
+  filePath: filePath('./logs/campaigns'),
+});
+
+// Pixels Logger
+const PixelsLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'debug',
+  filePath: filePath('./logs/pixels'),
+});
+
+// UserAccount Logger
+const UserAccountLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'debug',
+  filePath: filePath('./logs/userAccount'),
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -237,4 +265,8 @@ module.exports = {
   OrganizationLogger,
   InsightsLogger,
   AdsetLogger,
+  AdsLogger,
+  CampaignsLogger,
+  PixelsLogger,
+  UserAccountLogger,
 };

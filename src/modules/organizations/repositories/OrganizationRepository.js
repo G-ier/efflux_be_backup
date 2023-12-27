@@ -41,7 +41,7 @@ class OrganizationRepository {
 
   async fetchOne(fields = ['*'], filters = {}) {
     // Check if organization is in cache
-    const cacheKey = `organizations:${JSON.stringify({ fields, filters })}`;
+    const cacheKey = `organization:${JSON.stringify({ fields, filters })}`;
 
     const cachedOrganization = await getAsync(cacheKey);
     if (cachedOrganization) {
