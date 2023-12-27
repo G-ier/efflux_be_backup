@@ -65,7 +65,7 @@ class CapiService extends BaseService{
     async postCapiEvents(token, pixel, data) {
 
       this.logger.info(`Sending ${data.data.length} events to Facebook CAPI for pixel ${pixel}`);
-
+      console.log(data);
       const url = `${FB_API_URL}/${pixel}/events`;
       const response = await this.postToApi(url, {
           data: data.data,
@@ -128,7 +128,7 @@ class CapiService extends BaseService{
         const fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? event.fbc : `fb.1.${event.timestamp * 1000}.${event.external}`;
         const fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? event.fbp : `fb.1.${event.timestamp * 1000}.${generateEventId()}`;
 
-        for ( let i = 0; i < event.purchase_event_count; i++ ) {
+        for ( let i = 0; i < event.conversions; i++ ) {
 
           if ( currentPayload.data.length === MAX_EVENTS ) {
             payloads.push(currentPayload)
@@ -143,7 +143,7 @@ class CapiService extends BaseService{
             user_data: {
               // Finished
               country: [
-                sha256(event.country_code.toLowerCase())
+                sha256(event.region.toLowerCase())
               ],
               client_ip_address: event.ip,
               client_user_agent: event.user_agent,
@@ -157,15 +157,15 @@ class CapiService extends BaseService{
               st: [
                 sha256(
                   event.country_code === 'US' || event.country_code === 'United States' // The second condition is temporary until the update on FF takes place.
-                  ? usStates[event.state.toUpperCase()].toLowerCase()
-                  : event.state.toLowerCase().replace(" ", "")
+                  ? usStates[event.region.toUpperCase()].toLowerCase()
+                  : event.region.toLowerCase().replace(" ", "")
                 )
               ],
             },
             opt_out: false,
             custom_data: {
               currency: 'USD',
-              value: `${(event.purchase_event_value / event.purchase_event_count)}`,
+              value: `${(event.revenue / event.conversions)}`,
             }
           }
           currentPayload.data.push(eventPayload)
@@ -195,7 +195,14 @@ class CapiService extends BaseService{
 
       let updatedCount;
       if (network === 'crossroads') {
-        updatedCount = await this.database.update('raw_crossroads_data', {reported_to_capi: true}, {unique_identifier: eventIds})
+        updatedCount = await this.database.update('crossroads_raw_insights',
+        {
+          reported_conversions: this.database.connection.ref('conversions'),
+          reported_amount: this.database.connection.ref('revenue')
+        },
+        {
+          unique_identifier: eventIds
+        })
       } else if (network === 'tonic') {
         updatedCount = await this.database.update('tonic_raw_insights',
           {

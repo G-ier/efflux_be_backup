@@ -525,6 +525,11 @@ class CompositeController {
       error: error.error_user_msg || error.message,
     });
   }
+
+  async sendCapiEvents(req, res){
+    const { date, network } = req.query;
+    await this.compositeService.sendCapiEvents(date, network);
+  }
 }
 
 module.exports = CompositeController;

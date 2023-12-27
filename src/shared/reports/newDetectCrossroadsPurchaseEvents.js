@@ -16,9 +16,13 @@ const newDetectCrossroadsPurchaseEvents = async (database, date, traffic_source)
   i.timestamp,
   (i.conversions - i.reported_conversions) as conversions,
   (i.revenue - i.reported_amount) as revenue,
-  i.external
+  split_part(external, '_|_', 1) as external
+  -- gtmtr.fbc,
+  -- gtmtr.fbp
   FROM
   crossroads_raw_insights i
+  --FULL OUTER JOIN
+  --gtm_fb_cookie_values gtmtr ON i.session_id = gtmtr.session_id
   LEFT JOIN campaigns c
   ON i.campaign_id = c.id
   LEFT JOIN ad_accounts a
@@ -27,6 +31,7 @@ const newDetectCrossroadsPurchaseEvents = async (database, date, traffic_source)
   i.conversions - i.reported_conversions > 0
   AND date = '${date}'
   AND i.traffic_source = '${traffic_source}'
+  LIMIT 1
   `
 
   const result = await database.raw(QUERY)

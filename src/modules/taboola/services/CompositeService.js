@@ -10,7 +10,7 @@ const AdService = require("./AdService");
 const InsightService = require("./InsightService");
 const S2SService = require("./S2SService");
 const { TaboolaLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
-const newDetectCrossroadsPurchaseEvents = require("../../../shared/reports/newCrossroadsPurchasEventsFetching");
+const newDetectCrossroadsPurchaseEvents = require("../../../shared/reports/newDetectCrossroadsPurchaseEvents");
 
 class CompositeService {
 

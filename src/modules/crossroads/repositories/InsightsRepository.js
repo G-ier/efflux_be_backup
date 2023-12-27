@@ -40,15 +40,15 @@ class InsightsRepository {
     const traffic_source = this.getTrafficSource(insight);
 
     const [country_code, region, city] = insight.tg7 ? (insight.tg7).replace(" ", "").split('-') : ['Unknown', 'Unknown', 'Unknown'];
-    console.log("Traffic source: ", traffic_source);
-    console.log("Location data: ", country_code, region, city);
+
     let [pixel_id, timestamp] = insight.tg9
       ? (insight.tg9).replace(" ", "").split('-')
       : ['Unknown', 'Unknown'];
 
-    if (traffic_source === PROVIDERS.TABOOLA)
+    if (traffic_source === PROVIDERS.TABOOLA) {
       timestamp = insight.tg9
       pixel_id = ''
+    }
 
     let [campaign_id, adset_id, ad_id] = [insight.tg2, insight.tg5, insight.tg6]
     if (isNotNumeric(campaign_id)) campaign_id = 'Unknown';
@@ -198,7 +198,8 @@ class InsightsRepository {
     // Upsert aggregated data
     const aggregateChunks = _.chunk(AggregatedData, chunkSize);
     for (const chunk of aggregateChunks) {
-      await this.database.upsert(this.aggregatesTableName, chunk, "unique_identifier");
+      const uniqueChunk = _.uniqBy(chunk, 'unique_identifier');
+      await this.database.upsert(this.aggregatesTableName, uniqueChunk, "unique_identifier");
     }
   }
 

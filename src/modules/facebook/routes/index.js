@@ -22,6 +22,12 @@ route.get("/sync-account-data", async (req, res) => {
   compositeController.syncAccountData(req, res);
 });
 
+// @route    /api/facebook/report-conversions
+// @desc     POST Capi conversions 
+// @Access   Private
+route.post("/report-conversions", async (req, res) => {
+  compositeController.sendCapiEvents(req, res);
+});
 
 route.use("/management", management);
 route.use("/user_accounts", userAccounts);
