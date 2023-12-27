@@ -1,17 +1,18 @@
 // Third party imports
-const _                           = require("lodash");
+const _ = require('lodash');
 
 // Local application imports
-const DatabaseRepository          = require("../../../shared/lib/DatabaseRepository");
-const Insights                    = require("../entities/Insights");
-const { isNotNumeric }            = require("../../../shared/helpers/Utils");
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const Insights = require('../entities/Insights');
+const { isNotNumeric } = require('../../../shared/helpers/Utils');
+const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
+const { InsightsLogger } = require('../../../shared/lib/WinstonLogger');
 
 class InsightsRepository {
-
   // We might need to do some processing on the data, aggregate it, etc.
 
   constructor() {
-    this.tablename = "sedo";
+    this.tablename = 'sedo';
     this.database = new DatabaseRepository();
   }
 
@@ -32,11 +33,11 @@ class InsightsRepository {
       return group.reduce((acc, current) => {
         Object.keys(current).forEach((key) => {
           if (key === 'hour') {
-            acc[key] = current[key];  // keep the hour value from the last item in the group
+            acc[key] = current[key]; // keep the hour value from the last item in the group
           } else if (_.isNumber(current[key])) {
             acc[key] = (acc[key] || 0) + current[key];
           } else {
-            acc[key] = current[key];  // for other non-numeric fields
+            acc[key] = current[key]; // for other non-numeric fields
           }
         });
         return acc;
@@ -47,20 +48,35 @@ class InsightsRepository {
   }
 
   processSedoInsights(insights, date) {
-    const databaseDTOInsights = insights.map((insight) => this.parseSedoAPIData(insight, date))
-    const aggregatedInsights = this.aggregateByUniqueIdentifier(databaseDTOInsights)
-    return aggregatedInsights
+    const databaseDTOInsights = insights.map((insight) => this.parseSedoAPIData(insight, date));
+    const aggregatedInsights = this.aggregateByUniqueIdentifier(databaseDTOInsights);
+    return aggregatedInsights;
   }
 
   async upsert(insights, chunkSize = 500) {
-    const dataChunks = _.chunk(insights, chunkSize)
+    const dataChunks = _.chunk(insights, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tablename, chunk, 'unique_identifier')
+      await this.database.upsert(this.tablename, chunk, 'unique_identifier');
     }
   }
 
-  async fetchInsights(fields = ["*"], filters = {}, limit) {
+  async fetchInsights(fields = ['*'], filters = {}, limit) {
+    // Check if insights are in cache
+    const cacheKey = `insights:${JSON.stringify({ fields, filters, limit })}`;
+
+    const cachedInsights = await getAsync(cacheKey);
+    if (cachedInsights) {
+      InsightsLogger.debug('Fetched insights from cache');
+      return cachedInsights.map(this.toDomainEntity);
+    }
+
+    // If not in cache, fetch from the database
     const results = await this.database.query(this.tablename, fields, filters, limit);
+
+    // Set cache
+    InsightsLogger.debug('Setting insights in cache');
+    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
+
     return results.map(this.toDomainEntity);
   }
 
@@ -68,7 +84,9 @@ class InsightsRepository {
     const domain = insight.domain[0]._;
 
     const funnel_id = insight.c1[0]?._ ? insight.c1[0]._ : '';
-    let [campaign_id, adset_id, ad_id, traffic_source] = insight.c2[0]?._ ? (insight.c2[0]._).replace(" ", "").split('|') : ['Unkown', 'Unkown', 'Unkown', 'Unkown'];
+    let [campaign_id, adset_id, ad_id, traffic_source] = insight.c2[0]?._
+      ? insight.c2[0]._.replace(' ', '').split('|')
+      : ['Unkown', 'Unkown', 'Unkown', 'Unkown'];
 
     if (isNotNumeric(campaign_id)) campaign_id = 'Unkown';
     if (isNotNumeric(adset_id)) adset_id = 'Unkown';
@@ -93,15 +111,14 @@ class InsightsRepository {
       visitors,
       conversions,
       revenue: revenue,
-      unique_identifier: `${campaign_id}-${adset_id}-${ad_id}-${date}`
-    }
+      unique_identifier: `${campaign_id}-${adset_id}-${ad_id}-${date}`,
+    };
   }
 
   toDomainEntity(dbObject) {
-    throw new Error("Not implemented. Please implement this method after creating the table!");
+    throw new Error('Not implemented. Please implement this method after creating the table!');
     return new Insights(dbObject);
   }
-
 }
 
 module.exports = InsightsRepository;

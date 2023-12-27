@@ -1,5 +1,7 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const Organization = require('../entities/Organization');
+const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
+const { OrganizationLogger } = require('../../../shared/lib/WinstonLogger');
 
 class OrganizationRepository {
   constructor(database) {
@@ -38,8 +40,22 @@ class OrganizationRepository {
   }
 
   async fetchOne(fields = ['*'], filters = {}) {
+    // Check if organization is in cache
+    const cacheKey = `organization:${JSON.stringify({ fields, filters })}`;
+
+    const cachedOrganization = await getAsync(cacheKey);
+    if (cachedOrganization) {
+      OrganizationLogger.debug('Fetched: ' + cacheKey + ' from cache');
+      return JSON.parse(cachedOrganization);
+    }
+    // If not in cache, fetch from the database
+    OrganizationLogger.debug('Fetching organization from database');
     const result = await this.database.queryOne(this.tableName, fields, filters);
-    if (!fields.includes('*')) return result;
+
+    // Set cache
+    OrganizationLogger.debug('Setting: ' + cacheKey + ' in cache');
+    await setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+
     return result;
   }
 
