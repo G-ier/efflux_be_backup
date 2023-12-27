@@ -9,9 +9,8 @@ class InsightsController {
 
   async updateCrossroadsData(req, res) {
     try {
-      const { account, request_date, save_aggregated, save_raw_data, save_raw_data_to_file } = req.body;
-      const saveAggregatedData = ![false, 'false'].includes(save_aggregated)
-      await this.insightsService.updateCrossroadsData(account, request_date, saveAggregatedData, save_raw_data, save_raw_data_to_file);
+      const { account, request_date, save_raw_data_to_file } = req.body;
+      await this.insightsService.updateCrossroadsData(account, request_date, save_raw_data_to_file);
       res.json({ message: "Crossroads data updated successfully." });
     } catch (error) {
       res.status(500).json({ error: error.message });

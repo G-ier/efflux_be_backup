@@ -27,7 +27,7 @@ class AggregatesRepository {
 
   async campaignAdsets(params) {
     const { startDate, endDate, campaignId } = params;
-  
+
     // Check if campaignId is an array
     if (Array.isArray(campaignId)) {
       return await adsetsByCampaignId(this.database, startDate, endDate,campaignId);
@@ -97,7 +97,12 @@ class AggregatesRepository {
   toDatabaseDTO(row, trafficSource, network) {
     row.network = network
     row.traffic_source = trafficSource
-    row.unique_identifier = `${row.adset_id}-${row.date}-${row.hour}`
+    if (trafficSource === 'taboola'){
+      row.unique_identifier = `${row.campaign_id}-${row.date}-${row.hour}`
+    }
+    else{
+      row.unique_identifier = `${row.adset_id}-${row.date}-${row.hour}`
+    }
     delete row.ad_account_name;
     return row
   }

@@ -20,6 +20,7 @@ const postback              = require("../src/shared/routes/postback");
 const temp                  = require("../src/modules/temp/routes");
 const facebook              = require("../src/modules/facebook/routes");
 const tiktok                = require("../src/modules/tiktok/routes");
+const taboola = require("../src/modules/taboola/routes");
 const scrappedAds           = require("../src/modules/scrappedAds/routes");
 const aggregations          = require("../src/modules/aggregates/routes");
 const sedo                  = require("../src/modules/sedo/routes");
@@ -28,7 +29,6 @@ const auth                  = require("../src/modules/auth/routes");
 const funnelFlux            = require("../src/modules/funnelFlux/routes");
 const tonic                 = require("../src/modules/tonic/routes");
 const management            = require("../src/shared/routes/management");
-
 
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
@@ -80,6 +80,7 @@ function configureMiddleware(server) {
   server.use("/api/auth", auth);
   server.use("/api/facebook", facebook);
   server.use("/api/tiktok", tiktok);
+  server.use("/api/taboola", taboola);
   server.use("/api/composite-ad", scrappedAds);
   server.use("/api/aggregations", aggregations);
   server.use("/api/crossroads", crossroadRouter);

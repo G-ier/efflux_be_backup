@@ -8,7 +8,8 @@ exports.up = function (knex) {
       table.text('thumbnail_url');
       table.integer('campaign_id');
       table.text('user_id');
-      table.text('account_id');
+      table.integer('account_id');
+      table.text('provider_id');
       // Timestamps for created_at and updated_at
       table.timestamps(true, true);
     });
