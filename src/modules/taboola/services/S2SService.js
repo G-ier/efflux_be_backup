@@ -51,25 +51,27 @@ class S2SService extends BaseService{
 
         //const url = `https://trc.taboola.com/${account_id}/log/3/bulk-s2s-action`;
         //this.logger.info(`Sending ${data.data.length} events to Taboola S2S for account ${account_id}`);
-        console.log("SIKE \n");
-        console.log(data);
+
         // const response = await this.postToApi(url, {
         //     data,
         //   }, "Error posting events"
         // );
         // this.logger.info(`Response from Taboola S2S: ${JSON.stringify(response)}`)
-        return response;
+        // return response;
     }
 
     async constructTaboolaS2SPayload(filteredEvents) {
 
       this.logger.info(`Constructing Taboola S2S payload`);
+      // console.log("Filtered Events: \n \n");
       await this.createS2SLogEntry(filteredEvents);
 
       // 1. Extract Event Ids
       const eventIds        = filteredEvents.map((event) => event.id);
+    
       // 2. Group by pixel id
-      const tblAccountGrouped    = _.groupBy(filteredEvents, 'account_id');
+      const tblAccountGrouped    = _.groupBy(filteredEvents, 'ad_account');
+      
       // 3. Construct facebook conversion payloads
 
       const tblProcessedPayloads = []
@@ -77,13 +79,14 @@ class S2SService extends BaseService{
       Object.entries(tblAccountGrouped).forEach(([account_id, events]) => {
         const tblS2SPayloads  = this.constructTaboolaConversionEvents(events)
         tblProcessedPayloads.push({
-            entityType: 'account',
+            entityType: 'ad_account',
             entityId: account_id,
             actions: tblS2SPayloads
           })
       })
       this.logger.info(`Done constructing Taboola S2S payload`);
-      return tblProcessedPayloads
+      console.log(tblProcessedPayloads);
+      return { tblProcessedPayloads, eventIds }
     }
 
     constructTaboolaConversionEvents (events){
@@ -91,31 +94,28 @@ class S2SService extends BaseService{
       const MAX_EVENTS = 500;
 
       let payloads = [];
-      let currentPayload = { data: [] };
+      let currentPayload = { actions: [] };
 
       events.forEach((event) => {
 
-        for ( let i = 0; i < event.purchase_event_count; i++ ) {
-
-          if ( currentPayload.data.length === MAX_EVENTS ) {
-            payloads.push(currentPayload)
-            currentPayload = { actions: [] }
-          }
-
-          const eventPayload = {
-            click_id: event.click_id,
-            timestamp: Number(event.timestamp),
-            name: event.ruleID,
-            revenue: event.purchase_event_value,
-            quantity: event.purchase_event_count
-          }
-          currentPayload.actions.push(eventPayload)
+        if ( currentPayload.actions.length === MAX_EVENTS ) {
+          payloads.push(currentPayload)
+          currentPayload = { actions: [] }
         }
 
+        const eventPayload = {
+          click_id: event.external,
+          timestamp: Number(event.timestamp),
+          name: "search",
+          revenue: event.revenue,
+          currency: "USD",
+          quantity: event.conversions
+        }
+        currentPayload.actions.push(eventPayload)
       })
 
       // Add the last payload if it has any events
-      if (currentPayload.data.length > 0) {
+      if (currentPayload.actions.length > 0) {
         payloads.push(currentPayload);
       }
 
@@ -142,11 +142,21 @@ class S2SService extends BaseService{
     //   this.logger.info(`Updated ${updatedCount} Broken events to Facebook CAPI`)
     // }
 
-    // async updateReportedEvents(eventIds){
-    //   this.logger.info(`Updating Reported Session in DB`);
-    //   const updatedCount = await this.database.update('raw_crossroads_data', {reported_to_ts: true}, {unique_identifier: eventIds})
-    //   this.logger.info(`Reported ${updatedCount} session to Facebook CAPI`);
-    // }
+    async updateReportedEvents(eventIds){
+      this.logger.info(`Updating Reported Session in DB`);
+      console.log(eventIds);
+    //   updatedCount = await this.database.update('crossroads_raw_insights',
+    //     {
+    //       reported_conversions: this.database.connection.ref('conversions'),
+    //       reported_amount: this.database.connection.ref('revenue')
+    //     },
+    //     {
+    //       unique_identifier: eventIds
+    //     }
+    //  )
+
+    //  this.logger.info(`Reported ${updatedCount} session to Facebook CAPI`);
+    }
 
 }
 

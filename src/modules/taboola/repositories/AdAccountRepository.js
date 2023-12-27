@@ -53,7 +53,7 @@ class AdAccountRepository {
       status: adAccount.is_active ===true ? "active": "disabled",
       user_id: user_id,
       account_id: user_account_id,
-      fb_account_id: adAccount.advertiser_id,
+      fb_account_id: adAccount.id,
       currency: adAccount.currency,
       tz_name: adAccount.time_zone_name,
       tz_offset: getOffset(adAccount.time_zone_name)

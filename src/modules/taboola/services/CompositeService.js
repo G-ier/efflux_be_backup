@@ -64,19 +64,22 @@ class CompositeService {
       }
       CapiLogger.info(`Done fetching ${data.length} session from DB.`);
 
-      const tblProcessedPayloads = await this.s2SService.constructTaboolaS2SPayload(data);
+      const { tblProcessedPayloads, eventIds } = await this.s2SService.constructTaboolaS2SPayload(data);
 
-      console.log(tblProcessedPayloads);
       CapiLogger.info(`Posting events to FB CAPI in batches.`);
 
       for(const batch of tblProcessedPayloads){
         // const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
-          for(const payload of batch.payloads){
+          for(const payload of batch.actions){
             const jsonPayload = JSON.stringify(payload);
+            console.log(jsonPayload);
+            console.log("\n");
             await this.s2SService.postS2SEvents(jsonPayload);
           }
       }
       CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
+
+      //await this.s2SService.updateReportedEvents(eventIds);
     }
 }
 

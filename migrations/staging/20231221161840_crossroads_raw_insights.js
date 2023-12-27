@@ -41,8 +41,8 @@ exports.up = function(knex) {
 
         // Reporting Data
         table.string("pixel_id");
-        table.string("reported_conversions");
-        table.string("reported_amount");
+        table.integer("reported_conversions").defaultTo(0);
+        table.float("reported_amount").defaultTo(0);
 
         // Timestamps
         table.timestamp('created_at').defaultTo(knex.fn.now());
