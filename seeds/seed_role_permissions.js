@@ -16,6 +16,7 @@ exports.seed = async function (knex) {
 
       // Create associations
       return knex('role_permissions').insert([
+        // Admin role permissions
         {
           role_id: getIdByName(roles, 'org_admin'),
           permission_id: getIdByName(permissions, 'manage_ad_accounts'),
@@ -24,22 +25,173 @@ exports.seed = async function (knex) {
           role_id: getIdByName(roles, 'org_admin'),
           permission_id: getIdByName(permissions, 'manage_users'),
         },
-        // ... other role permission associations for Org Admin
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'create_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'delete_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'edit_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'start_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'stop_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'assign_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'create_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'delete_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'edit_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'create_ads'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_ads'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'delete_ads'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'edit_ads'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'manage_media_library'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'upload_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'edit_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'delete_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_media_library'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'manage_reports'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_reports'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'download_reports'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'invite_users'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_users'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'delete_users'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_organization'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'edit_organization'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_ad_accounts'),
+        },
+        // Media Buyer role permissions
+        {
+          role_id: getIdByName(roles, 'media_buyer'),
+          permission_id: getIdByName(permissions, 'read_media_library'),
+        },
         {
           role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_reports'),
         },
-        // ... other role permission associations for Media Buyer
+        {
+          role_id: getIdByName(roles, 'media_buyer'),
+          permission_id: getIdByName(permissions, 'read_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'media_buyer'),
+          permission_id: getIdByName(permissions, 'read_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'media_buyer'),
+          permission_id: getIdByName(permissions, 'read_ads'),
+        },
+        // Creative role permissions
         {
           role_id: getIdByName(roles, 'creatives'),
-          permission_id: getIdByName(permissions, 'manage_media_library'),
+          permission_id: getIdByName(permissions, 'upload_media'),
         },
-        // ... other role permission associations for Creatives
+        {
+          role_id: getIdByName(roles, 'creatives'),
+          permission_id: getIdByName(permissions, 'edit_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'creatives'),
+          permission_id: getIdByName(permissions, 'delete_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'creatives'),
+          permission_id: getIdByName(permissions, 'read_media_library'),
+        },
+        // Support Staff role permissions
         {
           role_id: getIdByName(roles, 'support_staff'),
           permission_id: getIdByName(permissions, 'read_reports'),
         },
-        // ... other role permission associations for Support Staff
+        {
+          role_id: getIdByName(roles, 'support_staff'),
+          permission_id: getIdByName(permissions, 'read_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'support_staff'),
+          permission_id: getIdByName(permissions, 'read_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'support_staff'),
+          permission_id: getIdByName(permissions, 'read_ads'),
+        },
       ]);
     });
 };

@@ -9,26 +9,51 @@ exports.seed = async function (knex) {
     .then(function () {
       // Inserts seed entries
       return knex('permissions').insert([
-        { name: 'manage_ad_accounts', description: 'Manages Ad Accounts' },
-        { name: 'manage_users', description: 'Manages users in organization' },
-        { name: 'manage_campaigns', description: 'Manages campaigns in organization' },
-        { name: 'manage_reports', description: 'Manages performance reports in organization' },
-        { name: 'manage_budgets', description: 'Manages budgets' },
-        {
-          name: 'manage_financial_planning',
-          description: 'Manages forecasts and financial planning',
-        },
-        { name: 'read_reports', description: 'Reads assigned performance reports' },
-        { name: 'read_media_library', description: 'Reads media library' },
-        {
-          name: 'manage_assigned_campaigns',
-          description: 'Manages assigned campaigns (including budgets)',
-        },
-        { name: 'manage_own_account', description: 'Manages own account' },
+        // Campaigns permissions
+        { name: 'create_campaigns', description: 'Creates campaigns in organization' },
+        { name: 'edit_campaigns', description: 'Edits campaigns in organization' },
+        { name: 'delete_campaigns', description: 'Deletes campaigns in organization' },
+        { name: 'read_campaigns', description: 'Reads assigned campaigns' },
+        { name: 'start_campaigns', description: 'Starts campaigns in organization' },
+        { name: 'stop_campaigns', description: 'Stops campaigns in organization' },
+        { name: 'assign_campaigns', description: 'Assigns campaigns to users in the organization' },
+
+        // Adsets permissions
+        { name: 'create_adsets', description: 'Creates adsets in organization' },
+        { name: 'edit_adsets', description: 'Edits adsets in organization' },
+        { name: 'delete_adsets', description: 'Deletes adsets in organization' },
+        { name: 'read_adsets', description: 'Reads assigned adsets' },
+
+        // Ads permissions
+        { name: 'create_ads', description: 'Creates ads in organization' },
+        { name: 'read_ads', description: 'Reads assigned ads' },
+        { name: 'edit_ads', description: 'Edits ads in organization' },
+        { name: 'delete_ads', description: 'Deletes ads in organization' },
+
+        // Media Library permissions
         { name: 'manage_media_library', description: 'Manages organization’s media library' },
+        { name: 'read_media_library', description: 'Reads media library' },
         { name: 'upload_media', description: 'Upload media assets' },
         { name: 'edit_media', description: 'Edit media assets' },
         { name: 'delete_media', description: 'Delete media assets' },
+
+        // Reports permissions
+        { name: 'manage_reports', description: 'Manages performance reports in organization' },
+        { name: 'read_reports', description: 'Reads assigned performance reports' },
+        { name: 'download_reports', description: 'Downloads performance reports' },
+
+        // Ad Accounts permissions
+        { name: 'manage_ad_accounts', description: 'Manages Ad Accounts in organization' },
+        { name: 'read_ad_accounts', description: 'Reads assigned Ad Accounts' },
+
+        // Users permissions
+        { name: 'invite_users', description: 'Invites users to the organization' },
+        { name: 'read_users', description: 'Reads users in the organization' },
+        { name: 'delete_users', description: 'Deletes users from the organization' },
+
+        // Organizations permissions
+        { name: 'edit_organization', description: 'Edits organization' },
+        { name: 'read_organization', description: 'Reads organization' },
       ]);
     });
 };

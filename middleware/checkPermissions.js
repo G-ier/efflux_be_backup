@@ -10,16 +10,21 @@ const checkPermission = (requiredPermission) => {
       .where('u.id', userId)
       .select('p.name');
 
-    // Check if user has the required permission
-    const hasPermission = userPermissions.some(
-      (permission) => permission.name === requiredPermission,
+    // Map to permission names for easier checking
+    const userPermissionNames = userPermissions.map((permission) => permission.name);
+
+    // Check if user has any of the required permissions
+    const hasPermission = requiredPermissions.some((requiredPermission) =>
+      userPermissionNames.includes(requiredPermission),
     );
 
     if (!hasPermission) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      return res
+        .status(403)
+        .json({ message: 'You do not have the required permissions to access this route' });
     }
 
-    next(); // Move to next middleware or route handler
+    next();
   };
 };
 
