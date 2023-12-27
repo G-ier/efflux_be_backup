@@ -3,6 +3,7 @@ const redis = require('redis');
 const client = redis.createClient({
   url: process.env.REDIS_CLUSTER_URL_LOCAL,
 });
+
 client.connect();
 
 client.on('connect', () => {

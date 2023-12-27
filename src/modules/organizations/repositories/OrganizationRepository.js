@@ -1,5 +1,6 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const Organization = require('../entities/Organization');
+const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
 
 class OrganizationRepository {
   constructor(database) {
@@ -38,8 +39,25 @@ class OrganizationRepository {
   }
 
   async fetchOne(fields = ['*'], filters = {}) {
+    // Check if organization is in cache
+    const cacheKey = `organizations:${JSON.stringify({ fields, filters })}`;
+
+    const cachedOrganization = await getAsync(cacheKey);
+    if (cachedOrganization) {
+      console.log('Fetched organization from cache');
+      return JSON.parse(cachedOrganization);
+    }
+
+    // If not in cache, fetch from the database
     const result = await this.database.queryOne(this.tableName, fields, filters);
-    if (!fields.includes('*')) return result;
+
+    // Set cache
+    console.log('Setting organization in cache');
+    await setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+
+    if (!fields.includes('*')) {
+      return result;
+    }
     return result;
   }
 
