@@ -1,10 +1,12 @@
-const _ = require("lodash");
-const Adset = require("../entities/Adset");
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+const _ = require('lodash');
+const Adset = require('../entities/Adset');
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
+const { AdsetLogger } = require('../../../shared/lib/WinstonLogger');
 
 class AdsetsRepository {
   constructor(database) {
-    this.tableName = "adsets";
+    this.tableName = 'adsets';
     this.database = database || new DatabaseRepository();
   }
 
@@ -25,20 +27,37 @@ class AdsetsRepository {
     const dbObjects = adsets.map((adset) => this.toDatabaseDTO(adset, adAccountsMap));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "provider_id, traffic_source");
+      await this.database.upsert(this.tableName, chunk, 'provider_id, traffic_source');
     }
     return dbObjects;
   }
 
-  async fetchAdsets(fields = ["*"], filters = {}, limit, joins = []) {
+  async fetchAdsets(fields = ['*'], filters = {}, limit, joins = []) {
+    // Check if adsets are in cache
+    const cacheKey = `adsets:${JSON.stringify({ fields, filters, limit, joins })}`;
+
+    const cachedAdsets = await getAsync(cacheKey);
+    if (cachedAdsets) {
+      AdsetLogger.debug('Fetched: ' + cacheKey + ' from cache');
+      return json.parse(cachedAdsets);
+    }
+
+    // If not in cache, fetch from the database
+    AdsetLogger.debug('Fetching adsets from database');
     const results = await this.database.query(this.tableName, fields, filters, limit, joins);
+
+    // Set cache
+    AdsetLogger.debug('Setting: ' + cacheKey + ' in cache');
+    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
+
     return results;
   }
 
   async updateOne(adset, criteria) {
-    const data = this.toDatabaseDTO(adset)
+    const data = this.toDatabaseDTO(adset);
     const dbObject = Object.keys(data).reduce((acc, key) => {
-      if (data[key] != null) {  // This will check for both null and undefined
+      if (data[key] != null) {
+        // This will check for both null and undefined
         acc[key] = data[key];
       }
       return acc;
@@ -53,7 +72,7 @@ class AdsetsRepository {
       name: adset.adgroup_name,
       created_time: adset.create_time,
       updated_time: adset.modify_time,
-      traffic_source: "tiktok",
+      traffic_source: 'tiktok',
       campaign_id: adset.campaign_id,
       provider_id: adset.adgroup_id,
       status: adset.status || adset.operation_status,
@@ -63,7 +82,7 @@ class AdsetsRepository {
       daily_budget: adset.dailyBudget || adset.budget,
       lifetime_budget: adset.lifetime_budget,
       budget_remaining: adset.budget_remaining,
-      network: "unknown",
+      network: 'unknown',
     };
   }
 
@@ -80,7 +99,7 @@ class AdsetsRepository {
       dbObject.ad_account_id,
       dbObject.daily_budget,
       dbObject.lifetime_budget,
-      dbObject.budget_remaining
+      dbObject.budget_remaining,
     );
   }
 }

@@ -211,6 +211,13 @@ const InsightsLogger = new CustomLogger({
   filePath: filePath('./logs/insights'),
 });
 
+// Adset Logger
+const AdsetLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'debug',
+  filePath: filePath('./logs/adset'),
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -229,4 +236,5 @@ module.exports = {
   UserLogger,
   OrganizationLogger,
   InsightsLogger,
+  AdsetLogger,
 };

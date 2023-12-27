@@ -45,7 +45,7 @@ class OrganizationRepository {
 
     const cachedOrganization = await getAsync(cacheKey);
     if (cachedOrganization) {
-      OrganizationLogger.debug('Fetched organization from cache');
+      OrganizationLogger.debug('Fetched: ' + cacheKey + ' from cache');
       return JSON.parse(cachedOrganization);
     }
     // If not in cache, fetch from the database
@@ -53,7 +53,7 @@ class OrganizationRepository {
     const result = await this.database.queryOne(this.tableName, fields, filters);
 
     // Set cache
-    OrganizationLogger.debug('Setting organization in cache');
+    OrganizationLogger.debug('Setting: ' + cacheKey + ' in cache');
     await setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
 
     return result;

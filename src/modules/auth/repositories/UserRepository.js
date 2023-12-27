@@ -45,8 +45,7 @@ class UserRepository {
 
     const cachedUsers = await getAsync(cacheKey);
     if (cachedUsers) {
-      UserLogger.debug('Fetching users from cache');
-
+      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
       return JSON.parse(cachedUsers).map(this.toDomainEntity);
     }
 
@@ -54,7 +53,7 @@ class UserRepository {
     const results = await this.database.query(this.tableName, fields, filters, limit);
 
     // Set cache
-    UserLogger.debug('Setting users in cache');
+    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
     await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
 
     return results.map(this.toDomainEntity);
