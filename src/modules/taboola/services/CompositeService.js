@@ -71,15 +71,12 @@ class CompositeService {
       for(const batch of tblProcessedPayloads){
         // const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
           for(const payload of batch.actions){
-            const jsonPayload = JSON.stringify(payload);
-            console.log(jsonPayload);
-            console.log("\n");
-            await this.s2SService.postS2SEvents(jsonPayload);
+            await this.s2SService.postS2SEvents(payload, batch.entityId);
           }
       }
       CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
 
-      //await this.s2SService.updateReportedEvents(eventIds);
+      await this.s2SService.updateReportedEvents(eventIds);
     }
 }
 

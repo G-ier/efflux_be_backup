@@ -31,7 +31,6 @@ class AdAccountService extends BaseService {
 
     async syncAdAccounts(account_id, token, user_id, user_account_id){
         const adAccountsData = await this.getAdAccountsFromApi(account_id, token);
-        console.log(adAccountsData);
         this.logger.info(`Upserting ${adAccountsData.length} Ad Accounts`);
         const results = await this.executeWithLogging(
             () => this.adAccountsRepository.upsert(adAccountsData, user_id, user_account_id),

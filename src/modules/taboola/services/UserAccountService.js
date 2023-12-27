@@ -94,8 +94,6 @@ class UserAccountService extends BaseService {
       }
       const res = await this.fetchFromApi(url, {}, "Error getting Taboola Network Account", header);
 
-      console.log("User Account Res", res)
-
       const currentTimeInMilliseconds = new Date().getTime();
       // Calculate the expiration time in milliseconds
       const expirationTimeInMilliseconds = currentTimeInMilliseconds + expires_in * 1000;
