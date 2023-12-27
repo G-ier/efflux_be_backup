@@ -171,6 +171,10 @@ exports.seed = async function (knex) {
           role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_ads'),
         },
+        {
+          role_id: getIdByName(roles, 'media_buyer'),
+          permission_id: getIdByName(permissions, 'launch_ads'),
+        },
         // Creative role permissions
         {
           role_id: getIdByName(roles, 'creatives'),

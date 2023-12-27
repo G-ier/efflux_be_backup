@@ -1,6 +1,6 @@
 const route = require('express').Router();
 const multer = require('multer');
-const checkPermission = require('../../../../shared/middlewares/checkPermission');
+const checkPermission = require('../../../../../middleware/checkPermissions');
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -72,7 +72,7 @@ route.get('/ad-creatives/:creativeId', checkPermission(['read_ads']), (req, res)
   adCreativesController.fetchAdCreative(req, res),
 );
 
-route.get('/campaigns', checkPermission(['read_campaigns', 'assign_campaigns']), (req, res) =>
+route.get('/campaigns', checkPermission(['read_campaigns']), (req, res) =>
   campaignsController.fetchCampaigns(req, res),
 );
 

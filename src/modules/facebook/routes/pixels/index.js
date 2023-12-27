@@ -1,7 +1,7 @@
 const route = require('express').Router();
 const PixelsController = require('../../controllers/PixelsController');
 const pixelsController = new PixelsController();
-const checkPermission = require('../../../../shared/middlewares/checkPermission');
+const checkPermission = require('../../../../../middleware/checkPermissions');
 
 // @route    GET /api/facebook/pixels
 // @desc     Fetch pixels
