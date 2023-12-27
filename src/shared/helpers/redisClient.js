@@ -22,7 +22,7 @@ client.on('connect', () => {
 
 client.on('error', (err) => {
   console.log(`Redis went wrong ${err}`);
-  console.log('Environment: ', process.env.DATABASE_ENVIRONMENT);
+  console.log('Environment: ', process.env.REDIS_ENVIRONMENT);
 });
 
 module.exports = {
