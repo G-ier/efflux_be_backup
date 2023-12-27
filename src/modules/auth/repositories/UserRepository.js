@@ -1,7 +1,7 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const User = require('../entities/User');
 const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { logger } = require('../../../shared/lib/WinstonLogger');
+const { UserLogger } = require('../../../shared/lib/WinstonLogger');
 
 class UserRepository {
   constructor(database) {
@@ -45,16 +45,18 @@ class UserRepository {
 
     const cachedUsers = await getAsync(cacheKey);
     if (cachedUsers) {
-      logger.debug('Fetching users from cache');
-      return JSON.parse(cachedUsers);
+      UserLogger.debug('Fetching users from cache');
+
+      return JSON.parse(cachedUsers).map(this.toDomainEntity);
     }
 
     // If not in cache, fetch from the database
     const results = await this.database.query(this.tableName, fields, filters, limit);
 
     // Set cache
-    logger.debug('Setting users in cache');
+    UserLogger.debug('Setting users in cache');
     await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
+
     return results.map(this.toDomainEntity);
   }
 
@@ -78,7 +80,7 @@ class UserRepository {
 
     const cachedUser = await getAsync(cacheKey);
     if (cachedUser) {
-      logger.debug('Fetching user from cache');
+      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
       return JSON.parse(cachedUser);
     }
 
@@ -86,12 +88,9 @@ class UserRepository {
     const result = await this.database.queryOne(this.tableName, fields, filters);
 
     // Set cache
-    logger.debug('Setting user in cache');
+    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
     await setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
 
-    if (!fields.includes('*')) {
-      return result;
-    }
     return result;
   }
 
