@@ -19,11 +19,7 @@ exports.seed = async function (knex) {
         // Admin role permissions
         {
           role_id: getIdByName(roles, 'org_admin'),
-          permission_id: getIdByName(permissions, 'manage_ad_accounts'),
-        },
-        {
-          role_id: getIdByName(roles, 'org_admin'),
-          permission_id: getIdByName(permissions, 'manage_users'),
+          permission_id: getIdByName(permissions, 'launch_ads'),
         },
         {
           role_id: getIdByName(roles, 'org_admin'),
@@ -137,6 +133,23 @@ exports.seed = async function (knex) {
           role_id: getIdByName(roles, 'org_admin'),
           permission_id: getIdByName(permissions, 'read_ad_accounts'),
         },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'create_pixels'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'edit_pixels'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'delete_pixels'),
+        },
+        {
+          role_id: getIdByName(roles, 'org_admin'),
+          permission_id: getIdByName(permissions, 'read_pixels'),
+        },
+
         // Media Buyer role permissions
         {
           role_id: getIdByName(roles, 'media_buyer'),

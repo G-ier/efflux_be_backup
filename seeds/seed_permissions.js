@@ -18,6 +18,12 @@ exports.seed = async function (knex) {
         { name: 'stop_campaigns', description: 'Stops campaigns in organization' },
         { name: 'assign_campaigns', description: 'Assigns campaigns to users in the organization' },
 
+        // Pixels permissions
+        { name: 'create_pixels', description: 'Creates pixels in organization' },
+        { name: 'edit_pixels', description: 'Edits pixels in organization' },
+        { name: 'delete_pixels', description: 'Deletes pixels in organization' },
+        { name: 'read_pixels', description: 'Reads assigned pixels' },
+
         // Adsets permissions
         { name: 'create_adsets', description: 'Creates adsets in organization' },
         { name: 'edit_adsets', description: 'Edits adsets in organization' },
@@ -29,6 +35,7 @@ exports.seed = async function (knex) {
         { name: 'read_ads', description: 'Reads assigned ads' },
         { name: 'edit_ads', description: 'Edits ads in organization' },
         { name: 'delete_ads', description: 'Deletes ads in organization' },
+        { name: 'launch_ads', description: 'Launches ads in organization' },
 
         // Media Library permissions
         { name: 'manage_media_library', description: 'Manages organization’s media library' },

@@ -1,6 +1,5 @@
 const route = require('express').Router();
 const multer = require('multer');
-// Import the checkPermission middleware
 const checkPermission = require('../../../../shared/middlewares/checkPermission');
 
 const upload = multer({
@@ -43,7 +42,9 @@ route.post('/ad-creatives/sync', adCreativesController.syncAdCreatives);
 // @route     GET /api/facebook/management/ad-creatives
 // @desc     Fetch ad creatives
 // @Access   Private
-route.get('/ad-creatives', adCreativesController.fetchAdCreatives);
+route.get('/ad-creatives', checkPermission(['read_ads']), (req, res) =>
+  adCreativesController.fetchAdCreatives(req, res),
+);
 
 // @route     POST /api/facebook/management/ad-creatives
 // @desc     Add a new ad creative
@@ -53,23 +54,29 @@ route.post('/ad-creatives', (req, res) => compositeController.createAdCreative(r
 // @route     PUT /api/facebook/management/ad-creatives/:creativeId
 // @desc     Update an ad creative
 // @Access   Private
-route.put('/ad-creatives/:creativeId', adCreativesController.updateAdCreative);
+route.put('/ad-creatives/:creativeId', checkPermission(['edit_ads']), (req, res) =>
+  adCreativesController.updateAdCreative(req, res),
+);
 
 // @route     DELETE /api/facebook/management/ad-creatives/:creativeId
 // @desc     Delete an ad creative
 // @Access   Private
-route.delete('/ad-creatives/:creativeId', adCreativesController.deleteAdCreative);
+route.delete('/ad-creatives/:creativeId', checkPermission(['delete_ads']), (req, res) =>
+  adCreativesController.deleteAdCreative(req, res),
+);
 
 // @route     GET /api/facebook/management/ad-creatives/:creativeId
 // @desc     Fetch a specific ad creative by ID
 // @Access   Private
-route.get('/ad-creatives/:creativeId', adCreativesController.fetchAdCreativeById);
+route.get('/ad-creatives/:creativeId', checkPermission(['read_ads']), (req, res) =>
+  adCreativesController.fetchAdCreative(req, res),
+);
 
 route.get('/campaigns', checkPermission(['read_campaigns', 'assign_campaigns']), (req, res) =>
   campaignsController.fetchCampaigns(req, res),
 );
 
-route.get('/adsets', checkPermission(['create_adsets', 'read_adsets']), (req, res) => {
+route.get('/adsets', checkPermission(['read_adsets']), (req, res) => {
   adsetsController.fetchAdsets(req, res);
 });
 
@@ -77,9 +84,13 @@ route.post('/create-campaign', checkPermission('create_campaigns'), (req, res) =
   compositeController.createCampaignInFacebook(req, res),
 );
 
-route.post('/create-adset', (req, res) => compositeController.createAdset(req, res));
+route.post('/create-adset', checkPermission('create_adsets'), (req, res) =>
+  compositeController.createAdset(req, res),
+);
 
-route.post('/create-ad', (req, res) => compositeController.createAd(req, res));
+route.post('/create-ad', checkPermission('create_ads'), (req, res) =>
+  compositeController.createAd(req, res),
+);
 
 route.post('/upload-video', upload.single('video'), (req, res) =>
   adLauncherController.uploadVideoToFacebook(req, res),
