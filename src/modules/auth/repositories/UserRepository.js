@@ -8,12 +8,6 @@ class UserRepository {
     this.database = database || new DatabaseRepository();
   }
 
-  /**
-   * @param {User} user
-   * @returns {Promise<void>}
-   * @memberof UserRepository
-   * @description Saves a user to the database and deletes users from cache
-   **/
   async saveOne(user) {
     const dbObject = this.toDatabaseDTO(user);
     const insertResult = await this.database.insert(this.tableName, dbObject);
@@ -24,17 +18,7 @@ class UserRepository {
 
     return insertResult;
   }
-  // const dbObject = this.toDatabaseDTO(user);
-  // return await this.database.insert(this.tableName, dbObject);
-  // }
 
-  /**
-   * @param {User[]} users
-   * @param {number} [chunkSize=500]
-   * @returns {Promise<void>}
-   * @memberof UserRepository
-   * @description Saves users to the database in chunks and deletes users from cache
-   **/
   async saveInBulk(users, chunkSize = 500) {
     let data = users.map((user) => this.toDatabaseDTO(user));
     let dataChunks = _.chunk(data, chunkSize);
@@ -48,13 +32,6 @@ class UserRepository {
     await redisClient.delAsync(cacheKey);
   }
 
-  /**
-   * @param {data} data
-   * @param {criteria} criteria
-   * @returns {Promise<void>}
-   * @memberof UserRepository
-   * @description Updates a user in the database and deletes users from cache
-   **/
   async update(data, criteria) {
     // Delete users from cache
     const updateResult = await this.database.update(this.tableName, data, criteria);
@@ -65,12 +42,6 @@ class UserRepository {
     return updateResult;
   }
 
-  /**
-   * @param {criteria} criteria
-   * @returns {Promise<void>}
-   * @memberof UserRepository
-   * @description Deletes a user from the database and deletes users from cache
-   **/
   async delete(criteria) {
     const deleteResult = await this.database.delete(this.tableName, criteria);
 
