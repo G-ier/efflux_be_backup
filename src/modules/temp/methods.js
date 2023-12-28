@@ -56,8 +56,8 @@ class TemporaryService {
   async fetchUsersWithAdAccounts(userId, isAdmin) {
     let userFilters = {};
     if (!isAdmin) userFilters = { id: userId };
-    let users = await this.userRepository.fetchUsers(['id', 'name', 'nickname'], userFilters);
-    const userIds = users.map((user) => user.id);
+    let users = await this.userRepository.fetchUsers(["*"], userFilters);
+    const userIds = users.map(user => user.id);
 
     // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
     const whereClause = { 'ua.backup': false };
@@ -165,8 +165,13 @@ class TemporaryService {
 
     const body = {};
     if (name) body.name = name;
-
     const response = await axios.patch(url, body, { headers });
+
+    // If Auth0 update is successful, update the name in your UserRepository
+    if (response.status === 200) {
+      await this.userRepository.update({ name }, { sub: userId });
+    }
+
     return response.data;
   }
 
@@ -292,10 +297,10 @@ class TemporaryController {
     }
   }
 
-  async updateUserDetails(req, res) {
-    try {
-      const { name } = req.body;
-      const userId = req.user.sub; // Ensure that the user's ID is available, typically through authentication middleware
+async updateUserDetails(req, res) {
+  try {
+    const { name,userId } = req.body;
+    const user = userId || req.user.sub; // Ensure that the user's ID is available, typically through authentication middleware
 
       // Validate the input as necessary
       if (!name) {
@@ -303,7 +308,7 @@ class TemporaryController {
       }
 
       // Call a service method to update the user details
-      const updateResult = await this.temporaryService.updateUserDetails(userId, name);
+      const updateResult = await this.temporaryService.updateUserDetails(user, name);
       console.log({ updateResult });
       // Construct a response message based on what was updated
       let message = 'User details updated successfully: ';
