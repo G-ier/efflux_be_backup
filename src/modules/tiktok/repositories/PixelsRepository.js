@@ -1,8 +1,6 @@
 const _ = require('lodash');
 const Pixel = require('../entities/Pixel');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { PixelsLogger } = require('../../../shared/lib/WinstonLogger');
 
 class PixelRepository {
   constructor(database) {
@@ -24,23 +22,8 @@ class PixelRepository {
   }
 
   async fetchPixels(fields = ['*'], filters = {}, limit, joins = []) {
-    // Check if pixels are in cache
-    const cacheKey = `pixels:${JSON.stringify({ fields, filters, limit, joins })}`;
-
-    const cachedPixels = await getAsync(cacheKey);
-    if (cachedPixels) {
-      PixelsLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return JSON.parse(cachedPixels);
-    }
-
-    // If not in cache, fetch from the database
-    PixelsLogger.debug('Fetching pixels from database');
-    const results = await this.database.query(this.tableName, fields, filters, limit, joins);
-
-    // Set cache
-    PixelsLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-
+    const cache = true;
+    const results = await this.database.query(this.tableName, fields, filters, limit, joins, cache);
     return results;
   }
 

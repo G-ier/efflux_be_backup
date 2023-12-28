@@ -1,8 +1,6 @@
 const _ = require('lodash');
 const Adset = require('../entities/Adset');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { AdsetLogger } = require('../../../shared/lib/WinstonLogger');
 
 class AdsetsRepository {
   constructor(database) {
@@ -33,23 +31,7 @@ class AdsetsRepository {
   }
 
   async fetchAdsets(fields = ['*'], filters = {}, limit, joins = []) {
-    // Check if adsets are in cache
-    const cacheKey = `adsets:${JSON.stringify({ fields, filters, limit, joins })}`;
-
-    const cachedAdsets = await getAsync(cacheKey);
-    if (cachedAdsets) {
-      AdsetLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return json.parse(cachedAdsets);
-    }
-
-    // If not in cache, fetch from the database
-    AdsetLogger.debug('Fetching adsets from database');
-    const results = await this.database.query(this.tableName, fields, filters, limit, joins);
-
-    // Set cache
-    AdsetLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-
+    const results = await this.database.query(this.tableName, fields, filters, limit, joins, true);
     return results;
   }
 

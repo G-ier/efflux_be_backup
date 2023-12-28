@@ -5,8 +5,6 @@ const _ = require('lodash');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const Insights = require('../entities/Insights');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { InsightsLogger } = require('../../../shared/lib/WinstonLogger');
 
 class InsightsRepository {
   // We might need to do some processing on the data, aggregate it, etc.
@@ -61,23 +59,10 @@ class InsightsRepository {
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {
-    // Check if insights are in cache
-    const cacheKey = `insights:${JSON.stringify({ fields, filters, limit })}`;
-
-    const cachedInsights = await getAsync(cacheKey);
-    if (cachedInsights) {
-      InsightsLogger.debug('Fetched insights from cache');
-      return cachedInsights.map(this.toDomainEntity);
-    }
-
+    const cache = true;
     // If not in cache, fetch from the database
-    const results = await this.database.query(this.tablename, fields, filters, limit);
-
-    // Set cache
-    InsightsLogger.debug('Setting insights in cache');
-    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-
-    return results.map(this.toDomainEntity);
+    const results = await this.database.query(this.tablename, fields, filters, limit, [], cache);
+    return results
   }
 
   parseSedoAPIData(insight, date) {

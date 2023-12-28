@@ -1,8 +1,6 @@
 const _ = require('lodash');
 const Ad = require('../entities/Ad');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { AdsLogger } = require('../../../shared/lib/WinstonLogger');
 
 class AdsRepository {
   constructor(database) {
@@ -32,24 +30,9 @@ class AdsRepository {
   }
 
   async fetchAds(fields = ['*'], filters = {}, limit) {
-    // Check if ads are in cache
-    const cacheKey = `ads:${JSON.stringify({ fields, filters, limit })}`;
-
-    const cachedAds = await getAsync(cacheKey);
-    if (cachedAds) {
-      AdsLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return JSON.parse(cachedAds).map(this.toDomainEntity);
-    }
-
-    // If not in cache, fetch from the database
-    AdsLogger.debug('Fetching ads from database');
-    const results = await this.database.query(this.tableName, fields, filters, limit);
-
-    // Set cache
-    AdsLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-
-    return results.map(this.toDomainEntity);
+    const cache = true;
+    const results = await this.database.query(this.tableName, fields, filters, limit, [], cache);
+    return results
   }
 
   toDatabaseDTO(ad, adAccountsMap) {

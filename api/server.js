@@ -71,6 +71,11 @@ const initializeAPI = async () => {
                                           : databaseEnvironment === 'staging' ? stagingDatabaseUrl
                                           : process.env.DATABASE_URL_LOCAL;
 
+    const redisEnvironment                = EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT');
+    const redisUrl                        = redisEnvironment === 'production' ? EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_PRODUCTION')
+                                          : redisEnvironment === 'staging' ? EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_STAGING')
+                                          : process.env.REDIS_CLUSTER_URL_LOCAL;
+
     console.log(`
       Server Info:
         Port: ${port}
@@ -88,7 +93,11 @@ const initializeAPI = async () => {
 
       Database:
         Environment: ${databaseEnvironment || 'development'}
-        URL: ${databaseUrl || 'development'}
+        URL: ${databaseUrl}
+
+      Redis:
+        Environment: ${redisEnvironment || 'development'}
+        URL: ${redisUrl}
 
       Cron Jobs [${rulesEnvironment}]:
         Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}

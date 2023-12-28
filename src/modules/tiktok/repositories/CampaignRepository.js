@@ -1,8 +1,6 @@
 const _ = require('lodash');
 const Campaign = require('../entities/Campaign');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { CampaignsLogger } = require('../../../shared/lib/WinstonLogger');
 
 class CampaignRepository {
   constructor(database) {
@@ -45,23 +43,8 @@ class CampaignRepository {
   }
 
   async fetchCampaigns(fields = ['*'], filters = {}, limit, joins = []) {
-    // Check if campaigns are in cache
-    const cacheKey = `campaigns:${JSON.stringify({ fields, filters, limit, joins })}`;
-
-    const cachedCampaigns = await getAsync(cacheKey);
-    if (cachedCampaigns) {
-      CampaignsLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return JSON.parse(cachedCampaigns);
-    }
-
-    // If not in cache, fetch from the database
-    CampaignsLogger.debug('Fetching campaigns from database');
-    const results = await this.database.query(this.tableName, fields, filters, limit, joins);
-
-    // Set cache
-    CampaignsLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-
+    const cache = true;
+    const results = await this.database.query(this.tableName, fields, filters, limit, joins, cache);
     return results;
   }
 

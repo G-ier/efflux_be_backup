@@ -1,9 +1,8 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const User = require('../entities/User');
-const { getAsync, setAsync } = require('../../../shared/helpers/redisClient');
-const { UserLogger } = require('../../../shared/lib/WinstonLogger');
 
 class UserRepository {
+
   constructor(database) {
     this.tableName = 'users';
     this.database = database || new DatabaseRepository();
@@ -40,23 +39,10 @@ class UserRepository {
   }
 
   async fetchUsers(fields = ['*'], filters = {}, limit) {
-    // Check if users are in cache
-    const cacheKey = `users:${JSON.stringify({ fields, filters, limit })}`;
-
-    const cachedUsers = await getAsync(cacheKey);
-    if (cachedUsers) {
-      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return JSON.parse(cachedUsers).map(this.toDomainEntity);
-    }
-
+    const cache = true
     // If not in cache, fetch from the database
-    const results = await this.database.query(this.tableName, fields, filters, limit);
-
-    // Set cache
-    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-
-    return results.map(this.toDomainEntity);
+    const results = await this.database.query(this.tableName, fields, filters, limit, [], cache);
+    return results
   }
 
   // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
@@ -74,22 +60,9 @@ class UserRepository {
   }
 
   async fetchOne(fields = ['*'], filters = {}) {
-    // Check if user is in cache
-    const cacheKey = `user:${JSON.stringify({ fields, filters })}`;
-
-    const cachedUser = await getAsync(cacheKey);
-    if (cachedUser) {
-      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return JSON.parse(cachedUser);
-    }
-
+    const cache = true
     // If not in cache, fetch from the database
-    const result = await this.database.queryOne(this.tableName, fields, filters);
-
-    // Set cache
-    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
-
+    const result = await this.database.queryOne(this.tableName, fields, filters, [], cache);
     return result;
   }
 
