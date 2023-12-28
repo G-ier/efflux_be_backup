@@ -10,13 +10,7 @@ class UserRepository {
 
   async saveOne(user) {
     const dbObject = this.toDatabaseDTO(user);
-    const insertResult = await this.database.insert(this.tableName, dbObject);
-
-    // Delete users from cache
-    const cacheKey = `users:*`;
-    await redisClient.delAsync(cacheKey);
-
-    return insertResult;
+    return await this.database.insert(this.tableName, dbObject);
   }
 
   async saveInBulk(users, chunkSize = 500) {
@@ -26,30 +20,14 @@ class UserRepository {
     for (let chunk of dataChunks) {
       await this.database.insert(this.tableName, chunk);
     }
-
-    // Delete users from cache
-    const cacheKey = `users:*`;
-    await redisClient.delAsync(cacheKey);
   }
 
   async update(data, criteria) {
-    // Delete users from cache
-    const updateResult = await this.database.update(this.tableName, data, criteria);
-
-    const cacheKey = `users:*`;
-    await redisClient.delAsync(cacheKey);
-
-    return updateResult;
+    return await this.database.update(this.tableName, data, criteria);
   }
 
   async delete(criteria) {
-    const deleteResult = await this.database.delete(this.tableName, criteria);
-
-    // Delete users from cache
-    const cacheKey = `users:*`;
-    await redisClient.delAsync(cacheKey);
-
-    return deleteResult;
+    return await this.database.delete(this.tableName, criteria);
   }
 
   async upsert(users, chunkSize = 500) {

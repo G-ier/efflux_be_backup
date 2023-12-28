@@ -14,11 +14,21 @@ class DatabaseRepository {
     }
   }
 
+  /**
+   * Insert a single row into a table. Returns the inserted row. Deletes the cache for the table.
+   */
   async insert(table, dbObject, trx = null) {
     try {
       const connection = trx || this.connection;
-      const insertValue = await connection(table).insert(dbObject).returning('*');
-      return insertValue;
+      const insertResult = await connection(table).insert(dbObject).returning('*');
+
+      // Delete cache for the table
+      if (this.enableCache) {
+        const cacheKey = `${table}:*`;
+        await this.redis.delAsync(cacheKey);
+      }
+
+      return insertResult;
     } catch (error) {
       console.error(`Failed to insert into table ${table}`, error);
       throw error;
@@ -124,6 +134,7 @@ class DatabaseRepository {
     }
   }
 
+  /** Delete rows from a table. Returns the number of deleted rows. Deletes the cache for the table. Returns the number of deleted rows. */
   async delete(tableName, filters, trx = null) {
     try {
       const connection = trx || this.connection;
@@ -139,7 +150,14 @@ class DatabaseRepository {
           queryBuilder = queryBuilder.where(key, value);
         }
       }
+
       const deletedRowCount = await queryBuilder.del();
+
+      // Delete cache for the table
+      if (this.enableCache) {
+        const cacheKey = `${tableName}:*`;
+        await this.redis.delAsync(cacheKey);
+      }
 
       return deletedRowCount; // Return number of deleted rows
     } catch (error) {
