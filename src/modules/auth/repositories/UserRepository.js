@@ -1,18 +1,40 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const User = require('../entities/User');
+const redisClient = require('../../../shared/lib/RedisConnection');
 
 class UserRepository {
-
   constructor(database) {
     this.tableName = 'users';
     this.database = database || new DatabaseRepository();
   }
 
+  /**
+   * @param {User} user
+   * @returns {Promise<void>}
+   * @memberof UserRepository
+   * @description Saves a user to the database and deletes users from cache
+   **/
   async saveOne(user) {
     const dbObject = this.toDatabaseDTO(user);
-    return await this.database.insert(this.tableName, dbObject);
-  }
+    const insertResult = await this.database.insert(this.tableName, dbObject);
 
+    // Delete users from cache
+    const cacheKey = `users:*`;
+    await redisClient.delAsync(cacheKey);
+
+    return insertResult;
+  }
+  // const dbObject = this.toDatabaseDTO(user);
+  // return await this.database.insert(this.tableName, dbObject);
+  // }
+
+  /**
+   * @param {User[]} users
+   * @param {number} [chunkSize=500]
+   * @returns {Promise<void>}
+   * @memberof UserRepository
+   * @description Saves users to the database in chunks and deletes users from cache
+   **/
   async saveInBulk(users, chunkSize = 500) {
     let data = users.map((user) => this.toDatabaseDTO(user));
     let dataChunks = _.chunk(data, chunkSize);
@@ -20,14 +42,43 @@ class UserRepository {
     for (let chunk of dataChunks) {
       await this.database.insert(this.tableName, chunk);
     }
+
+    // Delete users from cache
+    const cacheKey = `users:*`;
+    await redisClient.delAsync(cacheKey);
   }
 
+  /**
+   * @param {data} data
+   * @param {criteria} criteria
+   * @returns {Promise<void>}
+   * @memberof UserRepository
+   * @description Updates a user in the database and deletes users from cache
+   **/
   async update(data, criteria) {
-    return await this.database.update(this.tableName, data, criteria);
+    // Delete users from cache
+    const updateResult = await this.database.update(this.tableName, data, criteria);
+
+    const cacheKey = `users:*`;
+    await redisClient.delAsync(cacheKey);
+
+    return updateResult;
   }
 
+  /**
+   * @param {criteria} criteria
+   * @returns {Promise<void>}
+   * @memberof UserRepository
+   * @description Deletes a user from the database and deletes users from cache
+   **/
   async delete(criteria) {
-    return await this.database.delete(this.tableName, criteria);
+    const deleteResult = await this.database.delete(this.tableName, criteria);
+
+    // Delete users from cache
+    const cacheKey = `users:*`;
+    await redisClient.delAsync(cacheKey);
+
+    return deleteResult;
   }
 
   async upsert(users, chunkSize = 500) {
@@ -39,10 +90,10 @@ class UserRepository {
   }
 
   async fetchUsers(fields = ['*'], filters = {}, limit) {
-    const cache = true
+    const cache = true;
     // If not in cache, fetch from the database
     const results = await this.database.query(this.tableName, fields, filters, limit, [], cache);
-    return results
+    return results;
   }
 
   // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
@@ -60,7 +111,7 @@ class UserRepository {
   }
 
   async fetchOne(fields = ['*'], filters = {}) {
-    const cache = true
+    const cache = true;
     // If not in cache, fetch from the database
     const result = await this.database.queryOne(this.tableName, fields, filters, [], cache);
     return result;
@@ -70,7 +121,7 @@ class UserRepository {
     // Check if user permissions are in cache
     const cacheKey = `userPermissions:${userId}`;
 
-    const cachedUserPermissions = await getAsync(cacheKey);
+    const cachedUserPermissions = await redisClient.getAsync(cacheKey);
     if (cachedUserPermissions) {
       UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
       return JSON.parse(cachedUserPermissions);
@@ -91,7 +142,7 @@ class UserRepository {
 
     // Set cache
     UserLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(userPermissions), 'EX', 3600); // Expires in 1 hour
+    await redisClient.setAsync(cacheKey, JSON.stringify(userPermissions), 'EX', 3600); // Expires in 1 hour
 
     return userPermissions;
   }
