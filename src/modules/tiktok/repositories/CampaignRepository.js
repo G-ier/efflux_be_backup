@@ -1,11 +1,10 @@
-const _ = require("lodash");
-const Campaign = require("../entities/Campaign");
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+const _ = require('lodash');
+const Campaign = require('../entities/Campaign');
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 
 class CampaignRepository {
-
   constructor(database) {
-    this.tableName = "campaigns";
+    this.tableName = 'campaigns';
     this.database = database || new DatabaseRepository();
   }
 
@@ -26,14 +25,15 @@ class CampaignRepository {
     const dbObjects = campaigns.map((campaign) => this.toDatabaseDTO(campaign, adAccountsMap));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "id");
+      await this.database.upsert(this.tableName, chunk, 'id');
     }
   }
 
   async updateOne(campaign, criteria) {
-    const data = this.toDatabaseDTO(campaign)
+    const data = this.toDatabaseDTO(campaign);
     const dbObject = Object.keys(data).reduce((acc, key) => {
-      if (data[key] != null) {  // This will check for both null and undefined
+      if (data[key] != null) {
+        // This will check for both null and undefined
         acc[key] = data[key];
       }
       return acc;
@@ -42,8 +42,9 @@ class CampaignRepository {
     return await this.database.update(this.tableName, dbObject, criteria);
   }
 
-  async fetchCampaigns(fields = ["*"], filters = {}, limit, joins=[]) {
-    const results = await this.database.query(this.tableName, fields, filters, limit, joins);
+  async fetchCampaigns(fields = ['*'], filters = {}, limit, joins = []) {
+    const cache = true;
+    const results = await this.database.query(this.tableName, fields, filters, limit, joins, cache);
     return results;
   }
 
@@ -58,7 +59,7 @@ class CampaignRepository {
       ORDER BY
           created_time::timestamptz
       LIMIT 1;
-    `)
+    `);
     return results.rows;
   }
 
@@ -68,7 +69,7 @@ class CampaignRepository {
       name: campaign.campaign_name,
       created_time: campaign.create_time,
       updated_time: campaign.modify_time,
-      traffic_source: "tiktok",
+      traffic_source: 'tiktok',
       status: campaign.status || campaign.operation_status,
       user_id: adAccountsMap?.[campaign.advertiser_id].user_id,
       account_id: adAccountsMap?.[campaign.advertiser_id].account_id,
@@ -76,7 +77,7 @@ class CampaignRepository {
       daily_budget: campaign.dailyBudget || null,
       lifetime_budget: campaign.budget ?? 0,
       budget_remaining: null,
-      network: "unknown",
+      network: 'unknown',
     };
   }
 
@@ -92,7 +93,7 @@ class CampaignRepository {
       dbObject.ad_account_id,
       dbObject.daily_budget,
       dbObject.lifetime_budget,
-      dbObject.budget_remaining
+      dbObject.budget_remaining,
     );
   }
 }

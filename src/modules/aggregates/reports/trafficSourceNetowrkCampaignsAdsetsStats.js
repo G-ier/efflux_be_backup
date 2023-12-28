@@ -9,13 +9,17 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       insights.campaign_id,
       insights.adset_id,
       MAX(campaign_name) as campaign_name,
+      ${trafficSource != 'taboola' ? `
       MAX(adsets.status) as status,
-      CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
+      CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,` : 
+      `MAX(c.status) as status,
+      CAST(COALESCE(MAX(c.daily_budget), '0') AS FLOAT) * 100 as daily_budget,`}
+
       MAX(insights.adset_name) as adset_name,
       ${castSum(`nw_uniq_conversions`)} as nw_uniq_conversions,
       ${buildSelectionColumns("", calculateSpendRevenue=true)}
     FROM insights
-    JOIN adsets ON insights.adset_id = adsets.provider_id
+    JOIN ${trafficSource != 'taboola' ? `adsets ON insights.adset_id = adsets.provider_id` : `campaigns c ON c.id = insights.campaign_id`}
     WHERE date > '${startDate}' AND date <= '${endDate}' AND insights.traffic_source = '${trafficSource}' AND insights.network = '${network}'
       ${mediaBuyerCondition}
       ${adAccountCondition}
@@ -41,12 +45,11 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       )
       ELSE CAST(MAX(c.daily_budget) AS FLOAT)
     END AS daily_budget,
-    json_agg(ad.*) as adsets
+    ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as adsets
     FROM adset_data ad
     JOIN campaigns c ON ad.campaign_id = c.id
     GROUP BY ad.campaign_id, ad.campaign_name;
   `;
-
   const { rows } = await database.raw(query);
   return rows;
 }

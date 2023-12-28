@@ -1,11 +1,10 @@
-const _ = require("lodash");
+const _ = require('lodash');
 const Pixel = require('../entities/Pixel');
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 
 class PixelRepository {
-
   constructor(database) {
-    this.tableName = "tt_pixels";
+    this.tableName = 'tt_pixels';
     this.database = database || new DatabaseRepository();
   }
 
@@ -15,15 +14,16 @@ class PixelRepository {
   }
 
   async saveInBulk(pixels, chunkSize = 500) {
-    let data = pixels.map((pixel) => toDatabaseDTO(pixel))
-    let dataChunks = _.chunk(data, chunkSize)
+    let data = pixels.map((pixel) => toDatabaseDTO(pixel));
+    let dataChunks = _.chunk(data, chunkSize);
     for (let chunk of dataChunks) {
-      await this.database.insert(this.tableName, chunk)
+      await this.database.insert(this.tableName, chunk);
     }
   }
 
   async fetchPixels(fields = ['*'], filters = {}, limit, joins = []) {
-    const results = await this.database.query(this.tableName, fields, filters, limit, joins);
+    const cache = true;
+    const results = await this.database.query(this.tableName, fields, filters, limit, joins, cache);
     return results;
   }
 
@@ -31,7 +31,7 @@ class PixelRepository {
     const dbObjects = pixels.map((pixel) => this.toDatabaseDTO(pixel, adAccountsMap));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "id");
+      await this.database.upsert(this.tableName, chunk, 'id');
     }
   }
 
@@ -45,7 +45,9 @@ class PixelRepository {
 
   toDatabaseDTO(pixel, adAccountsMap) {
     return {
-      id: `${pixel.pixel_id}_${pixel.ad_account_id}_${adAccountsMap[pixel.ad_account_id]?.account_id}`,
+      id: `${pixel.pixel_id}_${pixel.ad_account_id}_${
+        adAccountsMap[pixel.ad_account_id]?.account_id
+      }`,
       pixel_id: pixel.pixel_id,
       code: pixel.pixel_code,
       name: pixel.pixel_name,
@@ -56,8 +58,8 @@ class PixelRepository {
       provider_id: pixel.ad_account_id,
       user_id: adAccountsMap[pixel.ad_account_id]?.user_id,
       account_id: adAccountsMap[pixel.ad_account_id]?.account_id,
-      ad_account_id: adAccountsMap[pixel.ad_account_id]?.id
-    }
+      ad_account_id: adAccountsMap[pixel.ad_account_id]?.id,
+    };
   }
 
   toDomainEntity(dbObject) {
@@ -78,7 +80,6 @@ class PixelRepository {
       dbObject.provider_id,
     );
   }
-
 }
 
 module.exports = PixelRepository;

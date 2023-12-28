@@ -165,6 +165,10 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
           Value: Efflux-BE
@@ -234,6 +238,9 @@ Resources:
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
+
+            # Define environment
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
         TagSpecifications:
           - ResourceType: volume
@@ -509,6 +516,7 @@ Resources:
       ClusterName: Efflux-BE
       CacheNodeType: cache.t3.medium
       Engine: redis
+      EngineVersion: 7.1
       NumCacheNodes: 1
       Port: 6379
       VpcSecurityGroupIds:

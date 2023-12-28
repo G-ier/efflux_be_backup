@@ -22,6 +22,20 @@ route.get("/sync-account-data", async (req, res) => {
   compositeController.syncAccountData(req, res);
 });
 
+// @route    /api/facebook/report-conversions
+// @desc     POST facebook refresh data
+// @Access   Private
+route.post("/report-conversions", async (req, res) => {
+  compositeController.reportConversions(req, res);
+});
+
+// @route    /api/facebook/report-conversions
+// @desc     POST facebook refresh data
+// @Access   Private
+route.post("/report-conversions", async (req, res) => {
+  compositeController.reportConversions(req, res);
+});
+
 
 route.use("/management", management);
 route.use("/user_accounts", userAccounts);

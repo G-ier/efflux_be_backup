@@ -1,9 +1,17 @@
 const DatabaseConnection = require("./DatabaseConnection");
 
+
 class DatabaseRepository {
 
   constructor(connection) {
     this.connection = connection || new DatabaseConnection().getConnection();
+    // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
+    // through inheritance. We can parametrise the function to conditionally use cache or not.
+    this.disableCache = true;
+    if (!this.disableCache) {
+      const RedisConnection = require("./RedisConnection");
+      this.redis = RedisConnection.getClient()
+    }
   }
 
   async insert(table, dbObject, trx = null) {
@@ -17,13 +25,17 @@ class DatabaseRepository {
     }
   }
 
-  async upsert(tableName, data, conflictTarget = null, excludeFields = []) {
+  async upsert(tableName, data, conflictTarget = null, excludeFields = [], trx = null) {
     try {
       const insert = this.connection(tableName).insert(data).toString();
 
       // If conflictTarget is not provided, simply execute the insert query
       if (!conflictTarget) {
-        await this.connection.raw(insert);
+        if (trx) {
+          await trx.raw(insert);
+        } else {
+          await this.connection.raw(insert);
+        }
         return;
       }
 
@@ -37,7 +49,12 @@ class DatabaseRepository {
       }
 
       const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
-      await this.connection.raw(query);
+
+      if (trx) {
+        await trx.raw(query);
+      } else {
+        await this.connection.raw(query);
+      }
     } catch (error) {
       console.error("Error upserting row/s: ", error);
       throw error;
@@ -49,9 +66,19 @@ class DatabaseRepository {
     fields = ["*"],
     filters = {},
     limit,
-    joins = []
+    joins = [],
+    cache = false
   ) {
     try {
+
+      if (cache && !this.disableCache) {
+        // Check if users are in cache
+        console.log(`Fetching from cache: ${tableName}`)
+        const cacheKey = `${tableName}:${JSON.stringify({ fields, filters, limit })}`;
+        const cachedUsers = await this.redis.getAsync(cacheKey);
+        return JSON.parse(cachedUsers)
+      }
+
       let queryBuilder = this.connection(tableName).select(fields);
 
       // Handling joins
@@ -94,6 +121,13 @@ class DatabaseRepository {
       if (limit) queryBuilder = queryBuilder.limit(limit);
 
       const results = await queryBuilder;
+
+      if (cache && !this.disableCache) {
+        // Set cache
+        console.log(`Setting cache: ${tableName}`)
+        await this.redis.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
+      }
+
       return results;
     } catch (error) {
       console.error(`Error querying table ${tableName}`, error);
@@ -152,8 +186,17 @@ class DatabaseRepository {
     }
   }
 
-  async queryOne(tableName, fields = ["*"], filters = {}, orderBy = []) {
+  async queryOne(tableName, fields = ["*"], filters = {}, orderBy = [], cache = false) {
     try {
+
+        if (cache && !this.disableCache) {
+            // Check if users are in cache
+            console.log(`Fetching from cache: ${tableName}`)
+            const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
+            const cachedUsers = await this.redis.getAsync(cacheKey);
+            return JSON.parse(cachedUsers)
+        }
+
         let queryBuilder = this.connection(tableName).select(fields);
 
         for (const [key, value] of Object.entries(filters)) {
@@ -170,12 +213,21 @@ class DatabaseRepository {
         }
 
         const result = await queryBuilder.first();
+        if (cache && !this.disableCache) {
+          // Set cache
+          console.log(`Setting cache: ${tableName}`)
+          await this.redis.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+        }
         return result;
     } catch (error) {
         console.error(`Error querying table ${tableName}`, error);
         throw error;
     }
 }
+
+  async startTransaction() {
+    return this.connection.transaction();
+  }
 
   async raw(query) {
     try {

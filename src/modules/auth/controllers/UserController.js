@@ -1,5 +1,5 @@
 // Local application imports
-const UserService = require("../services/UserService");
+const UserService = require('../services/UserService');
 
 class UsersController {
   constructor() {
@@ -15,6 +15,12 @@ class UsersController {
   async saveUsersInBulk(req, res) {
     const { users, chunkSize } = req.body;
     const result = await this.userService.saveUsersInBulk(users, chunkSize);
+    res.json(result);
+  }
+
+  async fetchUserOrganization(req, res) {
+    const { userId } = req.params;
+    const result = await this.userService.fetchUserOrganization(userId);
     res.json(result);
   }
 
@@ -40,6 +46,11 @@ class UsersController {
     const { fields, filters, limit } = req.query;
     const results = await this.userService.fetchUsers(fields, filters, limit);
     res.json(results);
+  }
+
+  async fetchUserPermissions(userId) {
+    const results = await this.userService.fetchUserPermissions(userId);
+    return results;
   }
 }
 

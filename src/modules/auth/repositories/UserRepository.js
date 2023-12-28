@@ -1,9 +1,10 @@
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const User = require("../entities/User");
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const User = require('../entities/User');
 
 class UserRepository {
+
   constructor(database) {
-    this.tableName = "users";
+    this.tableName = 'users';
     this.database = database || new DatabaseRepository();
   }
 
@@ -15,6 +16,7 @@ class UserRepository {
   async saveInBulk(users, chunkSize = 500) {
     let data = users.map((user) => this.toDatabaseDTO(user));
     let dataChunks = _.chunk(data, chunkSize);
+
     for (let chunk of dataChunks) {
       await this.database.insert(this.tableName, chunk);
     }
@@ -32,19 +34,66 @@ class UserRepository {
     const dbObjects = users.map((user) => this.toDatabaseDTO(user));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "id");
+      await this.database.upsert(this.tableName, chunk, 'id');
     }
   }
 
-  async fetchUsers(fields = ["*"], filters = {}, limit) {
-    const results = await this.database.query(this.tableName, fields, filters, limit);
-    return results.map(this.toDomainEntity);
+  async fetchUsers(fields = ['*'], filters = {}, limit) {
+    const cache = true
+    // If not in cache, fetch from the database
+    const results = await this.database.query(this.tableName, fields, filters, limit, [], cache);
+    return results
   }
 
-  async fetchOne(fields = ["*"], filters = {}) {
-    const result = await this.database.queryOne(this.tableName, fields, filters);
-    if (!fields.includes("*")) return result;
+  // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
+  async fetchUserOrganization(id) {
+    // Step 1: Fetch the user from the database
+    const user = await this.fetchOne(['*'], { id });
+
+    // Step 2: Fetch the organization from the database using the user's org_id
+    const organization = await this.database.queryOne('organizations', ['*'], {
+      id: user.org_id,
+    });
+
+    // Step 3: Return the organization
+    return organization;
+  }
+
+  async fetchOne(fields = ['*'], filters = {}) {
+    const cache = true
+    // If not in cache, fetch from the database
+    const result = await this.database.queryOne(this.tableName, fields, filters, [], cache);
     return result;
+  }
+
+  async fetchUserPermissions(userId) {
+    // Check if user permissions are in cache
+    const cacheKey = `userPermissions:${userId}`;
+
+    const cachedUserPermissions = await getAsync(cacheKey);
+    if (cachedUserPermissions) {
+      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
+      return JSON.parse(cachedUserPermissions);
+    }
+
+    const databaseRepository = new DatabaseRepository();
+    // If not in cache, fetch from the database
+    const userPermissions = await databaseRepository.raw(
+      `
+        SELECT permissions.name
+        FROM users
+        INNER JOIN roles ON users.role_id = roles.id
+        INNER JOIN role_permissions ON roles.id = role_permissions.role_id
+        INNER JOIN permissions ON role_permissions.permission_id = permissions.id
+        WHERE users.id = ${userId};
+      `,
+    );
+
+    // Set cache
+    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
+    await setAsync(cacheKey, JSON.stringify(userPermissions), 'EX', 3600); // Expires in 1 hour
+
+    return userPermissions;
   }
 
   toDatabaseDTO(user) {
@@ -53,6 +102,8 @@ class UserRepository {
       email: user.email,
       image_url: user.image_url,
       nickname: user.nickname,
+      org_id: user.org_id,
+      role_id: user.role_id,
       sub: user.sub,
       acct_type: user.acct_type,
       phone: user.phone,
@@ -68,6 +119,8 @@ class UserRepository {
   toDomainEntity(dbObject) {
     return new User(
       dbObject.id,
+      dbObject.org_id,
+      dbObject.role_id,
       dbObject.name,
       dbObject.email,
       dbObject.image_url,
@@ -80,10 +133,9 @@ class UserRepository {
       dbObject.created_at,
       dbObject.updated_at,
       dbObject.provider,
-      dbObject.providerId
+      dbObject.providerId,
     );
   }
-
 }
 
 module.exports = UserRepository;
