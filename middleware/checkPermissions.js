@@ -1,6 +1,4 @@
-const { getAsync, setAsync } = require('../src/shared/helpers/redisClient');
 const UserController = require('../src/modules/auth/controllers/UserController');
-const { UserLogger } = require('../src/shared/lib/WinstonLogger');
 
 const checkPermission = (requiredPermissions) => {
   return async (req, res, next) => {

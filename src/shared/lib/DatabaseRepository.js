@@ -1,23 +1,23 @@
-const DatabaseConnection = require("./DatabaseConnection");
-
+const DatabaseConnection = require('./DatabaseConnection');
 
 class DatabaseRepository {
-
   constructor(connection) {
     this.connection = connection || new DatabaseConnection().getConnection();
+
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
-    // through inheritance. We can parametrise the function to conditionally use cache or not.
-    this.disableCache = true;
-    if (!this.disableCache) {
-      const RedisConnection = require("./RedisConnection");
-      this.redis = RedisConnection.getClient()
+    // through inheritance. We can parametrize the function to conditionally use cache or not.
+    this.enableCache = process.env.ENABLE_CACHE === 'true';
+
+    if (this.enableCache) {
+      const RedisConnection = require('./RedisConnection');
+      this.redis = RedisConnection.getClient();
     }
   }
 
   async insert(table, dbObject, trx = null) {
     try {
       const connection = trx || this.connection;
-      const insertValue =  await connection(table).insert(dbObject).returning("*");
+      const insertValue = await connection(table).insert(dbObject).returning('*');
       return insertValue;
     } catch (error) {
       console.error(`Failed to insert into table ${table}`, error);
@@ -42,10 +42,10 @@ class DatabaseRepository {
       const conflictKeys = Object.keys(data[0])
         .filter((key) => !excludeFields.includes(key))
         .map((key) => `${key} = EXCLUDED.${key}`)
-        .join(", ");
+        .join(', ');
 
       if (!conflictKeys) {
-        throw new Error("No fields left to update after excluding.");
+        throw new Error('No fields left to update after excluding.');
       }
 
       const query = `${insert} ON CONFLICT (${conflictTarget}) DO UPDATE SET ${conflictKeys}`;
@@ -56,48 +56,37 @@ class DatabaseRepository {
         await this.connection.raw(query);
       }
     } catch (error) {
-      console.error("Error upserting row/s: ", error);
+      console.error('Error upserting row/s: ', error);
       throw error;
     }
   }
 
-  async query(
-    tableName,
-    fields = ["*"],
-    filters = {},
-    limit,
-    joins = [],
-    cache = false
-  ) {
+  async query(tableName, fields = ['*'], filters = {}, limit, joins = [], cache = false) {
     try {
-
-      if (cache && !this.disableCache) {
+      if (cache && this.enableCache) {
         // Check if users are in cache
-        console.log(`Fetching from cache: ${tableName}`)
+        console.log(`Fetching from cache: ${tableName}`);
         const cacheKey = `${tableName}:${JSON.stringify({ fields, filters, limit })}`;
         const cachedUsers = await this.redis.getAsync(cacheKey);
-        return JSON.parse(cachedUsers)
+        return JSON.parse(cachedUsers);
       }
 
       let queryBuilder = this.connection(tableName).select(fields);
 
       // Handling joins
       for (const join of joins) {
-        if (join.type === "inner") {
+        if (join.type === 'inner') {
           queryBuilder = queryBuilder.join(join.table, join.first, join.operator, join.second);
-        } else if (join.type === "left") {
+        } else if (join.type === 'left') {
           queryBuilder = queryBuilder.leftJoin(join.table, join.first, join.operator, join.second);
         }
       }
 
       // Apply filters to the query
       for (const [key, value] of Object.entries(filters)) {
-
         if (Array.isArray(value)) {
           queryBuilder = queryBuilder.whereIn(key, value);
-
         } else if (typeof value === 'object' && value !== null) {
-
           // Handle special filter conditions like greater than, less than, etc.
           if (value.gt !== undefined) {
             queryBuilder = queryBuilder.where(key, '>', value.gt);
@@ -122,9 +111,9 @@ class DatabaseRepository {
 
       const results = await queryBuilder;
 
-      if (cache && !this.disableCache) {
+      if (cache && this.enableCache) {
         // Set cache
-        console.log(`Setting cache: ${tableName}`)
+        console.log(`Setting cache: ${tableName}`);
         await this.redis.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
       }
 
@@ -186,44 +175,43 @@ class DatabaseRepository {
     }
   }
 
-  async queryOne(tableName, fields = ["*"], filters = {}, orderBy = [], cache = false) {
+  async queryOne(tableName, fields = ['*'], filters = {}, orderBy = [], cache = false) {
     try {
+      if (cache && this.enableCache) {
+        // Check if users are in cache
+        console.log(`Fetching from cache: ${tableName}`);
+        const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
+        const cachedUsers = await this.redis.getAsync(cacheKey);
+        return JSON.parse(cachedUsers);
+      }
 
-        if (cache && !this.disableCache) {
-            // Check if users are in cache
-            console.log(`Fetching from cache: ${tableName}`)
-            const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
-            const cachedUsers = await this.redis.getAsync(cacheKey);
-            return JSON.parse(cachedUsers)
+      let queryBuilder = this.connection(tableName).select(fields);
+
+      for (const [key, value] of Object.entries(filters)) {
+        if (Array.isArray(value)) {
+          queryBuilder = queryBuilder.whereIn(key, value);
+        } else {
+          queryBuilder = queryBuilder.where(key, value);
         }
+      }
 
-        let queryBuilder = this.connection(tableName).select(fields);
+      // Handle order by rules
+      for (const rule of orderBy) {
+        queryBuilder = queryBuilder.orderBy(rule.column, rule.direction);
+      }
 
-        for (const [key, value] of Object.entries(filters)) {
-            if (Array.isArray(value)) {
-                queryBuilder = queryBuilder.whereIn(key, value);
-            } else {
-                queryBuilder = queryBuilder.where(key, value);
-            }
-        }
-
-        // Handle order by rules
-        for (const rule of orderBy) {
-            queryBuilder = queryBuilder.orderBy(rule.column, rule.direction);
-        }
-
-        const result = await queryBuilder.first();
-        if (cache && !this.disableCache) {
-          // Set cache
-          console.log(`Setting cache: ${tableName}`)
-          await this.redis.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
-        }
-        return result;
+      const result = await queryBuilder.first();
+      if (cache && this.enableCache) {
+        // Set cache
+        console.log(`Setting cache: ${tableName}`);
+        await this.redis.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+      }
+      return result;
     } catch (error) {
-        console.error(`Error querying table ${tableName}`, error);
-        throw error;
+      console.error(`Error querying table ${tableName}`, error);
+      throw error;
     }
-}
+  }
 
   async startTransaction() {
     return this.connection.transaction();
@@ -234,11 +222,10 @@ class DatabaseRepository {
       const result = await this.connection.raw(query);
       return result;
     } catch (error) {
-      console.error("Error executing raw query: ", error);
+      console.error('Error executing raw query: ', error);
       throw error;
     }
   }
-
 }
 
 module.exports = DatabaseRepository;
