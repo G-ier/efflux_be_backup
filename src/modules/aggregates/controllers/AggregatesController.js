@@ -16,8 +16,7 @@ class AggregatesController {
         }
 
         // Check if the user has 'admin' permission
-        const isAdmin = user.permissions && user.permissions.includes("admin");
-
+        const isAdmin = user.roles && user.roles.includes("admin");
         // If the user is not an admin, enforce mediaBuyer to be the user's ID
         if (!isAdmin) {
           mediaBuyer = user.id; // Assuming 'id' is the user's identifier
