@@ -3,10 +3,12 @@ const { CronJob }                                                = require('cron
 require("dotenv").config();
 
 // Local application imports
-const { todayYMD }          = require('../../../shared/helpers/calendar');
+const { todayYMD, yesterdayYMD }          = require('../../../shared/helpers/calendar');
 const { sendSlackNotification }                                  = require("../../../shared/lib/SlackNotificationService");
 const CompositeService                                           = require('../services/CompositeService');
 const { TABOOLA_UPDATE_TODAY_REGULAR_CRON,
+  TABOOLA_UPDATE_YESTERDAY_CRON,
+  TABOOLA_REPORT_CONVERSIONS_YESTERDAY,
 TABOOLA_CAPI_REPORT_REGULAR_CRON 
 }= require('./rules');
 
@@ -35,7 +37,7 @@ async function updateTaboolaData(day) {
 
     try {
       dataUpdatesLogger.info(`STARTED | TABOOLA | ${day}`);
-      await compositeService.syncUserAccountsData(todayYMD(), todayYMD());
+      await compositeService.syncUserAccountsData( day, day);
       dataUpdatesLogger.info(`COMPLETED | TABOOLA | ${day}`);
     } catch (error) {
       dataUpdatesLogger.warn(`FAILED | TABOOLA | ${day} | ${error}`);
@@ -47,7 +49,14 @@ async function updateTaboolaData(day) {
 const updateTodayDataRegular = new CronJob(
     TABOOLA_UPDATE_TODAY_REGULAR_CRON, // '28 * * * *',
     (async () => {
-      await updateTaboolaData('today');
+      await updateTaboolaData(todayYMD(), todayYMD());
+    }
+  ));
+
+const updateYesterdayData = new CronJob(
+    TABOOLA_UPDATE_YESTERDAY_CRON, // '28 * * * *',
+    (async () => {
+      await updateTaboolaData(yesterdayYMD(), yesterdayYMDYMD());
     }
   ));
 
@@ -58,13 +67,24 @@ const reportTaboolaConversionsToCrossroadsRegular = new CronJob(
     }
   ));
 
+const reportYesterdayCrossroadsTaboolaConversions = new CronJob(
+    TABOOLA_REPORT_CONVERSIONS_YESTERDAY,
+    (async () => {
+        await reportTaboolaConversions(yesterdayYMD());
+    }
+
+));
+
 const initializeTaboolaCron = () => {
 
     // If both are disabled, return immediately
     if (disableGeneralCron && disableTaboolaCron) return;
 
     updateTodayDataRegular.start();
-    if (CRON_ENVIRONMENT === 'production') reportTaboolaConversionsToCrossroadsRegular.start();
+    updateYesterdayData.start();
+    // if (CRON_ENVIRONMENT === 'production') 
+    reportTaboolaConversionsToCrossroadsRegular.start();
+    reportYesterdayCrossroadsTaboolaConversions.start();
 }
 
 

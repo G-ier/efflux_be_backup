@@ -365,8 +365,6 @@ class CompositeService {
     // Filter Data
     const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents(data, pixels);
 
-    console.log("BROKEN PIXEL EVENTS: ", brokenPixelEvents)
-    console.log("VALID PIXEL EVENTS: ", validPixelEvents);
     // Flag incorrect Data
     await this.capiService.updateInvalidEvents(brokenPixelEvents, network);
 

@@ -31,7 +31,7 @@ const newDetectCrossroadsPurchaseEvents = async (database, date, traffic_source)
   i.conversions - i.reported_conversions > 0
   AND date = '${date}'
   AND i.traffic_source = '${traffic_source}'
-  LIMIT 1
+  AND valid_pixel = true
   `
 
   const result = await database.raw(QUERY)

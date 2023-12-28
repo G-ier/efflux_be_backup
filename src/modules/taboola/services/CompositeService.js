@@ -64,9 +64,18 @@ class CompositeService {
       }
       CapiLogger.info(`Done fetching ${data.length} session from DB.`);
 
-      const { tblProcessedPayloads, eventIds } = await this.s2SService.constructTaboolaS2SPayload(data);
+      // Fetching accounts from db
+      const accounts = await this.adAccountService.fetchAdAccountsFromDatabase(['fb_account_id'], { provider: "taboola" })
 
-      CapiLogger.info(`Posting events to FB CAPI in batches.`);
+      // Filter Data
+      const { brokenAccountEvents, validAccountEvents } = await this.s2SService.parseBrokenAccountEvents(data, accounts);
+
+      //Flag incorrect Data
+      await this.s2SService.updateInvalidEvents(brokenAccountEvents);
+
+      const { tblProcessedPayloads, eventIds } = await this.s2SService.constructTaboolaS2SPayload(validAccountEvents);
+
+      CapiLogger.info(`Posting events to Taboola S2S in batches.`);
 
       for(const batch of tblProcessedPayloads){
         // const { account } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
@@ -74,7 +83,8 @@ class CompositeService {
             await this.s2SService.postS2SEvents(payload, batch.entityId);
           }
       }
-      CapiLogger.info(`DONE Posting events to FB CAPI in batches.`);
+
+      CapiLogger.info(`DONE Posting events to Taboola S2S in batches.`);
 
       await this.s2SService.updateReportedEvents(eventIds);
     }

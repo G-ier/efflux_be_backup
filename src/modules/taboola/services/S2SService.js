@@ -39,10 +39,10 @@ class S2SService extends BaseService{
           unique_identifier: event.id
         }
       })
-      // const dataChunks = _.chunk(logEntries, 1000);
-      // for (const chunk of dataChunks) {
-      //   await this.database.insert('capi_logs', chunk);
-      // }
+      const dataChunks = _.chunk(logEntries, 1000);
+      for (const chunk of dataChunks) {
+        await this.database.insert('capi_logs', chunk);
+      }
 
       this.logger.info(`Done adding S2S Logs to the database`);
     }
@@ -53,8 +53,6 @@ class S2SService extends BaseService{
         this.logger.info(`Sending ${data.actions.length} events to Taboola S2S for account ${account_id}`);
 
         const jsonPayload = JSON.stringify(data);
-        console.log("Reporting to: ", url);
-        console.log("Payload reported: ", jsonPayload, "\n");
         const response = await this.postToApi(url, jsonPayload, "Error posting events");
         this.logger.info(`Response from Taboola S2S: ${JSON.stringify(response)}`)
         return response;
@@ -105,7 +103,7 @@ class S2SService extends BaseService{
         const eventPayload = {
           'click-id': event.external,
           timestamp: Number(event.timestamp) * 1000,
-          name: "search",
+          name: "Search",
           revenue: Number(event.revenue),
           currency: "USD",
           quantity: event.conversions
@@ -123,38 +121,39 @@ class S2SService extends BaseService{
 
     async updateReportedEvents(eventIds){
       this.logger.info(`Updating Reported Session in DB`);
-    //   const updatedCount = await this.database.update('crossroads_raw_insights',
-    //     {
-    //       reported_conversions: this.database.connection.ref('conversions'),
-    //       reported_amount: this.database.connection.ref('revenue')
-    //     },
-    //     {
-    //       unique_identifier: eventIds
-    //     }
-    //  )
+      const updatedCount = await this.database.update('crossroads_raw_insights',
+        {
+          reported_conversions: this.database.connection.ref('conversions'),
+          reported_amount: this.database.connection.ref('revenue')
+        },
+        {
+          unique_identifier: eventIds
+        }
+     )
 
-    //  this.logger.info(`Reported ${updatedCount} session to Facebook CAPI`);
+     this.logger.info(`Reported ${updatedCount} sessions to Taboola S2S`);
     }
 
-    // async parseBrokenAccountEvents(events, accounts) {
-    //     this.logger.info(`Parsing Events with broken Pixel ID`);
-    //     const dbPixelIds        = pixels.map((pixel) => pixel.pixel_id);
-    //     const brokenPixelEvents = events.filter((event) => !dbPixelIds.includes(event.pixel_id))
-    //     console.log(`Found ${brokenPixelEvents.length} broken pixel events`)
-    //     const validPixelEvents  = events.filter((event) => dbPixelIds.includes(event.pixel_id))
-    //     this.logger.info(
-    //       `Events Parsing Telemetry: SUCCESS(${validPixelEvents.length}) | ERROR(${brokenPixelEvents.length})`,
-    //     );
+    async parseBrokenAccountEvents(events, accounts) {
+        this.logger.info(`Parsing Events with broken account Ids`);
+        const dbAccountIds        = accounts.map((account) => account.fb_account_id);
 
-    //     return { brokenPixelEvents, validPixelEvents };
-    // }
+        const brokenAccountEvents = events.filter((event) => !dbAccountIds.includes(event.ad_account))
+        console.log(`Found ${brokenAccountEvents.length} broken account events`)
+        const validAccountEvents  = events.filter((event) => dbAccountIds.includes(event.ad_account))
+        this.logger.info(
+          `Events Parsing Telemetry: SUCCESS(${validAccountEvents.length}) | ERROR(${brokenAccountEvents.length})`,
+        );
 
-    // async updateInvalidEvents(brokenEvents){
-    //   const eventIds        = brokenEvents.map((event) => event.id)
-    //   this.logger.info(`Updating Broken Events in DB`);
-    //   const updatedCount = await this.database.update('raw_crossroads_data', {valid_pixel: false}, {unique_identifier: eventIds});
-    //   this.logger.info(`Updated ${updatedCount} Broken events to Facebook CAPI`)
-    // }
+        return { brokenAccountEvents, validAccountEvents };
+    }
+
+    async updateInvalidEvents(brokenEvents){
+      const eventIds        = brokenEvents.map((event) => event.id)
+      this.logger.info(`Updating Broken Events in DB`);
+      const updatedCount = await this.database.update('crossroads_raw_insights', {valid_pixel: false}, {unique_identifier: eventIds});
+      this.logger.info(`Updated ${updatedCount} Broken events to Taboola S2S`)
+    }
 }
 
 module.exports = S2SService;
