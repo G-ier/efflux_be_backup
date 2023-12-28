@@ -1,25 +1,29 @@
-const checkPermission = (requiredPermission) => {
+const { getAsync, setAsync } = require('../src/shared/helpers/redisClient');
+const UserController = require('../src/modules/auth/controllers/UserController');
+const { UserLogger } = require('../src/shared/lib/WinstonLogger');
+
+const checkPermission = (requiredPermissions) => {
   return async (req, res, next) => {
     const userId = req.user.id; // Assuming req.user is populated by authentication middleware
+    const userController = new UserController();
 
-    // Fetch user role and permissions from the database
-    const userPermissions = await knex('role_permissions as rp')
-      .join('permissions as p', 'p.id', 'rp.permission_id')
-      .join('roles as r', 'r.id', 'rp.role_id')
-      .join('users as u', 'u.role_id', 'r.id')
-      .where('u.id', userId)
-      .select('p.name');
+    const userPermissions = await userController.fetchUserPermissions(userId);
 
-    // Check if user has the required permission
-    const hasPermission = userPermissions.some(
-      (permission) => permission.name === requiredPermission,
+    // Map to permission names for easier checking
+    const userPermissionNames = userPermissions.rows.map((permission) => permission.name);
+
+    // Check if user has any of the required permissions
+    const hasPermission = requiredPermissions.some((requiredPermission) =>
+      userPermissionNames.includes(requiredPermission),
     );
 
     if (!hasPermission) {
-      return res.status(403).json({ message: 'Insufficient permissions' });
+      return res
+        .status(403)
+        .json({ message: 'You do not have the required permissions to access this route' });
     }
 
-    next(); // Move to next middleware or route handler
+    next();
   };
 };
 

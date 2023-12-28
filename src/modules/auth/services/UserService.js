@@ -44,6 +44,10 @@ class UserService {
   async fetchOne(fields = ['*'], filters = {}) {
     return await this.userRepository.fetchOne(fields, filters);
   }
+
+  async fetchUserPermissions(userId) {
+    return await this.userRepository.fetchUserPermissions(userId);
+  }
 }
 
 module.exports = UserService;

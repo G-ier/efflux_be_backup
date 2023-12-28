@@ -66,15 +66,46 @@ class UserRepository {
     return result;
   }
 
+  async fetchUserPermissions(userId) {
+    // Check if user permissions are in cache
+    const cacheKey = `userPermissions:${userId}`;
+
+    const cachedUserPermissions = await getAsync(cacheKey);
+    if (cachedUserPermissions) {
+      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
+      return JSON.parse(cachedUserPermissions);
+    }
+
+    const databaseRepository = new DatabaseRepository();
+    // If not in cache, fetch from the database
+    const userPermissions = await databaseRepository.raw(
+      `
+        SELECT permissions.name
+        FROM users
+        INNER JOIN roles ON users.role_id = roles.id
+        INNER JOIN role_permissions ON roles.id = role_permissions.role_id
+        INNER JOIN permissions ON role_permissions.permission_id = permissions.id
+        WHERE users.id = ${userId};
+      `,
+    );
+
+    // Set cache
+    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
+    await setAsync(cacheKey, JSON.stringify(userPermissions), 'EX', 3600); // Expires in 1 hour
+
+    return userPermissions;
+  }
+
   toDatabaseDTO(user) {
     return {
       name: user.name,
       email: user.email,
       image_url: user.image_url,
       nickname: user.nickname,
+      org_id: user.org_id,
+      role_id: user.role_id,
       sub: user.sub,
       acct_type: user.acct_type,
-      org_id: user.org_id,
       phone: user.phone,
       token: user.token,
       fbID: user.fbID,
@@ -89,6 +120,7 @@ class UserRepository {
     return new User(
       dbObject.id,
       dbObject.org_id,
+      dbObject.role_id,
       dbObject.name,
       dbObject.email,
       dbObject.image_url,

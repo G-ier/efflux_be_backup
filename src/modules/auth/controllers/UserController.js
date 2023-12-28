@@ -47,6 +47,11 @@ class UsersController {
     const results = await this.userService.fetchUsers(fields, filters, limit);
     res.json(results);
   }
+
+  async fetchUserPermissions(userId) {
+    const results = await this.userService.fetchUserPermissions(userId);
+    return results;
+  }
 }
 
 module.exports = UsersController;
