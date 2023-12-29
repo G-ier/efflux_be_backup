@@ -75,6 +75,8 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
     MAX(tbl.updated_at) as ts_last_updated,
     null as adset_id
     FROM taboola tbl
+    WHERE tbl.campaign_id IN (SELECT campaign_id FROM restriction)
+    ${campaignIdsRestriction ? `AND tt.campaign_id IN ${campaignIdsRestriction}` : ''}
     GROUP BY tbl.date, tbl.hour, tbl.campaign_id
     )`
   }
@@ -308,7 +310,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
         ${campaignIdsRestriction ? `WHERE c.id IN ${campaignIdsRestriction}` : ''}
       GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
-    )` : 
+    )` :
     `agg_adsets_data AS (
       SELECT
       id as campaign_id,
@@ -320,7 +322,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       FROM campaigns
       ${campaignIdsRestriction ? `WHERE id IN ${campaignIdsRestriction}` : ''}
       GROUP BY id, user_id, ad_account_id
-    )` 
+    )`
   }
     , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
     , ${NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
