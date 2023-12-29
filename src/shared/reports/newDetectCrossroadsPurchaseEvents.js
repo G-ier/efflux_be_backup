@@ -2,10 +2,11 @@
 const newDetectCrossroadsPurchaseEvents = async (database, date, traffic_source) => {
 
   const QUERY = `SELECT
-  a.fb_account_id as ad_account, 
+  a.fb_account_id as ad_account,
   i.campaign_id,
   i.campaign_name,
   i.unique_identifier as id,
+  i.session_id,
   i.traffic_source,
   i.ip,
   i.country_code,
@@ -27,7 +28,7 @@ const newDetectCrossroadsPurchaseEvents = async (database, date, traffic_source)
   ON i.campaign_id = c.id
   LEFT JOIN ad_accounts a
   ON a.id = c.ad_account_id
-  WHERE  
+  WHERE
   i.conversions - i.reported_conversions > 0
   AND date = '${date}'
   AND i.traffic_source = '${traffic_source}'

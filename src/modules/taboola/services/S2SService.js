@@ -18,7 +18,6 @@ class S2SService extends BaseService{
     async createS2SLogEntry(data) {
       this.logger.info(`Adding S2S Logs to the database`);
       const logEntries = data.map((event) => {
-        const click_id = event.external;
         const pst_timestamp = moment.utc(event.timestamp * 1000).tz('America/Los_Angeles').format('YYYY-MM-DDTHH:mm:ss');
         return {
           traffic_source: 'taboola',
@@ -27,7 +26,7 @@ class S2SService extends BaseService{
           event_unix_timestamp: event.timestamp,
           isos_timestamp: pst_timestamp,
           tz: 'America/Los_Angeles',
-          session_id: click_id,
+          session_id: event.session_id,
           campaign_name: event.campaign_name,
           campaign_id: event.campaign_id,
           conversions_reported: event.conversions,
