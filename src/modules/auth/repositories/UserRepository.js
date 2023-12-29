@@ -42,10 +42,12 @@ class UserRepository {
 // Reusable function to build SQL query and group by fields
  buildQueryAndGroupBy(tableName, fields, filters, groupByFields = [], limit = null) {
   const cache = true;
+  const userFields = fields.map((field) => `${tableName}.${field}`);
+
   let sqlQuery = `
       SELECT 
-          ${fields.join(', ')}, 
-          ARRAY_AGG(DISTINCT roles.name) as roles, 
+      ${userFields.join(', ')}, 
+      ARRAY_AGG(DISTINCT roles.name) as roles, 
           ARRAY_AGG(DISTINCT permissions.name) as permissions
       FROM ${tableName}
       LEFT JOIN roles ON ${tableName}.role_id = roles.id
