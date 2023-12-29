@@ -119,15 +119,12 @@ class UserAccountService extends BaseService {
     }
 
     async getAccessToken() {
-      
+
       this.logger.info("Checking if token is still valid.");
       if (!this.token || this.expires_in < new Date()) {
-        // 1. Try to fetch the token from the database
-        // 2. Check if the token is still valid
-        // 3. If the token is not valid, fetch a new token from the API
         const { access_token, expires_in } = await this.getTaboolaAdvertiserTokenFromClient();
         const res = await this.syncTaboolaNetworkAccount(access_token, expires_in);
-        this.token =res.token;
+        this.token = res.token;
         this.expires_in = res.expires_in;
       }
       else{

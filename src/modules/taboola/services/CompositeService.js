@@ -24,10 +24,10 @@ class CompositeService {
         this.conversionRuleService = new ConversionRuleService();
     }
 
-    async syncUserAccountsData(start_date, end_date){
-        const access_token = await this.userAccountService.getAccessToken();
-        const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
-        TaboolaLogger.info(`Syncing data for account ${name}`);
+    async syncUserAccountsData(start_date, end_date) {
+      const access_token = await this.userAccountService.getAccessToken();
+      const { id, name, provider_id, user_id } = await this.userAccountService.getFetchingAccount();
+      TaboolaLogger.info(`Syncing data for account ${name} with date range ${start_date} - ${end_date}.`);
 
       //Sync Ad Accounts
       await this.adAccountService.syncAdAccounts(provider_id, access_token, user_id, id);
@@ -54,7 +54,7 @@ class CompositeService {
 
     async sendS2SEvents(date) {
       // Retrieve the data
-      CapiLogger.info(`Fetching session from DB.`);
+      CapiLogger.info(`Fetching session from DB for date ${date}.`);
       // To be replaced
       const data = await newDetectCrossroadsPurchaseEvents(this.s2SService.database, date, 'taboola');
 
@@ -84,7 +84,7 @@ class CompositeService {
           }
       }
 
-      CapiLogger.info(`DONE Posting events to Taboola S2S in batches.`);
+      CapiLogger.info(`DONE Posting events to Taboola S2S in batches for ${date}.`);
 
       await this.s2SService.updateReportedEvents(eventIds);
     }

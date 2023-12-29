@@ -1,15 +1,11 @@
 // Third Party Imports
 const _                     = require("lodash");
-const sha256                = require('js-sha256');
 const moment                = require('moment-timezone');
 
 // Local Imports
-const { usStates }          = require('../../../shared/constants/states');
 const { todayYMD, todayHH } = require('../../../shared/helpers/calendar');
-// const { todayYMD, todayHH } = require('../../../shared/helpers/calendar');
 const BaseService           = require("../../../shared/services/BaseService");
 const { CapiLogger }        = require("../../../shared/lib/WinstonLogger");
-const { TABOOLA_URL }        = require('../constants');
 const DatabaseRepository    = require('../../../shared/lib/DatabaseRepository')
 
 class S2SService extends BaseService{
@@ -36,12 +32,12 @@ class S2SService extends BaseService{
           campaign_id: event.campaign_id,
           conversions_reported: event.conversions,
           revenue_reported: event.revenue,
-          unique_identifier: event.id
+          unique_identifier: `${event.id}-${event.timestamp}-${todayYMD()}-${todayHH()}`,
         }
       })
       const dataChunks = _.chunk(logEntries, 1000);
       for (const chunk of dataChunks) {
-        await this.database.insert('capi_logs', chunk);
+        await this.database.upsert('capi_logs', chunk, 'unique_identifier');
       }
 
       this.logger.info(`Done adding S2S Logs to the database`);
@@ -61,15 +57,15 @@ class S2SService extends BaseService{
     async constructTaboolaS2SPayload(filteredEvents) {
 
       this.logger.info(`Constructing Taboola S2S payload`);
-      
+
       await this.createS2SLogEntry(filteredEvents);
 
       // 1. Extract Event Ids
       const eventIds        = filteredEvents.map((event) => event.id);
-    
+
       // 2. Group by pixel id
       const tblAccountGrouped    = _.groupBy(filteredEvents, 'ad_account');
-      
+
       // 3. Construct facebook conversion payloads
 
       const tblProcessedPayloads = []
