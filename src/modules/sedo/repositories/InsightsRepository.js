@@ -58,6 +58,31 @@ class InsightsRepository {
     }
   }
 
+  async fetchInsightsForCompilation(date) {
+    const query = `
+      SELECT
+        date,
+        hour,
+        domain,
+        traffic_source,
+        campaign_id,
+        adset_id,
+        ad_id,
+        pb_visits,
+        pb_conversions,
+        pb_revenue,
+        revenue,
+        unique_identifier,
+        CONCAT(campaign_id, '-', adset_id, '-', ad_id, '-', date) as date_level_matching_identifier
+      FROM
+        sedo
+      WHERE
+        date = '${date}'
+    `
+    const results = await this.database.raw(query)
+    return results.rows
+  }
+
   async fetchInsights(fields = ['*'], filters = {}, limit) {
     const cache = true;
     // If not in cache, fetch from the database
