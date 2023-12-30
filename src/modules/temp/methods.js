@@ -225,7 +225,7 @@ class TemporaryController {
   async fetchUsersWithAdAccounts(req, res) {
     try {
       const userId = req.user.id;
-      const isAdmin = req.user.permissions.includes('admin');
+      const isAdmin = req.user.roles.includes('admin');
       const users = await this.temporaryService.fetchUsersWithAdAccounts(userId, isAdmin);
       res.status(200).json(users);
     } catch (error) {

@@ -38,12 +38,51 @@ class UserRepository {
     }
   }
 
-  async fetchUsers(fields = ['*'], filters = {}, limit) {
-    const cache = true
-    // If not in cache, fetch from the database
-    const results = await this.database.query(this.tableName, fields, filters, limit, [], cache);
-    return results
+
+// Reusable function to build SQL query and group by fields
+ buildQueryAndGroupBy(tableName, fields, filters, groupByFields = [], limit = null) {
+  const cache = true;
+  const userFields = fields.map((field) => `${tableName}.${field}`);
+
+  let sqlQuery = `
+      SELECT 
+      ${userFields.join(', ')}, 
+      ARRAY_AGG(DISTINCT roles.name) as roles, 
+          ARRAY_AGG(DISTINCT permissions.name) as permissions
+      FROM ${tableName}
+      LEFT JOIN roles ON ${tableName}.role_id = roles.id
+      LEFT JOIN role_permissions ON roles.id = role_permissions.role_id
+      LEFT JOIN permissions ON role_permissions.permission_id = permissions.id
+  `;
+
+  if (Object.keys(filters).length) {
+      const filterConditions = Object.entries(filters).map(([key, value]) => `${tableName}."${key}" = '${value}'`);
+      sqlQuery += ` WHERE ${filterConditions.join(' AND ')}`;
   }
+
+  // Group by user ID by default
+  const groupBy = ['users.id', 'roles.id', 'permissions.id', 'role_permissions.id', ...groupByFields];
+  sqlQuery += ` GROUP BY ${groupBy.join(', ')}`;
+
+  if (limit) {
+      sqlQuery += ` LIMIT ${limit}`;
+  }
+
+  return { sqlQuery, cache };
+}
+
+async fetchUsers(fields = ['*'], filters = {}, limit) {
+  const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
+  const results = await this.database.raw(sqlQuery, cache);
+  return results?.rows;
+}
+
+async fetchOne(fields = ['*'], filters = {}) {
+  const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
+  const result = await this.database.raw(sqlQuery, cache); // assuming queryOneRaw method exists
+  return result?.rows?.[0];
+}
+
 
   // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
   async fetchUserOrganization(id) {
@@ -59,12 +98,7 @@ class UserRepository {
     return organization;
   }
 
-  async fetchOne(fields = ['*'], filters = {}) {
-    const cache = true
-    // If not in cache, fetch from the database
-    const result = await this.database.queryOne(this.tableName, fields, filters, [], cache);
-    return result;
-  }
+
 
   async fetchUserPermissions(userId) {
     // Check if user permissions are in cache
