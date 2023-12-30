@@ -1,14 +1,20 @@
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const _ = require("lodash");
-const PROVIDERS = require("../../../shared/constants/providers");
-const { isNotNumeric }            = require("../../../shared/helpers/Utils");
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const _ = require('lodash');
+const PROVIDERS = require('../../../shared/constants/providers');
+const { isNotNumeric } = require('../../../shared/helpers/Utils');
+const { SqsService } = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
-
   constructor(database) {
-    this.aggregatesTableName = "crossroads";
-    this.tableName = "crossroads_raw_insights";
+    this.aggregatesTableName = 'crossroads';
+    this.tableName = 'crossroads_raw_insights';
     this.database = database || new DatabaseRepository();
+
+    const queueUrl =
+      process.env.CROSSROAD_QUEUE_URL ||
+      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
+
+    this.sqsService = new SqsService(queueUrl);
   }
 
   getTrafficSource(stat) {
@@ -17,47 +23,47 @@ class InsightsRepository {
       stat.tg2.startsWith(PROVIDERS.FACEBOOK) ||
       stat.referrer.includes(PROVIDERS.FACEBOOK) ||
       stat.referrer.includes(PROVIDERS.INSTAGRAM) ||
-      stat.campaign__name.includes("FB")
+      stat.campaign__name.includes('FB')
     )
       return PROVIDERS.FACEBOOK;
     else if (
       stat.tg1.startsWith(PROVIDERS.OUTBRAIN) ||
       stat.referrer.includes(PROVIDERS.OUTBRAIN) ||
-      stat.campaign__name.includes("OUTB")
+      stat.campaign__name.includes('OUTB')
     )
       return PROVIDERS.OUTBRAIN;
-    else if (stat.campaign__name.includes("TT") || stat.referrer.includes(PROVIDERS.TIKTOK)) return PROVIDERS.TIKTOK;
-    else if (stat.campaign__name.includes("TB")) {
+    else if (stat.campaign__name.includes('TT') || stat.referrer.includes(PROVIDERS.TIKTOK))
+      return PROVIDERS.TIKTOK;
+    else if (stat.campaign__name.includes('TB')) {
       return PROVIDERS.TABOOLA;
-    }
-    else {
+    } else {
       return PROVIDERS.UNKNOWN;
     }
   }
 
   parseCRApiData(insight, account, request_date) {
-
     const traffic_source = this.getTrafficSource(insight);
 
-    const [country_code, region, city] = insight.tg7 ? (insight.tg7).replace(" ", "").split('-') : ['Unknown', 'Unknown', 'Unknown'];
+    const [country_code, region, city] = insight.tg7
+      ? insight.tg7.replace(' ', '').split('-')
+      : ['Unknown', 'Unknown', 'Unknown'];
 
     let [pixel_id, timestamp] = insight.tg9
-      ? (insight.tg9).replace(" ", "").split('-')
+      ? insight.tg9.replace(' ', '').split('-')
       : ['Unknown', 'Unknown'];
 
     if (traffic_source === PROVIDERS.TABOOLA) {
-      timestamp = insight.tg9
-      pixel_id = ''
+      timestamp = insight.tg9;
+      pixel_id = '';
     }
 
-    let [campaign_id, adset_id, ad_id] = [insight.tg2, insight.tg5, insight.tg6]
+    let [campaign_id, adset_id, ad_id] = [insight.tg2, insight.tg5, insight.tg6];
     if (isNotNumeric(campaign_id)) campaign_id = 'Unknown';
     if (isNotNumeric(adset_id)) adset_id = 'Unknown';
     if (isNotNumeric(ad_id)) ad_id = 'Unknown';
     const session_id = /^[0-9a-zA-Z]+$/.test(insight.tg3) ? insight.tg3 : 'Unknown';
 
     return {
-
       // Timely Data
       date: request_date,
       hour: insight.hour,
@@ -72,8 +78,8 @@ class InsightsRepository {
       // Traffic Source Data
       pixel_id: pixel_id,
       campaign_id: campaign_id,
-      campaign_name: insight.tg1 || "Unknown",
-      adset_name: "",
+      campaign_name: insight.tg1 || 'Unknown',
+      adset_name: '',
       adset_id: adset_id,
       ad_id: ad_id,
       traffic_source: traffic_source,
@@ -82,8 +88,8 @@ class InsightsRepository {
       session_id: session_id,
       ip: insight.tg4,
       country_code: country_code,
-      region: region || "Unknown",
-      city: city || "Unknown",
+      region: region || 'Unknown',
+      city: city || 'Unknown',
       external: insight.tg10,
       timestamp: timestamp,
       user_agent: insight.tg8,
@@ -106,21 +112,20 @@ class InsightsRepository {
   }
 
   aggregateInsights(aggregate, insight) {
-
     Object.keys(insight).forEach((key) => {
       if (key === 'hour' || key === 'crossroads_campaign_id' || key === 'hour_fetched') {
         aggregate[key] = insight[key];
       } else if (_.isNumber(insight[key])) {
         aggregate[key] = (aggregate[key] || 0) + insight[key];
       } else {
-        aggregate[key] = insight[key];  // for other non-numeric fields
+        aggregate[key] = insight[key]; // for other non-numeric fields
       }
     });
   }
 
   cleanseData(insight) {
     // Remove user specific data from the insight
-    const parsedInsight = {...insight};
+    const parsedInsight = { ...insight };
     delete parsedInsight.session_id;
     delete parsedInsight.ip;
     delete parsedInsight.country_code;
@@ -133,82 +138,87 @@ class InsightsRepository {
     delete parsedInsight.crossroads_campaign_number;
     delete parsedInsight.crossroads_campaign_type;
 
-    parsedInsight.total_revenue_clicks = parsedInsight.conversions; delete parsedInsight.conversions;
-    parsedInsight.total_revenue = parsedInsight.revenue; delete parsedInsight.revenue;
+    parsedInsight.total_revenue_clicks = parsedInsight.conversions;
+    delete parsedInsight.conversions;
+    parsedInsight.total_revenue = parsedInsight.revenue;
+    delete parsedInsight.revenue;
     delete parsedInsight.keyword_clicked;
 
-    parsedInsight.total_searches = parsedInsight.lander_searches || 0; delete parsedInsight.lander_searches;
-    parsedInsight.total_lander_visits = parsedInsight.lander_visitors || 0; delete parsedInsight.lander_visitors;
-    parsedInsight.total_tracked_visitors = parsedInsight.tracked_visitors || 0; delete parsedInsight.tracked_visitors;
+    parsedInsight.total_searches = parsedInsight.lander_searches || 0;
+    delete parsedInsight.lander_searches;
+    parsedInsight.total_lander_visits = parsedInsight.lander_visitors || 0;
+    delete parsedInsight.lander_visitors;
+    parsedInsight.total_tracked_visitors = parsedInsight.tracked_visitors || 0;
+    delete parsedInsight.tracked_visitors;
 
     parsedInsight.hour_fetched = parsedInsight.hour;
     parsedInsight.request_date = parsedInsight.date;
 
-    parsedInsight.unique_identifier = `${parsedInsight.campaign_id}-${parsedInsight.adset_id}-${parsedInsight.ad_id}-${parsedInsight.date}-${parsedInsight.hour}`
+    parsedInsight.unique_identifier = `${parsedInsight.campaign_id}-${parsedInsight.adset_id}-${parsedInsight.ad_id}-${parsedInsight.date}-${parsedInsight.hour}`;
     return parsedInsight;
   }
 
   async processData(data, account, request_date) {
-
     // Process raw data and aggregated data in a single loop
     const hourlyAdsets = {};
     const rawData = [];
     let hourKey;
 
     data.forEach((insight) => {
-
       // Step 1: Parse API Data into a human readable format
       const parsedInsight = this.parseCRApiData(insight, account, request_date);
 
       // Include in rawData only if the session_id is not Unknown (i.e. came from Funnel Flux)
-      if (parsedInsight.session_id != 'Unknown' && !parsedInsight.user_agent.includes('facebookexternalhit')) {
+      if (
+        parsedInsight.session_id != 'Unknown' &&
+        !parsedInsight.user_agent.includes('facebookexternalhit')
+      ) {
         rawData.push(parsedInsight);
       }
 
       // Step 2: Aggregate data
       const cleansedInsight = this.cleanseData(parsedInsight);
-      if (cleansedInsight.traffic_source === 'taboola'){
+      if (cleansedInsight.traffic_source === 'taboola') {
         hourKey = `${cleansedInsight.crossroads_campaign_id}-${cleansedInsight.hour}`;
-      }
-      else{
+      } else {
         hourKey = `${cleansedInsight.adset_id}-${cleansedInsight.hour}`;
       }
       // Aggregate data
       if (hourlyAdsets[hourKey]) {
         this.aggregateInsights(hourlyAdsets[hourKey], cleansedInsight);
-      }
-      else {
+      } else {
         hourlyAdsets[hourKey] = cleansedInsight;
       }
     });
 
-    return [rawData, Object.values(hourlyAdsets)]
+    return [rawData, Object.values(hourlyAdsets)];
   }
 
   async upsert(insights, id, request_date, chunkSize = 500) {
-
     const [rawData, AggregatedData] = await this.processData(insights, id, request_date);
 
     // Upsert raw user session data
     const dataChunks = _.chunk(rawData, chunkSize);
     for (const chunk of dataChunks) {
       const uniqueChunk = _.uniqBy(chunk, 'unique_identifier');
-      await this.database.upsert(this.tableName, uniqueChunk, "unique_identifier");
+      await this.database.upsert(this.tableName, uniqueChunk, 'unique_identifier');
+
+      // push to SQS queue
+      await this.sqsService.sendMessageToQueue(uniqueChunk);
     }
 
     // Upsert aggregated data
     const aggregateChunks = _.chunk(AggregatedData, chunkSize);
     for (const chunk of aggregateChunks) {
       const uniqueChunk = _.uniqBy(chunk, 'unique_identifier');
-      await this.database.upsert(this.aggregatesTableName, uniqueChunk, "unique_identifier");
+      await this.database.upsert(this.aggregatesTableName, uniqueChunk, 'unique_identifier');
     }
   }
 
-  async fetchInsights(fields = ["*"], filters = {}, limit) {
+  async fetchInsights(fields = ['*'], filters = {}, limit) {
     const results = await this.database.query(this.aggregatesTableName, fields, filters, limit);
     return results.map(this.toDomainEntity);
   }
-
 }
 
 module.exports = InsightsRepository;
