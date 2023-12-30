@@ -56,8 +56,6 @@ class InsightsRepository {
     if (isNotNumeric(ad_id)) ad_id = 'Unknown';
     const session_id = /^[0-9a-zA-Z]+$/.test(insight.tg3) ? insight.tg3 : 'Unknown';
 
-    if (traffic_source === PROVIDERS.TABOOLA) timestamp = insight.tg9
-
     return {
 
       // Timely Data
@@ -161,8 +159,11 @@ class InsightsRepository {
 
       // Step 1: Parse API Data into a human readable format
       const parsedInsight = this.parseCRApiData(insight, account, request_date);
+
       // Include in rawData only if the session_id is not Unknown (i.e. came from Funnel Flux)
-      if (parsedInsight.session_id != 'Unknown' && !parsedInsight.user_agent.includes('facebookexternalhit')) rawData.push(parsedInsight);
+      if (parsedInsight.session_id != 'Unknown' && !parsedInsight.user_agent.includes('facebookexternalhit')) {
+        rawData.push(parsedInsight);
+      }
 
       // Step 2: Aggregate data
       const cleansedInsight = this.cleanseData(parsedInsight);
