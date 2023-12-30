@@ -240,7 +240,7 @@ Resources:
             source ~/.bashrc
 
             # use newrelic production file
-            sudo cp /var/www/efflux-backend/newrelic/efflux_prod.js /var/www/efflux-backend/newrelic.js
+            sudo cp /var/www/efflux-backend/infrastructure/newrelic/efflux_prod.js /var/www/efflux-backend/newrelic.js
 
             # Define environment
             echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null

@@ -114,7 +114,7 @@ Resources:
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
 
             # use newrelic staging file
-            sudo cp /var/www/efflux-backend/newrelic/dus_prod.js /var/www/efflux-backend/newrelic.js
+            sudo cp /var/www/efflux-backend/infrastructure/newrelic/dus_prod.js /var/www/efflux-backend/newrelic.js
 
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
