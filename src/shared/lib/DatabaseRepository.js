@@ -24,8 +24,7 @@ class DatabaseRepository {
 
       // Delete cache for the table
       if (this.enableCache) {
-        const cacheKey = `${table}:*`;
-        await this.redis.delAsync(cacheKey);
+        await this.redis.deleteKeysByTableName(table);
       }
 
       return insertResult;
@@ -155,8 +154,7 @@ class DatabaseRepository {
 
       // Delete cache for the table
       if (this.enableCache) {
-        const cacheKey = `${tableName}:*`;
-        await this.redis.delAsync(cacheKey);
+        await this.redis.deleteKeysByTableName(tableName);
       }
 
       return deletedRowCount; // Return number of deleted rows
