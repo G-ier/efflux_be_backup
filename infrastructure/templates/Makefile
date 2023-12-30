@@ -12,7 +12,7 @@ deploy-prod:
 	@aws cloudformation deploy \
 		--stack-name $(EFFLUX_PROD) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file be-template.yaml \
+		--template-file efflux-be.yaml \
 		--parameter-overrides \
 			ProjectName=efflux \
 			OperatorEmail=ilyas@ad.roi \
@@ -27,7 +27,7 @@ deploy-staging:
 	@aws cloudformation deploy \
 		--stack-name $(EFFLUX_STAGING) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file staging-template.yaml \
+		--template-file efflux-staging.yaml \
 		--parameter-overrides \
 			ProjectName=efflux-staging \
 			OperatorEmail=ilyas@ad.roi\
@@ -41,7 +41,7 @@ deploy-metabase:
 	@aws cloudformation deploy \
 		--stack-name $(METABASE_PROD) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-		--template-file metabase-template.yaml \
+		--template-file metabase-prod.yaml \
 		--parameter-overrides \
 			OperatorEmail=ilyas@ad.roi\
 			RDSPostgresClusterPassword=eapsU6KlwrnUWswdZ9BWnY \
@@ -53,7 +53,7 @@ deploy-dus-prod:
 	@aws cloudformation deploy \
 		--stack-name $(EFFLUX_DUS_PROD) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file dus-prod-template.yaml \
+		--template-file dus-prod.yaml \
 		--tags project=efflux \
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
@@ -62,7 +62,7 @@ deploy-dus-staging:
 	@aws cloudformation deploy \
 		--stack-name $(EFFLUX_DUS_STAGING) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file dus-staging-template.yaml \
+		--template-file dus-staging.yaml \
 		--tags project=efflux \
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
