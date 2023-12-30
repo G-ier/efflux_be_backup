@@ -46,6 +46,7 @@ exports.up = function(knex) {
     // Reporting Data
     table.integer("reported_conversions").defaultTo(0);
     table.float("reported_amount").defaultTo(0);
+    table.boolean("valid_pixel").defaultTo(true);
 
     // Timestamps
     table.timestamp('created_at').defaultTo(knex.fn.now());
