@@ -128,7 +128,7 @@ Resources:
             source ~/.bashrc
 
             # use newrelic staging file
-            sudo cp /var/www/efflux-backend/newrelic_staging.js /var/www/efflux-backend/newrelic.js
+            sudo cp /var/www/efflux-backend/newrelic/efflux_staging.js /var/www/efflux-backend/newrelic.js
 
             # Define environment
             echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
