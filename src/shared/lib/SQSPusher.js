@@ -13,7 +13,7 @@ class SqsService {
     this.queueUrl = queueUrl;
   }
 
-  async push(event) {
+  async sendMessageToQueue(event) {
     const params = {
       MessageBody: JSON.stringify(event),
       QueueUrl: this.queueUrl,

@@ -1,26 +1,32 @@
 // Third Party Imports
-const _                           = require("lodash");
+const _ = require('lodash');
 
 // Local Imports
-const DatabaseRepository          = require("../../../shared/lib/DatabaseRepository");
-const { isNotNumeric }            = require("../../../shared/helpers/Utils");
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const { isNotNumeric } = require('../../../shared/helpers/Utils');
+const { SqsService } = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
-
   constructor() {
-    this.tableName = "tonic_raw_insights";
-    this.aggregatesTableName = "tonic"
+    this.tableName = 'tonic_raw_insights';
+    this.aggregatesTableName = 'tonic';
     this.database = new DatabaseRepository();
+
+    const queueUrl =
+      process.env.TONIC_QUEUE_URL ||
+      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-tonic-queue';
+
+    this.sqsService = new SqsService(queueUrl);
   }
 
-  async fetchInsights(fields = ["*"], filters = {}, limit) {
+  async fetchInsights(fields = ['*'], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
   }
 
   cleanseData(insight) {
     // Remove user specific data from the insight
-    const cleansedCopy = {...insight}
+    const cleansedCopy = { ...insight };
     delete cleansedCopy.click_timestamp;
     delete cleansedCopy.ip;
     delete cleansedCopy.country_code;
@@ -44,13 +50,12 @@ class InsightsRepository {
       } else if (_.isNumber(insight[key])) {
         aggregate[key] = (aggregate[key] || 0) + insight[key];
       } else {
-        aggregate[key] = insight[key];  // for other non-numeric fields
+        aggregate[key] = insight[key]; // for other non-numeric fields
       }
     });
   }
 
   parseTonicAPIData(insight) {
-
     // MAPPING
     // subid1: user-agent
     // subid2: pixel_id_|_campaign_id_|_adset_id_|_ad_id_|_traffic_source_|_external
@@ -59,9 +64,13 @@ class InsightsRepository {
 
     // New Extracted Fields
     const user_agent = insight.subid1 || 'Unknown';
-    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = insight.subid2 ? insight.subid2.split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = insight.subid2
+      ? insight.subid2.split('_|_')
+      : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
     const session_id = insight.subid3 || 'Unknown';
-    let [ip, country_code, region, city, timestamp, campaign_name] = insight.subid4 ? (insight.subid4).split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+    let [ip, country_code, region, city, timestamp, campaign_name] = insight.subid4
+      ? insight.subid4.split('_|_')
+      : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
 
     // Extract meaningful data from the raw API response of our parameter mapping
     const hour = insight.timestamp.split(' ')[1].split(':')[0];
@@ -72,13 +81,12 @@ class InsightsRepository {
     if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
 
     return {
-
       date: insight.date,
       hour: parseInt(hour),
       click_timestamp: insight.timestamp,
 
       // Tonic Data
-      tonic_campaign_id: insight.campaign_id ? parseInt(insight.campaign_id): null,
+      tonic_campaign_id: insight.campaign_id ? parseInt(insight.campaign_id) : null,
       tonic_campaign_name: insight.campaign_name,
       ad_type: insight.adtype,
       advertiser: insight.advertiser,
@@ -111,20 +119,21 @@ class InsightsRepository {
       revenue_type: insight.revenue_type || 'Unknown',
 
       // Identifier
-      unique_identifier: `${insight.timestamp}-${insight.keyword}-${session_id}`
-    }
-
+      unique_identifier: `${insight.timestamp}-${insight.keyword}-${session_id}`,
+    };
   }
 
   processTonicData(data) {
     // Process raw data and aggregated data in a single loop
     const hourlyAdsets = {};
-    const rawData = []
+    const rawData = [];
     data.forEach((insight) => {
-
       // Save raw data
       const parsedInsight = this.parseTonicAPIData(insight);
       rawData.push(parsedInsight);
+
+      // push to SQS queue
+      this.sqsService.sendMessageToQueue(parsedInsight);
 
       // Clean insight data
       const cleansedInsight = this.cleanseData(parsedInsight);
@@ -136,30 +145,26 @@ class InsightsRepository {
       } else {
         hourlyAdsets[adsetHourKey] = cleansedInsight;
       }
-
-    })
-    return [rawData, Object.values(hourlyAdsets)]
+    });
+    return [rawData, Object.values(hourlyAdsets)];
   }
 
   async upsert(insights, chunkSize = 500) {
-
     // Process Tonic Data
     const [rawData, adsetAggregatedData] = this.processTonicData(insights);
 
     // Upsert raw user session data
     const dataChunks = _.chunk(rawData, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "unique_identifier");
+      await this.database.upsert(this.tableName, chunk, 'unique_identifier');
     }
 
     // Upsert aggregate data
     const aggregateChunks = _.chunk(adsetAggregatedData, chunkSize);
     for (const chunk of aggregateChunks) {
-      await this.database.upsert(this.aggregatesTableName, chunk, "unique_identifier");
+      await this.database.upsert(this.aggregatesTableName, chunk, 'unique_identifier');
     }
-
   }
-
 }
 
 module.exports = InsightsRepository;
