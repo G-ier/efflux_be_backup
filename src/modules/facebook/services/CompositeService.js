@@ -341,6 +341,35 @@ class CompositeService {
     }
   }
 
+  async routeConversions(conversion, network='crossroads') {
+    // Fetch pixels from database
+    const pixels = await this.pixelsService.fetchPixelsFromDatabase(['pixel_id']);
+
+    // Filter Data. We don't update broken events here. The event is in the DynamoDB table.
+    const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents([conversion], pixels);
+
+    // If no valid events, return
+    if (validPixelEvents.length === 0) {
+      CapiLogger.info(`Conversion with id: ${conversion.id} didn't have a valid pixel value`);
+      return;
+    }
+
+    // Construct facebook conversion payloads
+    const { fbProcessedPayloads, eventIds } = await this.capiService.constructFacebookCAPIPayload(validPixelEvents);
+
+    // Post events to FB CAPI
+    CapiLogger.info(`Posting events to FB CAPI in batches.`);
+    for(const batch of fbProcessedPayloads){
+
+      const { token } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
+
+        for(const payload of batch.payloads) {
+          await this.capiService.postCapiEvents(token, batch.entityId, payload);
+        }
+    }
+    CapiLogger.info(`Reported to Facebook CAPI for network ${network}`);
+  }
+
   async sendCapiEvents(date, network='crossroads') {
 
     // Retrieve the data

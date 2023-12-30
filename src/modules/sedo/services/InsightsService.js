@@ -7,7 +7,6 @@ const { SedoLogger }                              = require("../../../shared/lib
 const BaseService                                 = require("../../../shared/services/BaseService");
 const InsightsRepository                          = require("../repositories/InsightsRepository")
 const DataCompiler                                = require("../services/DataCompiler")
-const FFDataService                               = require("../../funnelFlux/services/FFDataService")
 const {
   calculateAccumulated
 }                                                 = require("../../../shared/helpers/Utils")
@@ -20,7 +19,6 @@ class InsightsService extends BaseService {
   constructor() {
     super(SedoLogger);
     this.repository = new InsightsRepository();
-    this.FFDataService = new FFDataService();
     this.dataCompiler = DataCompiler;
   }
 
@@ -50,16 +48,6 @@ class InsightsService extends BaseService {
     return parsedXMLBody.SEDOSTATS.item;
   }
 
-  async getFFApiInsights(date, tz="+02:00",includeDateMatchingIdentifier=false) {
-    this.logger.info(`Starting to sync Sedo data from Funnel Flux for date ${date}`);
-    // The timezone is hardcoded to Europe/Berlin because Final Sedo Insights are in that timezone
-    const startDate = date + 'T00:00:00' + tz;
-    const endDate = date + 'T23:59:59' + tz;
-    const insights = await this.FFDataService.getAdsetHourlyReport(startDate, endDate, includeDateMatchingIdentifier)
-    const processedInsights = this.repository.aggregateByUniqueIdentifier(insights)
-    return processedInsights
-  }
-
   async compileFinalSedoInsight(date) {
 
     // Fetch Insights from Sedo API
@@ -68,12 +56,12 @@ class InsightsService extends BaseService {
     const processedSedoInsights = this.repository.processSedoInsights(sedoInsight, date)
     this.logger.info(`accumulatedSedoInsights post merge`, calculateAccumulated(processedSedoInsights))
 
-    // Fetch Insights from Funnel Flux API
-    const funnelFluxInsight = await this.getFFApiInsights(date, "+02:00", true)
-    this.logger.info(`accumulated funnel flux insights post merge`,calculateAccumulated(funnelFluxInsight, ['pb_conversions', 'pb_revenue', 'pb_visits']))
+    // Fetch Insights from the database. This data is put there by the Sedo Callback Processor Stack on AWS.
+    const postbackInsightrs = await this.repository.fetchInsightsForCompilation(date)
+    this.logger.info(`accumulated funnel flux insights post merge`, calculateAccumulated(postbackInsightrs, ['pb_conversions', 'pb_revenue', 'pb_visits']))
 
     // Merge Sedo and Funnel Flux Insights and distribute sedo final daily insights to hourly insights
-    const finalResults = this.dataCompiler.distributeDtoH(funnelFluxInsight, processedSedoInsights, this.logger)
+    const finalResults = this.dataCompiler.distributeDtoH(postbackInsightrs, processedSedoInsights, this.logger)
     this.logger.info(`finals results post merge`, calculateAccumulated(finalResults,
       ['pb_conversions', 'conversions', 'pb_revenue', 'revenue', 'pb_visits', 'visitors']
     ))
@@ -81,13 +69,10 @@ class InsightsService extends BaseService {
     return finalResults
   }
 
-  async syncSedoInsights(date, final=false) {
-    this.logger.info(`Starting to sync Sedo data for date ${date} | Final: ${final}`);
+  async syncSedoInsights(date) {
 
-    let insights;
-    if (final) insights = await this.compileFinalSedoInsight(date)
-    else insights = await this.getFFApiInsights(date)
-
+    this.logger.info(`Starting to sync Sedo data for date ${date}`);
+    const insights = await this.compileFinalSedoInsight(date)
     this.logger.info(`Upserting ${insights.length} Sedo insights for date ${date}`);
     await this.executeWithLogging(
       () => this.repository.upsert(insights),

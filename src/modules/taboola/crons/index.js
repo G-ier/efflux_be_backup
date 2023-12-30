@@ -3,17 +3,17 @@ const { CronJob }                                                = require('cron
 require("dotenv").config();
 
 // Local application imports
-const { todayYMD, yesterdayYMD }          = require('../../../shared/helpers/calendar');
+const { todayYMD, yesterdayYMD }                                 = require('../../../shared/helpers/calendar');
 const { sendSlackNotification }                                  = require("../../../shared/lib/SlackNotificationService");
 const CompositeService                                           = require('../services/CompositeService');
 const { TABOOLA_UPDATE_TODAY_REGULAR_CRON,
   TABOOLA_UPDATE_YESTERDAY_CRON,
   TABOOLA_REPORT_CONVERSIONS_YESTERDAY,
-TABOOLA_CAPI_REPORT_REGULAR_CRON 
-}= require('./rules');
-
+  TABOOLA_CAPI_REPORT_REGULAR_CRON
+}                                                                = require('./rules');
 const { dataUpdatesLogger }                                      = require('../../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager                                = require('../../../shared/services/EnvironmentVariablesManager');
+
 const DISABLE_CRON                = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
 const DISABLE_TABOOLA_CRON       = EnvironmentVariablesManager.getEnvVariable('DISABLE_TABOOLA_CRON')
 const CRON_ENVIRONMENT            = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT')
@@ -82,11 +82,9 @@ const initializeTaboolaCron = () => {
 
     updateTodayDataRegular.start();
     updateYesterdayData.start();
-    // if (CRON_ENVIRONMENT === 'production') 
+    // if (CRON_ENVIRONMENT === 'production')
     reportTaboolaConversionsToCrossroadsRegular.start();
     reportYesterdayCrossroadsTaboolaConversions.start();
 }
 
-
-
- module.exports = initializeTaboolaCron;
+module.exports = initializeTaboolaCron;

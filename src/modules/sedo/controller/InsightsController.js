@@ -6,9 +6,9 @@ class InsightsController {
   }
 
   async syncInsights(req, res) {
-    const { date, final } = req.query;
+    const { date } = req.query;
     try {
-      await this.service.syncSedoInsights(date, final === 'true');
+      await this.service.syncSedoInsights(date);
       return res.status(200).json(`Sedo insights for date ${date} synced successfully`);
     } catch (err) {
       return res.status(500).json(err.message);
