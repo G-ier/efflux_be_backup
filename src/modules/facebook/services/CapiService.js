@@ -137,10 +137,6 @@ class CapiService extends BaseService {
             currentPayload = { data: [] }
           }
 
-          const state = event.country_code === 'US' && usStates[event.state.toUpperCase()] !== undefined
-            ? usStates[event.state.toUpperCase()].toLowerCase()
-            : event.state.toLowerCase().replace(" ", "")
-
           const eventPayload = {
             event_name: 'Purchase',
             event_time: Number(event.timestamp),
@@ -165,8 +161,11 @@ class CapiService extends BaseService {
             custom_data: {
               currency: 'USD',
               value: `${(event.purchase_event_value / event.purchase_event_count)}`,
+              content_name: event.keyword,
             }
           }
+
+          if (event.vertical) eventPayload.custom_data.content_type = event.vertical;
           currentPayload.data.push(eventPayload)
         }
 
