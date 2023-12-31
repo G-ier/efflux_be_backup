@@ -9,7 +9,7 @@ exports.config = {
   /**
    * Array of application names.
    */
-  app_name: ['Efflux Backend'],
+  app_name: ['Efflux BE Prod'],
   /**
    * Your New Relic license key.
    */

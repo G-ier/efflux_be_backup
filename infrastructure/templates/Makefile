@@ -12,7 +12,7 @@ deploy-prod:
 	@aws cloudformation deploy \
 		--stack-name $(EFFLUX_PROD) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file efflux-be.yaml \
+		--template-file efflux-be-prod.yaml \
 		--parameter-overrides \
 			ProjectName=efflux \
 			OperatorEmail=ilyas@ad.roi \
@@ -27,7 +27,7 @@ deploy-staging:
 	@aws cloudformation deploy \
 		--stack-name $(EFFLUX_STAGING) \
 		--capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM  \
-		--template-file efflux-staging.yaml \
+		--template-file efflux-be-staging.yaml \
 		--parameter-overrides \
 			ProjectName=efflux-staging \
 			OperatorEmail=ilyas@ad.roi\
