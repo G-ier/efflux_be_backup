@@ -217,9 +217,12 @@ Resources:
     Properties:
       Name: Efflux-Staging
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
-      Port: "80"
+      HealthCheckIntervalSeconds: 5
+      HealthCheckTimeoutSeconds: 2
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+      Port: 80
       Protocol: HTTP
       VpcId: !ImportValue Efflux-VPC
       Tags:
@@ -364,7 +367,7 @@ Resources:
       MasterUsername: effluxapp
       MasterUserPassword: !Ref RDSPostgresClusterPassword
       PubliclyAccessible: true
-      BackupRetentionPeriod: 5
+      BackupRetentionPeriod: 3
       Port: 5432
       StorageEncrypted: false
       StorageType: gp3
