@@ -98,7 +98,7 @@ class S2SService extends BaseService{
         const eventPayload = {
           'click-id': event.external,
           timestamp: Number(event.timestamp) * 1000,
-          name: "Search",
+          name: "search",
           revenue: Number(event.revenue),
           currency: "USD",
           quantity: event.conversions
