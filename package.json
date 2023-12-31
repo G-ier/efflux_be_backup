@@ -21,6 +21,7 @@
     "@aws-sdk/client-secrets-manager": "^3.441.0",
     "@aws-sdk/client-ssm": "^3.441.0",
     "async": "^3.2.3",
+    "aws-sdk": "^2.1528.0",
     "axios": "^1.6.2",
     "cloudinary": "^1.23.0",
     "connect-livereload": "^0.6.1",

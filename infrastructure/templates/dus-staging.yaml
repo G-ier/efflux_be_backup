@@ -19,7 +19,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: DUS-Prod
+      GroupName: DUS-Staging
       GroupDescription: Enable SSH access and HTTP
       VpcId: !ImportValue Efflux-VPC
       SecurityGroupIngress:
@@ -49,7 +49,7 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: DUS-Prod
+          Value: DUS-Staging
         - Key: project
           Value: efflux
         - Key: component
@@ -59,7 +59,7 @@ Resources:
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: DUS-Prod
+      LaunchTemplateName: DUS-Staging
       LaunchTemplateData:
         BlockDeviceMappings:
           - DeviceName: /dev/sda1
@@ -76,7 +76,7 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-dus
-        InstanceType: t3a.large
+        InstanceType: t3.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -108,10 +108,13 @@ Resources:
             sudo service codedeploy-agent start
 
             # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:dus-prod
+            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:dus-staging
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
+
+            # Set environment variables
+            NEWRELIC_ENVIRONMENT=staging
 
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
@@ -121,7 +124,7 @@ Resources:
           - ResourceType: volume
             Tags:
               - Key: Name
-                Value: DUS-Prod Volume
+                Value: DUS-Staging Volume
               - Key: project
                 Value: efflux
               - Key: component
@@ -129,7 +132,7 @@ Resources:
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: DUS-Prod Instance
+                Value: DUS-Staging Instance
               - Key: project
                 Value: efflux
               - Key: component
@@ -141,10 +144,10 @@ Resources:
       Subscription:
         - Endpoint: !Ref OperatorEmail
           Protocol: email
-      TopicName: DUS-Prod-ScalingNotification
+      TopicName: DUS-Staging-ScalingNotification
       Tags:
         - Key: Name
-          Value: DUS-Prod-ScalingNotification
+          Value: DUS-Staging-ScalingNotification
         - Key: project
           Value: efflux
         - Key: component
@@ -154,7 +157,7 @@ Resources:
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: DUS-Prod-ASG
+      AutoScalingGroupName: DUS-Staging-ASG
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
@@ -178,7 +181,7 @@ Resources:
         - !ImportValue Efflux-PublicSubnet3
       Tags:
         - Key: Name
-          Value: DUS-Prod Instance
+          Value: DUS-Staging Instance
           PropagateAtLaunch: true
         - Key: project
           Value: efflux
@@ -191,7 +194,7 @@ Resources:
   ApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: DusProdALB
+      Name: DusStagingALB
       SecurityGroups:
         - !Ref InstanceSecurityGroup
       Subnets:
@@ -200,7 +203,7 @@ Resources:
         - !ImportValue Efflux-PublicSubnet3
       Tags:
         - Key: Name
-          Value: DusProdALB
+          Value: DusStagingALB
         - Key: project
           Value: efflux
         - Key: component
@@ -210,7 +213,7 @@ Resources:
   ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: DUS-Prod
+      Name: DUS-Staging
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: "30"
       HealthCheckTimeoutSeconds: "5"
@@ -219,7 +222,7 @@ Resources:
       VpcId: !ImportValue Efflux-VPC
       Tags:
         - Key: Name
-          Value: DUS-Prod
+          Value: DUS-Staging
         - Key: project
           Value: efflux
         - Key: component
@@ -262,7 +265,7 @@ Resources:
   CloudWatchAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: DUS-Prod-CPU-Alarm
+      AlarmName: DUS-Staging-CPU-Alarm
       EvaluationPeriods: "1"
       Statistic: Average
       Threshold: "60"
@@ -282,11 +285,11 @@ Resources:
   CodeDeployApplication:
     Type: AWS::CodeDeploy::Application
     Properties:
-      ApplicationName: DUS-Prod
+      ApplicationName: DUS-Staging
       ComputePlatform: Server
       Tags:
         - Key: Name
-          Value: DUS-Prod
+          Value: DUS-Staging
         - Key: project
           Value: efflux
         - Key: component
@@ -297,7 +300,7 @@ Resources:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
       ApplicationName: !Ref CodeDeployApplication
-      DeploymentGroupName: DUS-Prod
+      DeploymentGroupName: DUS-Staging
       DeploymentConfigName: CodeDeployDefault.OneAtATime
       ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
       AutoScalingGroups:
@@ -307,7 +310,7 @@ Resources:
         DeploymentType: IN_PLACE
       LoadBalancerInfo:
         TargetGroupInfoList:
-          - Name: DUS-Prod
+          - Name: DUS-Staging
         TargetGroupPairInfoList:
           - TargetGroups:
               - Name: !Ref ALBTargetGroup
@@ -317,17 +320,17 @@ Resources:
       Ec2TagFilters:
         - Key: Name
           Type: KEY_AND_VALUE
-          Value: DUS-Prod Instance
+          Value: DUS-Staging Instance
       TriggerConfigurations:
         - TriggerEvents:
             - DeploymentFailure
             - DeploymentStop
             - DeploymentSuccess
-          TriggerName: DUS-Prod-DeploymentTrigger
+          TriggerName: DUS-Staging-DeploymentTrigger
           TriggerTargetArn: !Ref NotificationTopic
       Tags:
         - Key: Name
-          Value: DUS-Prod-DeploymentGroup
+          Value: DUS-Staging-DeploymentGroup
         - Key: project
           Value: efflux
         - Key: component
@@ -373,7 +376,7 @@ Resources:
       Path: "/"
       Roles:
         - !Ref CodeDeployServiceRole
-      InstanceProfileName: DUS-Prod-InstanceProfile
+      InstanceProfileName: DUS-Staging-InstanceProfile
 
   # # Create CodeDeploy Role
   CodeDeployRole:
@@ -441,7 +444,7 @@ Resources:
       Path: "/"
       Roles:
         - !Ref CodeDeployRole
-      InstanceProfileName: DUS-Prod
+      InstanceProfileName: DUS-Staging
 
 ####################
 # Outputs
