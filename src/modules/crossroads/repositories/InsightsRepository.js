@@ -2,7 +2,7 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const _ = require('lodash');
 const PROVIDERS = require('../../../shared/constants/providers');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const { SqsService } = require('../../../shared/lib/SQSPusher');
+const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
   constructor(database) {

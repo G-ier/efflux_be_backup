@@ -4,7 +4,7 @@ const _ = require('lodash');
 // Local Imports
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const { SqsService } = require('../../../shared/lib/SQSPusher');
+const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
   constructor() {
