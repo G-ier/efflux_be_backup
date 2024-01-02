@@ -2,7 +2,8 @@
 
 cd /var/www/efflux-backend
 
-sudo cp /var/www/efflux-backend/infrastructure/newrelic/efflux_$NEWRELIC_ENVIRONMENT.js /var/www/efflux-backend/newrelic.js
+# Use the right Newrelic config file
+cp /var/www/efflux-backend/infrastructure/newrelic/efflux_$NEWRELIC_ENVIRONMENT.js /var/www/efflux-backend/newrelic.js
 
 pm2 stop ecosystem.config.js
 pm2 start ecosystem.config.js --env production

@@ -331,9 +331,10 @@ Resources:
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: 5
       HealthCheckTimeoutSeconds: 2
+      HealthyThresholdCount: 2
       Matcher:
-        HttpCode: "200"
-      Port: "80"
+        HttpCode: 200
+      Port: 80
       Protocol: HTTP
       VpcId: !Ref VPC
       Tags:

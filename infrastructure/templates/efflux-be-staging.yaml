@@ -168,9 +168,9 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MaxSize: "3"
+      MaxSize: "2"
       MinSize: "1"
-      DesiredCapacity: "2"
+      DesiredCapacity: "1"
       NotificationConfigurations:
         - TopicARN: !Ref NotificationTopic
           NotificationTypes:
