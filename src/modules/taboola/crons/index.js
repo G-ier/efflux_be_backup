@@ -82,9 +82,10 @@ const initializeTaboolaCron = () => {
 
     updateTodayDataRegular.start();
     updateYesterdayData.start();
-    // if (CRON_ENVIRONMENT === 'production')
-    reportTaboolaConversionsToCrossroadsRegular.start();
-    reportYesterdayCrossroadsTaboolaConversions.start();
+    if (CRON_ENVIRONMENT === 'production') {
+      reportTaboolaConversionsToCrossroadsRegular.start();
+      reportYesterdayCrossroadsTaboolaConversions.start();
+    }
 }
 
 module.exports = initializeTaboolaCron;
