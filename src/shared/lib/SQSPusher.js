@@ -21,7 +21,6 @@ class SqsService {
 
     try {
       const data = await this.sqs.sendMessage(params).promise();
-      console.log(`Message sent to SQS queue, ID: ${data.MessageId}`);
     } catch (error) {
       console.error(`Error sending message to SQS queue: ${error}`);
     }
