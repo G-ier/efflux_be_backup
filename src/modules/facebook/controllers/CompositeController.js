@@ -8,6 +8,7 @@ const _ = require("lodash");
 const AdCreativesService = require("../services/AdCreativesService");
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 
+
 class CompositeController {
 
   constructor() {
@@ -523,15 +524,6 @@ class CompositeController {
       message: "An error occurred while launching the ad.",
       error: error.error_user_msg || error.message,
     });
-  }
-
-  async routeConversions(req, res) {
-    const body = req.body;
-    body.purchase_event_value = body.revenue; delete body.revenue;
-    body.purchase_event_count = body.conversions; delete body.conversions;
-    body.state = body.region; delete body.region;
-    const response = await this.compositeService.routeConversions(body, body.network);
-    res.json(response);
   }
 
   async reportConversions(req, res) {

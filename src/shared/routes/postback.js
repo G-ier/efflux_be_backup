@@ -12,8 +12,6 @@ const { PostbackLogger, PostbackTestLogger } = require('../../shared/lib/Winston
 const {PostbackQueue} = require('../helpers/Queue');
 const { isNotNumeric }            = require("../helpers/Utils");
 
-const reporting                   = require("./reporting");
-
 const db = new DatabaseRepository()
 const postbackQueue = new PostbackQueue();
 
@@ -415,7 +413,5 @@ route.get('/collect', async(req, res) => {
   }
 
 });
-
-route.use("/reporting", reporting);
 
 module.exports = route;
