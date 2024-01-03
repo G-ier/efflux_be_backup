@@ -132,6 +132,26 @@ const reportYesterdayCrossroadsFacebookConversions = new CronJob(
   }
 ));
 
+// CROSSROADS CONVERSION REPORTING
+const reportFacebookConversionsToMedianetRegular = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
+  (async () => {
+    for (const network of ['media-net']) {
+      await reportFacebookConversions(todayYMD(), network);
+    }
+  }
+));
+
+const reportYesterdayMedianetFacebookConversions = new CronJob(
+  FACEBOOK_REPORT_CONVERSIONS_YESTERDAY,
+  (async () => {
+    for (const network of ['media-net']) {
+      await reportFacebookConversions(yesterdayYMD(), network);
+    }
+  }
+));
+
+
 const updatePagesRegular = new CronJob(
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
   (async () =>{
@@ -167,6 +187,8 @@ const initializeFacebookCron = () => {
     reportYesterdayTonicFacebookConversions.start()
     reportFacebookConversionsToCrossroadsRegular.start()
     reportYesterdayCrossroadsFacebookConversions.start()
+    reportFacebookConversionsToMedianetRegular.start()
+    reportYesterdayMedianetFacebookConversions.start()
   }
 
 }

@@ -32,46 +32,45 @@ const updateMediaNetData = async (date) => {
       await sendSlackNotification(`FAILED | MEDIANET |  ${date}`)
     }
   }
-  
+
   const update2DaysAgoData = new CronJob(
     MEDIANET_UPDATE_2_DAYS_AGO_CRON,
     (async () => {
       await updateMediaNetData(dayBeforeYesterdayYMD().replace(/-/g, ''));
     }
   ));
-  
+
   const updateYesterdayDataAfterMidnightPST = new CronJob(
     MEDIANET_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON,
     (async () => {
       await updateMediaNetData(yesterdayYMD().replace(/-/g, ''));
     }
   ));
-  
+
   const updateYesterdayDataAtNoonPST = new CronJob(
     MEDIANET_UPDATE_YESTERDAY_AT_NOON_CRON,
     (async () => {
       await updateMediaNetData(yesterdayYMD().replace(/-/g, ''));
     }
   ));
-  
+
   const updateTodayDataRegular = new CronJob(
     MEDIANET_UPDATE_TODAY_REGULAR_CRON,
     (async () => {
-      console.log('MEDIANET_UPDATE_TODAY_REGULAR_CRON')
       await updateMediaNetData(todayYMD().replace(/-/g, ''));
     }
   ));
-  
+
   const initializeMediaNetCron = () => {
-  
+
     // If both are disabled, return immediately
     if (disableGeneralCron && disableMediaNetCron) return;
-  
+
     update2DaysAgoData.start();
     updateYesterdayDataAfterMidnightPST.start();
     updateYesterdayDataAtNoonPST.start();
     updateTodayDataRegular.start();
-  
+
   }
-  
+
   module.exports = initializeMediaNetCron;

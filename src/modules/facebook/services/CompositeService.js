@@ -16,6 +16,7 @@ const PageService = require("./PageService");
 const CapiService = require("./CapiService");
 const newDetectCrossroadsPurchaseEvents = require("../../../shared/reports/newDetectCrossroadsPurchaseEvents")
 const detectTonicPurchaseEvents = require("../../../shared/reports/detectTonicPurchaseEvents")
+const detectMediaNetPurchaseEvents = require("../../../shared/reports/detectMediaNetPurchaseEvents")
 const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 const { validateInput } = require("../helpers");
@@ -352,6 +353,9 @@ class CompositeService {
     }
     else if (network === 'tonic') {
       data = await detectTonicPurchaseEvents(this.capiService.database, date, 'facebook');
+    }
+    else if (network === 'media-net') {
+      data = await detectMediaNetPurchaseEvents(this.capiService.database, date, 'facebook');
     }
     if (data.length === 0) {
       CapiLogger.info(`No events found for date ${date}.`);

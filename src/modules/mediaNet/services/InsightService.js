@@ -43,8 +43,6 @@ class InsightService extends BaseService{
     }
 
     async syncInsights(startDate, endDate){
-        console.log(startDate);
-        console.log(endDate);
         this.logger.info('Syncing MediaNet Insights');
         const insights = await this.fetchInsightsFromApi(startDate, endDate);
         console.log(insights);
