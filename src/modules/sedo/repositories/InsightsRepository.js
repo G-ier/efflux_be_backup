@@ -66,16 +66,19 @@ class InsightsRepository {
   }
 
   parseSedoAPIData(insight, date) {
-
     const domain = insight.domain[0]._;
-    const user_agent = insight.c1[0]?._ ? insight.c1[0]._ : 'Unknown';
-    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = insight.c2[0]?._ ? insight.c2[0]?._.split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
-    let [ip, country_code, region, city, timestamp, campaign_name, session_id] = insight.c3[0]?._ ? (insight.c3[0]?._).split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
+
+    const funnel_id = insight.c1[0]?._ ? insight.c1[0]._ : '';
+    let [campaign_id, adset_id, ad_id, traffic_source] = insight.c2[0]?._
+      ? insight.c2[0]._.replace(' ', '').split('|')
+      : ['Unkown', 'Unkown', 'Unkown', 'Unkown'];
 
     if (isNotNumeric(campaign_id)) campaign_id = 'Unkown';
     if (isNotNumeric(adset_id)) adset_id = 'Unkown';
     if (isNotNumeric(ad_id)) ad_id = 'Unkown';
     if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unkown';
+
+    const hit_id = insight.c3[0]?._ ? insight.c3[0]._ : '';
 
     const visitors = insight.uniques[0]._ ? parseInt(insight.uniques[0]._) : 0;
     const conversions = insight.clicks[0]._ ? parseInt(insight.clicks[0]._) : 0;
@@ -88,9 +91,8 @@ class InsightsRepository {
       campaign_id,
       adset_id,
       ad_id,
-      campaign_name,
-      adset_name: '',
-      ad_name: '',
+      funnel_id,
+      hit_id,
       visitors,
       conversions,
       revenue: revenue,
