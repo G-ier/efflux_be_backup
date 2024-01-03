@@ -53,4 +53,9 @@ route.get(
   async (req, res) => await temporaryController.fetchUserOrganization(req, res),
 );
 
+route.post('/update-password', async (req, res) => await temporaryController.updatePassword(req, res));
+
+route.post('/update-details', async (req, res) => await temporaryController.updateUserDetails(req, res));
+
+
 module.exports = route;

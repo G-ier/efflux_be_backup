@@ -7,6 +7,7 @@ const detectCrossroadsPurchaseEvents = async (database, date, traffic_source) =>
       tg2 as campaign_id,
       tg3 as session_id,
       unique_identifier as id,
+      lander_keyword as keyword,
       traffic_source,
       tg4 as ip,
       CASE
@@ -40,7 +41,9 @@ const detectCrossroadsPurchaseEvents = async (database, date, traffic_source) =>
     FULL OUTER JOIN
     	gtm_fb_cookie_values gtmtr ON raw_crossroads_data.tg3 = gtmtr.session_id
     WHERE
-      revenue_clicks > 0 AND reported_conversions < revenue_clicks AND publisher_revenue_amount > 0
+      revenue_clicks > 0
+      AND reported_conversions < revenue_clicks
+      AND publisher_revenue_amount > 0
       AND date = '${date}'
       AND traffic_source = '${traffic_source}'
       AND valid_pixel = true
