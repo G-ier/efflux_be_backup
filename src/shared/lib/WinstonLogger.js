@@ -176,6 +176,13 @@ const TonicLogger = new CustomLogger({
   filePath: filePath('tonic'),
 });
 
+// MediaNet Logger
+const MediaNetLogger = new CustomLogger({
+  destination:streamDestination,
+  level: 'info',
+  filePath: filePath('medianet')
+});
+
 // Analysis Logger
 const AnalysisLogger = new CustomLogger({
   destination: streamDestination,
@@ -261,12 +268,5 @@ module.exports = {
   dataUpdatesLogger,
   SedoLogger,
   TonicLogger,
-  UserLogger,
-  OrganizationLogger,
-  InsightsLogger,
-  AdsetLogger,
-  AdsLogger,
-  CampaignsLogger,
-  PixelsLogger,
-  UserAccountLogger,
+  MediaNetLogger
 };

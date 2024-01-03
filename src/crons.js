@@ -6,6 +6,7 @@ const initializeSedoCron                  = require("./modules/sedo/crons");
 const initializeAggregatesUpdateCron      = require("./modules/aggregates/crons/aggregates");
 const initializeRevealBotSheetsUpdateCron = require("./modules/aggregates/crons/revealBotSheets");
 const initializeTonicCron                 = require("./modules/tonic/crons");
+const initialiseMediaNetCron              = require("./modules/mediaNet/crons");
 const initializeTemporaryCron             = require("./modules/temp/crons");
 
 
@@ -18,6 +19,7 @@ const initializeCronJobs = () => {
   initializeAggregatesUpdateCron();
   initializeRevealBotSheetsUpdateCron();
   initializeTonicCron();
+  initialiseMediaNetCron();
   // initializeTemporaryCron();
 };
 

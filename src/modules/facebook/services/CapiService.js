@@ -154,7 +154,11 @@ class CapiService extends BaseService {
               fbc: fbc,
               fbp: fbp,
               st: [
-                sha256(state)
+                sha256(
+                  event.country_code === 'US' || event.country_code === 'United States' // The second condition is temporary until the update on FF takes place.
+                  ? usStates[event.region.toUpperCase()].toLowerCase()
+                  : event.region.toLowerCase().replace(" ", "")
+                )
               ],
             },
             opt_out: false,
