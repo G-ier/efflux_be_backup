@@ -41,8 +41,7 @@ class BaseService {
     try {
       return await asyncFn();
     } catch (error) {
-      console.log(error);
-      this.logger.error(`${errorMsg}: ${error}`);
+      this.logger.error(`${errorMsg}: ${error.response.data.error}`);
       throw error;
     }
   }
