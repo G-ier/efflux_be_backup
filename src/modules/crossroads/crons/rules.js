@@ -4,7 +4,7 @@ const environment = EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT
 const CROSSROADS_UPDATE_2_DAYS_AGO_CRON = '15 8 * * *'
 const CROSSROADS_UPDATE_YESTERDAY_AFTER_MIDNIGHT_CRON = '4 11 * * *'
 const CROSSROADS_UPDATE_YESTERDAY_AT_NOON_CRON = '4 17 * * *'
-const CROSSROADS_UPDATE_TODAY_REGULAR_CRON = environment === 'prod' ? '*/15 * * * *' : '37 * * * *'
+const CROSSROADS_UPDATE_TODAY_REGULAR_CRON = environment === 'prod' ? '*/15 * * * *' : '0 * * * *'
 
 module.exports = {
   CROSSROADS_UPDATE_2_DAYS_AGO_CRON,

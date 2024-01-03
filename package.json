@@ -21,6 +21,7 @@
     "@aws-sdk/client-secrets-manager": "^3.441.0",
     "@aws-sdk/client-ssm": "^3.441.0",
     "async": "^3.2.3",
+    "aws-sdk": "^2.1528.0",
     "axios": "^1.6.2",
     "cloudinary": "^1.23.0",
     "connect-livereload": "^0.6.1",
@@ -31,7 +32,7 @@
     "dotenv": "^8.6.0",
     "easy-soap-request": "^4.7.0",
     "express": "^4.17.1",
-    "express-jwt": "^6.0.0",
+    "express-jwt": "^6.1.2",
     "express-jwt-authz": "^2.4.1",
     "express-paginate": "^1.0.2",
     "form-data": "^4.0.0",
@@ -58,7 +59,7 @@
     "oauth-1.0a": "^2.2.6",
     "pg": "^8.5.1",
     "puppeteer": "^14.3.0",
-    "redis": "^3.1.2",
+    "redis": "^4.6.12",
     "sqlite3": "^5.0.0",
     "stripe": "^8.127.0",
     "ua-parser-js": "^0.7.28",
@@ -68,6 +69,7 @@
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
+    "@types/express-jwt": "^7.4.2",
     "jest": "^26.6.3",
     "nodemon": "^2.0.6",
     "supertest": "^6.3.3"

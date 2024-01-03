@@ -43,6 +43,7 @@ const initializeAPI = async () => {
     const DISABLE_SEDO_CRON               = EnvironmentVariablesManager.getEnvVariable('DISABLE_SEDO_CRON')
     const DISABLE_TIKTOK_CRON             = EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CRON')
     const DISABLE_FACEBOOK_CRON           = EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_CRON')
+    const DISABLE_TABOOLA_CRON            = EnvironmentVariablesManager.getEnvVariable('DISABLE_TABOOLA_CRON')
     const DISABLE_AGGREGATES_UPDATE_CRON  = EnvironmentVariablesManager.getEnvVariable('DISABLE_AGGREGATES_UPDATE_CRON')
     const DISABLE_REVEALBOT_SHEET_CRON    = EnvironmentVariablesManager.getEnvVariable('DISABLE_REVEALBOT_SHEET_CRON')
     const DISABLE_SLACK_NOTIFICATION      = EnvironmentVariablesManager.getEnvVariable('DISABLE_SLACK_NOTIFICATION')
@@ -54,6 +55,7 @@ const initializeAPI = async () => {
     const disableSedoCron                 = DISABLE_SEDO_CRON === 'true' || DISABLE_SEDO_CRON !== 'false';
     const disableTikTokCron               = DISABLE_TIKTOK_CRON === 'true' || DISABLE_TIKTOK_CRON !== 'false';
     const disableFacebookCron             = DISABLE_FACEBOOK_CRON === 'true' || DISABLE_FACEBOOK_CRON !== 'false';
+    const disableTaboolaCron              = DISABLE_TABOOLA_CRON === 'true' || DISABLE_TABOOLA_CRON !== 'false';
     const disableAggregatesUpdateCron     = DISABLE_AGGREGATES_UPDATE_CRON === 'true' || DISABLE_AGGREGATES_UPDATE_CRON !== 'false';
     const disableRevealBotSheetCron       = DISABLE_REVEALBOT_SHEET_CRON === 'true' || DISABLE_REVEALBOT_SHEET_CRON !== 'false';
     const disableSlackNotification        = DISABLE_SLACK_NOTIFICATION === 'true' || DISABLE_SLACK_NOTIFICATION !== 'false';
@@ -68,6 +70,11 @@ const initializeAPI = async () => {
     const databaseUrl                     = databaseEnvironment === 'production' ? productionDatabaseUrl
                                           : databaseEnvironment === 'staging' ? stagingDatabaseUrl
                                           : process.env.DATABASE_URL_LOCAL;
+
+    const redisEnvironment                = EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT');
+    const redisUrl                        = redisEnvironment === 'production' ? EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_PRODUCTION')
+                                          : redisEnvironment === 'staging' ? EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_STAGING')
+                                          : process.env.REDIS_CLUSTER_URL_LOCAL;
 
     console.log(`
       Server Info:
@@ -86,7 +93,11 @@ const initializeAPI = async () => {
 
       Database:
         Environment: ${databaseEnvironment || 'development'}
-        URL: ${databaseUrl || 'development'}
+        URL: ${databaseUrl}
+
+      Redis:
+        Environment: ${redisEnvironment || 'development'}
+        URL: ${redisUrl}
 
       Cron Jobs [${rulesEnvironment}]:
         Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
@@ -95,6 +106,7 @@ const initializeAPI = async () => {
         Sedo       : ${disableSedoCron ? 'Disabled' : 'Enabled'}
         TikTok     : ${disableTikTokCron ? 'Disabled' : 'Enabled'}
         Facebook   : ${disableFacebookCron ? 'Disabled' : 'Enabled'}
+        Taboola    : ${disableTaboolaCron ? 'Disabled' : 'Enabled'}
         Aggregates : ${disableAggregatesUpdateCron ? 'Disabled' : 'Enabled'}
         RevealBot  : ${disableRevealBotSheetCron ? 'Disabled' : 'Enabled'}
     `)

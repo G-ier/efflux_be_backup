@@ -113,6 +113,9 @@ Resources:
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
 
+            # Set environment variables
+            NEWRELIC_ENVIRONMENT=staging
+
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc

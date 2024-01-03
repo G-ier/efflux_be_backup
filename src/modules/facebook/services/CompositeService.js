@@ -14,7 +14,7 @@ const AdsetsService = require("./AdsetsService");
 const AdInsightsService = require("./AdInsightsService");
 const PageService = require("./PageService");
 const CapiService = require("./CapiService");
-const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents")
+const newDetectCrossroadsPurchaseEvents = require("../../../shared/reports/newDetectCrossroadsPurchaseEvents")
 const detectTonicPurchaseEvents = require("../../../shared/reports/detectTonicPurchaseEvents")
 const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
@@ -348,12 +348,11 @@ class CompositeService {
     let data = [];
 
     if (network === 'crossroads') {
-      data = await detectCrossroadsPurchaseEvents(this.capiService.database, date, 'facebook');
+      data = await newDetectCrossroadsPurchaseEvents(this.capiService.database, date, 'facebook');
     }
     else if (network === 'tonic') {
       data = await detectTonicPurchaseEvents(this.capiService.database, date, 'facebook');
     }
-
     if (data.length === 0) {
       CapiLogger.info(`No events found for date ${date}.`);
       return;

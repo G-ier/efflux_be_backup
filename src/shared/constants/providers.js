@@ -4,6 +4,7 @@ module.exports = {
   AUTH0: 'auth0',
   GOOGLE: 'google',
   TIKTOK: 'tiktok',
+  TABOOLA: 'taboola',
   INSTAGRAM: 'instagram',
   UNKNOWN: 'unknown',
 }

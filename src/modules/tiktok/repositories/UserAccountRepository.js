@@ -1,14 +1,13 @@
 // Third party imports
-const _ = require("lodash");
+const _ = require('lodash');
 
 // Local application imports
-const UserAccount = require("../entities/UserAccount");
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+const UserAccount = require('../entities/UserAccount');
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 
 class UserAccountRepository {
-
   constructor(database) {
-    this.tableName = "user_accounts";
+    this.tableName = 'user_accounts';
     this.database = database || new DatabaseRepository();
   }
 
@@ -16,12 +15,13 @@ class UserAccountRepository {
     let data = user_accounts.map((user_account) => this.toDatabaseDTO(user_account));
     const dataChunks = _.chunk(data, chunkSize);
     for (const chunk of dataChunks) {
-      await this.database.upsert(this.tableName, chunk, "name")
+      await this.database.upsert(this.tableName, chunk, 'name');
     }
   }
 
-  async fetchUserAccounts(fields = ["*"], filters = {}, limit) {
-    const results = await this.database.query(this.tableName, fields, filters, limit);
+  async fetchUserAccounts(fields = ['*'], filters = {}, limit) {
+    const cache = true;
+    const results = await this.database.query(this.tableName, fields, filters, limit, [], cache);
     return results;
   }
 
@@ -33,9 +33,6 @@ class UserAccountRepository {
     return user_account;
   }
 
-  toDomainEntity(dbObject) {
-    return new Adset();
-  }
 }
 
 module.exports = UserAccountRepository;

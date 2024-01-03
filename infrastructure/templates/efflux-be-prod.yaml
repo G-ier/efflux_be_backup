@@ -9,19 +9,137 @@ Parameters:
     Description: The email address to notify when there are any scaling activities
     Type: String
     Default: ilyas@roi.ad
+  RDSPostgresClusterPassword:
+    Description: The password for the database
+    NoEcho: "true"
+    Type: String
+    MinLength: "8"
+    MaxLength: "41"
 
 ####################
 # Resources
 ####################
 
 Resources:
+  # Creating the VPC
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.10.0.0/16
+      EnableDnsSupport: yes
+      EnableDnsHostnames: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-VPC
+        - Key: project
+          Value: efflux
+
+  # Creating Internet Gateway
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: Name
+          Value: Efflux-InternetGateway
+        - Key: project
+          Value: efflux
+
+  # Attaching the ITG to the VPC
+  InternetGatewayAttachment:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref InternetGateway
+
+  # Creating Public Subnet 1
+  PublicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1a
+      CidrBlock: 10.10.1.0/24
+      MapPublicIpOnLaunch: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicSubnet1
+        - Key: project
+          Value: efflux
+
+  # Creating Public Subnet 2
+  PublicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1b
+      CidrBlock: 10.10.2.0/24
+      MapPublicIpOnLaunch: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicSubnet2
+        - Key: project
+          Value: efflux
+
+  # Creating Public Subnet 3
+  PublicSubnet3:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      AvailabilityZone: us-east-1c
+      CidrBlock: 10.10.3.0/24
+      MapPublicIpOnLaunch: yes
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicSubnet3
+        - Key: project
+          Value: efflux
+
+  # Creating a Public Route Table
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref VPC
+      Tags:
+        - Key: Name
+          Value: Efflux-PublicRouteTable
+        - Key: project
+          Value: efflux
+
+  # Configuring Public Route
+  PublicRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  # Associating Subnet 1 and Route Table
+  PublicSubnet1RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet1
+
+  # Associating Subnet 2 and Route Table
+  PublicSubnet2RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet2
+
+  # Associating Subnet 3 and Route Table
+  PublicSubnet3RouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      SubnetId: !Ref PublicSubnet3
+
   # Creating Security Group for EC2 Instances
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: DUS-Prod
+      GroupName: Efflux-BE
       GroupDescription: Enable SSH access and HTTP
-      VpcId: !ImportValue Efflux-VPC
+      VpcId: !Ref VPC
       SecurityGroupIngress:
         - IpProtocol: tcp
           FromPort: 22
@@ -47,19 +165,21 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           CidrIp: 0.0.0.0/0
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: DUS-Prod
+          Value: Efflux-BE
         - Key: project
           Value: efflux
-        - Key: component
-          Value: dus
 
   # Configuring launch template
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: DUS-Prod
+      LaunchTemplateName: Efflux-BE
       LaunchTemplateData:
         BlockDeviceMappings:
           - DeviceName: /dev/sda1
@@ -67,7 +187,9 @@ Resources:
               VolumeSize: 20
               VolumeType: gp3
               DeleteOnTermination: yes
-              Encrypted: true
+              Encrypted: false
+        IamInstanceProfile:
+          Name: !Ref CodeDeployInstanceProfile
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: yes
@@ -75,8 +197,8 @@ Resources:
             Groups:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-        KeyName: efflux-dus
-        InstanceType: t3a.large
+        KeyName: efflux-backend
+        InstanceType: t3.medium
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -108,7 +230,7 @@ Resources:
             sudo service codedeploy-agent start
 
             # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:dus-prod
+            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-be
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
@@ -117,23 +239,25 @@ Resources:
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
 
+            # Set environment variables
+            NEWRELIC_ENVIRONMENT=prod
+
+            # Define environment
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
               - Key: Name
-                Value: DUS-Prod Volume
+                Value: Efflux-BE Volume
               - Key: project
                 Value: efflux
-              - Key: component
-                Value: dus
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: DUS-Prod Instance
+                Value: Efflux-BE Instance
               - Key: project
                 Value: efflux
-              - Key: component
-                Value: dus
 
   NotificationTopic:
     Type: AWS::SNS::Topic
@@ -141,26 +265,24 @@ Resources:
       Subscription:
         - Endpoint: !Ref OperatorEmail
           Protocol: email
-      TopicName: DUS-Prod-ScalingNotification
+      TopicName: Efflux-ScalingNotification
       Tags:
         - Key: Name
-          Value: DUS-Prod-ScalingNotification
+          Value: Efflux-ScalingNotification
         - Key: project
           Value: efflux
-        - Key: component
-          Value: dus
 
   # Create an Auto Scaling Group
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: DUS-Prod-ASG
+      AutoScalingGroupName: Efflux-BE-ASG
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MaxSize: "1"
-      MinSize: "1"
-      DesiredCapacity: "1"
+      MaxSize: "4"
+      MinSize: "2"
+      DesiredCapacity: "2"
       NotificationConfigurations:
         - TopicARN: !Ref NotificationTopic
           NotificationTypes:
@@ -173,57 +295,53 @@ Resources:
       TargetGroupARNs:
         - !Ref ALBTargetGroup
       VPCZoneIdentifier:
-        - !ImportValue Efflux-PublicSubnet1
-        - !ImportValue Efflux-PublicSubnet2
-        - !ImportValue Efflux-PublicSubnet3
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
       Tags:
         - Key: Name
-          Value: DUS-Prod Instance
+          Value: Efflux-BE Instance
           PropagateAtLaunch: true
         - Key: project
           Value: efflux
-          PropagateAtLaunch: true
-        - Key: component
-          Value: dus
           PropagateAtLaunch: true
 
   # Creating an Application Load Balancer
   ApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: DusProdALB
+      Name: EffluxALB
       SecurityGroups:
         - !Ref InstanceSecurityGroup
       Subnets:
-        - !ImportValue Efflux-PublicSubnet1
-        - !ImportValue Efflux-PublicSubnet2
-        - !ImportValue Efflux-PublicSubnet3
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
       Tags:
         - Key: Name
-          Value: DusProdALB
+          Value: EffluxALB
         - Key: project
           Value: efflux
-        - Key: component
-          Value: dus
 
   # Configuring Application Load Balancer Target Group
   ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: DUS-Prod
+      Name: Efflux-BE
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
-      Port: "80"
+      HealthCheckIntervalSeconds: 5
+      HealthCheckTimeoutSeconds: 2
+      HealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+      Port: 80
       Protocol: HTTP
-      VpcId: !ImportValue Efflux-VPC
+      VpcId: !Ref VPC
       Tags:
         - Key: Name
-          Value: DUS-Prod
+          Value: ALBTargetGroup
         - Key: project
           Value: efflux
-        - Key: component
-          Value: dus
 
   # Configuring Application Load Balancer Listener
   ALBListener:
@@ -262,7 +380,7 @@ Resources:
   CloudWatchAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: DUS-Prod-CPU-Alarm
+      AlarmName: Efflux-CPU-Alarm
       EvaluationPeriods: "1"
       Statistic: Average
       Threshold: "60"
@@ -278,26 +396,182 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       MetricName: CPUUtilization
 
+  # ElasticFileSystem
+  ElasticFileSystem:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      BackupPolicy: { "Status": "ENABLED" }
+      Encrypted: true
+      PerformanceMode: generalPurpose
+      ThroughputMode: bursting
+      LifecyclePolicies:
+        - TransitionToIA: AFTER_60_DAYS
+        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
+      FileSystemTags:
+        - Key: Name
+          Value: Efflux-EFS
+        - Key: project
+          Value: efflux
+
+  # Mount Target 1
+  MountTarget1:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticFileSystem
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet1
+
+  # Mount Target 2
+  MountTarget2:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticFileSystem
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet2
+
+  # Mount Target 3
+  MountTarget3:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref ElasticFileSystem
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
+      SubnetId: !Ref PublicSubnet3
+
+  # Create an RDS Postgres Database with 100GB storage, db.t3.large instance, and auto minor version upgrade enabled and backup retention period of 7 days and backup window of 30 minutes
+  RDSPostgresDB:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      AllocatedStorage: 70
+      DeletionProtection: false
+      DBInstanceClass: db.t3.large
+      Engine: postgres
+      EngineVersion: 15.4
+      DBInstanceIdentifier: efflux-be
+      DBName: efflux
+      MasterUsername: effluxapp
+      MasterUserPassword: !Ref RDSPostgresClusterPassword
+      PubliclyAccessible: true
+      BackupRetentionPeriod: 5
+      Port: 5432
+      StorageEncrypted: false
+      StorageType: gp3
+      PreferredBackupWindow: 00:30-01:00
+      PreferredMaintenanceWindow: mon:03:00-mon:03:30
+      AutoMinorVersionUpgrade: true
+      MonitoringInterval: 60
+      MonitoringRoleArn: !GetAtt RDSMonitoringRole.Arn
+      EnablePerformanceInsights: true
+      PerformanceInsightsRetentionPeriod: 31
+      VPCSecurityGroups:
+        - !Ref InstanceSecurityGroup
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+
+  RDSMonitoringRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - monitoring.rds.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Path: "/"
+      Policies:
+        - PolicyName: RDSMonitoringRolePolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - cloudwatch:*
+                  - logs:*
+                Resource: "*"
+
+  # Create a DB Subnet Group
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: Subnet group for Efflux RDS
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-BE-SubnetGroup
+        - Key: project
+          Value: efflux
+
+  # Create an ElastiCache Redis Cluster
+  RedisCluster:
+    Type: AWS::ElastiCache::CacheCluster
+    Properties:
+      ClusterName: Efflux-BE
+      CacheNodeType: cache.t3.medium
+      Engine: redis
+      EngineVersion: 7.1
+      NumCacheNodes: 1
+      Port: 6379
+      VpcSecurityGroupIds:
+        - !Ref InstanceSecurityGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
+      AutoMinorVersionUpgrade: true
+      Tags:
+        - Key: Name
+          Value: Efflux-BE
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: cache
+
+  # Create a Cache Subnet Group
+  CacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      Description: Subnet group for Efflux ElastiCache
+      SubnetIds:
+        - !Ref PublicSubnet1
+        - !Ref PublicSubnet2
+        - !Ref PublicSubnet3
+      Tags:
+        - Key: Name
+          Value: Efflux-BE-SubnetGroup
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: cache
+
   # Create CodeDeploy Application
   CodeDeployApplication:
     Type: AWS::CodeDeploy::Application
     Properties:
-      ApplicationName: DUS-Prod
+      ApplicationName: Efflux-BE
       ComputePlatform: Server
       Tags:
         - Key: Name
-          Value: DUS-Prod
+          Value: Efflux-BE
         - Key: project
           Value: efflux
-        - Key: component
-          Value: dus
+        - Key: operation
+          Value: deployment
 
-  # # Create CodeDeploy Deployment Group
+  # Create CodeDeploy Deployment Group
   CodeDeployDeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
       ApplicationName: !Ref CodeDeployApplication
-      DeploymentGroupName: DUS-Prod
+      DeploymentGroupName: Efflux-BE
       DeploymentConfigName: CodeDeployDefault.OneAtATime
       ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
       AutoScalingGroups:
@@ -307,7 +581,7 @@ Resources:
         DeploymentType: IN_PLACE
       LoadBalancerInfo:
         TargetGroupInfoList:
-          - Name: DUS-Prod
+          - Name: Efflux-BE
         TargetGroupPairInfoList:
           - TargetGroups:
               - Name: !Ref ALBTargetGroup
@@ -317,21 +591,21 @@ Resources:
       Ec2TagFilters:
         - Key: Name
           Type: KEY_AND_VALUE
-          Value: DUS-Prod Instance
+          Value: Efflux-BE Instance
       TriggerConfigurations:
         - TriggerEvents:
             - DeploymentFailure
             - DeploymentStop
             - DeploymentSuccess
-          TriggerName: DUS-Prod-DeploymentTrigger
+          TriggerName: Efflux-BE-DeploymentTrigger
           TriggerTargetArn: !Ref NotificationTopic
       Tags:
         - Key: Name
-          Value: DUS-Prod-DeploymentGroup
+          Value: Efflux-BE-DeploymentGroup
         - Key: project
           Value: efflux
-        - Key: component
-          Value: dus
+        - Key: operation
+          Value: deployment
 
   # Create CodeDeploy Service Role
   CodeDeployServiceRole:
@@ -344,6 +618,7 @@ Resources:
             Principal:
               Service:
                 - codedeploy.amazonaws.com
+                - ec2.amazonaws.com
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -366,16 +641,16 @@ Resources:
                   - ssm:GetParameter*
                 Resource: "*"
 
-  # # Create CodeDeploy Instance Profile
+  # Create CodeDeploy Instance Profile
   CodeDeployInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
       Path: "/"
       Roles:
         - !Ref CodeDeployServiceRole
-      InstanceProfileName: DUS-Prod-InstanceProfile
+      InstanceProfileName: Efflux-BE-InstanceProfile
 
-  # # Create CodeDeploy Role
+  # Create CodeDeploy Role
   CodeDeployRole:
     Type: AWS::IAM::Role
     Properties:
@@ -409,7 +684,7 @@ Resources:
                   - ssm:GetParameter*
                 Resource: "*"
 
-  # # Create CodeDeploy Role Policy
+  # Create CodeDeploy Role Policy
   CodeDeployRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -441,16 +716,52 @@ Resources:
       Path: "/"
       Roles:
         - !Ref CodeDeployRole
-      InstanceProfileName: DUS-Prod
+      InstanceProfileName: Efflux-BE
 
 ####################
 # Outputs
 ####################
 
 Outputs:
+  VPC:
+    Description: VPC ID
+    Value: !Ref VPC
+    Export:
+      Name: Efflux-VPC
+  InternetGateway:
+    Description: Internet Gateway ID
+    Value: !Ref InternetGateway
+    Export:
+      Name: Efflux-InternetGateway
+  PublicSubnet1:
+    Description: Public Subnet 1 ID
+    Value: !Ref PublicSubnet1
+    Export:
+      Name: Efflux-PublicSubnet1
+  PublicSubnet2:
+    Description: Public Subnet 2 ID
+    Value: !Ref PublicSubnet2
+    Export:
+      Name: Efflux-PublicSubnet2
+  PublicSubnet3:
+    Description: Public Subnet 3 ID
+    Value: !Ref PublicSubnet3
+    Export:
+      Name: Efflux-PublicSubnet3
   ALBTargetGroup:
     Description: Application Load Balancer Target Group ID
     Value: !Ref ALBTargetGroup
   CloudWatchAlarm:
     Description: CloudWatch Alarm ID
     Value: !Ref CloudWatchAlarm
+  ElasticFileSystem:
+    Description: Elastic File System ID
+    Value: !Ref ElasticFileSystem
+  RDSPostgresDB:
+    Description: RDS Postgres Database ID
+    Value: !Ref RDSPostgresDB
+  RDSPostgresEndpoint:
+    Description: RDS Postgres Database Endpoint
+    Value: !GetAtt RDSPostgresDB.Endpoint.Address
+    Export:
+      Name: EffluxRDSPostgresEndpoint

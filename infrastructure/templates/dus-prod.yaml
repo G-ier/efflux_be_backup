@@ -9,12 +9,6 @@ Parameters:
     Description: The email address to notify when there are any scaling activities
     Type: String
     Default: ilyas@roi.ad
-  RDSPostgresClusterPassword:
-    Description: The password for the database
-    NoEcho: "true"
-    Type: String
-    MinLength: "8"
-    MaxLength: "41"
 
 ####################
 # Resources
@@ -25,7 +19,7 @@ Resources:
   InstanceSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: Efflux-Staging
+      GroupName: DUS-Prod
       GroupDescription: Enable SSH access and HTTP
       VpcId: !ImportValue Efflux-VPC
       SecurityGroupIngress:
@@ -55,15 +49,17 @@ Resources:
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
-          Value: Efflux-Staging
+          Value: DUS-Prod
         - Key: project
-          Value: efflux-staging-staging
+          Value: efflux
+        - Key: component
+          Value: dus
 
   # Configuring launch template
   LaunchTemplate:
     Type: AWS::EC2::LaunchTemplate
     Properties:
-      LaunchTemplateName: Efflux-Staging
+      LaunchTemplateName: DUS-Prod
       LaunchTemplateData:
         BlockDeviceMappings:
           - DeviceName: /dev/sda1
@@ -72,8 +68,6 @@ Resources:
               VolumeType: gp3
               DeleteOnTermination: yes
               Encrypted: true
-        IamInstanceProfile:
-          Name: !Ref CodeDeployInstanceProfile
         NetworkInterfaces:
           - DeviceIndex: 0
             AssociatePublicIpAddress: yes
@@ -81,8 +75,8 @@ Resources:
             Groups:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-        KeyName: efflux-staging
-        InstanceType: t3.small
+        KeyName: efflux-dus
+        InstanceType: t3a.large
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -114,31 +108,35 @@ Resources:
             sudo service codedeploy-agent start
 
             # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-staging
+            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:dus-prod
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
+
+            # Set environment variables
+            NEWRELIC_ENVIRONMENT=prod
 
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
 
-            # Define environment
-            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
-
         TagSpecifications:
           - ResourceType: volume
             Tags:
               - Key: Name
-                Value: Efflux-Staging Volume
+                Value: DUS-Prod Volume
               - Key: project
-                Value: efflux-staging
+                Value: efflux
+              - Key: component
+                Value: dus
           - ResourceType: instance
             Tags:
               - Key: Name
-                Value: Efflux-Staging Instance
+                Value: DUS-Prod Instance
               - Key: project
-                Value: efflux-staging
+                Value: efflux
+              - Key: component
+                Value: dus
 
   NotificationTopic:
     Type: AWS::SNS::Topic
@@ -146,22 +144,24 @@ Resources:
       Subscription:
         - Endpoint: !Ref OperatorEmail
           Protocol: email
-      TopicName: Efflux-Staging-ScalingNotification
+      TopicName: DUS-Prod-ScalingNotification
       Tags:
         - Key: Name
-          Value: Efflux-Staging-ScalingNotification
+          Value: DUS-Prod-ScalingNotification
         - Key: project
-          Value: efflux-staging
+          Value: efflux
+        - Key: component
+          Value: dus
 
   # Create an Auto Scaling Group
   AutoScalingGroup:
     Type: AWS::AutoScaling::AutoScalingGroup
     Properties:
-      AutoScalingGroupName: Efflux-Staging-ASG
+      AutoScalingGroupName: DUS-Prod-ASG
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MaxSize: "2"
+      MaxSize: "1"
       MinSize: "1"
       DesiredCapacity: "1"
       NotificationConfigurations:
@@ -181,17 +181,20 @@ Resources:
         - !ImportValue Efflux-PublicSubnet3
       Tags:
         - Key: Name
-          Value: Efflux-Staging Instance
+          Value: DUS-Prod Instance
           PropagateAtLaunch: true
         - Key: project
-          Value: efflux-staging
+          Value: efflux
+          PropagateAtLaunch: true
+        - Key: component
+          Value: dus
           PropagateAtLaunch: true
 
   # Creating an Application Load Balancer
   ApplicationLoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
-      Name: EffluxStagingALB
+      Name: DusProdALB
       SecurityGroups:
         - !Ref InstanceSecurityGroup
       Subnets:
@@ -200,15 +203,17 @@ Resources:
         - !ImportValue Efflux-PublicSubnet3
       Tags:
         - Key: Name
-          Value: EffluxStagingALB
+          Value: DusProdALB
         - Key: project
-          Value: efflux-staging
+          Value: efflux
+        - Key: component
+          Value: dus
 
   # Configuring Application Load Balancer Target Group
   ALBTargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      Name: Efflux-Staging
+      Name: DUS-Prod
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: "30"
       HealthCheckTimeoutSeconds: "5"
@@ -217,9 +222,11 @@ Resources:
       VpcId: !ImportValue Efflux-VPC
       Tags:
         - Key: Name
-          Value: Efflux-Staging
+          Value: DUS-Prod
         - Key: project
-          Value: efflux-staging
+          Value: efflux
+        - Key: component
+          Value: dus
 
   # Configuring Application Load Balancer Listener
   ALBListener:
@@ -246,32 +253,6 @@ Resources:
       ListenerArn: !Ref ALBListener
       Priority: "1"
 
-  # New HTTPS Listener
-  ALBHttpsListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
-      LoadBalancerArn: !Ref ApplicationLoadBalancer
-      Port: "443"
-      Protocol: HTTPS
-      Certificates:
-        - CertificateArn: arn:aws:acm:us-east-1:524744845066:certificate/3b81d94e-8a66-41ee-a9c7-8a5e80efe6d3 # SSL certificate ARN
-
-  ALBHttpsListenerRule:
-    Type: AWS::ElasticLoadBalancingV2::ListenerRule
-    Properties:
-      Actions:
-        - Type: forward
-          TargetGroupArn: !Ref ALBTargetGroup
-      Conditions:
-        - Field: path-pattern
-          Values:
-            - "/*"
-      ListenerArn: !Ref ALBHttpsListener
-      Priority: "2"
-
   # Scaling Policy
   ScalingPolicy:
     Type: AWS::AutoScaling::ScalingPolicy
@@ -284,7 +265,7 @@ Resources:
   CloudWatchAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
-      AlarmName: Efflux-Staging-CPU-Alarm
+      AlarmName: DUS-Prod-CPU-Alarm
       EvaluationPeriods: "1"
       Statistic: Average
       Threshold: "60"
@@ -300,153 +281,26 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       MetricName: CPUUtilization
 
-  # ElasticFileSystem
-  ElasticFileSystem:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      BackupPolicy: { "Status": "ENABLED" }
-      Encrypted: true
-      PerformanceMode: generalPurpose
-      ThroughputMode: bursting
-      LifecyclePolicies:
-        - TransitionToIA: AFTER_60_DAYS
-        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
-      FileSystemTags:
-        - Key: Name
-          Value: Efflux-Staging-EFS
-        - Key: project
-          Value: efflux-staging
-
-  # Mount Target 1
-  MountTarget1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet1
-
-  # Mount Target 2
-  MountTarget2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet2
-
-  # Mount Target 3
-  MountTarget3:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet3
-
-  RDSPostgresDB:
-    Type: AWS::RDS::DBInstance
-    Properties:
-      AllocatedStorage: 53
-      DeletionProtection: false
-      DBInstanceClass: db.t3.small
-      Engine: postgres
-      EngineVersion: 16.1
-      DBInstanceIdentifier: efflux-staging
-      DBName: efflux
-      MasterUsername: effluxapp
-      MasterUserPassword: !Ref RDSPostgresClusterPassword
-      PubliclyAccessible: true
-      BackupRetentionPeriod: 5
-      Port: 5432
-      StorageEncrypted: false
-      StorageType: gp3
-      PreferredBackupWindow: 00:30-01:00
-      PreferredMaintenanceWindow: mon:03:00-mon:03:30
-      AutoMinorVersionUpgrade: true
-      VPCSecurityGroups:
-        - !Ref InstanceSecurityGroup
-      DBSubnetGroupName: !Ref DBSubnetGroup
-      Tags:
-        - Key: Name
-          Value: Efflux-Staging
-        - Key: project
-          Value: efflux-staging
-
-  # Create a DB Subnet Group
-  DBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: Subnet group for Efflux RDS
-      SubnetIds:
-        - !ImportValue Efflux-PublicSubnet1
-        - !ImportValue Efflux-PublicSubnet2
-        - !ImportValue Efflux-PublicSubnet3
-      Tags:
-        - Key: Name
-          Value: Efflux-Staging-SubnetGroup
-        - Key: project
-          Value: efflux-staging
-
-  # Create an ElastiCache Redis Cluster
-  RedisCluster:
-    Type: AWS::ElastiCache::CacheCluster
-    Properties:
-      ClusterName: Efflux-Staging
-      CacheNodeType: cache.t3.small
-      Engine: redis
-      EngineVersion: 7.1
-      NumCacheNodes: 1
-      Port: 6379
-      VpcSecurityGroupIds:
-        - !Ref InstanceSecurityGroup
-      CacheSubnetGroupName: !Ref CacheSubnetGroup
-      AutoMinorVersionUpgrade: true
-      Tags:
-        - Key: Name
-          Value: Efflux-Staging
-        - Key: project
-          Value: efflux-staging
-        - Key: operation
-          Value: cache
-
-  # Create a Cache Subnet Group
-  CacheSubnetGroup:
-    Type: AWS::ElastiCache::SubnetGroup
-    Properties:
-      Description: Subnet group for Efflux ElastiCache
-      SubnetIds:
-        - !ImportValue Efflux-PublicSubnet1
-        - !ImportValue Efflux-PublicSubnet2
-        - !ImportValue Efflux-PublicSubnet3
-      Tags:
-        - Key: Name
-          Value: Efflux-Staging-SubnetGroup
-        - Key: project
-          Value: efflux-staging
-        - Key: operation
-          Value: cache
-
   # Create CodeDeploy Application
   CodeDeployApplication:
     Type: AWS::CodeDeploy::Application
     Properties:
-      ApplicationName: Efflux-Staging
+      ApplicationName: DUS-Prod
       ComputePlatform: Server
       Tags:
         - Key: Name
-          Value: Efflux-Staging
+          Value: DUS-Prod
         - Key: project
-          Value: efflux-staging
-        - Key: operation
-          Value: deployment
+          Value: efflux
+        - Key: component
+          Value: dus
 
   # # Create CodeDeploy Deployment Group
   CodeDeployDeploymentGroup:
     Type: AWS::CodeDeploy::DeploymentGroup
     Properties:
       ApplicationName: !Ref CodeDeployApplication
-      DeploymentGroupName: Efflux-Staging
+      DeploymentGroupName: DUS-Prod
       DeploymentConfigName: CodeDeployDefault.OneAtATime
       ServiceRoleArn: !GetAtt CodeDeployServiceRole.Arn
       AutoScalingGroups:
@@ -456,7 +310,7 @@ Resources:
         DeploymentType: IN_PLACE
       LoadBalancerInfo:
         TargetGroupInfoList:
-          - Name: Efflux-Staging
+          - Name: DUS-Prod
         TargetGroupPairInfoList:
           - TargetGroups:
               - Name: !Ref ALBTargetGroup
@@ -466,21 +320,21 @@ Resources:
       Ec2TagFilters:
         - Key: Name
           Type: KEY_AND_VALUE
-          Value: Efflux-Staging Instance
+          Value: DUS-Prod Instance
       TriggerConfigurations:
         - TriggerEvents:
             - DeploymentFailure
             - DeploymentStop
             - DeploymentSuccess
-          TriggerName: Efflux-Staging-DeploymentTrigger
+          TriggerName: DUS-Prod-DeploymentTrigger
           TriggerTargetArn: !Ref NotificationTopic
       Tags:
         - Key: Name
-          Value: Efflux-Staging-DeploymentGroup
+          Value: DUS-Prod-DeploymentGroup
         - Key: project
-          Value: efflux-staging
-        - Key: operation
-          Value: deployment
+          Value: efflux
+        - Key: component
+          Value: dus
 
   # Create CodeDeploy Service Role
   CodeDeployServiceRole:
@@ -522,7 +376,7 @@ Resources:
       Path: "/"
       Roles:
         - !Ref CodeDeployServiceRole
-      InstanceProfileName: Efflux-Staging-InstanceProfile
+      InstanceProfileName: DUS-Prod-InstanceProfile
 
   # # Create CodeDeploy Role
   CodeDeployRole:
@@ -558,7 +412,7 @@ Resources:
                   - ssm:GetParameter*
                 Resource: "*"
 
-  # Create CodeDeploy Role Policy
+  # # Create CodeDeploy Role Policy
   CodeDeployRolePolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -590,7 +444,7 @@ Resources:
       Path: "/"
       Roles:
         - !Ref CodeDeployRole
-      InstanceProfileName: Efflux-Staging
+      InstanceProfileName: DUS-Prod
 
 ####################
 # Outputs
@@ -603,12 +457,3 @@ Outputs:
   CloudWatchAlarm:
     Description: CloudWatch Alarm ID
     Value: !Ref CloudWatchAlarm
-  ElasticFileSystem:
-    Description: Elastic File System ID
-    Value: !Ref ElasticFileSystem
-  RDSPostgresDB:
-    Description: RDS Postgres Database ID
-    Value: !Ref RDSPostgresDB
-  RDSPostgresEndpoint:
-    Description: RDS Postgres Database Endpoint
-    Value: !GetAtt RDSPostgresDB.Endpoint.Address

@@ -62,7 +62,25 @@ function TRAFFIC_SOURCE(network, trafficSource ,startDate, endDate, campaignIdsR
         GROUP BY tt.date, tt.hour, tt.adset_id
       )
     `
-  } else {
+  }
+  else if (trafficSource === 'taboola'){
+    return `traffic_source AS (
+    SELECT tbl.date,
+    tbl.hour,
+    tbl.campaign_id as campaign_id,
+    CAST(ROUND(SUM(tbl.spent)::decimal, 2) AS FLOAT) as spend,
+    CAST(ROUND(SUM(tbl.impressions)::decimal, 2) AS FLOAT) as impressions,
+    CAST(ROUND(SUM(tbl.clicks)::decimal, 2) AS FLOAT) as clicks,
+    CAST(ROUND(SUM(tbl.cpa_actions_num)::decimal, 2) AS FLOAT) as ts_conversions,
+    MAX(tbl.updated_at) as ts_last_updated,
+    null as adset_id
+    FROM taboola tbl
+    WHERE tbl.campaign_id IN (SELECT campaign_id FROM restriction)
+    ${campaignIdsRestriction ? `AND tt.campaign_id IN ${campaignIdsRestriction}` : ''}
+    GROUP BY tbl.date, tbl.hour, tbl.campaign_id
+    )`
+  }
+  else {
     throw new Error('Invalid traffic source')
   }
 }
@@ -74,8 +92,12 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
         SELECT
           cr.hour as hour,
           cr.request_date as date,
-          cr.adset_id,
-          MAX(cr.campaign_id) as campaign_id,
+          ${
+            trafficSource === 'taboola' ? `MAX(cr.adset_id) as adset_id,
+            cr.campaign_id as campaign_id `:
+             `cr.adset_id,
+              MAX(cr.campaign_id) as campaign_id`
+          },
           CAST(ROUND(SUM(cr.total_revenue)::decimal, 2) AS FLOAT) as revenue,
           CAST(SUM(cr.total_searches) AS INTEGER) as searches,
           CAST(SUM(cr.total_lander_visits) AS INTEGER) as lander_visits,
@@ -89,7 +111,9 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
         AND   cr.request_date <= '${endDate}'
         AND   cr.traffic_source = '${trafficSource}'
         ${campaignIdsRestriction ? `AND cr.campaign_id IN ${campaignIdsRestriction}` : ''}
-        GROUP BY cr.request_date, cr.hour, cr.adset_id
+        GROUP BY cr.request_date, cr.hour, cr.adset_id,  ${
+          trafficSource === 'taboola' ? `cr.campaign_id`: `cr.adset_id`
+        }
       )
     `
   } else if (network === 'sedo') {
@@ -215,6 +239,15 @@ function RETURN_FIELDS(network, traffic_source) {
       ELSE 0 END as spend_plus_fee
       `
     }
+    else if (trafficSource === 'taboola'){
+      return `
+      CASE WHEN network.date IS NULL THEN traffic_source.spend
+      ELSE 0 END as unallocated_spend_plus_fee,
+      CASE WHEN network.date IS NOT NULL THEN
+      traffic_source.spend
+      ELSE 0 END as spend_plus_fee
+      `
+    }
     else {
       throw new Error('Invalid traffic source')
     }
@@ -265,7 +298,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       WHERE
         date > '${startDate}' AND date <= '${endDate}'
       AND traffic_source = '${trafficSource}'
-    ), agg_adsets_data AS (
+    ), ${ trafficSource != 'taboola' ? `agg_adsets_data AS (
       SELECT
         c.id as campaign_id,
         MAX(c.name) as campaign_name,
@@ -277,7 +310,20 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
         ${campaignIdsRestriction ? `WHERE c.id IN ${campaignIdsRestriction}` : ''}
       GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
-    )
+    )` :
+    `agg_adsets_data AS (
+      SELECT
+      id as campaign_id,
+      MAX(name) as campaign_name,
+      '' as adset_id,
+      '' as adset_name,
+      user_id,
+      ad_account_id
+      FROM campaigns
+      ${campaignIdsRestriction ? `WHERE id IN ${campaignIdsRestriction}` : ''}
+      GROUP BY id, user_id, ad_account_id
+    )`
+  }
     , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
     , ${NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
       ${POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
@@ -292,8 +338,14 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       agg_adsets_data.ad_account_id as ad_account_id,
       ${RETURN_FIELDS(network, trafficSource)}
     FROM network
-    FULL OUTER JOIN traffic_source ON traffic_source.adset_id = network.adset_id AND traffic_source.date = network.date AND network.hour = traffic_source.hour
-    FULL OUTER JOIN agg_adsets_data ON traffic_source.adset_id = agg_adsets_data.adset_id
+    FULL OUTER JOIN traffic_source ON
+    ${
+      trafficSource === 'taboola' ? `traffic_source.campaign_id = network.campaign_id`: ` traffic_source.adset_id = network.adset_id`
+    }
+    AND traffic_source.date = network.date AND network.hour = traffic_source.hour
+    FULL OUTER JOIN agg_adsets_data ON ${
+      trafficSource === 'taboola' ? `traffic_source.campaign_id = agg_adsets_data.campaign_id` : `traffic_source.adset_id = agg_adsets_data.adset_id`
+    }
     ${
       network === 'crossroads' || network === 'tonic' ? `
         FULL OUTER JOIN postback_events ON network.adset_id = postback_events.adset_id AND network.date = postback_events.date AND network.hour = postback_events.hour
