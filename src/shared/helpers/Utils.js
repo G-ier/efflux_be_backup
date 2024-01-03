@@ -1,3 +1,5 @@
+const moment = require('moment-timezone');
+
 function isNotNumeric(str) {
   return isNaN(parseFloat(str)) || !isFinite(str);
 }
@@ -50,9 +52,27 @@ function getDatesBetween(startDate, endDate) {
   return dates;
 }
 
+function extractDateHourFromUnixTimestamp(timestamp, timezone='America/Los_Angeles'){
+  // Step 1: Convert the timestamp to a Date Object
+  const date = moment.unix(timestamp);
+
+  // Step 2: Convert the date object to the specified timezone
+  date.tz(timezone);
+
+  // Step 3: Extract the date in YYYY-MM-DD format
+  const formattedDate = date.format('YYYY-MM-DD');
+
+  // Extract the hour in 'H' (only number without preceding 0 for hours < 10) format
+  const formattedHour = date.format('H');
+
+  return [formattedDate, formattedHour];
+
+}
+
 module.exports = {
   isNotNumeric,
   calculateAccumulated,
   offsetHourByShift,
-  getDatesBetween
+  getDatesBetween,
+  extractDateHourFromUnixTimestamp
 }

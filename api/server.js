@@ -40,6 +40,7 @@ const initializeAPI = async () => {
     const DISABLE_CRON                    = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON')
     const DISABLE_CROSSROADS_CRON         = EnvironmentVariablesManager.getEnvVariable('DISABLE_CROSSROADS_CRON')
     const DISABLE_TONIC_CRON              = EnvironmentVariablesManager.getEnvVariable('DISABLE_TONIC_CRON')
+    const DISABLE_MEDIANET_CRON           = EnvironmentVariablesManager.getEnvVariable('DISABLE_MEDIANET_CRON')
     const DISABLE_SEDO_CRON               = EnvironmentVariablesManager.getEnvVariable('DISABLE_SEDO_CRON')
     const DISABLE_TIKTOK_CRON             = EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CRON')
     const DISABLE_FACEBOOK_CRON           = EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_CRON')
@@ -52,6 +53,7 @@ const initializeAPI = async () => {
     const disableGeneralCron              = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
     const disableCrossroadsCron           = DISABLE_CROSSROADS_CRON === 'true' || DISABLE_CROSSROADS_CRON !== 'false';
     const disableTonicCron                = DISABLE_TONIC_CRON === 'true' || DISABLE_TONIC_CRON !== 'false';
+    const disableMediaNetCron             = DISABLE_MEDIANET_CRON === 'true' || DISABLE_MEDIANET_CRON !== 'false';
     const disableSedoCron                 = DISABLE_SEDO_CRON === 'true' || DISABLE_SEDO_CRON !== 'false';
     const disableTikTokCron               = DISABLE_TIKTOK_CRON === 'true' || DISABLE_TIKTOK_CRON !== 'false';
     const disableFacebookCron             = DISABLE_FACEBOOK_CRON === 'true' || DISABLE_FACEBOOK_CRON !== 'false';
@@ -103,6 +105,7 @@ const initializeAPI = async () => {
         Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
         Crossroads : ${disableCrossroadsCron ? 'Disabled' : 'Enabled'}
         Tonic      : ${disableTonicCron ? 'Disabled' : 'Enabled'}
+        MediaNet   : ${disableMediaNetCron ? 'Disabled' : 'Enabled'}
         Sedo       : ${disableSedoCron ? 'Disabled' : 'Enabled'}
         TikTok     : ${disableTikTokCron ? 'Disabled' : 'Enabled'}
         Facebook   : ${disableFacebookCron ? 'Disabled' : 'Enabled'}

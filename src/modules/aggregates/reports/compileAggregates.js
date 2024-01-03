@@ -168,6 +168,33 @@ function NETWORK(network, trafficSource, startDate, endDate, campaignIdsRestrict
     )
     `
   }
+  else if (network === 'medianet') {
+    return `
+    network AS (
+      SELECT
+        medianet.hour as hour,
+        medianet.date as date,
+        medianet.adset_id,
+        MAX(medianet.campaign_id) as campaign_id,
+        SUM(medianet.revenue) as revenue,
+        0 AS searches,
+        0 AS lander_visits,
+        SUM(medianet.conversions) AS cr_conversions,
+        MAX(medianet.updated_at) as network_updated_at,
+        0 as pb_lander_conversions,
+        0 as pb_conversions,
+        0 AS visitors,
+        0 AS uniq_conversions,
+        0 AS tracked_visitors
+      FROM medianet
+      WHERE medianet.date > '${startDate}'
+      AND   medianet.date <= '${endDate}'
+      AND   medianet.traffic_source = '${trafficSource}'
+      ${campaignIdsRestriction ? `AND medianet.campaign_id IN ${campaignIdsRestriction}` : ''}
+      GROUP BY medianet.date, medianet.hour, medianet.adset_id
+    )
+    `
+  }
   else {
     throw new Error('Invalid network')
   }
@@ -191,7 +218,7 @@ function POSTBACKS(network, trafficSource, startDate, endDate, campaignIdsRestri
       GROUP BY pb.date, pb.hour, pb.adset_id
     )`
   }
-  else if (network === 'sedo') {
+  else if (network === 'sedo' || network === 'medianet') {
     return ``
   }
   else {
@@ -273,7 +300,7 @@ function RETURN_FIELDS(network, traffic_source) {
         postback_events.pb_serp_conversions as pb_serp_conversions,
         postback_events.pb_conversions as pb_conversions,
       `:
-      network === 'sedo' ? `
+      network === 'sedo' || network === 'medianet' ? `
         network.pb_lander_conversions as pb_lander_conversions,
         0 as pb_serp_conversions,
         network.pb_conversions as pb_conversions,
@@ -332,7 +359,7 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       COALESCE(traffic_source.hour, network.hour) as hour,
       COALESCE(agg_adsets_data.campaign_id, traffic_source.campaign_id, network.campaign_id) as campaign_id,
       agg_adsets_data.campaign_name as campaign_name,
-      COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id ${network === 'sedo' ? '' : ', postback_events.adset_id'}) as adset_id,
+      COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id ${network === 'sedo' || network === 'medianet' ? '' : ', postback_events.adset_id'}) as adset_id,
       agg_adsets_data.adset_name as adset_name,
       agg_adsets_data.user_id as user_id,
       agg_adsets_data.ad_account_id as ad_account_id,
