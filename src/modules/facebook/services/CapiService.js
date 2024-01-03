@@ -144,7 +144,7 @@ class CapiService extends BaseService {
             action_source: "website",
             user_data: {
               country: [
-                sha256(event.region.toLowerCase())
+                sha256(event.country_code.toLowerCase())
               ],
               client_ip_address: event.ip,
               client_user_agent: event.user_agent,

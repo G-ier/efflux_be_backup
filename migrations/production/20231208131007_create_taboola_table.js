@@ -25,12 +25,12 @@ exports.up = function (knex) {
       table.decimal('cpa_conversion_rate_clicks', 5, 2);
       table.decimal('cpa_conversion_rate_views', 5, 2);
       table.string('currency');
-      table.string('unique_identifier');
+      table.string('unique_identifier').unique();
       table.timestamp('created_at').defaultTo(knex.fn.now());
       table.timestamp('updated_at').defaultTo(knex.fn.now());
     });
   };
-  
+
   exports.down = function (knex) {
     return knex.schema.dropTable('taboola');
   };

@@ -9,11 +9,12 @@ exports.up = function (knex) {
       table.integer('campaign_id');
       table.text('user_id');
       table.text('account_id');
+      table.text('provider_id');
       // Timestamps for created_at and updated_at
       table.timestamps(true, true);
     });
   };
-  
+
   exports.down = function (knex) {
     return knex.schema.dropTable('taboola_ads');
   };
