@@ -56,7 +56,7 @@ const updateTodayDataRegular = new CronJob(
 const updateYesterdayData = new CronJob(
     TABOOLA_UPDATE_YESTERDAY_CRON, // '28 * * * *',
     (async () => {
-      await updateTaboolaData(yesterdayYMD(), yesterdayYMDYMD());
+      await updateTaboolaData(yesterdayYMD(), yesterdayYMD());
     }
   ));
 
