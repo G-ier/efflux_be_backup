@@ -9,6 +9,10 @@ class CampaignsService extends TonicBaseService {
     this.repository = new CampaignsRepository();
   }
 
+  async getCampaignsAccount(campaignId) {
+    return await this.repository.fetchCampaignsAccount(campaignId);
+  }
+
   async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     this.logger.info(`Fetching Tonic Campaigns from the database`);
     const results = await this.repository.fetchCampaigns(fields, filters, limit);
@@ -19,25 +23,26 @@ class CampaignsService extends TonicBaseService {
   async fetchCampaignCallback(campaignId) {
     this.logger.info(`Fetching callback for Tonic Campaign ID ${campaignId} from API`);
     const endpoint = `campaign/callback?campaign_id=${campaignId}`;
-    const response = await this.makeTonicAPIRequest('GET', endpoint, {}, 'Error fetching campaigns');
+    const account = await this.repository.fetchCampaignsAccount(campaignId);
+    const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching campaigns');
     this.logger.info(`Fetched Tonic Campaign Callback for Campaign ID ${campaignId}`);
     return response;
   }
 
-  async fetchCampaignsFromAPI(state) {
+  async fetchCampaignsFromAPI(account, state) {
     this.logger.info(`Fetching ${state} Tonic Campaigns from the API`);
     const endpoint = `campaign/list?output=json&state=${state}`;
-    const response = await this.makeTonicAPIRequest('GET', endpoint, {}, 'Error fetching campaigns');
+    const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching campaigns');
     this.logger.info(`Fetched ${response.length} ${state} Tonic Campaigns from the API`);
     return response;
   }
 
-  async syncCampaigns() {
-    this.logger.info('Syncing Tonic Campaigns');
-    const campaigns = await this.fetchCampaignsFromAPI('active');
+  async syncCampaigns(account) {
+    this.logger.info(`Syncing Tonic Campaigns for account ${account.email}`);
+    const campaigns = await this.fetchCampaignsFromAPI(account, 'active');
     this.logger.info(`Upserting ${campaigns.length} Tonic Campaigns`);
     await this.executeWithLogging(
-      () => this.repository.upsert(campaigns),
+      () => this.repository.upsert(campaigns, account.id),
       "Error processing and upserting bulk data"
     );
     this.logger.info('Tonic Campaigns synced successfully');
