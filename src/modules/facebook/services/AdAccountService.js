@@ -25,13 +25,32 @@ class AdAccountService extends BaseService {
   async getAdAccountsFromApi(userId, token) {
     this.logger.info("Fetching Ad Accounts from API");
 
-    const data = await this.fetchFromApi(
-      `${FB_API_URL}${userId}/adaccounts`,
-        {fields: fieldsFilter, access_token: token, limit: 10000 },
-      "Error fetching Ad Accounts from API"
-    );
-    this.logger.info(`Fetched ${data?.data?.length} Ad Accounts from API`)
-    return data?.data;
+    const adAccounts = [];
+    let paging = {};
+    let url = `${FB_API_URL}${userId}/adaccounts`;
+    let params = {
+      fields: fieldsFilter,
+      access_token: token,
+      limit: 200,
+    };
+
+    do {
+      if (paging?.next) {
+        url = paging.next;
+        params = {};
+      }
+
+      const data = await this.fetchFromApi(
+        url,
+        params,
+        "Error fetching Ad Accounts from API"
+      );
+      paging = { ...data?.paging };
+      if (data?.data?.length) adAccounts.push(...data.data);
+    } while (paging?.next);
+
+    this.logger.info(`Fetched ${adAccounts.length} Ad Accounts from API`)
+    return adAccounts;
   }
 
   async syncAdAccounts(providerId, userId, accountId, token) {

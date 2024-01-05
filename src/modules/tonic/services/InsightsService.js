@@ -16,22 +16,22 @@ class InsightsService extends TonicBaseService {
     return results;
   }
 
-  async fetchInsightsFromAPI(startDate, endDate, hour, final=false) {
+  async fetchInsightsFromAPI(account, startDate, endDate, hour, final=false) {
     this.logger.info(`Fetching Tonic Insights from the API`);
     const endpoint = final
       ? `/epc/final?from=${startDate}&to=${endDate}${hour ? `&hour=${hour}` : ''}`
       : `/epc/daily?date=${startDate}&show_revenue_type=yes`;
-    const response = await this.makeTonicAPIRequest('GET', endpoint, {}, 'Error fetching insights');
+    const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching insights');
     this.logger.info(`Fetched ${response.length} Tonic Insights from the API`);
     return response;
   }
 
-  async syncInsights(startDate, endDate, hour, final=false) {
+  async syncInsights(account, startDate, endDate, hour, final=false) {
 
-    this.logger.info(`Syncing Tonic Insights for date range: ${startDate} - ${endDate} ${hour ? `at hour ${hour}` : ''}`);
+    this.logger.info(`Syncing Tonic Insights for date range: ${startDate} - ${endDate} ${hour ? `at hour ${hour}` : ''} for account ${account.email}`);
 
     // Pass the neccessary Parameters
-    const insights = await this.fetchInsightsFromAPI(startDate, endDate, hour, final);
+    const insights = await this.fetchInsightsFromAPI(account, startDate, endDate, hour, final);
     this.logger.info(`Upserting ${insights.length} Tonic Insights`);
     await this.executeWithLogging(
       () => this.repository.upsert(insights),

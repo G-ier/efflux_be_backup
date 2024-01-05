@@ -383,7 +383,7 @@ class CompositeService {
     CapiLogger.info(`Posting events to FB CAPI in batches.`);
     for(const batch of fbProcessedPayloads){
       const { token } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
-        for(const payload of batch.payloads){
+        for(const payload of batch.payloads) {
           await this.capiService.postCapiEvents(token, batch.entityId, payload);
         }
     }

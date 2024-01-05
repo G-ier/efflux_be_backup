@@ -79,7 +79,6 @@ class CapiService extends BaseService {
       this.logger.info(`Parsing Events with broken Pixel ID`);
       const dbPixelIds        = pixels.map((pixel) => pixel.pixel_id);
       const brokenPixelEvents = events.filter((event) => !dbPixelIds.includes(event.pixel_id))
-      console.log(`Found ${brokenPixelEvents.length} broken pixel events`)
       const validPixelEvents  = events.filter((event) => dbPixelIds.includes(event.pixel_id))
       this.logger.info(
         `Events Parsing Telemetry: SUCCESS(${validPixelEvents.length}) | ERROR(${brokenPixelEvents.length})`,
@@ -121,8 +120,9 @@ class CapiService extends BaseService {
 
       events.forEach((event) => {
 
-        if (['', null, undefined].includes(event.timestamp) || ['', null, undefined].includes(event.external))
+        if (['', null, undefined].includes(event.timestamp) || ['', null, undefined].includes(event.external)) {
           return;
+        }
 
         const fbc = !['', 'undefined', null, undefined].includes(event.fbc) ? event.fbc : `fb.1.${event.timestamp * 1000}.${event.external}`;
         const fbp = !['', 'undefined', null, undefined].includes(event.fbp) ? event.fbp : `fb.1.${event.timestamp * 1000}.${generateEventId()}`;
@@ -130,7 +130,7 @@ class CapiService extends BaseService {
           ? usStates[event.state.toUpperCase()].toLowerCase()
           : event.state.toLowerCase().replace(" ", "")
 
-        for ( let i = 0; i < event.conversions; i++ ) {
+        for ( let i = 0; i < event.purchase_event_count; i++ ) {
 
           if ( currentPayload.data.length === MAX_EVENTS ) {
             payloads.push(currentPayload)
@@ -169,7 +169,9 @@ class CapiService extends BaseService {
             }
           }
 
-          if (event.vertical) eventPayload.custom_data.content_type = event.vertical;
+          if (event.vertical) {
+            eventPayload.custom_data.content_type = event.vertical
+          }
           currentPayload.data.push(eventPayload)
         }
 
@@ -217,6 +219,7 @@ class CapiService extends BaseService {
        )
       }
       this.logger.info(`Reported ${updatedCount} session to Facebook CAPI for network ${network}`);
+      return updatedCount;
     }
 }
 

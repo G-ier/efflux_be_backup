@@ -9,16 +9,6 @@ class CampaignsController {
       this.logger = TonicLogger;
     }
 
-    async syncCampaigns(req, res) {
-      try {
-        const campaignsSyncedCount = await this.service.syncCampaigns();
-        res.status(200).send(`Synced ${campaignsSyncedCount} Tonic Campaigns`);
-      } catch (error) {
-        this.logger.error(`Error syncing Tonic Campaigns: ${error.message}`);
-        res.status(500).send('Error syncing Tonic Campaigns');
-      }
-    }
-
     async getCampaignCallback(req, res) {
       try {
         const { campaign_id } = req.query;

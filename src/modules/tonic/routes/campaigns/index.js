@@ -7,13 +7,6 @@ const CampaignsController         = require("../../controllers/CampaignsControll
 // Controllers
 const campaignsController         = new CampaignsController();
 
-// @route     /api/tonic/campaigns/sync-campaigns
-// @desc      GET sync campaigns
-// @Access    Private
-route.get("/sync-campaigns", async (req, res) => {
-  await campaignsController.syncCampaigns(req, res);
-});
-
 // @route     /api/tonic/campaigns/callback
 // @desc      GET sync campaigns
 // @Access    Private
