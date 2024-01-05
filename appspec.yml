@@ -7,17 +7,17 @@ files:
 hooks:
   AfterInstall:
     - location: deployment_scripts/after_install.sh
-      timeout: 300
+      timeout: 120 # seconds
       runas: root
   ApplicationStop:
     - location: deployment_scripts/application_stop.sh
-      timeout: 300
+      timeout: 120 # seconds
       runas: root
   ApplicationStart:
     - location: deployment_scripts/application_start.sh
-      timeout: 300
+      timeout: 120 # seconds
       runas: root
   BeforeInstall:
     - location: deployment_scripts/before_install.sh
-      timeout: 300
+      timeout: 120 # seconds
       runas: root
