@@ -79,7 +79,7 @@ Resources:
               VolumeSize: 20
               VolumeType: gp3
               DeleteOnTermination: yes
-              Encrypted: true
+              Encrypted: false
         IamInstanceProfile:
           Name: !Ref CodeDeployInstanceProfile
         NetworkInterfaces:
@@ -95,9 +95,9 @@ Resources:
           Fn::Base64: !Sub |
             #!/bin/bash
             # Update and install initial packages
-            sudo apt update && \
-            sudo apt upgrade -y && \
-            sudo apt install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+            sudo apt-get update && \
+            sudo apt-get upgrade -y && \
+            sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
 
@@ -108,8 +108,8 @@ Resources:
             NODE_MAJOR=20
             echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
-            sudo apt update
-            sudo apt install nodejs -y
+            sudo apt-get update
+            sudo apt-get install nodejs -y
 
             # Install PM2
             sudo npm install pm2@latest -g
@@ -531,7 +531,7 @@ Resources:
                   - ssm:GetParameter*
                 Resource: "*"
 
-  # # Create CodeDeploy Instance Profile
+  # Create CodeDeploy Instance Profile
   CodeDeployInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
