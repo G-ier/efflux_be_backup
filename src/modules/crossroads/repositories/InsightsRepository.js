@@ -201,10 +201,12 @@ class InsightsRepository {
     const dataChunks = _.chunk(rawData, chunkSize);
     for (const chunk of dataChunks) {
       const uniqueChunk = _.uniqBy(chunk, 'unique_identifier');
-      await this.database.upsert(this.tableName, uniqueChunk, 'unique_identifier');
 
-      // push to SQS queue
+      // push to SQS queue (for storing in data lake)
       await this.sqsService.sendMessageToQueue(uniqueChunk);
+
+      // upsert to database
+      await this.database.upsert(this.tableName, uniqueChunk, 'unique_identifier');
     }
 
     // Upsert aggregated data
