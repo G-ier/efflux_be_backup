@@ -18,7 +18,7 @@ exports.seed = async function (knex) {
         }
         return item.id;
       };
-      
+
       // Create associations
       return knex('role_permissions').insert([
         // Admin role permissions
@@ -157,27 +157,27 @@ exports.seed = async function (knex) {
 
         // Media Buyer role permissions
         {
-          role_id: getIdByName(roles, 'media buyer'),
+          role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_media_library'),
         },
         {
-          role_id: getIdByName(roles, 'media buyer'),
+          role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_reports'),
         },
         {
-          role_id: getIdByName(roles, 'media buyer'),
+          role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_campaigns'),
         },
         {
-          role_id: getIdByName(roles, 'media buyer'),
+          role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_adsets'),
         },
         {
-          role_id: getIdByName(roles, 'media buyer'),
+          role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'read_ads'),
         },
         {
-          role_id: getIdByName(roles, 'media buyer'),
+          role_id: getIdByName(roles, 'media_buyer'),
           permission_id: getIdByName(permissions, 'launch_ads'),
         },
         // // Creative role permissions

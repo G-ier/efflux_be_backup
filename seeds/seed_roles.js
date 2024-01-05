@@ -10,7 +10,7 @@ exports.seed = async function (knex) {
       // Inserts seed entries
       return knex('roles').insert([
         { name: 'admin', description: 'admin', is_active: true },
-        { name: 'media buyer', description: 'media buyer', is_active: true },
+        { name: 'media_buyer', description: 'media buyer', is_active: true },
         { name: 'creative', description: 'creative', is_active: true },
         { name: 'support staff', description: 'support staff', is_active: true },
         { name: 'manager', description: 'manager', is_active: false },
