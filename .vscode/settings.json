@@ -5,6 +5,7 @@
         "DUSEIP",
         "effluxapp",
         "Metabase",
-        "newrelic"
+        "newrelic",
+        "runas"
     ]
 }
