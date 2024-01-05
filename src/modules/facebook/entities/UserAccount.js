@@ -11,7 +11,8 @@ class UserAccount {
     user_id,
     created_at,
     updated_at,
-    business_scoped_id
+    business_scoped_id,
+    org_id
   ) {
     this.id = id;
     this.name = name;
@@ -25,6 +26,7 @@ class UserAccount {
     this.created_at = created_at;
     this.updated_at = updated_at;
     this.business_scoped_id = business_scoped_id || ""; // default value is an empty string
+    this.org_id = org_id || null
   }
 }
 

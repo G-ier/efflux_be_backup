@@ -61,7 +61,7 @@ class UserRepository {
   }
 
   // Group by user ID by default
-  const groupBy = ['users.id', 'roles.id', 'permissions.id', 'role_permissions.id', ...groupByFields];
+  const groupBy = ['users.id', ...groupByFields];
   sqlQuery += ` GROUP BY ${groupBy.join(', ')}`;
 
   if (limit) {

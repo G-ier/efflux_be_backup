@@ -58,7 +58,8 @@ class UserAccountRepository {
       dbObject.user_id,
       dbObject.created_at,
       dbObject.updated_at,
-      dbObject.business_scoped_id
+      dbObject.business_scoped_id,
+      dbObject.org_id
     );
   }
 
