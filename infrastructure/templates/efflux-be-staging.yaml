@@ -504,9 +504,9 @@ Resources:
         Version: "2012-10-17"
         Statement:
           - Effect: Allow
-            Principal:
-              Service:
-                - codedeploy.amazonaws.com
+            Principal: Service:1
+              - codedeploy.amazonaws.com
+              - ec2.amazonaws.com
             Action:
               - sts:AssumeRole
       Path: "/"
@@ -521,6 +521,7 @@ Resources:
                   - ec2:Describe*
                   - elasticloadbalancing:*
                   - s3:*
+                  - iam:PassRole
                   - sns:*
                   - cloudwatch:*
                   - cloudformation:*
@@ -562,6 +563,7 @@ Resources:
                   - autoscaling:*
                   - ec2:*
                   - elasticloadbalancing:*
+                  - iam:PassRole
                   - s3:Get*
                   - s3:List*
                   - sns:*
@@ -585,6 +587,7 @@ Resources:
               - autoscaling:*
               - ec2:*
               - elasticloadbalancing:*
+              - iam:PassRole
               - s3:Get*
               - s3:List*
               - sns:*
