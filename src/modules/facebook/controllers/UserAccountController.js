@@ -12,7 +12,7 @@ class UserAccountController {
     try {
       const accountDetails = req.body;
       const user_id = req.user.id;
-
+      const org_id = req.user?.org_id || null
       // Destructure the account details from the request body.
       const { name, email, provider, providerId: provider_id, imageUrl: image_url, accessToken } = accountDetails;
       const exists = await this.userAccountService.fetchUserAccounts(['*'], { provider, provider_id }, 1)
@@ -32,7 +32,8 @@ class UserAccountController {
         image_url,
         status: "active",
         user_id,
-        token
+        token,
+        org_id
       }
       // Save the account to our database.
       const id = await this.userAccountService.saveUserAccountToDB(account);

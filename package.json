@@ -11,6 +11,7 @@
     "start": "node index.js",
     "start:newrelic": "node -r newrelic index.js",
     "server": "nodemon index.js",
+    "make-migration":"node commands/makeMigration.js",
     "migrate": "knex migrate:latest",
     "migrate:down": "knex migrate:down",
     "migrate:make": "knex migrate:make",
