@@ -632,6 +632,7 @@ Resources:
                   - autoscaling:*
                   - ec2:Describe*
                   - elasticloadbalancing:*
+                  - iam:PassRole
                   - s3:*
                   - sns:*
                   - cloudwatch:*
@@ -674,6 +675,7 @@ Resources:
                   - autoscaling:*
                   - ec2:*
                   - elasticloadbalancing:*
+                  - iam:PassRole
                   - s3:Get*
                   - s3:List*
                   - sns:*
@@ -697,6 +699,7 @@ Resources:
               - autoscaling:*
               - ec2:*
               - elasticloadbalancing:*
+              - iam:PassRole
               - s3:Get*
               - s3:List*
               - sns:*
