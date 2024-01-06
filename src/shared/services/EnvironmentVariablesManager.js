@@ -1,48 +1,102 @@
 // Load the AWS SDK
-const { SecretsManagerClient, GetSecretValueCommand }   = require("@aws-sdk/client-secrets-manager");
-const { SSMClient, GetParameterCommand }                = require("@aws-sdk/client-ssm");
-const fs                                                = require('fs');
-class EnvironmentVariablesManager {
+const { SecretsManagerClient, GetSecretValueCommand } = require('@aws-sdk/client-secrets-manager');
+const { SSMClient, GetParameterCommand } = require('@aws-sdk/client-ssm');
+const fs = require('fs');
 
+class EnvironmentVariablesManager {
   static instance = null;
   static initialized = false;
 
   static secrets = [
     // Database
-    'DATABASE_URL', 'DATABASE_URL_STAGING', 'OLD_PRODUCTION_DATABASE_URL',
+    'DATABASE_URL',
+    'DATABASE_URL_STAGING',
+    'OLD_PRODUCTION_DATABASE_URL',
+
     // Facebook
-    'FACEBOOK_APP_ID', 'FACEBOOK_APP_SECRET', 'FACEBOOK_PIXEL_TOKEN',
+    'FACEBOOK_APP_ID',
+    'FACEBOOK_APP_SECRET',
+    'FACEBOOK_PIXEL_TOKEN',
+
     // Sedo
-    'SEDO_PARTNERID', 'SEDO_SIGNKEY', 'SEDO_USERNAME', 'SEDO_PASSWORD',
+    'SEDO_PARTNERID',
+    'SEDO_SIGNKEY',
+    'SEDO_USERNAME',
+    'SEDO_PASSWORD',
+
     // Funnel Flux
-    'FUNNEL_FLUX_API_ACCESS_TOKEN', 'FUNNEL_FLUX_API_REFRESH_TOKEN',
+    'FUNNEL_FLUX_API_ACCESS_TOKEN',
+    'FUNNEL_FLUX_API_REFRESH_TOKEN',
+
     // AUTH0
-    'AUTH0_AUDIENCE', 'AUTH0_DOMAIN', 'AUTH0_API', 'AUTH0_CLIENT_ID', 'AUTH0_CLIENT_SECRET',
+    'AUTH0_AUDIENCE',
+    'AUTH0_DOMAIN',
+    'AUTH0_API',
+    'AUTH0_CLIENT_ID',
+    'AUTH0_CLIENT_SECRET',
+
     // REDIS
-    'REDIS_CLUSTER_URL_STAGING', 'REDIS_CLUSTER_URL_PRODUCTION',
+    'REDIS_CLUSTER_URL_STAGING',
+    'REDIS_CLUSTER_URL_PRODUCTION',
+
     // MediaNet
-    'MEDIANET_EMAIL', 'MEDIANET_PASSWORD',
+    'MEDIANET_EMAIL',
+    'MEDIANET_PASSWORD',
+
     // Google API Key File
     'GOOGLE_API_KEY_FILE',
+
+    // SQS Pusher Credentials
+    'SQS_PUSHER_ACCESS_KEY_ID',
+    'SQS_PUSHER_SECRET_KEY',
   ];
 
   static parameters = [
-
     // CRONS
-    'DISABLE_CRON', 'DISABLE_CROSSROADS_CRON', 'DISABLE_TONIC_CRON', 'DISABLE_MEDIANET_CRON', 'DISABLE_SEDO_CRON', 'DISABLE_FACEBOOK_CRON', 'DISABLE_TIKTOK_CRON',
-    'DISABLE_FUNNEL_FLUX_CRON', 'DISABLE_AGGREGATES_UPDATE_CRON', 'DISABLE_REVEALBOT_SHEET_CRON', 'DISABLE_TABOOLA_CRON',
-    'DISABLE_TIKTOK_CROSSROADS_REVEALBOT_SHEET_CRON', 'DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON', 'DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON',
+    'DISABLE_CRON',
+    'DISABLE_CROSSROADS_CRON',
+    'DISABLE_TONIC_CRON',
+    'DISABLE_MEDIANET_CRON',
+    'DISABLE_SEDO_CRON',
+    'DISABLE_FACEBOOK_CRON',
+    'DISABLE_TIKTOK_CRON',
+    'DISABLE_FUNNEL_FLUX_CRON',
+    'DISABLE_AGGREGATES_UPDATE_CRON',
+    'DISABLE_REVEALBOT_SHEET_CRON',
+    'DISABLE_TABOOLA_CRON',
+    'DISABLE_TIKTOK_CROSSROADS_REVEALBOT_SHEET_CRON',
+    'DISABLE_TIKTOK_SEDO_REVEALBOT_SHEET_CRON',
+    'DISABLE_FACEBOOK_CROSSROADS_REVEALBOT_SHEET_CRON',
     'DISABLE_FACEBOOK_SEDO_REVEALBOT_SHEET_CRON',
 
     // Server settings
-    'DATABASE_ENVIRONMENT', 'PORT', 'DISABLE_SLACK_NOTIFICATION', 'CRON_ENVIRONMENT', 'DISABLE_AUTH_DEADLOCK', 'REDIS_ENVIRONMENT',
+    'DATABASE_ENVIRONMENT',
+    'PORT',
+    'DISABLE_SLACK_NOTIFICATION',
+    'CRON_ENVIRONMENT',
+    'DISABLE_AUTH_DEADLOCK',
+
+    // SQS Queues
+    'CROSSROAD_QUEUE_URL',
+    'TONIC_QUEUE_URL',
+    'SEDO_QUEUE_URL',
+
+    // Redis
+    'REDIS_ENVIRONMENT',
+    'ENABLE_CACHE',
 
     // Logging
-    'LOGGING_ENVIRONMENT', 'LOG_LEVEL',
+    'LOGGING_ENVIRONMENT',
+    'LOG_LEVEL',
 
     // Temporary
-    'TESTING_CAMPAIGN_IDS'
-  ]
+    'TESTING_CAMPAIGN_IDS',
+
+    // External Services
+    'MEDIA_LIBRARY_SERVICE_ENDPOINT',
+    'NOTIFICATIONS_SERVICE_ENDPOINT',
+    'EMAILS_SERVICE_ENDPOINT',
+  ];
 
   get isInitialized() {
     return !!this._initialized; // Use a private property _initialized for internal tracking
@@ -51,13 +105,14 @@ class EnvironmentVariablesManager {
   constructor() {
     if (!EnvironmentVariablesManager.instance) {
       // Check if the runtime environment is development or production
-      this.environmentLocation = process.env.ENVIRONMENT_LOCATION === 'local' ? 'Local' : 'AWS Cloud'
+      this.environmentLocation =
+        process.env.ENVIRONMENT_LOCATION === 'local' ? 'Local' : 'AWS Cloud';
       this.region = 'us-east-1';
       this.secretsManager = new SecretsManagerClient({
-        region: this.region
+        region: this.region,
       });
       this.parametersManager = new SSMClient({
-        region: this.region
+        region: this.region,
       });
       this.cachedValues = {}; // Object to hold cached secrets
       EnvironmentVariablesManager.instance = this;
@@ -67,7 +122,6 @@ class EnvironmentVariablesManager {
 
   // Retrieve a parameter from the AWS SSM Parameter Store
   async retrieveParameter(parameterName) {
-
     // Check if the parameter is stored in the parameters manager
     if (!EnvironmentVariablesManager.parameters.includes(parameterName)) {
       throw new Error(`No secret ${parameterName} stored in manager`);
@@ -76,7 +130,7 @@ class EnvironmentVariablesManager {
     try {
       const params = {
         Name: parameterName,
-        WithDecryption: true
+        WithDecryption: true,
       };
       const data = await this.parametersManager.send(new GetParameterCommand(params));
 
@@ -84,7 +138,6 @@ class EnvironmentVariablesManager {
       const parameterValue = data.Parameter.Value;
       this.cachedValues[parameterName] = parameterValue;
       return parameterValue;
-
     } catch (error) {
       console.error(`Error retrieving parameter ${parameterName}: ${error}`);
       return null;
@@ -92,8 +145,7 @@ class EnvironmentVariablesManager {
   }
 
   // Retrieve a secret from the AWS Secrets Manager
-  async retrieveSecret(secretName, singleValue=true) {
-
+  async retrieveSecret(secretName, singleValue = true) {
     // Check if the secret is stored in the manager
     if (!EnvironmentVariablesManager.secrets.includes(secretName)) {
       throw new Error(`No secret ${secretName} stored in manager`);
@@ -102,17 +154,17 @@ class EnvironmentVariablesManager {
     try {
       const params = {
         SecretId: secretName,
-        VersionStage: "AWSCURRENT", // VersionStage defaults to AWSCURRENT if unspecified
+        VersionStage: 'AWSCURRENT', // VersionStage defaults to AWSCURRENT if unspecified
       };
       const data = await this.secretsManager.send(new GetSecretValueCommand(params));
 
       // Parse the secret value & store it in the cache
       const secretString = data.SecretString;
       const secretValue = secretString ? JSON.parse(secretString) : null;
-      const value = (singleValue && secretValue) ? secretValue[secretName] : secretValue;
+      const value = singleValue && secretValue ? secretValue[secretName] : secretValue;
       this.cachedValues[secretName] = value;
-      return value;
 
+      return value;
     } catch (error) {
       console.error(`Error retrieving secret ${secretName}: ${error}`);
       return null;
@@ -122,15 +174,21 @@ class EnvironmentVariablesManager {
   // Initialize the service by retrieving all secrets
   async init() {
     if (this.environmentLocation === 'Local') {
-      const envVars = EnvironmentVariablesManager.secrets.concat(EnvironmentVariablesManager.parameters);
+      const envVars = EnvironmentVariablesManager.secrets.concat(
+        EnvironmentVariablesManager.parameters,
+      );
       for (const secretName of envVars) {
         this.cachedValues[secretName] = process.env[secretName];
       }
     } else {
+      const requiredEnvVariables = [
+        'CRON_ENVIRONMENT',
+        'DATABASE_ENVIRONMENT',
+        'REDIS_ENVIRONMENT',
+        'STACK',
+      ];
 
-      const requiredEnvVariables = ['CRON_ENVIRONMENT', 'DATABASE_ENVIRONMENT', 'STACK'];
-
-      // Overwritting the env variables with the ones from the file
+      // Overwriting the env variables with the ones from the file
       const dotenv = require('dotenv');
       const envFilePath = '/etc/profile.d/efflux-backend.env';
 
@@ -138,7 +196,7 @@ class EnvironmentVariablesManager {
       const fileContent = fileExists ? fs.readFileSync(envFilePath, 'utf8').trim() : '';
       const envConfig = fileContent ? dotenv.parse(fileContent) : {};
 
-      const missingVariables = requiredEnvVariables.filter(key => !envConfig[key]);
+      const missingVariables = requiredEnvVariables.filter((key) => !envConfig[key]);
 
       // Throw an error if any of the required env variables are missing
       if (missingVariables.length > 0) {
@@ -157,7 +215,9 @@ class EnvironmentVariablesManager {
       if (!['staging', 'production'].includes(envConfig['CRON_ENVIRONMENT']))
         throw new Error(`CRON_ENVIRONMENT must be either 'staging' or 'production'`);
       if (!['staging', 'production', 'development'].includes(envConfig['DATABASE_ENVIRONMENT']))
-        throw new Error(`DATABASE_ENVIRONMENT must be either 'staging', 'production' or 'development'`);
+        throw new Error(
+          `DATABASE_ENVIRONMENT must be either 'staging', 'production' or 'development'`,
+        );
       if (!['BE', 'DUS'].includes(envConfig['STACK']))
         throw new Error(`STACK must be either 'BE' or 'DUS'`);
       for (const [key, value] of Object.entries(envConfig)) {
@@ -167,15 +227,16 @@ class EnvironmentVariablesManager {
       for (const secretName of EnvironmentVariablesManager.secrets) {
         await this.retrieveSecret(secretName, secretName !== 'GOOGLE_API_KEY_FILE');
       }
-      for (const parameterName of EnvironmentVariablesManager.parameters.filter(p => !requiredEnvVariables.includes(p))) {
+      for (const parameterName of EnvironmentVariablesManager.parameters.filter(
+        (p) => !requiredEnvVariables.includes(p),
+      )) {
         await this.retrieveParameter(parameterName);
       }
 
       // If the STACK is BE, disable all CRONs, since this is the User Serving Stack, and for the moment disable all CRONs in production
       if (envConfig['STACK'] === 'BE') {
         Object.entries(this.cachedValues).forEach(([key, value]) => {
-          if (key.includes('CRON') && !key.includes('ENVIRONMENT'))
-            this.cachedValues[key] = 'true';
+          if (key.includes('CRON') && !key.includes('ENVIRONMENT')) this.cachedValues[key] = 'true';
         });
       }
     }
@@ -189,7 +250,6 @@ class EnvironmentVariablesManager {
     }
     return this.cachedValues[envVariableName] ? this.cachedValues[envVariableName] : null;
   }
-
 }
 
 // Export as a singleton
