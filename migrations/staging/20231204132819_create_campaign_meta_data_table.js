@@ -5,14 +5,13 @@ exports.up = function(knex) {
       table.increments('id').primary();
       table.string('name');
       table.string('objective');
-      table.text('special_ad_categories'); // Storing as JSON string
+      table.text('special_ad_category');
       table.string('special_ad_category_country');
-      table.string('campaign_id');
+      table.text('campaign_id').references('id').inTable('campaigns');
       table.timestamps(true, true); // Creates created_at and updated_at columns
     });
   };
-  
+
   exports.down = function(knex) {
     return knex.schema.dropTable('campaign_metadata');
   };
-  
