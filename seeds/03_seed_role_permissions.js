@@ -11,13 +11,8 @@ exports.seed = async function (knex) {
       const roles = await knex.select('id', 'name').from('roles');
       const permissions = await knex.select('id', 'name').from('permissions');
 
-      const getIdByName = (collection, name) => {
-        const item = collection.find((item) => item.name === name);
-        if (!item) {
-          throw new Error(`Item not found: ${name}`);
-        }
-        return item.id;
-      };
+      // Helper function to get ID by name
+      const getIdByName = (collection, name) => collection.find((item) => item.name === name).id;
 
       // Create associations
       return knex('role_permissions').insert([
@@ -157,63 +152,63 @@ exports.seed = async function (knex) {
 
         // Media Buyer role permissions
         {
-          role_id: getIdByName(roles, 'media_buyer'),
+          role_id: getIdByName(roles, 'media buyer'),
           permission_id: getIdByName(permissions, 'read_media_library'),
         },
         {
-          role_id: getIdByName(roles, 'media_buyer'),
+          role_id: getIdByName(roles, 'media buyer'),
           permission_id: getIdByName(permissions, 'read_reports'),
         },
         {
-          role_id: getIdByName(roles, 'media_buyer'),
+          role_id: getIdByName(roles, 'media buyer'),
           permission_id: getIdByName(permissions, 'read_campaigns'),
         },
         {
-          role_id: getIdByName(roles, 'media_buyer'),
+          role_id: getIdByName(roles, 'media buyer'),
           permission_id: getIdByName(permissions, 'read_adsets'),
         },
         {
-          role_id: getIdByName(roles, 'media_buyer'),
+          role_id: getIdByName(roles, 'media buyer'),
           permission_id: getIdByName(permissions, 'read_ads'),
         },
         {
-          role_id: getIdByName(roles, 'media_buyer'),
+          role_id: getIdByName(roles, 'media buyer'),
           permission_id: getIdByName(permissions, 'launch_ads'),
         },
-        // // Creative role permissions
-        // {
-        //   role_id: getIdByName(roles, 'creatives'),
-        //   permission_id: getIdByName(permissions, 'upload_media'),
-        // },
-        // {
-        //   role_id: getIdByName(roles, 'creatives'),
-        //   permission_id: getIdByName(permissions, 'edit_media'),
-        // },
-        // {
-        //   role_id: getIdByName(roles, 'creatives'),
-        //   permission_id: getIdByName(permissions, 'delete_media'),
-        // },
-        // {
-        //   role_id: getIdByName(roles, 'creatives'),
-        //   permission_id: getIdByName(permissions, 'read_media_library'),
-        // },
-        // // Support Staff role permissions
-        // {
-        //   role_id: getIdByName(roles, 'support_staff'),
-        //   permission_id: getIdByName(permissions, 'read_reports'),
-        // },
-        // {
-        //   role_id: getIdByName(roles, 'support_staff'),
-        //   permission_id: getIdByName(permissions, 'read_campaigns'),
-        // },
-        // {
-        //   role_id: getIdByName(roles, 'support_staff'),
-        //   permission_id: getIdByName(permissions, 'read_adsets'),
-        // },
-        // {
-        //   role_id: getIdByName(roles, 'support_staff'),
-        //   permission_id: getIdByName(permissions, 'read_ads'),
-        // },
+        // Creative role permissions
+        {
+          role_id: getIdByName(roles, 'creative'),
+          permission_id: getIdByName(permissions, 'upload_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'creative'),
+          permission_id: getIdByName(permissions, 'edit_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'creative'),
+          permission_id: getIdByName(permissions, 'delete_media'),
+        },
+        {
+          role_id: getIdByName(roles, 'creative'),
+          permission_id: getIdByName(permissions, 'read_media_library'),
+        },
+        // Support Staff role permissions
+        {
+          role_id: getIdByName(roles, 'support staff'),
+          permission_id: getIdByName(permissions, 'read_reports'),
+        },
+        {
+          role_id: getIdByName(roles, 'support staff'),
+          permission_id: getIdByName(permissions, 'read_campaigns'),
+        },
+        {
+          role_id: getIdByName(roles, 'support staff'),
+          permission_id: getIdByName(permissions, 'read_adsets'),
+        },
+        {
+          role_id: getIdByName(roles, 'support staff'),
+          permission_id: getIdByName(permissions, 'read_ads'),
+        },
       ]);
     });
 };

@@ -1,13 +1,11 @@
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.up = function (knex) {
+exports.up = function(knex) {
+  return knex.schema.alterTable('crossroads_campaigns', function(table) {
+      table.string('vertical').defaultTo("");
+    });
 };
 
-/**
- * @param { import("knex").Knex } knex
- * @returns { Promise<void> }
- */
-exports.down = function (knex) {
+exports.down = function(knex) {
+  return knex.schema.alterTable('crossroads_campaigns', function(table) {
+      table.dropColumn('vertical');
+    });
 };

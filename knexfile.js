@@ -22,6 +22,9 @@ module.exports = {
       tableName: "knex_migrations",
       directory: "./migrations/production",
     },
+    seeds: {
+      directory: "./seeds",
+    },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
@@ -36,6 +39,9 @@ module.exports = {
       tableName: "knex_migrations",
       directory: "./migrations/staging",
     },
+    seeds: {
+      directory: "./seeds",
+    },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
@@ -48,7 +54,10 @@ module.exports = {
     },
     migrations: {
       tableName: "knex_migrations",
-      directory: "./migrations/staging",
+      directory: "./migrations/staging", // Updated to match environment
+    },
+    seeds: {
+      directory: "./seeds",
     },
     useNullAsDefault: true,
     ssl: false
@@ -59,7 +68,6 @@ module.exports = {
     pool: {
       min: 2,
       max: 20,
-
     },
     migrations: {
       tableName: "knex_migrations",
