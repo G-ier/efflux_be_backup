@@ -182,23 +182,16 @@ class CompositeService {
     return result[0];
   }
 
-  async syncPages(businessIds) {
+  async syncPages() {
 
     const accounts = await this.userAccountService.getFetchingAccount()
 
     // Construct an account for each business id.
-    const businessAdminAccount = accounts.filter(account => account.business)[0]
-    const businessAdminAccounts = businessIds.map(businessId => {
-      return {
-        ...businessAdminAccount,
-        businessId
-      }
-    })
-    // Sync business pages
-    await this.pageService.syncPages(businessAdminAccounts, true);
+    const systemUsers = accounts.filter(account => account.role === 'system_user')
+    await this.pageService.syncPages(systemUsers, true);
 
     // Sync pages for users
-    const clientAccounts = accounts.filter(account => !account.business)
+    const clientAccounts = accounts.filter(account => account.role === 'profile')
     await this.pageService.syncPages(clientAccounts, false);
 
   };

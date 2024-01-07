@@ -67,7 +67,7 @@ class UserAccountController {
     // Get the long-lived token from Facebook.
     const token = await this.userAccountService.getFacebookLongToken(accessToken);
 
-    const dataUpdate = {token: token, image_url: image_url};
+    const dataUpdate = {token: token, image_url: image_url, fetching: true};
     const filter = {id: accountId};
 
     FacebookLogger.info(`Setting token for ${name} to ${token}`);
