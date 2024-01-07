@@ -23,11 +23,11 @@ class PageService extends BaseService {
 
       const allPages = await async.mapLimit(accounts, 100, async (account) => {
         const { id: account_id, name: facebook_profile_name, provider_id: facebook_user_id, user_id: efflux_user_id, token: access_token } = account;
-        this.logger.info(`Using account ${facebook_profile_name} to fetch pages for ${pageType}: ${isBusiness ? account.businessId : facebook_profile_name}`);
+        this.logger.info(`Using account ${facebook_profile_name} to fetch pages for ${pageType}: ${isBusiness ? account.business_id : facebook_profile_name}`);
 
         let paging = {};
         const pages = [];
-        let url = isBusiness ? `${FB_API_URL}${account.businessId}/owned_pages` : `${FB_API_URL}me/accounts`;
+        let url = isBusiness ? `${FB_API_URL}${account.business_id}/owned_pages` : `${FB_API_URL}me/accounts`;
         let params = {
             access_token,
         };
@@ -42,29 +42,26 @@ class PageService extends BaseService {
             .get(url, {
               params,
             })
-            .catch((err) => {
-              this.logger.error(`Error fetching pages for account ${facebook_profile_name}`);
+            .catch(({ response : { data } }) => {
+              this.logger.error(`Error fetching pages for account ${facebook_profile_name}: ${data.error.message}`);
               return {};
             });
 
           paging = { ...data?.paging };
 
-          if (data?.data?.length)
-
+          if (data?.data?.length) {
             for (const page of data?.data) {
-
               page.account_id = account_id;
               page.facebook_user_id = facebook_user_id;
               page.efflux_user_id = efflux_user_id;
-
             }
-
             pages.push(...data?.data);
+          }
 
           await delay(1000);
         } while (paging?.next);
 
-        this.logger.info(`Fetched ${pages.length} pages with ${facebook_profile_name} for ${pageType}: ${isBusiness ? account.businessId : facebook_profile_name}`);
+        this.logger.info(`Fetched ${pages.length} pages with ${facebook_profile_name} for ${pageType}: ${isBusiness ? account.business_id : facebook_profile_name}`);
         return pages;
       });
       const flattenedPages = _.flatten(allPages);

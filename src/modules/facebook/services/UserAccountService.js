@@ -26,38 +26,6 @@ class UserAccountService {
     return userAccount;
   }
 
-  async debug(accountName, admin_token, access_token, expire_warning_sent = 0, max_expire_warning_sent = 1) {
-
-    const url = `${FB_API_URL}debug_token?access_token=${admin_token}&input_token=${access_token}`;
-    let res = null;
-    try {
-        const response = await axios.get(url);
-        res = response.data.data;
-    } catch (err) {
-        console.info("ERROR GETTING OWNED AD ACCOUNTS", err.response?.data.error || err);
-        return ["", false];
-    }
-
-    if (res.is_valid) {
-      const diffTime = Math.abs(new Date() - new Date(res.expires_at * 1000));
-      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-
-      if (diffDays < 4) {
-        if (this.tokenExpireNotificationSent < this.tokenExpireNotificationMax) {
-          await sendSlackNotification(
-            `URGENT: Facebook API Token of user ${accountName} is about to expire in ${diffDays} days, please refresh it.`
-          );
-          this.tokenExpireNotificationSent++;
-        }
-      }
-
-      return [accountName, res.is_valid];
-    } else {
-      console.log(`Token is not valid for ${accountName}`);
-      return ["", false];
-    }
-  }
-
   async getFacebookLongToken(accessToken) {
     const { data } =  await axios.get(`${FB_API_URL}oauth/access_token`, {
       params: {
@@ -87,76 +55,70 @@ class UserAccountService {
     }
   }
 
-  async validateAccounts(accounts, admin_token=null) {
+  async debug(accountName, token) {
 
-    let accountValidity = {};
+    const url = `${FB_API_URL}oauth/access_token_info?access_token=${token}`;
+    let res;
+    try {
+        const response = await axios.get(url);
+        res = response.data;
+    } catch (err) {
+        console.log(`Token of user ${accountName} is invalid`)
+        return false
+    }
 
+    // Notify in Slack if token is about to expire in 4 days.
+    // Expires is is in seconds.
+    if (res.expires_in) {
+      const diffDays = Math.ceil(res.expires_in / (60 * 60 * 24));
+      if (diffDays < 4) {
+        if (this.tokenExpireNotificationSent < this.tokenExpireNotificationMax) {
+          await sendSlackNotification(
+            `URGENT: Facebook API Token of user ${accountName} is about to expire in ${diffDays} days, please refresh it.`
+          );
+          this.tokenExpireNotificationSent++;
+        }
+      }
+    }
+    return true
+  }
+
+  async validateFacebookAccountToken(accounts) {
+    const brokenAccountIds = []; const validAccounts = [];
     for (const account of accounts) {
-      let [username, isValid] = await this.debug(account.name, admin_token ? admin_token : account.token, account.token);
-      accountValidity[account.id] = isValid;
+      const isValid = await this.debug(account.name, account.token);
+      if (isValid) validAccounts.push(account);
+      else brokenAccountIds.push(account.id);
     }
-
-    // 3 If no accounts are valid, return
-    if (Object.values(accountValidity).every((val) => val !== true)) {
-      throw new Error("No valid accounts to fetch data from");
-    }
-
-    return accounts.filter((account) => accountValidity[account.id] === true);
+    return [brokenAccountIds, validAccounts];
   }
 
   async getFetchingAccount(admins_only = false, clients_only = false, specificId = null) {
 
-    const fetchingFields = ["id", "name", "provider_id", "user_id", "token"];
+    const fetchingFields = ["id", "name", "provider_id", "user_id", "token", "role", "business_id"];
 
     // We need to get a admin account and all the other fetching accounts here.
-    const whereClause = { provider: "facebook", role: 'admin', fetching: true, backup: false };
+    const whereClause = { provider: "facebook", fetching: true };
     if (specificId) whereClause.id = specificId;
-    const adminAccounts = await this.fetchUserAccounts(fetchingFields,
+    const accounts = await this.fetchUserAccounts(fetchingFields,
       whereClause
     );
 
-    // Attemp to get the admin account/try backup accounts. If none work, throw error.
-    let adminAccount;
-    try {
-      FacebookLogger.info("Retrieving primary admin account and ensuring it is valid")
-      const validAccounts = await this.validateAccounts(adminAccounts, null);
-      adminAccount = validAccounts[0];
-    } catch (err) {
+    FacebookLogger.info(`Found ${accounts.length} accounts to fetch data from`);
 
-      FacebookLogger.info("Primary account failed, using backup account")
+    // Segregate the accounts into valid and broken accounts
+    const [brokenAccountIds, validAccounts] = await this.validateFacebookAccountToken(accounts);
 
-      // We need to get a admin account and all the other fetching accounts here.
-      const backupAdminAccounts = await this.fetchUserAccounts(fetchingFields,
-        { provider: "facebook", role: 'admin', fetching: true, backup: true }
-      );
-      try {
-        const validAccounts = await this.validateAccounts(backupAdminAccounts, null);
-        adminAccount = validAccounts[0];
-      } catch (err) {
-        FacebookLogger.error("No valid admin accounts found. Terminating")
-        throw new Error("No valid admin accounts found");
-      }
+    // Mark broken accounts as not fetching
+    if (brokenAccountIds.length > 0) {
+      const updateCount = await this.userAccountRepository.update({ fetching: false }, { id: brokenAccountIds });
+      FacebookLogger.info(`Marked ${updateCount} broken accounts as not fetching`);
     }
-    adminAccount.business = true;
-    if (admins_only) return adminAccount;
-
-    const clientAccounts = await this.fetchUserAccounts(fetchingFields,
-      { provider: "facebook", role: 'client', fetching: true, backup: false }
-    );
-
-    let validClientAccounts = [];
-    try {
-      FacebookLogger.info("Retrieving client accounts")
-      const validAccounts = await this.validateAccounts(clientAccounts, adminAccount.token);
-      FacebookLogger.info(`Found ${validAccounts.length} valid client accounts`)
-      validClientAccounts = validAccounts;
-      for (const account of validClientAccounts) {
-        account.business = false;
-      }
-    } catch {}
-
-    if (clients_only) return validClientAccounts;
-    return [adminAccount, ...validClientAccounts];
+    // If no accounts are valid, return
+    if (validAccounts.length === 0) {
+      throw new Error("No valid accounts to fetch data from");
+    }
+    return validAccounts;
   }
 
   async saveUserAccountToDB(accountDetails) {

@@ -156,11 +156,7 @@ const updatePagesRegular = new CronJob(
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
   (async () =>{
     try{
-      let facebookBusinessIds = process.env.FACEBOOK_BUSINESS_IDS;
-      if (typeof facebookBusinessIds === 'string') {
-        facebookBusinessIds = JSON.parse(facebookBusinessIds);
-      }
-      await compositeService.syncPages(facebookBusinessIds);
+      await compositeService.syncPages();
       dataUpdatesLogger.info(`COMPLETED | PAGES | today`);
     } catch (error) {
       dataUpdatesLogger.warn(`FAILED | PAGES | today | ${error}`);

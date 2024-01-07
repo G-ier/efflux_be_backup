@@ -182,23 +182,16 @@ class CompositeService {
     return result[0];
   }
 
-  async syncPages(businessIds) {
+  async syncPages() {
 
     const accounts = await this.userAccountService.getFetchingAccount()
 
     // Construct an account for each business id.
-    const businessAdminAccount = accounts.filter(account => account.business)[0]
-    const businessAdminAccounts = businessIds.map(businessId => {
-      return {
-        ...businessAdminAccount,
-        businessId
-      }
-    })
-    // Sync business pages
-    await this.pageService.syncPages(businessAdminAccounts, true);
+    const systemUsers = accounts.filter(account => account.role === 'system_user')
+    await this.pageService.syncPages(systemUsers, true);
 
     // Sync pages for users
-    const clientAccounts = accounts.filter(account => !account.business)
+    const clientAccounts = accounts.filter(account => account.role === 'profile')
     await this.pageService.syncPages(clientAccounts, false);
 
   };
@@ -340,6 +333,35 @@ class CompositeService {
       console.error("Error uploading video:", error);
       throw error;
     }
+  }
+
+  async routeConversions(conversion, network='crossroads') {
+    // Fetch pixels from database
+    const pixels = await this.pixelsService.fetchPixelsFromDatabase(['pixel_id']);
+
+    // Filter Data. We don't update broken events here. The event is in the DynamoDB table.
+    const {brokenPixelEvents, validPixelEvents} = await this.capiService.parseBrokenPixelEvents([conversion], pixels);
+
+    // If no valid events, return
+    if (validPixelEvents.length === 0) {
+      CapiLogger.info(`Conversion with id: ${conversion.id} didn't have a valid pixel value`);
+      return;
+    }
+
+    // Construct facebook conversion payloads
+    const { fbProcessedPayloads, eventIds } = await this.capiService.constructFacebookCAPIPayload(validPixelEvents);
+
+    // Post events to FB CAPI
+    CapiLogger.info(`Posting events to FB CAPI in batches.`);
+    for(const batch of fbProcessedPayloads){
+
+      const { token } = await this.fetchEntitiesOwnerAccount(batch.entityType, batch.entityId);
+
+        for(const payload of batch.payloads) {
+          await this.capiService.postCapiEvents(token, batch.entityId, payload);
+        }
+    }
+    CapiLogger.info(`Reported to Facebook CAPI for network ${network}`);
   }
 
   async sendCapiEvents(date, network='crossroads') {
