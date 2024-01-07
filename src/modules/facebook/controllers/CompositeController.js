@@ -84,12 +84,7 @@ class CompositeController {
   }
 
   async syncPages(req, res) {
-    let facebookBusinessIds = process.env.FACEBOOK_BUSINESS_IDS;
-    if (typeof facebookBusinessIds === 'string') {
-      facebookBusinessIds = JSON.parse(facebookBusinessIds);
-    }
-    if (!facebookBusinessIds) res.status(500).send("No facebook business ids found");
-    const pageIds = await this.compositeService.syncPages(facebookBusinessIds);
+    const pageIds = await this.compositeService.syncPages();
     res.json(pageIds);
   }
 
