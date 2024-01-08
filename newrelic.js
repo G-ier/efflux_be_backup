@@ -1,5 +1,6 @@
 'use strict';
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
+
 /**
  * New Relic agent configuration.
  *
