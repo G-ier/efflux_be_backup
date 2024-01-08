@@ -6,6 +6,7 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const Insights = require('../entities/Insights');
 const interpretDataWTemplateV1 = require('../templates/v1');
 const interpretDataWTemplateV2 = require('../templates/v2');
+const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
   // We might need to do some processing on the data, aggregate it, etc.
@@ -13,6 +14,12 @@ class InsightsRepository {
   constructor() {
     this.tablename = 'sedo';
     this.database = new DatabaseRepository();
+
+    const queueUrl =
+      process.env.CROSSROAD_QUEUE_URL ||
+      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-sedo-queue';
+
+    this.sqsService = new SqsService(queueUrl);
   }
 
   async update(data, criteria) {
@@ -49,6 +56,10 @@ class InsightsRepository {
   processSedoInsights(insights, date) {
     const databaseDTOInsights = insights.map((insight) => this.parseSedoAPIData(insight, date));
     const aggregatedInsights = this.aggregateByUniqueIdentifier(databaseDTOInsights);
+
+    // push to SQS queue (for storing in data lake)
+    this.sqsService.sendMessageToQueue(aggregatedInsights);
+
     return aggregatedInsights;
   }
 
@@ -63,11 +74,14 @@ class InsightsRepository {
     const cache = true;
     // If not in cache, fetch from the database
     const results = await this.database.query(this.tablename, fields, filters, limit, [], cache);
-    return results
+    return results;
   }
 
   parseSedoAPIData(insight, date) {
-    const templateInterpretation = insight.c3[0]?._ && insight.c3[0]?._.startsWith('temp_v2_') ? interpretDataWTemplateV2 : interpretDataWTemplateV1;
+    const templateInterpretation =
+      insight.c3[0]?._ && insight.c3[0]?._.startsWith('temp_v2_')
+        ? interpretDataWTemplateV2
+        : interpretDataWTemplateV1;
     return templateInterpretation(insight, date);
   }
 
