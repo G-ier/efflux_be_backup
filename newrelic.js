@@ -1,15 +1,23 @@
 'use strict';
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 /**
  * New Relic agent configuration.
  *
  * See lib/config/default.js in the agent distribution for a more complete
  * description of configuration variables and their potential values.
  */
+
+const newRelicEnvironment =
+  EnvironmentVariablesManager.getEnvVariable('NEWRELIC_ENVIRONMENT') || 'local';
+
+const appName =
+  'Efflux BE ' + newRelicEnvironment.charAt(0).toUpperCase() + newRelicEnvironment.slice(1);
+
 exports.config = {
   /**
    * Array of application names.
    */
-  app_name: ['Efflux BE Prod'],
+  app_name: [appName],
   /**
    * Your New Relic license key.
    */

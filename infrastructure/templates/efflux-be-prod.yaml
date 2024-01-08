@@ -243,11 +243,8 @@ Resources:
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
 
-            # Set environment variables
-            NEWRELIC_ENVIRONMENT=prod
-
             # Define environment
-            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nNEWRELIC_ENVIRONMENT=production" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
         TagSpecifications:
           - ResourceType: volume

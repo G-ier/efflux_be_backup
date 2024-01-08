@@ -74,6 +74,7 @@ class EnvironmentVariablesManager {
     'PORT',
     'DISABLE_SLACK_NOTIFICATION',
     'CRON_ENVIRONMENT',
+    'NEWRELIC_ENVIRONMENT',
     'DISABLE_AUTH_DEADLOCK',
 
     // SQS Queues
@@ -185,6 +186,7 @@ class EnvironmentVariablesManager {
         'CRON_ENVIRONMENT',
         'DATABASE_ENVIRONMENT',
         'REDIS_ENVIRONMENT',
+        'NEWRELIC_ENVIRONMENT',
         'STACK',
       ];
 
