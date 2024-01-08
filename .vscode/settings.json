@@ -7,6 +7,7 @@
         "facebookexternalhit",
         "Metabase",
         "newrelic",
+        "postback",
         "runas"
     ]
 }
