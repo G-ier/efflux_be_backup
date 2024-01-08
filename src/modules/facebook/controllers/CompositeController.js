@@ -22,7 +22,6 @@ class CompositeController {
   async updateFacebookData(req, res) {
     const { startDate, endDate } = req.query;
     const updateResult = await this.compositeService.updateFacebookData(startDate, endDate, {
-      updatePixels: true,
       updateCampaigns: true,
       updateAdsets: true,
       updateInsights: true,
@@ -49,7 +48,6 @@ class CompositeController {
     // 2. Sync the facebook data of the account without insights
     const today = new Date().toISOString().split("T")[0];
     const syncEntityResult = await this.compositeService.syncUserAccountsData(account, today, today, {
-      updatePixels: true,
       updateCampaigns: true,
       updateAdsets: true,
       updateInsights: false,
@@ -62,7 +60,6 @@ class CompositeController {
 
     // 4. Sync the facebook data of the account with insights
     const syncInsightsResult = await this.compositeService.syncUserAccountsData(account, startTime, today, {
-      updatePixels: false,
       updateCampaigns: false,
       updateAdsets: false,
       updateInsights: true,

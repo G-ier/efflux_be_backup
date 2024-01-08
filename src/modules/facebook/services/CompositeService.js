@@ -39,7 +39,7 @@ class CompositeService {
     account,
     startDate,
     endDate,
-    { updatePixels = true, updateCampaigns = true, updateAdsets = true, updateInsights = true },
+    { updateCampaigns = true, updateAdsets = true, updateInsights = true },
   ) {
     const { token, name, user_id, id, provider_id } = account;
     FacebookLogger.info(`Syncing data for account ${name}`);
@@ -53,12 +53,6 @@ class CompositeService {
     );
     const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
     const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
-
-    // Sync Pixels
-    if (updatePixels)
-      try {
-        await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
-      } catch {}
 
     // Sync Campaigns
     if (updateCampaigns)
@@ -107,11 +101,11 @@ class CompositeService {
   async updateFacebookData(
     startDate,
     endDate,
-    { updatePixels = true, updateCampaigns = true, updateAdsets = true, updateInsights = true },
+    { updateCampaigns = true, updateAdsets = true, updateInsights = true },
   ) {
     FacebookLogger.info(`Starting to sync Facebook data for date range ${startDate} -> ${endDate}`);
 
-    if (!updatePixels && !updateCampaigns && !updateAdsets && !updateInsights)
+    if (!updateCampaigns && !updateAdsets && !updateInsights)
       throw new Error("No data to update. Please select at least one option");
 
     // Retrieving account we will use for fetching data
@@ -119,7 +113,6 @@ class CompositeService {
 
     for (const account of accounts) {
       await this.syncUserAccountsData(account, startDate, endDate, {
-        updatePixels,
         updateCampaigns,
         updateAdsets,
         updateInsights,
@@ -180,6 +173,29 @@ class CompositeService {
     }
 
     return result[0];
+  }
+
+  async syncPixels() {
+    const accounts = await this.userAccountService.getFetchingAccount()
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+      ["id", "provider_id", "user_id", "account_id"],
+      { provider: "facebook" }
+    );
+    for (const account of accounts) {
+
+      const { token, name, user_id, id, provider_id } = account;
+      FacebookLogger.info(`Syncing pixels for account ${name}`);
+
+      const accountAdAccounts = adAccounts.filter((adAccount) => adAccount.account_id === id);
+      const updatedAdAccountsDataMap = _(accountAdAccounts).keyBy("provider_id").value();
+      const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
+      try {
+        await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
+      } catch (error) {
+        console.log(error);
+      }
+    }
+    FacebookLogger.info(`Done syncing pixels`);
   }
 
   async syncPages() {
