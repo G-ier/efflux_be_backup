@@ -16,7 +16,7 @@ class InsightsRepository {
     this.database = new DatabaseRepository();
 
     const queueUrl =
-      process.env.CROSSROAD_QUEUE_URL ||
+      process.env.SEDO_QUEUE_URL ||
       'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-sedo-queue';
 
     this.sqsService = new SqsService(queueUrl);

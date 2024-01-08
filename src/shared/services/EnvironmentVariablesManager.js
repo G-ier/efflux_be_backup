@@ -81,6 +81,7 @@ class EnvironmentVariablesManager {
     'CROSSROAD_QUEUE_URL',
     'TONIC_QUEUE_URL',
     'SEDO_QUEUE_URL',
+    'INSIGHTS_QUEUE_URL',
 
     // Redis
     'REDIS_ENVIRONMENT',
