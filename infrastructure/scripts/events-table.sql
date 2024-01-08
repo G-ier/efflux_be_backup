@@ -1,4 +1,4 @@
-CREATE TABLE redirections (
+CREATE TABLE redirection_events (
     clientip String,
     timestamp DateTime,
     `from-mobile` String,
