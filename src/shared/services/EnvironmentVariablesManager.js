@@ -210,6 +210,8 @@ class EnvironmentVariablesManager {
           Example:
           CRON_ENVIRONMENT=staging
           DATABASE_ENVIRONMENT=staging
+          REDIS_ENVIRONMENT=staging
+          NEWRELIC_ENVIRONMENT=staging
           STACK=BE
         `);
       }
