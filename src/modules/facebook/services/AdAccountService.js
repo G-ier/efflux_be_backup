@@ -31,7 +31,7 @@ class AdAccountService extends BaseService {
     let params = {
       fields: fieldsFilter,
       access_token: token,
-      limit: 200,
+      limit: 50,
     };
 
     do {
