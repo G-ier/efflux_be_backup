@@ -1,8 +1,11 @@
 const AWS = require('aws-sdk');
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
+
+await EnvironmentVariablesManager.init();
 
 AWS.config.update({
-  accessKeyId: process.env.SQS_PUSHER_ACCESS_KEY_ID,
-  secretAccessKey: process.env.SQS_PUSHER_SECRET_KEY,
+  accessKeyId: EnvironmentVariablesManager.getEnvVariable('SQS_PUSHER_ACCESS_KEY_ID'),
+  secretAccessKey: EnvironmentVariablesManager.getEnvVariable('SQS_PUSHER_SECRET_KEY'),
   region: 'us-east-1',
 });
 
@@ -21,6 +24,7 @@ class SqsService {
 
     try {
       const data = await this.sqs.sendMessage(params).promise();
+      console.log(`Message sent to SQS queue: ${data.MessageId}`);
     } catch (error) {
       console.error(`Error sending message to SQS queue: ${error}`);
     }
