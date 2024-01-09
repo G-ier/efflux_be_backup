@@ -11,12 +11,18 @@ const EnvironmentVariablesManager = require('./src/shared/services/EnvironmentVa
 const newRelicEnvironment =
   EnvironmentVariablesManager.getEnvVariable('NEWRELIC_ENVIRONMENT') || 'local';
 
+const stackEnvironment = EnvironmentVariablesManager.getEnvVariable('STACK') || 'BE';
+
 exports.config = {
   /**
    * Array of application names.
    */
   app_name: [
-    'Efflux BE ' + newRelicEnvironment.charAt(0).toUpperCase() + newRelicEnvironment.slice(1),
+    'Efflux ' +
+      stackEnvironment +
+      ' ' +
+      newRelicEnvironment.charAt(0).toUpperCase() +
+      newRelicEnvironment.slice(1),
   ],
   /**
    * Your New Relic license key.
