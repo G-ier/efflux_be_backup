@@ -131,11 +131,8 @@ Resources:
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
 
-            # Set environment variables
-            NEWRELIC_ENVIRONMENT=staging
-
             # Define environment
-            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
         TagSpecifications:
           - ResourceType: volume

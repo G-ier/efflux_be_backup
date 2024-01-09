@@ -74,12 +74,14 @@ class EnvironmentVariablesManager {
     'PORT',
     'DISABLE_SLACK_NOTIFICATION',
     'CRON_ENVIRONMENT',
+    'NEWRELIC_ENVIRONMENT',
     'DISABLE_AUTH_DEADLOCK',
 
     // SQS Queues
     'CROSSROAD_QUEUE_URL',
     'TONIC_QUEUE_URL',
     'SEDO_QUEUE_URL',
+    'INSIGHTS_QUEUE_URL',
 
     // Redis
     'REDIS_ENVIRONMENT',
@@ -185,6 +187,7 @@ class EnvironmentVariablesManager {
         'CRON_ENVIRONMENT',
         'DATABASE_ENVIRONMENT',
         'REDIS_ENVIRONMENT',
+        'NEWRELIC_ENVIRONMENT',
         'STACK',
       ];
 
@@ -207,6 +210,8 @@ class EnvironmentVariablesManager {
           Example:
           CRON_ENVIRONMENT=staging
           DATABASE_ENVIRONMENT=staging
+          REDIS_ENVIRONMENT=staging
+          NEWRELIC_ENVIRONMENT=staging
           STACK=BE
         `);
       }

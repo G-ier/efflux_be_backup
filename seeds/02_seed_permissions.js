@@ -38,8 +38,6 @@ exports.seed = async function (knex) {
         { name: 'launch_ads', description: 'Launches ads in organization' },
 
         // Media Library permissions
-        { name: 'manage_media_library', description: 'Manages organization’s media library' },
-        { name: 'read_media_library', description: 'Reads media library' },
         { name: 'upload_media', description: 'Upload media assets' },
         { name: 'edit_media', description: 'Edit media assets' },
         { name: 'delete_media', description: 'Delete media assets' },

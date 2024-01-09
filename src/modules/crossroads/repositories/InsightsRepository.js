@@ -176,6 +176,9 @@ class InsightsRepository {
         rawData.push(parsedInsight);
       }
 
+      // push to SQS queue (for storing in data lake)
+      this.sqsService.sendMessageToQueue(parsedInsight);
+
       // Step 2: Aggregate data
       const cleansedInsight = this.cleanseData(parsedInsight);
       if (cleansedInsight.traffic_source === 'taboola') {
@@ -201,9 +204,6 @@ class InsightsRepository {
     const dataChunks = _.chunk(rawData, chunkSize);
     for (const chunk of dataChunks) {
       const uniqueChunk = _.uniqBy(chunk, 'unique_identifier');
-
-      // push to SQS queue (for storing in data lake)
-      await this.sqsService.sendMessageToQueue(uniqueChunk);
 
       // upsert to database
       await this.database.upsert(this.tableName, uniqueChunk, 'unique_identifier');
