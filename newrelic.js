@@ -1,17 +1,19 @@
 'use strict';
 const EnvironmentVariablesManager = require('./src/shared/services/EnvironmentVariablesManager');
 
+await EnvironmentVariablesManager.init();
+
+const newRelicEnvironment =
+  EnvironmentVariablesManager.getEnvVariable('NEWRELIC_ENVIRONMENT') || 'local';
+
+const stackEnvironment = EnvironmentVariablesManager.getEnvVariable('STACK') || 'BE';
+
 /**
  * New Relic agent configuration.
  *
  * See lib/config/default.js in the agent distribution for a more complete
  * description of configuration variables and their potential values.
  */
-
-const newRelicEnvironment =
-  EnvironmentVariablesManager.getEnvVariable('NEWRELIC_ENVIRONMENT') || 'local';
-
-const stackEnvironment = EnvironmentVariablesManager.getEnvVariable('STACK') || 'BE';
 
 exports.config = {
   /**
