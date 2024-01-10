@@ -164,7 +164,8 @@ class InsightsRepository {
     const rawData = [];
     let hourKey;
 
-    data.forEach((insight) => {
+    for (const insight of data) {
+
       // Step 1: Parse API Data into a human readable format
       const parsedInsight = this.parseCRApiData(insight, account, request_date);
 
@@ -174,10 +175,9 @@ class InsightsRepository {
         !parsedInsight.user_agent.includes('facebookexternalhit')
       ) {
         rawData.push(parsedInsight);
+        // push to SQS queue (for storing in data lake)
+        await this.sqsService.sendMessageToQueue(parsedInsight);
       }
-
-      // push to SQS queue (for storing in data lake)
-      this.sqsService.sendMessageToQueue(parsedInsight);
 
       // Step 2: Aggregate data
       const cleansedInsight = this.cleanseData(parsedInsight);
@@ -192,7 +192,7 @@ class InsightsRepository {
       } else {
         hourlyAdsets[hourKey] = cleansedInsight;
       }
-    });
+    }
 
     return [rawData, Object.values(hourlyAdsets)];
   }

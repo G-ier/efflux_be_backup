@@ -56,10 +56,6 @@ class InsightsRepository {
   processSedoInsights(insights, date) {
     const databaseDTOInsights = insights.map((insight) => this.parseSedoAPIData(insight, date));
     const aggregatedInsights = this.aggregateByUniqueIdentifier(databaseDTOInsights);
-
-    // push to SQS queue (for storing in data lake)
-    this.sqsService.sendMessageToQueue(aggregatedInsights);
-
     return aggregatedInsights;
   }
 
