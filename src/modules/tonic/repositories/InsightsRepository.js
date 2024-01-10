@@ -135,6 +135,7 @@ class InsightsRepository {
       rawData.push(parsedInsight);
 
       // push to SQS queue
+      // TODO: Temporary disabled. Enable when update to BatchWriteItem
       await this.sqsService.sendMessageToQueue(parsedInsight);
 
       // Clean insight data

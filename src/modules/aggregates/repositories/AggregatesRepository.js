@@ -138,6 +138,7 @@ class AggregatesRepository {
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
       // push to SQS queue (for storing in data lake)
+      // TODO: Temporary disabled. Enable when update to BatchWriteItem
       await this.sqsService.sendMessageToQueue(chunk);
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');

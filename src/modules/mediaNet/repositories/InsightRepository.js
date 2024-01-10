@@ -130,6 +130,7 @@ class InsightRepository {
       ) {
         rawData.push(parsedInsight);
         // push to SQS queue (for storing in data lake)
+        // TODO: Temporary disabled. Enable when update to BatchWriteItem
         await this.sqsService.sendMessageToQueue(parsedInsight);
       }
 

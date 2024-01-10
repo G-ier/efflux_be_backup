@@ -5,6 +5,7 @@ const { isNotNumeric } = require('../../../shared/helpers/Utils');
 const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
+
   constructor(database) {
     this.aggregatesTableName = 'crossroads';
     this.tableName = 'crossroads_raw_insights';
@@ -176,6 +177,7 @@ class InsightsRepository {
       ) {
         rawData.push(parsedInsight);
         // push to SQS queue (for storing in data lake)
+        // TODO: Temporary disabled. Enable when update to BatchWriteItem
         await this.sqsService.sendMessageToQueue(parsedInsight);
       }
 
