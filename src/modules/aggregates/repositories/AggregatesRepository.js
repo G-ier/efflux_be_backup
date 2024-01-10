@@ -138,7 +138,7 @@ class AggregatesRepository {
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
       // push to SQS queue (for storing in data lake)
-      this.sqsService.sendMessageToQueue(chunk);
+      await this.sqsService.sendMessageToQueue(chunk);
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
     }
