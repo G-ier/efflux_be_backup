@@ -123,17 +123,20 @@ class InsightsRepository {
     };
   }
 
-  processTonicData(data) {
+  async processTonicData(data) {
     // Process raw data and aggregated data in a single loop
     const hourlyAdsets = {};
     const rawData = [];
-    data.forEach((insight) => {
+
+    for (const insight of data) {
+
       // Save raw data
       const parsedInsight = this.parseTonicAPIData(insight);
       rawData.push(parsedInsight);
 
       // push to SQS queue
-      this.sqsService.sendMessageToQueue(parsedInsight);
+      // TODO: Temporary disabled. Enable when update to BatchWriteItem
+      await this.sqsService.sendMessageToQueue(parsedInsight);
 
       // Clean insight data
       const cleansedInsight = this.cleanseData(parsedInsight);
@@ -145,13 +148,14 @@ class InsightsRepository {
       } else {
         hourlyAdsets[adsetHourKey] = cleansedInsight;
       }
-    });
+    }
+
     return [rawData, Object.values(hourlyAdsets)];
   }
 
   async upsert(insights, chunkSize = 500) {
     // Process Tonic Data
-    const [rawData, adsetAggregatedData] = this.processTonicData(insights);
+    const [rawData, adsetAggregatedData] = await this.processTonicData(insights);
 
     // Upsert raw user session data
     const dataChunks = _.chunk(rawData, chunkSize);

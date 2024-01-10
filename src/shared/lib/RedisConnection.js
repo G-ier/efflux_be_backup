@@ -1,21 +1,32 @@
 // Third party imports
+require("dotenv").config();
 const redis = require('redis');
-
 // Local imports
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
 class RedisConnection {
   constructor() {
     if (!RedisConnection.instance) {
-      this.client = this.createClient();
-      this.setupEventListeners();
+      this.client = null; // Initialize client property
       RedisConnection.instance = this;
     }
-
     return RedisConnection.instance;
   }
 
-  createClient() {
+   async initialize() {
+    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+      return null
+    }
+    const instance = new RedisConnection();
+    const client = await instance.createClient();
+    this.client=client
+    instance.client= client
+    instance.setupEventListeners();
+    Object.freeze(instance); // Freeze the instance after setup
+    return instance;
+  }
+
+  async createClient() {
     const REDIS_ENVIRONMENT = EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT');
     let redisUrl = '';
 
@@ -26,12 +37,11 @@ class RedisConnection {
     } else {
       redisUrl = EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_LOCAL');
     }
-
     const client = redis.createClient({
       url: redisUrl,
     });
-
-    client.connect();
+    
+    await client.connect();
     return client;
   }
 
@@ -54,34 +64,46 @@ class RedisConnection {
     return this.client.quit();
   }
 
-  // Define async get and set methods to utilize Redis commands
   async getAsync(key) {
-    return new Promise((resolve, reject) => {
-      this.client.get(key, (err, reply) => {
-        if (err) reject(err);
-        resolve(reply);
-      });
-    });
+    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+      return null
+    }
+    try {
+      const reply = await this.client.get(key);
+      return reply;
+    } catch (err) {
+      throw err;
+    }
   }
+  
+  
 
   async setAsync(key, value) {
-    return new Promise((resolve, reject) => {
-      this.client.set(key, value, (err, reply) => {
-        if (err) reject(err);
-        resolve(reply);
-      });
-    });
+    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+      return () =>{}
+    }
+    try {
+      const reply = await this.client.set(key, value);
+      return reply;
+    } catch (err) {
+      throw err;
+    }
   }
+  
 
   async delAsync(key) {
-    return new Promise((resolve, reject) => {
-      this.client.del(key, (err, reply) => {
-        if (err) reject(err);
-        resolve(reply);
-      });
-    });
+    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+      return
+    }
+    try {
+      const reply = await this.client.del(key);
+      return reply;
+    } catch (err) {
+      console.error(`Error in delAsync with key ${key}:`, err);
+      throw err;
+    }
   }
-
+  
   async deleteKeysByTableName(tableName) {
     const pattern = `*${tableName}*`;
     let cursor = '0';
@@ -101,8 +123,28 @@ class RedisConnection {
   }
 }
 
-// Export as a singleton
+
+async function initRedis() {
+  try {
+    const instance = await RedisConnection.initialize();
+    console.log("Redis Client Initialized");
+  } catch (error) {
+    console.error("Failed to initialize Redis Client:", error);
+    throw error; // Rethrow error to handle it outside
+  }
+}
+
 const instance = new RedisConnection();
-Object.freeze(instance);
+
+async function initRedis() {
+  try {
+    await instance.initialize();
+    console.log("Redis Client Initialized");
+  } catch (error) {
+    console.error("Failed to initialize Redis Client:", error);
+    throw error;
+  }
+}
 
 module.exports = instance;
+module.exports.initRedis = initRedis;
