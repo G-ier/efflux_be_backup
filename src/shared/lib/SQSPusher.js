@@ -1,7 +1,7 @@
 const AWS = require('aws-sdk');
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
-await EnvironmentVariablesManager.init();
+EnvironmentVariablesManager.init();
 
 AWS.config.update({
   accessKeyId: EnvironmentVariablesManager.getEnvVariable('SQS_PUSHER_ACCESS_KEY_ID'),

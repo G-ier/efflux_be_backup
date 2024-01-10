@@ -137,10 +137,10 @@ class AggregatesRepository {
     const mappedData = data.map((row) => this.toDatabaseDTO(row, trafficSource, network));
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
+      await this.database.upsert(this.tableName, chunk, 'unique_identifier');
+
       // push to SQS queue (for storing in data lake)
       this.sqsService.sendMessageToQueue(chunk);
-
-      await this.database.upsert(this.tableName, chunk, 'unique_identifier');
     }
     return dataChunks;
   }
