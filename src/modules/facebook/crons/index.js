@@ -41,9 +41,9 @@ async function updateFacebookData(day) {
     else if (day === "yesterday")
       await compositeService.updateFacebookData(dayBeforeYesterdayYMD(null, 'UTC'), dayBeforeYesterdayYMD(null, 'UTC'), insightsUpdate);
     await compositeService.updateFacebookData(todayYMD(), todayYMD(), {
-      updateCampaigns: false,
-      updateAdsets: false,
-      updateInsights: false,
+      updateCampaigns: true,
+      updateAdsets: true,
+      updateInsights: true,
     });
     dataUpdatesLogger.info(`COMPLETED | FACEBOOK | ${day}`);
   } catch (error) {
