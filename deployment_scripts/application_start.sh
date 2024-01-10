@@ -6,6 +6,12 @@ cd /var/www/efflux-backend
 # this will be either staging, production, dus_staging or dus_production
 ENV=$1
 
+# if the environment variable is not set, default to production
+if [ -z "$ENV" ]
+then
+    ENV=production
+fi
+
 pm2 stop ecosystem.config.js
 pm2 start ecosystem.config.js --env $ENV
 
