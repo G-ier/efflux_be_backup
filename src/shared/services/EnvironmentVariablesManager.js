@@ -44,11 +44,7 @@ class EnvironmentVariablesManager {
     'MEDIANET_PASSWORD',
 
     // Google API Key File
-    'GOOGLE_API_KEY_FILE',
-
-    // SQS Pusher Credentials
-    'SQS_PUSHER_ACCESS_KEY_ID',
-    'SQS_PUSHER_SECRET_KEY',
+    'GOOGLE_API_KEY_FILE'
   ];
 
   static parameters = [
@@ -98,6 +94,11 @@ class EnvironmentVariablesManager {
     'MEDIA_LIBRARY_SERVICE_ENDPOINT',
     'NOTIFICATIONS_SERVICE_ENDPOINT',
     'EMAILS_SERVICE_ENDPOINT',
+
+    // SQS Pusher Credentials
+    'SQS_PUSHER_ACCESS_KEY_ID',
+    'SQS_PUSHER_SECRET_KEY',
+
   ];
 
   get isInitialized() {

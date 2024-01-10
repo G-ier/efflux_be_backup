@@ -1,8 +1,6 @@
 const AWS = require('aws-sdk');
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
-await EnvironmentVariablesManager.init();
-
 AWS.config.update({
   accessKeyId: EnvironmentVariablesManager.getEnvVariable('SQS_PUSHER_ACCESS_KEY_ID'),
   secretAccessKey: EnvironmentVariablesManager.getEnvVariable('SQS_PUSHER_SECRET_KEY'),
@@ -11,12 +9,14 @@ AWS.config.update({
 
 // Now you can create service clients or call AWS services.
 class SqsService {
+
   constructor(queueUrl) {
     this.sqs = new AWS.SQS();
     this.queueUrl = queueUrl;
   }
 
   async sendMessageToQueue(event) {
+
     const params = {
       MessageBody: JSON.stringify(event),
       QueueUrl: this.queueUrl,
@@ -28,6 +28,7 @@ class SqsService {
     } catch (error) {
       console.error(`Error sending message to SQS queue: ${error}`);
     }
+
   }
 }
 
