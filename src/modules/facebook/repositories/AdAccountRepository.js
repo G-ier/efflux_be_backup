@@ -40,6 +40,29 @@ class AdAccountsRepository {
       return results;
     }
 
+    async fetchAdAccountsMap(fields=['ua_aa_map.id', 'ua_id', 'aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'], 
+    filters = {}, limit, joins = []){
+      const joinAdAccount =  {
+        type: "inner",
+        table: "ad_accounts AS aa",
+        first: `ua_aa_map.aa_id`,
+        operator: "=",
+        second: "aa.provider_id",
+      }
+      const joinUserAccount =  {
+        type: "inner",
+        table: "user_accounts AS ua",
+        first: `ua_aa_map.ua_id`,
+        operator: "=",
+        second: "ua.id",
+      }
+      joins.push(joinAdAccount);
+      joins.push(joinUserAccount);
+      const results = await this.database.query("ua_aa_map", fields, filters, limit, joins);
+      console.log("Results length: ", results.length, " Results: ", results);
+      return results;
+    }
+
     toDatabaseDTO(adAccount, userId = null, accountId = null) {
       return {
         name: adAccount.name,
