@@ -35,9 +35,6 @@ class AdAccountRepository {
     return results;
   }
 
-
-
-
   toDatabaseDTO(adAccount, user_id, user_account_id) {
 
     const getOffset = (timeZone = 'UTC', date = new Date()) => {

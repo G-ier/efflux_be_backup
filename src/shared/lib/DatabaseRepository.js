@@ -1,6 +1,7 @@
 const DatabaseConnection = require('./DatabaseConnection');
 
 class DatabaseRepository {
+
   constructor(connection) {
     this.connection = connection || new DatabaseConnection().getConnection();
 

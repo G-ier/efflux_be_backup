@@ -155,8 +155,6 @@ class CampaignRepository {
       "created_time",
       "budget_remaining",
       "updated_time",
-      "user_id",
-      "account_id",
       "ad_account_id",
     ]);
 
@@ -166,15 +164,6 @@ class CampaignRepository {
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;
     }
-
-    if (adAccountInfo.user_id !== undefined) {
-      dbObject.user_id = adAccountInfo.user_id;
-    }
-
-    if (adAccountInfo.account_id !== undefined) {
-      dbObject.account_id = adAccountInfo.account_id;
-    }
-
     return dbObject;
   }
 
