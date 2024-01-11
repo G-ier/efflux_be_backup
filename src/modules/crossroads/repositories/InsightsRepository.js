@@ -2,20 +2,19 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const _ = require('lodash');
 const PROVIDERS = require('../../../shared/constants/providers');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
-
   constructor(database) {
     this.aggregatesTableName = 'crossroads';
     this.tableName = 'crossroads_raw_insights';
     this.database = database || new DatabaseRepository();
 
-    const queueUrl =
-      process.env.CROSSROAD_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
+    // const queueUrl =
+    //   process.env.CROSSROAD_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
 
-    this.sqsService = new SqsService(queueUrl);
+    // this.sqsService = new SqsService(queueUrl);
   }
 
   getTrafficSource(stat) {
@@ -166,7 +165,6 @@ class InsightsRepository {
     let hourKey;
 
     for (const insight of data) {
-
       // Step 1: Parse API Data into a human readable format
       const parsedInsight = this.parseCRApiData(insight, account, request_date);
 
@@ -178,7 +176,7 @@ class InsightsRepository {
         rawData.push(parsedInsight);
         // push to SQS queue (for storing in data lake)
         // TODO: Temporary disabled. Enable when update to BatchWriteItem
-        await this.sqsService.sendMessageToQueue(parsedInsight);
+        // await this.sqsService.sendMessageToQueue(parsedInsight);
       }
 
       // Step 2: Aggregate data

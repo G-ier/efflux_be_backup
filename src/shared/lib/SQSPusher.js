@@ -15,9 +15,6 @@ class SqsService {
   }
 
   async sendMessageToQueue(event) {
-    //TODO: Temporary disabled. Enable when update to BatchWriteItem
-    return;
-
     const params = {
       MessageBody: JSON.stringify(event),
       QueueUrl: this.queueUrl,

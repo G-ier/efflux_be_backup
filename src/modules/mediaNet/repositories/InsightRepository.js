@@ -4,7 +4,7 @@ const _ = require('lodash');
 // Local Imports
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const { extractDateHourFromUnixTimestamp, isNotNumeric } = require('../../../shared/helpers/Utils');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightRepository {
   constructor() {
@@ -12,11 +12,11 @@ class InsightRepository {
     this.aggregatesTableName = 'medianet';
     this.database = new DatabaseRepository();
 
-    const queueUrl =
-      process.env.CROSSROAD_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-medianet-queue';
+    // const queueUrl =
+    //   process.env.CROSSROAD_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-medianet-queue';
 
-    this.sqsService = new SqsService(queueUrl);
+    // this.sqsService = new SqsService(queueUrl);
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {
@@ -121,7 +121,6 @@ class InsightRepository {
     const rawData = [];
 
     for (const insight of insights) {
-
       // Save raw data
       const parsedInsight = this.parseMediaNetAPIData(insight);
       if (
@@ -130,8 +129,8 @@ class InsightRepository {
       ) {
         rawData.push(parsedInsight);
         // push to SQS queue (for storing in data lake)
-        // TODO: Temporary disabled. Enable when update to BatchWriteItem
-        await this.sqsService.sendMessageToQueue(parsedInsight);
+        //
+        // await this.sqsService.sendMessageToQueue(parsedInsight);
       }
 
       // Clean insight data
