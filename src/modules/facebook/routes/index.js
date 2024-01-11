@@ -5,6 +5,7 @@ const userAccounts  = require("./userAccounts");
 const pixels        = require("./pixels");
 const pages         = require("./pages");
 const mediaFolder   = require("./mediaFolders");
+const ads = require('./ads')
 
 const CompositeController = require("../controllers/CompositeController");
 const compositeController = new CompositeController();
@@ -43,5 +44,7 @@ route.use("/user_accounts", userAccounts);
 route.use("/pixels", pixels);
 route.use("/pages", pages);
 route.use("/media_folders", mediaFolder);
+route.use("/ads", ads);
+
 
 module.exports = route;

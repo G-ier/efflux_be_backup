@@ -255,15 +255,15 @@ class AdLauncherMedia extends BaseService {
 
       uploadedMedia.push({ type: 'image', hash: createdImage.hash });
 
-      await this.uploadToMediaLibrary(
-        'image',
-        file.buffer,
-        file.originalname,
-        adAccountId,
-        imageHash['images'][file.originalname].url,
-        user.id,
-        adsetData,
-      );
+      // await this.uploadToMediaLibrary(
+      //   'image',
+      //   file.buffer,
+      //   file.originalname,
+      //   adAccountId,
+      //   imageHash['images'][file.originalname].url,
+      //   user.id,
+      //   adsetData,
+      // );
 
       createdMediaObjects.push(createdImage);
 
