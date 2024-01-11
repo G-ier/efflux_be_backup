@@ -28,12 +28,6 @@ exports.up = function(knex) {
       table.dropColumn('user_id');
     }),
 
-    // Drop user_id from column_presets
-    knex.schema.table('column_presets', table => {
-      table.dropForeign(['user_id'], 'column_presets_user_id_foreign');
-      table.dropColumn('user_id');
-    }),
-
     // Drop user_id from tonic_campaigns
     knex.schema.table('tonic_campaigns', table => {
       table.dropForeign(['user_id'], 'crossroads_campaigns_user_id_foreign');
@@ -81,6 +75,10 @@ exports.up = function(knex) {
       table.dropForeign(['user_id'], 'tiktok_ads_user_id_foreign');
       table.dropColumn('user_id');
     }),
+
+    knex.schema.table('insights', table => {
+      table.dropColumn('user_id');
+    })
   ]);
 };
 
@@ -110,11 +108,6 @@ exports.down = function(knex) {
     knex.schema.table('campaigns', table => {
       table.integer('user_id').unsigned();
       table.foreign('user_id', 'campaigns_user_id_foreign').references('id').inTable('users').onDelete('CASCADE');
-    }),
-
-    knex.schema.table('column_presets', table => {
-      table.integer('user_id').unsigned();
-      table.foreign('user_id', 'column_presets_user_id_foreign').references('id').inTable('users').onDelete('CASCADE');
     }),
 
     knex.schema.table('tonic_campaigns', table => {
@@ -157,15 +150,9 @@ exports.down = function(knex) {
       table.foreign('user_id', 'tiktok_ads_user_id_foreign').references('id').inTable('users').onDelete('CASCADE');
     }),
 
-    knex.schema.table('u_aa_map', table => {
-      table.integer('u_id').unsigned();
-      table.foreign('u_id', 'u_aa_map_u_id_foreign').references('id').inTable('users');
-    }),
-
-    knex.schema.table('user_accounts', table => {
+    knex.schema.table('insights', table => {
       table.integer('user_id').unsigned();
-      table.foreign('user_id', 'user_accounts_user_id_foreign').references('id').inTable('users').onDelete('CASCADE');
-    }),
+    })
 
   ]);
 };

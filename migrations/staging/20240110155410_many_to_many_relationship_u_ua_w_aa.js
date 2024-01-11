@@ -34,7 +34,6 @@ exports.up = function(knex) {
       aa_id: row.provider_id,
       prioritized: false
     }));
-
     // Insert data into ua_aa_map
     return knex('ua_aa_map').insert(mappedData);
   })
@@ -76,24 +75,54 @@ exports.up = function(knex) {
       table.unique('provider_id');
     });
   })
+  // Update aa_id in ua_aa_map
+  .then(() => {
+    return knex.raw(`
+      UPDATE ua_aa_map
+      SET aa_id = ad_accounts.id
+      FROM ad_accounts
+      WHERE ua_aa_map.aa_id = ad_accounts.provider_id;
+    `);
+  })
+  // Alter column type of aa_id in ua_aa_map
+  .then(() => {
+    return knex.schema.table('ua_aa_map', function(table) {
+      table.bigInteger('aa_id').alter();
+    });
+  })
   // Add foreign key constraint to ua_aa_map
   .then(() => {
-    return knex.schema.alterTable('ua_aa_map', function(table) {
-      table.foreign('aa_id').references('provider_id').inTable('ad_accounts');
-    })
+    return knex.schema.table('ua_aa_map', function(table) {
+      table.foreign('aa_id', 'ua_aa_map_aa_id_foreign').references('id').inTable('ad_accounts');
+    });
+  })
+  // Update aa_id in u_aa_map
+  .then(() => {
+    return knex.raw(`
+      UPDATE u_aa_map
+      SET aa_id = ad_accounts.id
+      FROM ad_accounts
+      WHERE u_aa_map.aa_id = ad_accounts.provider_id;
+    `);
+  })
+  // Alter column type of aa_id in u_aa_map
+  .then(() => {
+    return knex.schema.table('u_aa_map', function(table) {
+      table.bigInteger('aa_id').alter();
+    });
   })
   // Add foreign key constraint to u_aa_map
   .then(() => {
-    return knex.schema.alterTable('u_aa_map', function(table) {
-      table.foreign('aa_id').references('provider_id').inTable('ad_accounts');
-    })
+    return knex.schema.table('u_aa_map', function(table) {
+      table.foreign('aa_id', 'u_aa_map_aa_id_foreign').references('id').inTable('ad_accounts');
+    });
   });
 };
 
 exports.down = function(knex) {
   // Reverse the addition of the unique constraint in ad_accounts
   return knex.schema.table('ad_accounts', function(table) {
-      table.dropUnique(['provider', 'provider_id']);
+      table.dropUnique('provider_id');
   })
   // Remove the u_aa_map table
   .then(() => {

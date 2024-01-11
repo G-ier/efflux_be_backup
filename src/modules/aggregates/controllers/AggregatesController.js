@@ -2,6 +2,7 @@ const AggregatesService = require("../services/AggregatesService");
 const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
 
 class AggregatesController {
+
   constructor() {
     this.aggregatesService = new AggregatesService();
   }
