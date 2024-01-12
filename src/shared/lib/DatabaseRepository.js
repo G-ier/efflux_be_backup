@@ -1,6 +1,7 @@
 const DatabaseConnection = require('./DatabaseConnection');
 
 class DatabaseRepository {
+
   constructor(connection) {
     this.connection = connection || new DatabaseConnection().getConnection();
 
@@ -79,7 +80,7 @@ class DatabaseRepository {
         const cachedUsers = await this.redis.getAsync(cacheKey);
         return JSON.parse(cachedUsers);
       }
-
+      console.log(fields);
       let queryBuilder = this.connection(tableName).select(fields);
 
       // Handling joins

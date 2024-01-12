@@ -56,8 +56,6 @@ class PixelRepository {
       mode: pixel.pixel_setup_mode,
       status: pixel.activity_status,
       provider_id: pixel.ad_account_id,
-      user_id: adAccountsMap[pixel.ad_account_id]?.user_id,
-      account_id: adAccountsMap[pixel.ad_account_id]?.account_id,
       ad_account_id: adAccountsMap[pixel.ad_account_id]?.id,
     };
   }

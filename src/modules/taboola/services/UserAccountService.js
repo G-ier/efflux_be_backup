@@ -39,27 +39,6 @@ class UserAccountService extends BaseService {
       return accounts[0];
     }
 
-    /**
-     * Unused, gets refresh token through a sign in popup. Getting it from client removes this step for users.
-    */
-    // async getTaboolaAdvertiserTokenFromAuthCode(auth_code) {
-    //   const url = `${TABOOLA_URL}/oauth/token`;
-    //   const headers = {
-    //     "Host": "https://backstage.taboola.com",
-    //     "Content-Type": "application/x-www-form-urlencoded"
-    //   };
-    //   const params = {
-    //     // client_id: [client_id],
-    //     // client_secret: [client_secret],
-    //     code: auth_code,
-    //     // redirect_uri: [redirect_uri],
-    //     // grant_type: authorization_code
-    //   };
-    //   res = this.postToApi(url, params, "Error getting Taboola Access token", headers);
-
-    //   return res;
-    // }
-
     async getTaboolaAdvertiserTokenFromClient() {
 
       this.logger.info("Fetching access token from API");

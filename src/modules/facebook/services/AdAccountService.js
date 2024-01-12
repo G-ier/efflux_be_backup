@@ -54,19 +54,46 @@ class AdAccountService extends BaseService {
   }
 
   async syncAdAccounts(providerId, userId, accountId, token) {
+
     const apiAdAccounts = await this.getAdAccountsFromApi(providerId, token);
+
     this.logger.info(`Upserting ${apiAdAccounts.length} Ad Accounts`);
+    // Upsert Ad Accounts
     await this.executeWithLogging(
-      () => this.adAccountRepository.upsert(apiAdAccounts, userId, accountId, 500),
+      () => this.adAccountRepository.upsertAdAccounts(apiAdAccounts, 500),
       "Error Upserting Ad Account"
     )
-    this.logger.info(`Done upserting ad accounts`);
+    this.logger.info(`Done upserting ad accounts`)
+
+    const providerIds = apiAdAccounts.map((account) => account.account_id);
+    const idsList = await this.adAccountRepository.fetchAdAccounts(["id"], { provider_id: providerIds });
+    const ids = idsList.map((id) => id.id);
+
+    this.logger.info(`Upserting User Account & User Ad Account Association`)
+    // Update The Map between Ad Accounts and User Accounts
+    await this.executeWithLogging(
+      () => this.adAccountRepository.upsertUserAccountsAssociation(ids, accountId, 500),
+      "Error Upserting User Account Ad Account Association"
+    )
+    // Update the map between Ad Accounts and Users
+    await this.executeWithLogging(
+      () => this.adAccountRepository.upsertUserAssociation(ids, userId, 500),
+      "Error Upserting User Ad Account Association"
+    )
+    this.logger.info(`Done upserting User Account & User Ad Account Association`)
+
     return apiAdAccounts.map((account) => account.id);
   }
 
   async fetchAdAccountsFromDatabase(fields = ["*"], filters = {}, limit, joins = []) {
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit, joins);
     return results;
+  }
+
+  async fetchAdAccountsMapFromDatabase(fields = ['ua_aa_map.id', 'ua_id', 'aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'], filters = {}, limit, joins = []){
+    const results = await this.adAccountRepository.fetchAdAccountsMap(fields, filters, limit, joins);
+    return results;
+    
   }
 
   async updateAdAccountInDatabase(updateData, id) {

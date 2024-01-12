@@ -43,8 +43,6 @@ class AdsRepository {
       traffic_source: 'tiktok',
       provider_id: ad.ad_id,
       status: ad.operation_status,
-      user_id: adAccountsMap[ad.advertiser_id].user_id,
-      account_id: adAccountsMap[ad.advertiser_id].account_id,
       ad_account_id: adAccountsMap[ad.advertiser_id].id,
       campaign_id: ad.campaign_id,
       ad_group_id: ad.adgroup_id,

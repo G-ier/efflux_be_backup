@@ -43,7 +43,7 @@ class AdRepository {
       url: ad.url,
       thumbnail_url: ad.thumbnail_url,
       campaign_id: ad.campaign_id,
-      account_id: ad.account_id,
+      ad_account_id: ad.ad_account_id,
       provider_id: ad.provider_id,
     };
   }

@@ -6,6 +6,9 @@ class AdAccountsRepository {
 
     constructor(database) {
       this.tableName = "ad_accounts";
+      this.userAccountsAssociationTableName = "ua_aa_map";
+      this.userAssociationTableName = "u_aa_map";
+      this.priorityTable = 'aa_prioritized_ua_map';
       this.database = database || new DatabaseRepository();
     }
 
@@ -22,11 +25,46 @@ class AdAccountsRepository {
       }
     }
 
-    async upsert(adAccounts, userId = null, accountId = null, chunkSize = 500) {
-      const dbObjects = adAccounts.map((adAccount) => this.toDatabaseDTO(adAccount, userId, accountId));
+    async upsertUserAccountsAssociation(adAccountIds, userAccountId, chunkSize = 500) {
+
+      const dbObjects = adAccountIds.map((id) => {
+        return {
+          ua_id: userAccountId,
+          aa_id: id
+        }
+      })
+
       const dataChunks = _.chunk(dbObjects, chunkSize);
       for (const chunk of dataChunks) {
-          await this.database.upsert(this.tableName, chunk, "provider, provider_id, account_id", ['user_id', 'account_id']);
+          await this.database.upsert(this.userAccountsAssociationTableName, chunk, "ua_id, aa_id");
+          await this.database.upsert(this.priorityTable, chunk, "aa_id", "aa_id");
+      }
+
+      return dbObjects;
+    }
+
+    async upsertUserAssociation(adAccountIds, userId, chunkSize = 500) {
+
+      const dbObjects = adAccountIds.map((id) => {
+        return {
+          u_id: userId,
+          aa_id: id
+        }
+      })
+
+      const dataChunks = _.chunk(dbObjects, chunkSize);
+      for (const chunk of dataChunks) {
+          await this.database.upsert(this.userAssociationTableName, chunk, "u_id, aa_id");
+      }
+
+      return dbObjects;
+    }
+
+    async upsertAdAccounts(adAccounts, chunkSize = 500) {
+      const dbObjects = adAccounts.map((adAccount) => this.toDatabaseDTO(adAccount));
+      const dataChunks = _.chunk(dbObjects, chunkSize);
+      for (const chunk of dataChunks) {
+          await this.database.upsert(this.tableName, chunk, "provider_id");
       }
       return dbObjects;
     }
@@ -40,14 +78,58 @@ class AdAccountsRepository {
       return results;
     }
 
-    toDatabaseDTO(adAccount, userId = null, accountId = null) {
+    async fetchAdAccountsMap(fields=['ua_aa_map.id', 'ua_id', 'aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'], 
+    filters = {}, limit, joins = []){
+      const joinAdAccount =  {
+        type: "inner",
+        table: "ad_accounts AS aa",
+        first: `ua_aa_map.aa_id`,
+        operator: "=",
+        second: "aa.provider_id",
+      }
+      const joinUserAccount =  {
+        type: "inner",
+        table: "user_accounts AS ua",
+        first: `ua_aa_map.ua_id`,
+        operator: "=",
+        second: "ua.id",
+      }
+      joins.push(joinAdAccount);
+      joins.push(joinUserAccount);
+      const results = await this.database.query("ua_aa_map", fields, filters, limit, joins);
+      console.log("Results length: ", results.length, " Results: ", results);
+      return results;
+    }
+
+    async fetchAdAccountsMap(fields=['ua_aa_map.id', 'ua_id', 'aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'], 
+    filters = {}, limit, joins = []){
+      const joinAdAccount =  {
+        type: "inner",
+        table: "ad_accounts AS aa",
+        first: `ua_aa_map.aa_id`,
+        operator: "=",
+        second: "aa.provider_id",
+      }
+      const joinUserAccount =  {
+        type: "inner",
+        table: "user_accounts AS ua",
+        first: `ua_aa_map.ua_id`,
+        operator: "=",
+        second: "ua.id",
+      }
+      joins.push(joinAdAccount);
+      joins.push(joinUserAccount);
+      const results = await this.database.query("ua_aa_map", fields, filters, limit, joins);
+      console.log("Results length: ", results.length, " Results: ", results);
+      return results;
+    }
+
+    toDatabaseDTO(adAccount) { 
       return {
         name: adAccount.name,
         provider: "facebook",
         provider_id: adAccount.id.replace(/^act_/, ""),
         status: "active",
-        user_id: userId,
-        account_id: accountId,
         fb_account_id: adAccount.account_id,
         amount_spent: adAccount.amount_spent,
         balance: adAccount.balance,

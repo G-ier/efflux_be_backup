@@ -118,8 +118,6 @@ class CampaignRepository {
       "spending_limit",
       "start_date_in_utc",
       "end_date_in_utc",
-      "user_id",
-      "account_id",
       "ad_account_id",
     ], [
       "id",
@@ -129,14 +127,12 @@ class CampaignRepository {
       "lifetime_budget",
       "start_time",
       "stop_time",
-      "user_id",
-      "account_id",
       "ad_account_id",
     ]);
 
     dbObject.network = "unkown";
     dbObject.traffic_source = "taboola";
-    
+
     // Set endDate to null if its value is like 9999
     if (dbObject.stop_time && dbObject.stop_time.includes('9999')) {
       dbObject.stop_time = null;
@@ -145,14 +141,6 @@ class CampaignRepository {
 
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;
-    }
-
-    if (adAccountInfo.user_id !== undefined) {
-      dbObject.user_id = adAccountInfo.user_id;
-    }
-
-    if (adAccountInfo.account_id !== undefined) {
-      dbObject.account_id = adAccountInfo.account_id;
     }
 
     return dbObject;
@@ -165,8 +153,6 @@ class CampaignRepository {
       dbObject.updated_time,
       dbObject.id,
       dbObject.status,
-      dbObject.user_id,
-      dbObject.account_id,
       dbObject.ad_account_id,
       dbObject.daily_budget,
       dbObject.lifetime_budget,

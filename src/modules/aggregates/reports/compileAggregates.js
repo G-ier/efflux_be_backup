@@ -331,12 +331,11 @@ async function compileAggregates(database, network, trafficSource, startDate, en
         MAX(c.name) as campaign_name,
         adsets.provider_id as adset_id,
         MAX(adsets.name) as adset_name,
-        adsets.user_id as user_id,
         adsets.ad_account_id as ad_account_id
       FROM adsets
         JOIN campaigns c ON c.id = adsets.campaign_id AND c.traffic_source = '${trafficSource}'
         ${campaignIdsRestriction ? `WHERE c.id IN ${campaignIdsRestriction}` : ''}
-      GROUP BY c.id, adsets.provider_id, adsets.user_id, adsets.ad_account_id
+      GROUP BY c.id, adsets.provider_id, adsets.ad_account_id
     )` :
     `agg_adsets_data AS (
       SELECT
@@ -344,11 +343,10 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       MAX(name) as campaign_name,
       '' as adset_id,
       '' as adset_name,
-      user_id,
       ad_account_id
       FROM campaigns
       ${campaignIdsRestriction ? `WHERE id IN ${campaignIdsRestriction}` : ''}
-      GROUP BY id, user_id, ad_account_id
+      GROUP BY id, ad_account_id
     )`
   }
     , ${TRAFFIC_SOURCE(network, trafficSource, startDate, endDate, campaignIdsRestriction)}
@@ -361,7 +359,6 @@ async function compileAggregates(database, network, trafficSource, startDate, en
       agg_adsets_data.campaign_name as campaign_name,
       COALESCE(agg_adsets_data.adset_id, network.adset_id, traffic_source.adset_id ${network === 'sedo' || network === 'medianet' ? '' : ', postback_events.adset_id'}) as adset_id,
       agg_adsets_data.adset_name as adset_name,
-      agg_adsets_data.user_id as user_id,
       agg_adsets_data.ad_account_id as ad_account_id,
       ${RETURN_FIELDS(network, trafficSource)}
     FROM network
