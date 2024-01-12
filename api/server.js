@@ -4,7 +4,7 @@ const express = require("express");
 
 // Local imports
 const EnvironmentVariablesManager = require("../src/shared/services/EnvironmentVariablesManager");
-
+const {initRedis}= require("../src/shared/lib/RedisConnection")
 // Initialize API
 const initializeAPI = async () => {
 
@@ -12,6 +12,9 @@ const initializeAPI = async () => {
   console.log("Retrieving environment variables...");
   await EnvironmentVariablesManager.init();
   console.log("Environment variables retrieved.");
+
+  console.log("Initializing Redis...")
+  await initRedis()
 
   // Initialize server
   const server = express();

@@ -170,8 +170,8 @@ class DatabaseRepository {
       let queryBuilder = this.connection(tableName);
 
       // Update the fields
-      queryBuilder = queryBuilder.update(updatedFields);
-
+      queryBuilder = queryBuilder.update(updatedFields).returning('*');
+      
       // Apply filters to the query
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
