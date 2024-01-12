@@ -7,6 +7,7 @@ const AdAccountRepository = require("../repositories/AdAccountRepository");
 const { FB_API_URL, fieldsFilter } = require("../constants");
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
+
 class AdAccountService extends BaseService {
 
   constructor() {
@@ -90,10 +91,29 @@ class AdAccountService extends BaseService {
     return results;
   }
 
-  async fetchAdAccountsMapFromDatabase(fields = ['ua_aa_map.id', 'ua_id', 'aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'], filters = {}, limit, joins = []){
-    const results = await this.adAccountRepository.fetchAdAccountsMap(fields, filters, limit, joins);
+  async fetchAdAccountsMapFromDatabase() {
+    const results = await this.adAccountRepository.fetchAdAccountsUserAccountMap(
+      ['ua_aa_map.id', 'ua_aa_map.ua_id', 'ua_aa_map.aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'],
+      {},
+      false,
+      [
+        {
+          type: "inner",
+          table: "ad_accounts AS aa",
+          first: `ua_aa_map.aa_id`,
+          operator: "=",
+          second: "aa.id",
+        },
+        {
+          type: "inner",
+          table: "user_accounts AS ua",
+          first: `ua_aa_map.ua_id`,
+          operator: "=",
+          second: "ua.id",
+        }
+      ]
+      );
     return results;
-    
   }
 
   async updateAdAccountInDatabase(updateData, id) {

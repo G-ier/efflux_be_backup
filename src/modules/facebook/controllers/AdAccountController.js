@@ -20,10 +20,12 @@ class AdAccountController {
   }
 
   async fetchAdAccountsMapFromDatabase(req, res) {
-    const { fields, filters } = req.query;
-    console.log(req.query);
-    const results = await this.adAccountService.fetchAdAccountsMapFromDatabase(fields, filters);
-    res.json(results);
+    try {
+      const results = await this.adAccountService.fetchAdAccountsMapFromDatabase();
+      res.json(results);
+    } catch (err) {
+      res.status(500).json(err);
+    }
   }
 
 }

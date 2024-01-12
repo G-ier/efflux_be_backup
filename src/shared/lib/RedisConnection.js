@@ -65,7 +65,7 @@ class RedisConnection {
   }
 
   async getAsync(key) {
-    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true') {
       return null
     }
     try {
@@ -79,7 +79,7 @@ class RedisConnection {
 
 
   async setAsync(key, value) {
-    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true') {
       return () =>{}
     }
     try {
@@ -92,7 +92,7 @@ class RedisConnection {
 
 
   async delAsync(key) {
-    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true'){
       return
     }
     try {

@@ -10,6 +10,7 @@ const AdsetsRepository = require('../facebook/repositories/AdsetsRepository');
 const CampaignRepository = require('../facebook/repositories/CampaignRepository');
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
+
 class TemporaryService {
 
   constructor() {
@@ -29,6 +30,11 @@ class TemporaryService {
     }
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
     return results;
+  }
+
+  async deleteAdAccountUserMap(aa_id, u_id) {
+    const response = await this.database('u_aa_map').where({ aa_id, u_id }).del();
+    return response;
   }
 
   async updateAdAccount(filter, updateData) {
@@ -171,6 +177,7 @@ class TemporaryService {
 }
 
 class TemporaryController {
+
   constructor() {
     this.temporaryService = new TemporaryService();
   }
@@ -186,6 +193,19 @@ class TemporaryController {
         limit,
       );
       res.status(200).json(adAccounts);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async deleteAdAccountUserMap(req, res) {
+    try {
+      const { id, userId } = req.body;
+      const deleted = await this.temporaryService.deleteAdAccountUserMap(id, userId);
+      res.status(200).json({
+        message: `AdAccount ${id} and it's campaigns + adsets were updated. Updated campaigns count: ${deleted}`,
+      });
     } catch (error) {
       console.log('ERROR', error);
       res.status(500).json({ message: error.message });

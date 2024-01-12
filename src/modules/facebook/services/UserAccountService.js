@@ -93,7 +93,7 @@ class UserAccountService {
     return [brokenAccountIds, validAccounts];
   }
 
-  async getFetchingAccount() {
+  async getFetchingAccount(specificId = null) {
 
     const fetchingFields = ["id", "name", "provider_id", "user_id", "token", "role", "business_id"];
 
