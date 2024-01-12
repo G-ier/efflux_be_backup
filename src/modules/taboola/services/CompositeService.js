@@ -32,11 +32,22 @@ class CompositeService {
       //Sync Ad Accounts
       await this.adAccountService.syncAdAccounts(provider_id, access_token, user_id, id);
       const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-          ["id", "provider_id", "user_id", "account_id"],
-          { account_id: id },
-        );
+        ["ad_accounts.id", "ad_accounts.provider_id"],
+        {"map.ua_id": id},
+        false,
+        [
+          {
+            type: "inner",
+            table: "ua_aa_map AS map",
+            first: "ad_accounts.id",
+            operator: "=",
+            second: "map.aa_id",
+          },
+        ],
+      );
       const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
       const updatedAdAccountsIds = _.map(adAccounts, "provider_id");
+
       if (!adAccounts.length) throw new Error("No ad accounts to update");
 
       // Sync Campaigns
@@ -47,7 +58,7 @@ class CompositeService {
         start_date, end_date);
 
       // Sync Ads
-      await this.adService.syncAds(access_token, campaigns, updatedAdAccountsDataMap);
+      await this.adService.syncAds(access_token, campaigns);
 
       return true;
     }

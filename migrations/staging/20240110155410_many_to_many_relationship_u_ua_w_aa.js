@@ -9,7 +9,6 @@ exports.up = function(knex) {
     table.increments('id').primary();
     table.integer('ua_id').unsigned().notNullable();
     table.string('aa_id').unsigned().notNullable();
-    table.boolean('prioritized').defaultTo(false);
     table.foreign('ua_id').references('id').inTable('user_accounts');
     table.unique(['ua_id', 'aa_id']);
   })

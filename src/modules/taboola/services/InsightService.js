@@ -11,7 +11,7 @@ const InsightRepository = require("../repositories/InsightRepository");
 const { stringify } = require("uuid");
 
 class InsightService  extends BaseService{
-    
+
     constructor(){
         super(TaboolaLogger);
         this.insightRepository = new InsightRepository();

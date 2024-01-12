@@ -62,8 +62,14 @@ exports.up = function(knex) {
     knex.schema.table('tiktok_ads', table => {
       table.dropForeign(['account_id'], 'tiktok_ads_account_id_foreign');
       table.dropColumn('account_id');
-    })
+    }),
 
+    // Drop account_id from taboola_ads
+    knex.schema.table('taboola_ads', table => {
+      table.dropColumn('account_id');
+      table.integer('ad_account_id').unsigned();
+      table.foreign('ad_account_id', 'taboola_ads_ad_account_id_foreign').references('id').inTable('ad_accounts').onDelete('CASCADE');
+    })
   ]);
 };
 
@@ -123,6 +129,10 @@ exports.down = function(knex) {
     knex.schema.table('tiktok_ads', table => {
       table.integer('account_id').unsigned();
       table.foreign('account_id', 'tiktok_ads_account_id_foreign').references('id').inTable('user_accounts').onDelete('CASCADE');
+    }),
+
+    knex.schema.table('taboola_ads', table => {
+      table.integer('account_id').unsigned();
     })
   ]);
 };

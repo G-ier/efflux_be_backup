@@ -78,6 +78,10 @@ exports.up = function(knex) {
 
     knex.schema.table('insights', table => {
       table.dropColumn('user_id');
+    }),
+
+    knex.schema.table('taboola_ads', table => {
+      table.dropColumn('user_id');
     })
   ]);
 };
@@ -151,6 +155,10 @@ exports.down = function(knex) {
     }),
 
     knex.schema.table('insights', table => {
+      table.integer('user_id').unsigned();
+    }),
+
+    knex.schema.table('taboola_ads', table => {
       table.integer('user_id').unsigned();
     })
 
