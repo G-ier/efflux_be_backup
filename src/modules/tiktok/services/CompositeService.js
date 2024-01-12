@@ -60,8 +60,15 @@ class CompositeService {
       result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
         {
           type: "inner",
+          table: "aa_prioritized_ua_map AS map",
+          first: `${config.tableName}.ad_account_id`,
+          operator: "=",
+          second: "map.aa_id",
+        },
+        {
+          type: "inner",
           table: "user_accounts AS ua",
-          first: `${config.tableName}.account_id`,
+          first: `map.ua_id`,
           operator: "=",
           second: "ua.id",
         },
@@ -86,7 +93,22 @@ class CompositeService {
 
     // Sync ad accounts
     await this.adAccountService.syncAdAccounts(token, id, user_id);
-    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["id", "provider_id", "user_id", "account_id"], {provider: "tiktok", account_id: id});
+
+    // Change the query to the new pattern.
+    const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+      ["ad_accounts.id", "ad_accounts.provider_id"],
+      {"map.ua_id": id},
+      false,
+      [
+        {
+          type: "inner",
+          table: "ua_aa_map AS map",
+          first: "ad_accounts.id",
+          operator: "=",
+          second: "map.aa_id",
+        },
+      ],
+    );
     const adAccountsMap = _(adAccounts).keyBy("provider_id").value();
     const adAccountIds = adAccountIdsLimitation ? adAccountIdsLimitation : Object.keys(adAccountsMap);
 
@@ -130,10 +152,8 @@ class CompositeService {
     // Sync ad insights
     if (uInsights){
       const campaignIdsMap = _(campaignIdsObjects).keyBy("id").value();
-      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
-      const adAccountsIds = adAccounts.map(({ provider_id }) => `${provider_id}`);
       try {
-        await this.adInsightsService.syncAdInsights(token, adAccountsIds, campaignIdsMap, date, endDate);
+        await this.adInsightsService.syncAdInsights(token, adAccountIds, campaignIdsMap, date, endDate);
       } catch (e) {
         this.logger.error(`Error syncing ad insights for account ${name}: ${e.message}`);
       }
@@ -179,12 +199,12 @@ class CompositeService {
           service = type === 'adset' ? this.adsetService : this.campaignService;
           const fetchMethod = type === 'adset' ? 'fetchAdsetsFromDatabase' : 'fetchCampaignsFromDatabase';
           ad_account_id = await service[fetchMethod](["ad_account_id"], {id: entityId});
-      } else {
-          throw new Error('Invalid type specified');
-      }
+        } else {
+            throw new Error('Invalid type specified');
+        }
         this.logger.debug(`Determined service and fetched ad account ID for entity ID ${entityId}`);
 
-        const { provider_id } = await this.adAccountService.fetchAdAccountDetails(ad_account_id[0].ad_account_id,"tiktok");
+        const { provider_id } = await this.adAccountService.fetchAdAccountDetails(ad_account_id[0].ad_account_id);
         const updateResponse = await this.updateServiceEntity({
             service,
             entityId,
