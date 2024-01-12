@@ -73,6 +73,10 @@ class AdAccountsRepository {
       return await this.database.update(this.tableName, updateFields, criterion);
     }
 
+    async updatePrioritiesMap(updateFields, criterion) {
+      return await this.database.update(this.priorityTable, updateFields, criterion);
+    }
+
     async fetchAdAccounts(fields = ['*'], filters = {}, limit, joins = []) {
       const results = await this.database.query(this.tableName, fields, filters, limit, joins);
       return results;

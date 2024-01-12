@@ -93,7 +93,7 @@ class AdAccountService extends BaseService {
 
   async fetchAdAccountsMapFromDatabase() {
     const results = await this.adAccountRepository.fetchAdAccountsUserAccountMap(
-      ['ua_aa_map.id', 'ua_aa_map.ua_id', 'ua_aa_map.aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'],
+      ['ua_aa_map.id', 'ua_aa_map.ua_id', 'ua_aa_map.aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name', 'prio.ua_id as prioritised_acc'],
       {},
       false,
       [
@@ -110,10 +110,22 @@ class AdAccountService extends BaseService {
           first: `ua_aa_map.ua_id`,
           operator: "=",
           second: "ua.id",
+        },
+        {
+          type: "inner",
+          table: "aa_prioritized_ua_map AS prio",
+          first: `ua_aa_map.aa_id`,
+          operator: "=",
+          second: "prio.aa_id",
         }
       ]
       );
     return results;
+  }
+
+  async updatePrioritiesMap(updateData, criterion) {
+    const updateCount = await this.adAccountRepository.updatePrioritiesMap(updateData, criterion);
+    return updateCount
   }
 
   async updateAdAccountInDatabase(updateData, id) {

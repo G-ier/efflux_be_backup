@@ -27,6 +27,18 @@ class AdAccountController {
       res.status(500).json(err);
     }
   }
+  async assignUserAccountToAdAccount(req, res){
+    try{
+      const { ad_account, user_account } = req.body;
+      const updateData = { ua_id: user_account }
+      const criterion = { aa_id: ad_account }
+      await this.adAccountService.updatePrioritiesMap(updateData, criterion);
+      res.json(ad_account);
+    } catch (err){
+      console.log(err)
+      res.status(500).json(err);
+    }
+  }
 
 }
 
