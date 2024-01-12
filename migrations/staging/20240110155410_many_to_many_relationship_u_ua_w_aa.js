@@ -30,8 +30,7 @@ exports.up = function(knex) {
   .then((rows) => {
     const mappedData = rows.map(row => ({
       ua_id: row.account_id,
-      aa_id: row.provider_id,
-      prioritized: false
+      aa_id: row.provider_id
     }));
     // Insert data into ua_aa_map
     return knex('ua_aa_map').insert(mappedData);
