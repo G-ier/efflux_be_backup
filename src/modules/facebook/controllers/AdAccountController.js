@@ -19,6 +19,13 @@ class AdAccountController {
     res.json(results);
   }
 
+  async fetchAdAccountsMapFromDatabase(req, res) {
+    const { fields, filters } = req.query;
+    console.log(req.query);
+    const results = await this.adAccountService.fetchAdAccountsMapFromDatabase(fields, filters);
+    res.json(results);
+  }
+
 }
 
 module.exports = AdAccountController;

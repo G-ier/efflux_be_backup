@@ -90,6 +90,12 @@ class AdAccountService extends BaseService {
     return results;
   }
 
+  async fetchAdAccountsMapFromDatabase(fields = ['ua_aa_map.id', 'ua_id', 'aa_id', 'ua.name AS ua_name', 'aa.name AS aa_name'], filters = {}, limit, joins = []){
+    const results = await this.adAccountRepository.fetchAdAccountsMap(fields, filters, limit, joins);
+    return results;
+    
+  }
+
   async updateAdAccountInDatabase(updateData, id) {
     const updateCount = await this.adAccountRepository.update(updateData, id);
     return updateCount
