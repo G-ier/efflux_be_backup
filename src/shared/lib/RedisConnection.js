@@ -14,7 +14,7 @@ class RedisConnection {
   }
 
    async initialize() {
-    if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
+    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true') {
       return null
     }
     const instance = new RedisConnection();
@@ -40,7 +40,7 @@ class RedisConnection {
     const client = redis.createClient({
       url: redisUrl,
     });
-    
+
     await client.connect();
     return client;
   }
@@ -75,8 +75,8 @@ class RedisConnection {
       throw err;
     }
   }
-  
-  
+
+
 
   async setAsync(key, value) {
     if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
@@ -89,7 +89,7 @@ class RedisConnection {
       throw err;
     }
   }
-  
+
 
   async delAsync(key) {
     if(!EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") === 'true'){
@@ -103,7 +103,7 @@ class RedisConnection {
       throw err;
     }
   }
-  
+
   async deleteKeysByTableName(tableName) {
     const pattern = `*${tableName}*`;
     let cursor = '0';
@@ -123,23 +123,13 @@ class RedisConnection {
   }
 }
 
-
-async function initRedis() {
-  try {
-    const instance = await RedisConnection.initialize();
-    console.log("Redis Client Initialized");
-  } catch (error) {
-    console.error("Failed to initialize Redis Client:", error);
-    throw error; // Rethrow error to handle it outside
-  }
-}
-
 const instance = new RedisConnection();
 
 async function initRedis() {
   try {
-    await instance.initialize();
-    console.log("Redis Client Initialized");
+    const init = await instance.initialize();
+    if (init) console.log("Redis Client Initialized");
+    else  console.log("Redis Client Not Initialized");
   } catch (error) {
     console.error("Failed to initialize Redis Client:", error);
     throw error;
