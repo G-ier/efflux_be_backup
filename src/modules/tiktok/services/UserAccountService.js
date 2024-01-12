@@ -32,6 +32,7 @@ class UserAccountService extends BaseService{
   }
 
   async getFetchingAccounts() {
+    // I don't have a method for token validation as I do for Facebookso this is good for now.
     const filters = { provider: "tiktok", fetching: true };
     const accounts = await this.userAccountRepostiory.fetchUserAccounts(
       ["id", "name", "provider_id", "user_id", "token"],

@@ -71,8 +71,6 @@ class CampaignRepository {
       updated_time: campaign.modify_time,
       traffic_source: 'tiktok',
       status: campaign.status || campaign.operation_status,
-      user_id: adAccountsMap?.[campaign.advertiser_id].user_id,
-      account_id: adAccountsMap?.[campaign.advertiser_id].account_id,
       ad_account_id: adAccountsMap?.[campaign.advertiser_id].id,
       daily_budget: campaign.dailyBudget || null,
       lifetime_budget: campaign.budget ?? 0,

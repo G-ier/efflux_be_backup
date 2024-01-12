@@ -58,8 +58,6 @@ class AdsetsRepository {
       campaign_id: adset.campaign_id,
       provider_id: adset.adgroup_id,
       status: adset.status || adset.operation_status,
-      user_id: adAccountsMap?.[adset.advertiser_id].user_id,
-      account_id: adAccountsMap?.[adset.advertiser_id].account_id,
       ad_account_id: adAccountsMap?.[adset.advertiser_id].id,
       daily_budget: adset.dailyBudget || adset.budget,
       lifetime_budget: adset.lifetime_budget,
