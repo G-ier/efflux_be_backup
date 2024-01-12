@@ -134,6 +134,17 @@ Resources:
             # Define environment
             echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
+            # Create a dummy Express Js app on port 3500 for the health check
+            sudo mkdir -p /var/www/health-check
+            cd /var/www/health-check
+            sudo npm init -y
+            sudo npm install express
+            sudo sh -c 'echo "const express = require('\''express'\''); const app = express(); app.get('\''/'\'', (req, res) => { res.send('\''The World is Yours!'\''); }); app.listen(3500, () => { console.log('\''Example app listening on port 3500'\''); });" > app.js'
+
+            # Start the app
+            cd /var/www/health-check
+            sudo pm2 start app.js --name health-check
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
