@@ -1,5 +1,7 @@
 // Third party imports
 const { createLogger, format, transports } = require('winston');
+const WinstonCloudWatch = require('winston-cloudwatch');
+
 const path = require('path');
 
 // Local application imports
@@ -7,14 +9,25 @@ const EnvironmentVariablesManager = require('../services/EnvironmentVariablesMan
 
 class CustomLogger {
   constructor(options) {
-    const { destination, level, pattern, filePath } = options;
+    const { destination, level, pattern, logGroupName } = options;
 
-    let logTransport;
+    let logTransports = [];
 
-    if (destination === 'file') {
-      logTransport = new transports.File({ filename: filePath });
+    if (destination === 'cloudwatch') {
+      const today = new Date().toISOString().split('T')[0]; // Format: 'YYYY-MM-DD'
+      const logStreamName = `${today}-${options.logStreamName}`; // Append the date to the log stream name  (e.g. '2020-01-01-logs')
+      logTransports.push(
+        new WinstonCloudWatch({
+          logGroupName: logGroupName,
+          logStreamName: logStreamName,
+          awsRegion: 'us-east-1',
+          jsonMessage: true,
+          createLogGroup: true,
+          createLogStream: true,
+        }),
+      );
     } else {
-      logTransport = new transports.Console();
+      logTransports = new transports.Console();
     }
 
     this.logger = createLogger({
@@ -32,7 +45,7 @@ class CustomLogger {
             .replace('{message}', info.message || '');
         }),
       ),
-      transports: [logTransport],
+      transports: logTransports,
     });
   }
 
@@ -86,79 +99,85 @@ class CustomLogger {
 
 const streamDestination =
   EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT') === 'production'
-    ? 'file'
+    ? 'cloudwatch'
     : 'console';
-const filePath = (msName) =>
-  EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT') === 'production'
-    ? `./logs/${msName}.log`
-    : null;
 
 // Crossroads Logger
 const CrossroadsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('crossroads'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'crossroads',
 });
 
 // Facebook Logger
 const FacebookLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('facebook'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'facebook',
 });
 
 // Tiktok Logger
 const TiktokLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('tiktok'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'tiktok',
 });
 
 // Taboola Logger
 const TaboolaLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('taboola'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'taboola',
 });
 // Capi Logger
 const CapiLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('capi'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'capi',
 });
 // Aggregates Logger
 const AggregatesLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('aggregates'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'aggregates',
 });
 
 // FunnelFlux Logger
 const FunnelFluxLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('funnelFlux'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'funnelFlux',
 });
 
 // Postback Logger
 const PostbackLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('postback'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'postback',
   pattern: '[{timestamp}]:[{level}] - {message}',
 });
 
 const PostbackTestLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('postback_test'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'postback_test',
   pattern: '[{timestamp}]:[{level}] - {message}',
 });
 // Requests Logger
 const RequestsLogger = new CustomLogger({
-  destination: 'file',
+  destination: streamDestination,
   level: 'info',
-  filePath: './logs/requests.log',
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'requests',
   pattern: '[{timestamp}]:[{level}]:{message}',
 });
 
@@ -166,91 +185,104 @@ const RequestsLogger = new CustomLogger({
 const SedoLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('sedo'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'sedo',
 });
 
 // Tonic Logger
 const TonicLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('tonic'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'tonic',
 });
 
 // MediaNet Logger
 const MediaNetLogger = new CustomLogger({
-  destination:streamDestination,
+  destination: streamDestination,
   level: 'info',
-  filePath: filePath('medianet')
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'medianet',
 });
 
 // Analysis Logger
 const AnalysisLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  filePath: filePath('analysis'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'analysis',
 });
 
 // CRON data update Logger
 const dataUpdatesLogger = new CustomLogger({
-  destination: 'file',
+  destination: streamDestination,
   level: 'info',
-  filePath: './logs/updates.log',
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'updates',
 });
 
 // User Logger
 const UserLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/user'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'user',
 });
 
 // Organization Logger
 const OrganizationLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/organization'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'organization',
 });
 
 // Insights Logger
 const InsightsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/insights'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'insights',
 });
 
 // Adset Logger
 const AdsetLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/adset'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'adset',
 });
 
 // Ads Logger
 const AdsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/ads'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'ads',
 });
 
 // Campaigns Logger
 const CampaignsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/campaigns'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'campaigns',
 });
 
 // Pixels Logger
 const PixelsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/pixels'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'pixels',
 });
 
 // UserAccount Logger
 const UserAccountLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  filePath: filePath('./logs/userAccount'),
+  logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
+  logStreamName: 'userAccount',
 });
 
 module.exports = {
@@ -268,5 +300,5 @@ module.exports = {
   dataUpdatesLogger,
   SedoLogger,
   TonicLogger,
-  MediaNetLogger
+  MediaNetLogger,
 };
