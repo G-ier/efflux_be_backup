@@ -27,7 +27,10 @@ class CustomLogger {
         }),
       );
     } else {
-      logTransports = new transports.Console();
+      logTransports = new transports.Console({
+        timestamp: true,
+        colorize: true,
+      });
     }
 
     this.logger = createLogger({
