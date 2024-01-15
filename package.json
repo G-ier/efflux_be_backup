@@ -9,7 +9,7 @@
     "start": "node index.js",
     "start:newrelic": "node -r newrelic index.js",
     "server": "nodemon index.js",
-    "make-migration":"node commands/makeMigration.js",
+    "make-migration": "node commands/makeMigration.js",
     "migrate": "knex migrate:latest",
     "migrate:down": "knex migrate:down",
     "migrate:make": "knex migrate:make",
@@ -66,6 +66,7 @@
     "uniqid": "^5.3.0",
     "uuid": "^9.0.1",
     "winston": "^3.10.0",
+    "winston-cloudwatch": "^6.2.0",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
