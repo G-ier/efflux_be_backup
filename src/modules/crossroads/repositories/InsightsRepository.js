@@ -11,6 +11,9 @@ class InsightsRepository {
     this.tableName = 'crossroads_raw_insights';
     this.database = database || new DatabaseRepository();
 
+    // TEMPORARY
+    this.tiktokCampaignIds = []
+
     const queueUrl =
       process.env.CROSSROAD_QUEUE_URL ||
       'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
@@ -18,7 +21,23 @@ class InsightsRepository {
     this.sqsService = new SqsService(queueUrl);
   }
 
+  // TEMPORARY
+  async fetchTiktokCampaignIds() {
+    const response = await this.database.raw(`
+      SELECT
+        id
+      FROM
+        campaigns
+      WHERE
+        traffic_source = 'tiktok'
+    `)
+    return response.rows.map(row => row.id)
+  }
+
   getTrafficSource(stat) {
+    // TEMPORARY
+    if (this.tiktokCampaignIds.includes(stat.tg2)) return PROVIDERS.TIKTOK;
+
     if (
       stat.tg10 === PROVIDERS.FACEBOOK ||
       stat.tg2.startsWith(PROVIDERS.FACEBOOK) ||
@@ -200,6 +219,10 @@ class InsightsRepository {
   }
 
   async upsert(insights, id, request_date, chunkSize = 500) {
+
+    // TEMPORARY
+    this.tiktokCampaignIds = await this.fetchTiktokCampaignIds();
+
     const [rawData, AggregatedData] = await this.processData(insights, id, request_date);
 
     // Upsert raw user session data
