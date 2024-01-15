@@ -2,9 +2,7 @@
   "name": "efflux-server",
   "version": "1.0.0",
   "main": "index.js",
-  "repository": "https://gitlab.com/elkhoudh/efflux",
-  "author": "Hamza Elkhoudiri",
-  "license": "MIT",
+  "repository": "https://github.com/roiads/efflux-be",
   "scripts": {
     "test": "jest --watch --verbose",
     "watch": "nodemon index.js",

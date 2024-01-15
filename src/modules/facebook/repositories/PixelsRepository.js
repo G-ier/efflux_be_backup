@@ -27,8 +27,8 @@ class PixelRepository {
     return results;
   }
 
-  async upsert(pixels, adAccountsMap, chunkSize = 500) {
-    const dbObjects = pixels.map((pixel) => this.toDatabaseDTO(pixel, adAccountsMap));
+  async upsert(pixels, chunkSize = 500) {
+    const dbObjects = pixels.map((pixel) => this.toDatabaseDTO(pixel));
     const dataChunks = _.chunk(dbObjects, chunkSize);
     for (const chunk of dataChunks) {
       await this.database.upsert(this.tableName, chunk, "pixel_id_ad_account_id");
@@ -43,15 +43,13 @@ class PixelRepository {
     return await this.database.delete(this.tableName, criterion);
   }
 
-  toDatabaseDTO(pixel, adAccountsMap) {
+  toDatabaseDTO(pixel) {
     return {
       pixel_id: pixel.id || pixel.pixel_id,
       domain: pixel.domain || "",
       token: pixel.token || "",
       bm: pixel.bm || "",
       name: pixel.name,
-      user_id: pixel.user_id ? pixel.user_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id]?.user_id : null,
-      account_id: adAccountsMap ? adAccountsMap[pixel.ad_account_id].account_id : null,
       business_id: pixel?.owner_business?.id || null,
       business_name: pixel?.owner_business?.name || null,
       is_unavailable: pixel.is_unavailable,

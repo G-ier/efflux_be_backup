@@ -72,8 +72,8 @@ class CampaignService extends BaseService {
       const adAccount = adAccountsMap[campaign.advertiser_id];
         return {
           campaignId: campaign.id,
-          adAccountId: adAccount.account_id,
-          providerId: campaign.advertiser_id // Replace 'additionalField' with the actual field you want to add
+          adAccountId: adAccount.id,
+          providerId: campaign.advertiser_id
         };
     });
     return result;

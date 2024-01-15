@@ -47,15 +47,27 @@ class CompositeService {
     // Sync Ad Accounts
     const updatedResults = await this.adAccountService.syncAdAccounts(provider_id, user_id, id, token);
     if (!updatedResults.length) throw new Error("No ad accounts to update");
+
+    // Fetch ad acounts belonging to the user account
     const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ["id", "provider_id", "user_id", "account_id"],
-      { account_id: id },
+      ["ad_accounts.id", "ad_accounts.provider_id"],
+      { "map.ua_id": id },
+      false,
+      [
+        {
+          type: "inner",
+          table: "ua_aa_map AS map",
+          first: "ad_accounts.id",
+          operator: "=",
+          second: "map.aa_id",
+        },
+      ],
     );
     const updatedAdAccountsDataMap = _(adAccounts).keyBy("provider_id").value();
     const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
 
     // Sync Campaigns
-    if (updateCampaigns)
+    if (updateCampaigns) {
       try {
         await this.campaignsService.syncCampaigns(
           token,
@@ -65,6 +77,7 @@ class CompositeService {
           endDate,
         );
       } catch {}
+    }
 
     // Sync Adsets
     if (updateAdsets) {
@@ -86,10 +99,8 @@ class CompositeService {
 
     // Sync Insights
     if (updateInsights) {
-      const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(["*"], { account_id: id });
-      const adAccountsIds = adAccounts.map(({ provider_id }) => `act_${provider_id}`);
       try {
-        await this.adInsightsService.syncAdInsights(token, adAccountsIds, startDate, endDate);
+        await this.adInsightsService.syncAdInsights(token, updatedAdAccountIds, startDate, endDate);
       } catch (e) {
         console.log(e);
       }
@@ -157,8 +168,15 @@ class CompositeService {
       result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
         {
           type: "inner",
+          table: "aa_prioritized_ua_map AS map",
+          first: `${config.tableName}.ad_account_id`,
+          operator: "=",
+          second: "map.aa_id",
+        },
+        {
+          type: "inner",
           table: "user_accounts AS ua",
-          first: `${config.tableName}.account_id`,
+          first: `map.ua_id`,
           operator: "=",
           second: "ua.id",
         },
@@ -178,19 +196,28 @@ class CompositeService {
   async syncPixels() {
     const accounts = await this.userAccountService.getFetchingAccount()
     const adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ["id", "provider_id", "user_id", "account_id"],
-      { provider: "facebook" }
+      ["map.ua_id", "ad_accounts.id", "ad_accounts.provider_id"],
+      { "ad_accounts.provider": "facebook" },
+      false,
+      [
+        {
+          type: "inner",
+          table: "ua_aa_map AS map",
+          first: "ad_accounts.id",
+          operator: "=",
+          second: "map.aa_id",
+        },
+      ]
     );
     for (const account of accounts) {
 
-      const { token, name, user_id, id, provider_id } = account;
+      const { token, name, id } = account;
       FacebookLogger.info(`Syncing pixels for account ${name}`);
+      const accountAdAccounts = adAccounts.filter((adAccount) => adAccount.ua_id === id);
+      const adAccountIds = accountAdAccounts.map((adAccount) => `act_${adAccount['provider_id']}`);
 
-      const accountAdAccounts = adAccounts.filter((adAccount) => adAccount.account_id === id);
-      const updatedAdAccountsDataMap = _(accountAdAccounts).keyBy("provider_id").value();
-      const updatedAdAccountIds = Object.keys(updatedAdAccountsDataMap).map((provider_id) => `act_${provider_id}`);
       try {
-        await this.pixelsService.syncPixels(token, updatedAdAccountIds, updatedAdAccountsDataMap);
+        await this.pixelsService.syncPixels(token, adAccountIds);
       } catch (error) {
         console.log(error);
       }

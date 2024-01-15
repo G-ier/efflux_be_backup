@@ -1,6 +1,6 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const RedisConnection = require("../../../shared/lib/RedisConnection")
 const User = require('../entities/User');
-
 class UserRepository {
 
   constructor(database) {
@@ -23,9 +23,20 @@ class UserRepository {
   }
 
   async update(data, criteria) {
-    return await this.database.update(this.tableName, data, criteria);
+    try {
+      const updated = await this.database.update(this.tableName, data, criteria);
+      if (Array.isArray(updated)) {
+        for (const update of updated) {
+          const x = await RedisConnection.delAsync(`user:${update.providerId}`);
+        }
+      } 
+      return updated;
+    } catch (error) {
+      console.error(`Error updating data in ${this.tableName}:`, error);
+      throw error;  // Rethrow or handle the error as appropriate for your application
+    }
   }
-
+  
   async delete(criteria) {
     return await this.database.delete(this.tableName, criteria);
   }
@@ -78,10 +89,39 @@ async fetchUsers(fields = ['*'], filters = {}, limit) {
 }
 
 async fetchOne(fields = ['*'], filters = {}) {
-  const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
-  const result = await this.database.raw(sqlQuery, cache); // assuming queryOneRaw method exists
-  return result?.rows?.[0];
+  try {
+    // Check if providerId is provided in filters and is valid
+    const providerId = filters.providerId;
+    let cachedObject = null;
+
+    if (providerId) {
+      // Retrieve from cache if providerId is valid
+      cachedObject = await RedisConnection.getAsync(`user:${providerId}`);
+      if (cachedObject) {
+        // Return cached object if available
+        return JSON.parse(cachedObject);
+      }
+    }
+    // Build SQL query
+    const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
+
+    // Execute query against the database
+    const result = await this.database.raw(sqlQuery, cache);
+    const object = result?.rows?.[0];
+
+    if (object && object.providerId) {
+      // Cache the result if object is valid and has a providerId
+      await RedisConnection.setAsync(`user:${object.providerId}`, JSON.stringify(object));
+    }
+
+    return object;
+  } catch (error) {
+    // Handle errors such as database connection issues
+    console.error('Error in fetchOne:', error);
+    throw error;
+  }
 }
+
 
 
   // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"

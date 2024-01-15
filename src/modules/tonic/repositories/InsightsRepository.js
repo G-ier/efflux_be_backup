@@ -4,7 +4,7 @@ const _ = require('lodash');
 // Local Imports
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
   constructor() {
@@ -12,11 +12,11 @@ class InsightsRepository {
     this.aggregatesTableName = 'tonic';
     this.database = new DatabaseRepository();
 
-    const queueUrl =
-      process.env.TONIC_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-tonic-queue';
+    // const queueUrl =
+    //   process.env.TONIC_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-tonic-queue';
 
-    this.sqsService = new SqsService(queueUrl);
+    // this.sqsService = new SqsService(queueUrl);
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {
@@ -129,14 +129,12 @@ class InsightsRepository {
     const rawData = [];
 
     for (const insight of data) {
-
       // Save raw data
       const parsedInsight = this.parseTonicAPIData(insight);
       rawData.push(parsedInsight);
 
       // push to SQS queue
-      // TODO: Temporary disabled. Enable when update to BatchWriteItem
-      await this.sqsService.sendMessageToQueue(parsedInsight);
+      // await this.sqsService.sendMessageToQueue(parsedInsight);
 
       // Clean insight data
       const cleansedInsight = this.cleanseData(parsedInsight);

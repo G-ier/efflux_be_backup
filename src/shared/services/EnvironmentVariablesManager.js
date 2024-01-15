@@ -38,6 +38,7 @@ class EnvironmentVariablesManager {
     // REDIS
     'REDIS_CLUSTER_URL_STAGING',
     'REDIS_CLUSTER_URL_PRODUCTION',
+    'REDIS_CLUSTER_URL_LOCAL',
 
     // MediaNet
     'MEDIANET_EMAIL',

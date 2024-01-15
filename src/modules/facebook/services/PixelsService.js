@@ -9,7 +9,6 @@ const { FB_API_URL, delay } = require('../constants');
 const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const BaseService = require("../../../shared/services/BaseService");
 
-const { sendSlackNotification } = require('../../../shared/lib/SlackNotificationService');
 class PixelsService extends BaseService {
 
   constructor() {
@@ -63,12 +62,12 @@ class PixelsService extends BaseService {
     return _.flatten(allPixels)
   }
 
-  async syncPixels(access_token, adAccountIds, adAccountsMap, date = "today") {
+  async syncPixels(access_token, adAccountIds, date = "today") {
     const pixels = await this.getPixelsFromApi(access_token, adAccountIds, date);
 
     this.logger.info(`Upserting ${pixels.length} Pixels`);
     await this.executeWithLogging(
-      () => this.pixelRepository.upsert(pixels, adAccountsMap, 500),
+      () => this.pixelRepository.upsert(pixels, 500),
       "Error Upserting Pixels"
     )
     this.logger.info(`Done upserting Pixels`);

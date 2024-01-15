@@ -24,18 +24,6 @@ module.exports = {
         NEW_RELIC_LICENSE_KEY: '05deb215fbdea6d15e080ae888415b2dFFFFNRAL',
         PORT: 80,
       },
-      env_dus_production: {
-        NODE_ENV: 'production',
-        NEW_RELIC_APP_NAME: 'Efflux DUS Production',
-        NEW_RELIC_LICENSE_KEY: '05deb215fbdea6d15e080ae888415b2dFFFFNRAL',
-        PORT: 80,
-      },
-      env_dus_staging: {
-        NODE_ENV: 'staging',
-        NEW_RELIC_APP_NAME: 'Efflux DUS Staging',
-        NEW_RELIC_LICENSE_KEY: '05deb215fbdea6d15e080ae888415b2dFFFFNRAL',
-        PORT: 80,
-      },
     },
   ],
 };

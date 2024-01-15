@@ -10,7 +10,9 @@ const AdsetsRepository = require('../facebook/repositories/AdsetsRepository');
 const CampaignRepository = require('../facebook/repositories/CampaignRepository');
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
+
 class TemporaryService {
+
   constructor() {
     this.userRepository = new UserRepository();
     this.adAccountRepository = new AdAccountRepository();
@@ -30,27 +32,15 @@ class TemporaryService {
     return results;
   }
 
+  async deleteAdAccountUserMap(aa_id, u_id) {
+    const response = await this.database('u_aa_map').where({ aa_id, u_id }).del();
+    return response;
+  }
+
   async updateAdAccount(filter, updateData) {
-    const updateCount = await this.adAccountRepository.update(updateData, filter);
-
-    if (updateData.user_id) {
-      console.log(`
-      Campaigns and adsets have a user id which is linked to ad account id.
-      Updating the user id of the ad account will update the user id of the campaigns and adsets.`);
-      const updatedCampaignsCount = await this.campaignRepository.update(
-        { user_id: updateData.user_id },
-        { ad_account_id: filter.id },
-      );
-      const updatedAdsetsCount = await this.adsetsRepository.update(
-        { user_id: updateData.user_id },
-        { ad_account_id: filter.id },
-      );
-      console.log('Campaigns  Updated', updatedCampaignsCount);
-      console.log('Adsets     Updated', updatedAdsetsCount);
-    }
-
-    console.log('Ad Accounts Updated', updateCount);
-    return updateCount !== 0;
+    const userId = updateData.user_id; const adAccountIds = [filter.id];
+    const uCount = await this.adAccountRepository.upsertUserAssociation(adAccountIds, userId);
+    return uCount !== 0;
   }
 
   async fetchUsersWithAdAccounts(userId, isAdmin) {
@@ -60,26 +50,26 @@ class TemporaryService {
     const userIds = users.map(user => user.id);
 
     // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
-    const whereClause = { 'ua.backup': false };
-    if (!isAdmin) whereClause['ad_accounts.user_id'] = userIds;
+    let whereClause = {};
+    if (!isAdmin) whereClause['map.u_id'] = userIds;
 
     const adAccounts = await this.adAccountRepository.fetchAdAccounts(
       [
         'ad_accounts.id',
         'ad_accounts.provider_id',
-        'ad_accounts.user_id',
         'ad_accounts.name',
         'ad_accounts.provider',
+        'map.u_id AS user_id'
       ],
       whereClause,
-      1000,
+      false,
       [
         {
           type: 'inner',
-          table: 'user_accounts AS ua',
-          first: `ad_accounts.account_id`,
+          table: 'u_aa_map AS map',
+          first: `ad_accounts.id`,
           operator: '=',
-          second: 'ua.id',
+          second: 'map.aa_id',
         },
       ],
     );
@@ -187,6 +177,7 @@ class TemporaryService {
 }
 
 class TemporaryController {
+
   constructor() {
     this.temporaryService = new TemporaryService();
   }
@@ -202,6 +193,19 @@ class TemporaryController {
         limit,
       );
       res.status(200).json(adAccounts);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async deleteAdAccountUserMap(req, res) {
+    try {
+      const { id, userId } = req.body;
+      const deleted = await this.temporaryService.deleteAdAccountUserMap(id, userId);
+      res.status(200).json({
+        message: `AdAccount ${id} and it's campaigns + adsets were updated. Updated campaigns count: ${deleted}`,
+      });
     } catch (error) {
       console.log('ERROR', error);
       res.status(500).json({ message: error.message });
@@ -297,28 +301,27 @@ class TemporaryController {
     }
   }
 
-async updateUserDetails(req, res) {
-  try {
-    const { name,userId } = req.body;
-    const user = userId || req.user.sub; // Ensure that the user's ID is available, typically through authentication middleware
+  async updateUserDetails(req, res) {
+    try {
+      const { name,userId } = req.body;
+      const user = userId || req.user.sub; // Ensure that the user's ID is available, typically through authentication middleware
 
-      // Validate the input as necessary
-      if (!name) {
-        return res.status(400).json({ message: 'No update parameters provided.' });
+        // Validate the input as necessary
+        if (!name) {
+          return res.status(400).json({ message: 'No update parameters provided.' });
+        }
+
+        // Call a service method to update the user details
+        const updateResult = await this.temporaryService.updateUserDetails(user, name);
+        // Construct a response message based on what was updated
+        let message = 'User details updated successfully: ';
+        if (name) message += 'Name ';
+
+        res.status(200).json({ message: message.trim(), updateResult });
+      } catch (error) {
+        console.log('ERROR', error);
+        res.status(500).json({ message: error.message });
       }
-
-      // Call a service method to update the user details
-      const updateResult = await this.temporaryService.updateUserDetails(user, name);
-      console.log({ updateResult });
-      // Construct a response message based on what was updated
-      let message = 'User details updated successfully: ';
-      if (name) message += 'Name ';
-
-      res.status(200).json({ message: message.trim(), updateResult });
-    } catch (error) {
-      console.log('ERROR', error);
-      res.status(500).json({ message: error.message });
-    }
   }
 
   // This will be used to get ad accounts from a user_id. If the user is admin, it will get all ad accounts.
