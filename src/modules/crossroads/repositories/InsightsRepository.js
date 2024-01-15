@@ -14,10 +14,9 @@ class InsightsRepository {
     // TEMPORARY
     this.tiktokCampaignIds = []
 
-    // const queueUrl =
-    //   process.env.CROSSROAD_QUEUE_URL ||
-    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
-
+    const queueUrl =
+      process.env.CROSSROAD_QUEUE_URL ||
+      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
     // this.sqsService = new SqsService(queueUrl);
   }
 
@@ -34,8 +33,20 @@ class InsightsRepository {
     return response.rows.map(row => row.id)
   }
 
-  getTrafficSource(stat) {
+  // TEMPORARY
+  async fetchTiktokCampaignIds() {
+    const response = await this.database.raw(`
+      SELECT
+        id
+      FROM
+        campaigns
+      WHERE
+        traffic_source = 'tiktok'
+    `)
+    return response.rows.map(row => row.id)
+  }
 
+  getTrafficSource(stat) {
     // TEMPORARY
     if (this.tiktokCampaignIds.includes(stat.tg2)) return PROVIDERS.TIKTOK;
 
@@ -221,7 +232,7 @@ class InsightsRepository {
   async upsert(insights, id, request_date, chunkSize = 500) {
 
     // TEMPORARY
-    this.tiktokCampaignIds = await this.fetchTiktokCampaignIds(request_date);
+    this.tiktokCampaignIds = await this.fetchTiktokCampaignIds();
 
     const [rawData, AggregatedData] = await this.processData(insights, id, request_date);
 
