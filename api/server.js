@@ -112,11 +112,6 @@ const initializeAPI = async () => {
         }
 
       Logging:
-        "The production environment logs every modules logs to it's
-        own file. The development environment logs all modules logs
-        to the console. Even if you don't set the LOGGING_ENVIRONMENT
-        variable, the default is development."
-
         Environment: ${loggingEnvironment || 'development'}
         Log Level: ${logLevel || 'info'}
 
