@@ -14,7 +14,7 @@ const EnvironmentVariablesManager = require('../services/EnvironmentVariablesMan
 
 class CustomLogger {
   constructor(options) {
-    const { destination, level, pattern, logGroupName } = options;
+    const { destination, level, logGroupName } = options;
 
     let logTransports = [];
 
@@ -28,7 +28,7 @@ class CustomLogger {
           awsOptions: {
             region: 'us-east-1',
           },
-          jsonMessage: true,
+          jsonMessage: false,
           createLogGroup: true,
           createLogStream: true,
         }),
@@ -176,7 +176,6 @@ const PostbackLogger = new CustomLogger({
   level: 'info',
   logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
   logStreamName: 'postback',
-  pattern: '[{timestamp}]:[{level}] - {message}',
 });
 
 const PostbackTestLogger = new CustomLogger({
@@ -184,7 +183,6 @@ const PostbackTestLogger = new CustomLogger({
   level: 'info',
   logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
   logStreamName: 'postback_test',
-  pattern: '[{timestamp}]:[{level}] - {message}',
 });
 // Requests Logger
 const RequestsLogger = new CustomLogger({
@@ -192,7 +190,6 @@ const RequestsLogger = new CustomLogger({
   level: 'info',
   logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
   logStreamName: 'requests',
-  pattern: '[{timestamp}]:[{level}] - {message}',
 });
 
 // Sedo Logger
