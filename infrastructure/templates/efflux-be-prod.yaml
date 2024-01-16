@@ -238,9 +238,15 @@ Resources:
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
+            echo "alias htop='sudo htop'" >> ~/.bashrc
+            source ~/.bashrc
 
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
+            source ~/.bashrc
+
+            # Add alias for quickly resetting the application
+            echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env production && pm2 save && pm2 logs'" >> ~/.bashrc
             source ~/.bashrc
 
             # Define environment
