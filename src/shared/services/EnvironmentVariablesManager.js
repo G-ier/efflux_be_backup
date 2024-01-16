@@ -46,6 +46,10 @@ class EnvironmentVariablesManager {
 
     // Google API Key File
     'GOOGLE_API_KEY_FILE',
+
+    // Efflux Logger
+    'EFFLUX_LOGGER_ACCESS_KEY_ID',
+    'EFFLUX_LOGGER_SECRET_KEY',
   ];
 
   static parameters = [
@@ -99,10 +103,6 @@ class EnvironmentVariablesManager {
     // SQS Pusher Credentials
     'SQS_PUSHER_ACCESS_KEY_ID',
     'SQS_PUSHER_SECRET_KEY',
-
-    // Efflux Logger
-    'EFFLUX_LOGGER_ACCESS_KEY_ID',
-    'EFFLUX_LOGGER_SECRET_KEY',
   ];
 
   get isInitialized() {
