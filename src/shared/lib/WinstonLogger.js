@@ -50,19 +50,23 @@ class CustomLogger {
 
     this.logger = createLogger({
       level: level || 'info',
-      format: format.combine(
-        format.timestamp(),
-        format.printf((info) => {
-          let formattedPattern =
-            pattern || '[{timestamp}][{filename}][{method}]:[{level}] - {message}';
-          return formattedPattern
-            .replace('{timestamp}', (info.timestamp || '').padEnd(25, ' ')) // Assuming 25 characters for timestamp
-            .replace('{filename}', (info.filename || '').padEnd(30, ' ')) // 30 characters for filename
-            .replace('{method}', (info.method || '').padEnd(40, ' ')) // Assuming 20 characters for method
-            .replace('{level}', info.level) // Assuming 10 characters for level
-            .replace('{message}', info.message || '');
-        }),
-      ),
+      format:
+        destination === 'cloudwatch'
+          ? format.json()
+          : format.combine(
+              format.timestamp(),
+              format.printf((info) => {
+                let formattedPattern =
+                  pattern || '[{timestamp}][{filename}][{method}]:[{level}] - {message}';
+                return formattedPattern
+                  .replace('{timestamp}', (info.timestamp || '').padEnd(25, ' ')) // Assuming 25 characters for timestamp
+                  .replace('{filename}', (info.filename || '').padEnd(30, ' ')) // 30 characters for filename
+                  .replace('{method}', (info.method || '').padEnd(40, ' ')) // Assuming 20 characters for method
+                  .replace('{level}', info.level) // Assuming 10 characters for level
+                  .replace('{message}', info.message || '');
+              }),
+            ),
+
       transports: logTransports,
     });
   }
