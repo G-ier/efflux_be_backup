@@ -37,7 +37,7 @@ class AdAccountsRepository {
       const dataChunks = _.chunk(dbObjects, chunkSize);
       for (const chunk of dataChunks) {
           await this.database.upsert(this.userAccountsAssociationTableName, chunk, "ua_id, aa_id");
-          await this.database.upsert(this.priorityTable, chunk, "aa_id", "aa_id");
+          await this.database.upsert(this.priorityTable, chunk, "aa_id", ["aa_id"]);
       }
 
       return dbObjects;
