@@ -313,4 +313,12 @@ module.exports = {
   SedoLogger,
   TonicLogger,
   MediaNetLogger,
+  PixelsLogger,
+  UserLogger,
+  OrganizationLogger,
+  InsightsLogger,
+  AdsetLogger,
+  AdsLogger,
+  CampaignsLogger,
+  UserAccountLogger,
 };
