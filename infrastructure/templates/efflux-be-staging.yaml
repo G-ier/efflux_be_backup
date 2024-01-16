@@ -410,6 +410,18 @@ Resources:
         - Key: project
           Value: efflux-staging
 
+  # a cloudwatch log group for the application
+  ApplicationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/ec2/efflux-be-staging
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: Efflux-Staging-EC2LogGroup
+        - Key: project
+          Value: efflux
+
   # Create an ElastiCache Redis Cluster
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
