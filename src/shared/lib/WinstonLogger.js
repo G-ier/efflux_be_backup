@@ -200,7 +200,7 @@ const RequestsLogger = new CustomLogger({
   level: 'info',
   logGroupName: '/aws/ec2/efflux-be-' + EnvironmentVariablesManager.getEnvVariable('ENVIRONMENT'),
   logStreamName: 'requests',
-  pattern: '[{timestamp}]:[{level}]:{message}',
+  pattern: '[{timestamp}]:[{level}] - {message}',
 });
 
 // Sedo Logger
