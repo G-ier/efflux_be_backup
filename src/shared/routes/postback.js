@@ -268,16 +268,25 @@ route.get('/tonic', async (req, res) => {
     // subid4: ip_|_country_code_|_region_|_city_|_timestamp_|_campaign_name
 
     PostbackLogger.info(`TONIC PBQP: ${JSON.stringify(req.query)}`)
-    const {
+    let {
       subid1,
       subid2,
       subid3,
       subid4,
-      txid,
       revenue,
       kwp,
       type
     } = req.query;
+
+    // Renaming type to match the rest of the analytics
+    if (type) {
+      if (['view', 'redirect'].includes(type)) type = 'PageView'
+      else if (['viewrt'].includes(type)) type = 'ViewContent'
+      else if (['click', 'estimated_revenue_5h', 'preestimated_revenue', 'estimated_revenue'].includes(type)) {
+        if (type === 'click') revenue = 0
+        type = 'Purchase'
+      }
+    }
 
     // New Extracted Fields
     const user_agent = subid1 || 'Unknown';
