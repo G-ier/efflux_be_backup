@@ -1,5 +1,6 @@
 const db = require('../data/dbConfig');
 const _ = require('lodash');
+const { PixelsLogger } = require('../../../shared/lib/WinstonLogger');
 
 async function getAll(orderBy, fields = ['*']) {
   const pixels = await db
@@ -99,7 +100,7 @@ async function updatePixels(pixels, pixelIds) {
 
   if (createArr.length) {
     const created = await add(createArr, fields);
-    console.log('CREATED PIXELS LENGTH', created.length);
+    PixelsLogger.info('CREATED PIXELS LENGTH', created.length);
     result.push(...created);
   }
 
@@ -120,11 +121,11 @@ async function updatePixels(pixels, pixelIds) {
         ),
       ),
     );
-    console.log('UPDATED PIXELS LENGTH', updated.length);
+    PixelsLogger.info('UPDATED PIXELS LENGTH', updated.length);
     result.push(...updated);
   }
 
-  console.log('SKIPPED PIXELS LENGTH', skipArr.length);
+  PixelsLogger.info('SKIPPED PIXELS LENGTH', skipArr.length);
   result.push(...skipArr);
   return result;
 }
