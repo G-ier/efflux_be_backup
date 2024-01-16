@@ -48,8 +48,7 @@ class CustomLogger {
           : format.combine(
               format.timestamp(),
               format.printf((info) => {
-                let formattedPattern =
-                  pattern || '[{timestamp}][{filename}][{method}]:[{level}] - {message}';
+                let formattedPattern = '[{timestamp}][{filename}][{method}]:[{level}] - {message}';
                 return formattedPattern
                   .replace('{timestamp}', (info.timestamp || '').padEnd(25, ' ')) // Assuming 25 characters for timestamp
                   .replace('{filename}', (info.filename || '').padEnd(30, ' ')) // 30 characters for filename
