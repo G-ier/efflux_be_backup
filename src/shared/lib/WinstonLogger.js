@@ -1,7 +1,12 @@
 // Third party imports
+const AWS = require('aws-sdk');
+
+AWS.config.update({
+  region: 'us-east-1',
+});
+
 const { createLogger, format, transports } = require('winston');
 const WinstonCloudWatch = require('winston-cloudwatch');
-
 const path = require('path');
 
 // Local application imports
@@ -20,7 +25,17 @@ class CustomLogger {
         new WinstonCloudWatch({
           logGroupName: logGroupName,
           logStreamName: logStreamName,
-          awsRegion: 'us-east-1',
+          awsOptions: {
+            credentials: {
+              accessKeyId: EnvironmentVariablesManager.getEnvVariable(
+                'EFFLUX_LOGGER_ACCESS_KEY_ID',
+              ),
+              secretAccessKey: EnvironmentVariablesManager.getEnvVariable(
+                'EFFLUX_LOGGER_SECRET_KEY',
+              ),
+            },
+            region: 'us-east-1',
+          },
           jsonMessage: true,
           createLogGroup: true,
           createLogStream: true,
