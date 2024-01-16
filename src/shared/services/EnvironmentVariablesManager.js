@@ -38,13 +38,14 @@ class EnvironmentVariablesManager {
     // REDIS
     'REDIS_CLUSTER_URL_STAGING',
     'REDIS_CLUSTER_URL_PRODUCTION',
+    'REDIS_CLUSTER_URL_LOCAL',
 
     // MediaNet
     'MEDIANET_EMAIL',
     'MEDIANET_PASSWORD',
 
     // Google API Key File
-    'GOOGLE_API_KEY_FILE'
+    'GOOGLE_API_KEY_FILE',
   ];
 
   static parameters = [
@@ -98,7 +99,6 @@ class EnvironmentVariablesManager {
     // SQS Pusher Credentials
     'SQS_PUSHER_ACCESS_KEY_ID',
     'SQS_PUSHER_SECRET_KEY',
-
   ];
 
   get isInitialized() {

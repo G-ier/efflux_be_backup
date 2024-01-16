@@ -79,6 +79,16 @@ class CompositeController {
     res.status(200).send("Facebook data synced");
   }
 
+  async syncPixels(req, res) {
+    try {
+      await this.compositeService.syncPixels();
+      res.json(true);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Internal Server Error");
+    }
+  }
+
   async syncPages(req, res) {
     const pageIds = await this.compositeService.syncPages();
     res.json(pageIds);

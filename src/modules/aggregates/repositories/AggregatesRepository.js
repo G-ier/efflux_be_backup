@@ -13,18 +13,18 @@ const trafficSourceNetworkHourly = require('../reports/trafficSourceNetworkHourl
 const compileAggregates = require('../reports/compileAggregates');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class AggregatesRepository {
   constructor(database) {
     this.tableName = 'insights';
     this.database = database || new DatabaseRepository();
 
-    const queueUrl =
-      process.env.INSIGHTS_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/efflux-insights-to-clickhouse';
+    // const queueUrl =
+    //   process.env.INSIGHTS_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/efflux-insights-to-clickhouse';
 
-    this.sqsService = new SqsService(queueUrl);
+    // this.sqsService = new SqsService(queueUrl);
   }
 
   async revealBotSheets(
@@ -138,8 +138,7 @@ class AggregatesRepository {
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
       // push to SQS queue (for storing in data lake)
-      // TODO: Temporary disabled. Enable when update to BatchWriteItem
-      await this.sqsService.sendMessageToQueue(chunk);
+      // await this.sqsService.sendMessageToQueue(chunk);
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
     }

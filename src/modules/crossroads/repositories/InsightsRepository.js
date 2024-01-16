@@ -2,7 +2,7 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const _ = require('lodash');
 const PROVIDERS = require('../../../shared/constants/providers');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
 
@@ -11,14 +11,44 @@ class InsightsRepository {
     this.tableName = 'crossroads_raw_insights';
     this.database = database || new DatabaseRepository();
 
+    // TEMPORARY
+    this.tiktokCampaignIds = []
     const queueUrl =
       process.env.CROSSROAD_QUEUE_URL ||
       'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
+    // this.sqsService = new SqsService(queueUrl);
+  }
 
-    this.sqsService = new SqsService(queueUrl);
+  // TEMPORARY
+  async fetchTiktokCampaignIds(date) {
+    const response = await this.database.raw(`
+      SELECT
+        id
+      FROM
+        campaigns
+      WHERE
+        traffic_source = 'tiktok'
+    `)
+    return response.rows.map(row => row.id)
+  }
+
+  // TEMPORARY
+  async fetchTiktokCampaignIds() {
+    const response = await this.database.raw(`
+      SELECT
+        id
+      FROM
+        campaigns
+      WHERE
+        traffic_source = 'tiktok'
+    `)
+    return response.rows.map(row => row.id)
   }
 
   getTrafficSource(stat) {
+    // TEMPORARY
+    if (this.tiktokCampaignIds.includes(stat.tg2)) return PROVIDERS.TIKTOK;
+
     if (
       stat.tg10 === PROVIDERS.FACEBOOK ||
       stat.tg2.startsWith(PROVIDERS.FACEBOOK) ||
@@ -166,7 +196,6 @@ class InsightsRepository {
     let hourKey;
 
     for (const insight of data) {
-
       // Step 1: Parse API Data into a human readable format
       const parsedInsight = this.parseCRApiData(insight, account, request_date);
 
@@ -178,7 +207,7 @@ class InsightsRepository {
         rawData.push(parsedInsight);
         // push to SQS queue (for storing in data lake)
         // TODO: Temporary disabled. Enable when update to BatchWriteItem
-        await this.sqsService.sendMessageToQueue(parsedInsight);
+        // await this.sqsService.sendMessageToQueue(parsedInsight);
       }
 
       // Step 2: Aggregate data
@@ -200,6 +229,10 @@ class InsightsRepository {
   }
 
   async upsert(insights, id, request_date, chunkSize = 500) {
+
+    // TEMPORARY
+    this.tiktokCampaignIds = await this.fetchTiktokCampaignIds();
+
     const [rawData, AggregatedData] = await this.processData(insights, id, request_date);
 
     // Upsert raw user session data

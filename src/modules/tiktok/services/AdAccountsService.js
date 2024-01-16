@@ -72,17 +72,35 @@ class AdAccountService extends BaseService {
     const adAccountsData = await this.getAdAccountsFromApi(access_token);
     this.logger.info(`Upserting ${adAccountsData.length} Ad Accounts`);
     const results = await this.executeWithLogging(
-      () => this.adAccountsRepository.upsert(adAccountsData, account_id, user_id),
+      () => this.adAccountsRepository.upsertAdAccounts(adAccountsData),
       "Error Upserting Ad Account"
     )
     this.logger.info(`Done upserting ad accounts`);
+
+    const providerIds = adAccountsData.map((account) => account.advertiser_id);
+    const idsList = await this.adAccountsRepository.fetchAdAccounts(["id"], { provider_id: providerIds });
+    const ids = idsList.map((id) => id.id);
+
+    this.logger.info(`Upserting User Account & User Ad Account Association`)
+    // Update The Map between Ad Accounts and User Accounts
+    await this.executeWithLogging(
+      () => this.adAccountsRepository.upsertUserAccountsAssociation(ids, account_id, 500),
+      "Error Upserting User Account Ad Account Association"
+    )
+    // Update the map between Ad Accounts and Users
+    await this.executeWithLogging(
+      () => this.adAccountsRepository.upsertUserAssociation(ids, user_id, 500),
+      "Error Upserting User Ad Account Association"
+    )
+    this.logger.info(`Done upserting User Account & User Ad Account Association`)
+
     return results
   }
 
-  async fetchAdAccountDetails(ad_account_id,provider) {
+  async fetchAdAccountDetails(ad_account_id) {
     const adAccount = await this.fetchAdAccountsFromDatabase(
-        ["id", "provider_id", "user_id", "account_id"],
-        { provider: provider, id: parseInt(ad_account_id) }
+        ["id", "provider_id"],
+        { id: ad_account_id}
     );
     this.logger.debug('Fetched ad account details');
     return adAccount[0];

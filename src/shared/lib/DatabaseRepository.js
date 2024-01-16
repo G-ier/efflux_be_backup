@@ -1,7 +1,9 @@
 const DatabaseConnection = require('./DatabaseConnection');
 
 class DatabaseRepository {
+
   constructor(connection) {
+
     this.connection = connection || new DatabaseConnection().getConnection();
 
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
@@ -79,7 +81,6 @@ class DatabaseRepository {
         const cachedUsers = await this.redis.getAsync(cacheKey);
         return JSON.parse(cachedUsers);
       }
-
       let queryBuilder = this.connection(tableName).select(fields);
 
       // Handling joins
@@ -169,7 +170,7 @@ class DatabaseRepository {
       let queryBuilder = this.connection(tableName);
 
       // Update the fields
-      queryBuilder = queryBuilder.update(updatedFields);
+      queryBuilder = queryBuilder.update(updatedFields).returning('*');
 
       // Apply filters to the query
       for (const [key, value] of Object.entries(filters)) {

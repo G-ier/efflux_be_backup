@@ -110,24 +110,12 @@ class AdsetsRepository {
       "daily_budget",
       "lifetime_budget",
       "budget_remaining",
-      "user_id",
-      "account_id",
       "ad_account_id",
     ]);
 
     dbObject.traffic_source = "facebook";
     dbObject.provider_id = adset.id;
     dbObject.network = "unknown";
-
-    if (adAccountInfo.user_id !== undefined) {
-      dbObject.user_id = adAccountInfo.user_id;
-
-    }
-
-    if (adAccountInfo.account_id !== undefined) {
-      dbObject.account_id = adAccountInfo.account_id;
-    }
-
 
     if (adAccountInfo.id !== undefined) {
       dbObject.ad_account_id = adAccountInfo.id;
