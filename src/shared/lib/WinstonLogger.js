@@ -26,14 +26,6 @@ class CustomLogger {
           logGroupName: logGroupName,
           logStreamName: logStreamName,
           awsOptions: {
-            credentials: {
-              accessKeyId: EnvironmentVariablesManager.getEnvVariable(
-                'EFFLUX_LOGGER_ACCESS_KEY_ID',
-              ),
-              secretAccessKey: EnvironmentVariablesManager.getEnvVariable(
-                'EFFLUX_LOGGER_SECRET_KEY',
-              ),
-            },
             region: 'us-east-1',
           },
           jsonMessage: true,
