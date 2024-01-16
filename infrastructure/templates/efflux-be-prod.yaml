@@ -244,7 +244,7 @@ Resources:
             source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nNEWRELIC_ENVIRONMENT=production\nREDIS_ENVIRONMENT=production\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nNEWRELIC_ENVIRONMENT=production\nREDIS_ENVIRONMENT=production\nLOGGING_ENVIRONMENT=production\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
@@ -658,6 +658,7 @@ Resources:
                   - s3:*
                   - iam:PassRole
                   - sns:*
+                  - logs:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
@@ -702,6 +703,7 @@ Resources:
                   - s3:Get*
                   - s3:List*
                   - sns:*
+                  - logs:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
@@ -726,6 +728,7 @@ Resources:
               - s3:Get*
               - s3:List*
               - sns:*
+              - logs:*
               - cloudwatch:*
               - cloudformation:*
               - codedeploy:*

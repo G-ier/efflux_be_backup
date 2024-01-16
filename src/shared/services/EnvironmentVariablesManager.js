@@ -46,10 +46,6 @@ class EnvironmentVariablesManager {
 
     // Google API Key File
     'GOOGLE_API_KEY_FILE',
-
-    // Efflux Logger
-    'EFFLUX_LOGGER_ACCESS_KEY_ID',
-    'EFFLUX_LOGGER_SECRET_KEY',
   ];
 
   static parameters = [
