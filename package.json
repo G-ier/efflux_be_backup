@@ -17,6 +17,7 @@
     "testFFDataService": "node src/modules/funnelFlux/services/FunnelFluxDataService.js"
   },
   "dependencies": {
+    "@aws-sdk/client-cloudwatch-logs": "^3.490.0",
     "@aws-sdk/client-secrets-manager": "^3.441.0",
     "@aws-sdk/client-ssm": "^3.441.0",
     "async": "^3.2.3",
