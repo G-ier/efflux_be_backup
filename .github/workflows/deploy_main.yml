@@ -16,6 +16,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Build and Deploy using Docker Compose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }} # If you added this as a secret.
         run: |
           cd ~/goerge-efflux-platform
           git checkout ${GITHUB_REF#refs/heads/}
