@@ -18,9 +18,11 @@ class UsersController {
     try {
       const { fullName, email, role } = req.body;
       let organizationName = '';
-      const role_id = await this.roleService.fetchOne(['*'], { name: role?.toLowerCase() })?.id;
+      const role_name = role?.toLowerCase()
+      const role_obj = await this.roleService.fetchOne(['*'], { name: role_name });
+      const role_id = role_obj?.id
       if (req.user.org_id) {
-        const organization = await this.organizationService.fetchOne(['*'], { org_id: req.user.org_id });
+        const organization = await this.organizationService.fetchOne(['*'], { id: req.user.org_id });
         organizationName = organization?.name;
       }
 
