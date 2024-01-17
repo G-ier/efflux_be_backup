@@ -21,6 +21,11 @@ jobs:
           git checkout ${GITHUB_REF#refs/heads/}
           git pull origin ${GITHUB_REF#refs/heads/}
           
+          # Exporting AWS credentials to be used by Docker
+          echo "AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}" > .env.aws
+          echo "AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}" >> .env.aws
+          echo "AWS_DEFAULT_REGION=${AWS_DEFAULT_REGION}" >> .env.aws
+
           # Stopping and removing all containers
           docker-compose down
 
