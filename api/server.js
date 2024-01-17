@@ -35,43 +35,11 @@ const initializeAPI = async () => {
     console.log(`🔥 ---------- Server started ------------ 🔥`);
 
     const DISABLE_CRON = 'true';
-    const DISABLE_CROSSROADS_CRON =
-      EnvironmentVariablesManager.getEnvVariable('DISABLE_CROSSROADS_CRON');
-    const DISABLE_TONIC_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_TONIC_CRON');
-    const DISABLE_MEDIANET_CRON =
-      EnvironmentVariablesManager.getEnvVariable('DISABLE_MEDIANET_CRON');
-    const DISABLE_SEDO_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_SEDO_CRON');
-    const DISABLE_TIKTOK_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_TIKTOK_CRON');
-    const DISABLE_FACEBOOK_CRON =
-      EnvironmentVariablesManager.getEnvVariable('DISABLE_FACEBOOK_CRON');
-    const DISABLE_TABOOLA_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_TABOOLA_CRON');
-    const DISABLE_AGGREGATES_UPDATE_CRON = EnvironmentVariablesManager.getEnvVariable(
-      'DISABLE_AGGREGATES_UPDATE_CRON',
-    );
-    const DISABLE_REVEALBOT_SHEET_CRON = EnvironmentVariablesManager.getEnvVariable(
-      'DISABLE_REVEALBOT_SHEET_CRON',
-    );
+
     const DISABLE_SLACK_NOTIFICATION = EnvironmentVariablesManager.getEnvVariable(
       'DISABLE_SLACK_NOTIFICATION',
     );
 
-    const rulesEnvironment =
-      EnvironmentVariablesManager.getEnvVariable('CRON_ENVIRONMENT') || 'staging';
-    const disableGeneralCron = DISABLE_CRON === 'true' || DISABLE_CRON !== 'false';
-    const disableCrossroadsCron =
-      DISABLE_CROSSROADS_CRON === 'true' || DISABLE_CROSSROADS_CRON !== 'false';
-    const disableTonicCron = DISABLE_TONIC_CRON === 'true' || DISABLE_TONIC_CRON !== 'false';
-    const disableMediaNetCron =
-      DISABLE_MEDIANET_CRON === 'true' || DISABLE_MEDIANET_CRON !== 'false';
-    const disableSedoCron = DISABLE_SEDO_CRON === 'true' || DISABLE_SEDO_CRON !== 'false';
-    const disableTikTokCron = DISABLE_TIKTOK_CRON === 'true' || DISABLE_TIKTOK_CRON !== 'false';
-    const disableFacebookCron =
-      DISABLE_FACEBOOK_CRON === 'true' || DISABLE_FACEBOOK_CRON !== 'false';
-    const disableTaboolaCron = DISABLE_TABOOLA_CRON === 'true' || DISABLE_TABOOLA_CRON !== 'false';
-    const disableAggregatesUpdateCron =
-      DISABLE_AGGREGATES_UPDATE_CRON === 'true' || DISABLE_AGGREGATES_UPDATE_CRON !== 'false';
-    const disableRevealBotSheetCron =
-      DISABLE_REVEALBOT_SHEET_CRON === 'true' || DISABLE_REVEALBOT_SHEET_CRON !== 'false';
     const disableSlackNotification =
       DISABLE_SLACK_NOTIFICATION === 'true' || DISABLE_SLACK_NOTIFICATION !== 'false';
 
@@ -118,18 +86,6 @@ const initializeAPI = async () => {
       Redis:
         Environment: ${redisEnvironment || 'development'}
         URL: ${redisUrl}
-
-      Cron Jobs [${rulesEnvironment}]:
-        Enable All : ${disableGeneralCron ? 'Disabled' : 'Enabled'}
-        Crossroads : ${disableCrossroadsCron ? 'Disabled' : 'Enabled'}
-        Tonic      : ${disableTonicCron ? 'Disabled' : 'Enabled'}
-        MediaNet   : ${disableMediaNetCron ? 'Disabled' : 'Enabled'}
-        Sedo       : ${disableSedoCron ? 'Disabled' : 'Enabled'}
-        TikTok     : ${disableTikTokCron ? 'Disabled' : 'Enabled'}
-        Facebook   : ${disableFacebookCron ? 'Disabled' : 'Enabled'}
-        Taboola    : ${disableTaboolaCron ? 'Disabled' : 'Enabled'}
-        Aggregates : ${disableAggregatesUpdateCron ? 'Disabled' : 'Enabled'}
-        RevealBot  : ${disableRevealBotSheetCron ? 'Disabled' : 'Enabled'}
     `);
   });
 };
