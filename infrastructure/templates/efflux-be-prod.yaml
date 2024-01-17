@@ -760,7 +760,7 @@ Resources:
   FirewallProtection:
     Type: AWS::WAFv2::WebACL
     Properties:
-      Description: "Firewall protection for Efflux BE"
+      Description: Firewall protection for Efflux BE Production
       Name: Efflux-BE-Production-WebACL
       Scope: REGIONAL
       DefaultAction:
@@ -799,6 +799,18 @@ Resources:
             SampledRequestsEnabled: false
             CloudWatchMetricsEnabled: false
             MetricName: AWS-AWSManagedRulesSQLiRuleSet
+        - Name: AWS-AWSManagedRulesAdminProtectionRuleSet
+          Priority: 3
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesAdminProtectionRuleSet
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: false
+            CloudWatchMetricsEnabled: false
+            MetricName: AWS-AWSManagedRulesAdminProtectionRuleSet
 
   FirewallProtectionLogging:
     Type: AWS::WAFv2::LoggingConfiguration
