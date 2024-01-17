@@ -2,9 +2,14 @@ const UserService = require('../src/modules/auth/services/UserService');
 const _ = require('lodash');
 
 module.exports = async (req, res, next) => {
-  req.user.isAdmin = req.user.permissions.includes('admin');
-  req.user.providerId = req.user.sub.split('|')[1];
-  let user = await new UserService().fetchOne(['*'], { providerId: req.user.providerId });
+  console.log('USERUSERUSER');
+  console.log(req.auth);
+
+  // TODO: Fix isAdmin
+  req.auth.isAdmin = req.auth.permissions.includes('admin');
+  req.auth.providerId = req.auth.sub.split('|')[1];
+
+  let user = await new UserService().fetchOne(['*'], { providerId: req.auth.providerId });
   if (user) {
     user.roles = _.compact(user.roles);
     // Then, check if user.roles is empty
@@ -17,6 +22,9 @@ module.exports = async (req, res, next) => {
       user.permissions = [];
     }
   }
-  req.user = { ...req.user, ...user };
+
+  req.user = { ...req.auth, ...user };
+  console.log('REQREQREQ');
+  console.log(req.user);
   next();
 };

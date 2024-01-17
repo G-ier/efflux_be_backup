@@ -5,24 +5,25 @@ const { RequestsLogger } = require('../src/shared/lib/WinstonLogger');
 const { v4: uuidv4 } = require('uuid');
 
 const routesLogger = async (req, res, next) => {
-
   const { method, url, headers, query, body } = req;
-  const requestId = uuidv4();  // Generate a unique UUID for this request/response pair
+  const requestId = uuidv4(); // Generate a unique UUID for this request/response pair
 
   const originalSend = res.send;
-  res.send = function() {
+  res.send = function () {
     const code = res.statusCode;
-    const logMessage = `[${requestId}]: Response - ${req.method} ${req.url}, with status ${res.statusCode} and body ${(arguments[0])}`;
+    const logMessage = `[${requestId}]: Response - ${req.method} ${req.url}, with status ${res.statusCode} and body ${arguments[0]}`;
     if (code >= 400) RequestsLogger.error(logMessage);
-    else RequestsLogger.info(logMessage);
+    // TODO: only log if debug is enabled
+    // else RequestsLogger.info(logMessage);
 
     originalSend.apply(res, arguments);
   };
 
-  RequestsLogger.info(`[${requestId}]: Request - ${method} ${url} ${JSON.stringify({ headers, query, body })}`);
+  RequestsLogger.info(
+    `[${requestId}]: Request - ${method} ${url} ${JSON.stringify({ headers, query, body })}`,
+  );
 
   next();
-}
+};
 
-
-module.exports = routesLogger
+module.exports = routesLogger;
