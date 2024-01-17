@@ -761,14 +761,14 @@ Resources:
     Type: AWS::WAFv2::WebACL
     Properties:
       Description: "Firewall protection for Efflux BE"
-      Name: Efflux-BE-ProductionWebACL
+      Name: Efflux-BE-Production-WebACL
       Scope: REGIONAL
       DefaultAction:
         Allow: {}
       VisibilityConfig:
         SampledRequestsEnabled: true
         CloudWatchMetricsEnabled: true
-        MetricName: Efflux-BE-ProductionWebACL
+        MetricName: Efflux-BE-Production-WebACL
       Tags:
         - Key: project
           Value: efflux
@@ -821,8 +821,8 @@ Resources:
   FirewallProtectionAssociation:
     Type: AWS::WAFv2::WebACLAssociation
     Properties:
-      ResourceArn: !Ref ALBListener
-      WebACLArn: !Ref FirewallProtection
+      ResourceArn: !Ref ApplicationLoadBalancer
+      WebACLArn: !GetAtt FirewallProtection.Arn
 
 ####################
 # Outputs
