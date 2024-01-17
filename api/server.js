@@ -24,13 +24,9 @@ const initializeAPI = async () => {
   });
 
   const { configureMiddleware } = require('../middleware');
-  const { initializeCronJobs } = require('../src/crons');
 
-  // Configuring global middle ware
+  // Configuring global middleware
   configureMiddleware(server);
-
-  // initialize Cron jobs
-  initializeCronJobs();
 
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
@@ -38,7 +34,7 @@ const initializeAPI = async () => {
   server.listen(port, async () => {
     console.log(`🔥 ---------- Server started ------------ 🔥`);
 
-    const DISABLE_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_CRON');
+    const DISABLE_CRON = 'true';
     const DISABLE_CROSSROADS_CRON =
       EnvironmentVariablesManager.getEnvVariable('DISABLE_CROSSROADS_CRON');
     const DISABLE_TONIC_CRON = EnvironmentVariablesManager.getEnvVariable('DISABLE_TONIC_CRON');

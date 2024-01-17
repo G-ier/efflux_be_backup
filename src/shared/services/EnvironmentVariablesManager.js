@@ -224,8 +224,9 @@ class EnvironmentVariablesManager {
         throw new Error(
           `DATABASE_ENVIRONMENT must be either 'staging', 'production' or 'development'`,
         );
-      if (!['BE', 'DUS'].includes(envConfig['STACK']))
-        throw new Error(`STACK must be either 'BE' or 'DUS'`);
+
+      if (envConfig['STACK'] !== 'BE') throw new Error(`STACK must be 'BE'`);
+
       for (const [key, value] of Object.entries(envConfig)) {
         this.cachedValues[key] = value;
       }
