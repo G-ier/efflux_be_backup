@@ -1,7 +1,6 @@
 // Third party imports
 require('dotenv');
 const { expressjwt: jwt } = require('express-jwt');
-// const jwt = require('express-jwt');
 const jwksRsa = require('jwks-rsa');
 
 // Local imports
