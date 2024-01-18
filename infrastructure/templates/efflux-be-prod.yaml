@@ -787,20 +787,8 @@ Resources:
             SampledRequestsEnabled: false
             CloudWatchMetricsEnabled: false
             MetricName: AWS-AWSManagedRulesCommonRuleSet
-        - Name: AWS-AWSManagedRulesSQLiRuleSet
-          Priority: 2
-          Statement:
-            ManagedRuleGroupStatement:
-              VendorName: AWS
-              Name: AWSManagedRulesSQLiRuleSet
-          OverrideAction:
-            Count: {}
-          VisibilityConfig:
-            SampledRequestsEnabled: false
-            CloudWatchMetricsEnabled: false
-            MetricName: AWS-AWSManagedRulesSQLiRuleSet
         - Name: AWS-AWSManagedRulesAdminProtectionRuleSet
-          Priority: 3
+          Priority: 2
           Statement:
             ManagedRuleGroupStatement:
               VendorName: AWS
@@ -811,6 +799,47 @@ Resources:
             SampledRequestsEnabled: false
             CloudWatchMetricsEnabled: false
             MetricName: AWS-AWSManagedRulesAdminProtectionRuleSet
+        - Name: BlockMaliciousPaths
+          Priority: 0
+          Statement:
+            OrStatement:
+              Statements:
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/.env"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/php.php"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/php_info.php"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/_profiler/phpinfo"
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: false
+            MetricName: BlockMaliciousPaths
 
   FirewallProtectionLogging:
     Type: AWS::WAFv2::LoggingConfiguration
