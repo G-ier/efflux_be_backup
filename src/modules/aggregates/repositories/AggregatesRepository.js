@@ -13,12 +13,14 @@ const trafficSourceNetworkHourly = require('../reports/trafficSourceNetworkHourl
 const compileAggregates = require('../reports/compileAggregates');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
+const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
 // const SqsService = require('../../../shared/lib/SQSPusher');
 
 class AggregatesRepository {
   constructor(database) {
     this.tableName = 'insights';
     this.database = database || new DatabaseRepository();
+    this.clickhouse = new ClickhouseRepository();
 
     // const queueUrl =
     //   process.env.INSIGHTS_QUEUE_URL ||
@@ -141,6 +143,7 @@ class AggregatesRepository {
       // await this.sqsService.sendMessageToQueue(chunk);
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
+      await this.clickhouse.insertData(chunk);
     }
     return dataChunks;
   }

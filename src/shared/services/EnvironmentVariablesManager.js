@@ -13,6 +13,12 @@ class EnvironmentVariablesManager {
     'DATABASE_URL_STAGING',
     'OLD_PRODUCTION_DATABASE_URL',
 
+    // Clickhouse
+    'CLICKHOUSE_URL',
+    'CLICKHOUSE_USER',
+    'CLICKHOUSE_PASSWORD',
+    'CLICKHOUSE_DB',
+
     // Facebook
     'FACEBOOK_APP_ID',
     'FACEBOOK_APP_SECRET',
