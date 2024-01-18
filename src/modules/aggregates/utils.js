@@ -6,6 +6,22 @@ function preferredOrder(obj, order) {
   return newObject;
 }
 
+function formatDateToISO(date) {
+  // Ensure the input is a Date object
+  if (!(date instanceof Date)) {
+      throw new Error('Input must be a Date object');
+  }
+
+  const pad = (number) => (number < 10 ? '0' + number : number);
+
+  return date.getFullYear() +
+      '-' + pad(date.getMonth() + 1) +
+      '-' + pad(date.getDate()) +
+      ' ' + pad(date.getHours()) +
+      ':' + pad(date.getMinutes()) +
+      ':' + pad(date.getSeconds());
+}
+
 function cleanData(parsedData) {
   // if parsedData.org_id is not set, set it to 1
   // if it's set, convert it to Int32
@@ -15,15 +31,12 @@ function cleanData(parsedData) {
     parsedData["org_id"] = parseInt(parsedData["org_id"]);
   }
 
-  // Combine the date and hour fields into a single field named "event_timestamp" and transform the date field into a timestamp
-  if (parsedData["date"] && parsedData["hour"]) {
-    parsedData["event_timestamp"] = new Date(
-      parsedData["date"] + "T" + parsedData["hour"] + ":00:00.000Z"
-    ).getTime();
-
-    delete parsedData["date"];
-    delete parsedData["hour"];
-  }
+  parsedData["date"] = parsedData["date"] ?
+    formatDateToISO(new Date(parsedData["date"])) : formatDateToISO(new Date());
+  parsedData["traffic_source_updated_at"] = parsedData["traffic_source_updated_at"] ?
+    formatDateToISO(new Date(parsedData["traffic_source_updated_at"])) : formatDateToISO(new Date());
+  parsedData["network_updated_at"] = parsedData["network_updated_at"] ?
+    formatDateToISO(new Date(parsedData["network_updated_at"])) : formatDateToISO(new Date());
 
   const fieldMappings = {
     searches: "nbr_of_searches",
