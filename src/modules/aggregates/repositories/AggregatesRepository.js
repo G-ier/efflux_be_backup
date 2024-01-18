@@ -145,7 +145,6 @@ class AggregatesRepository {
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
 
-
       // push to clickhouse
       for (const row of chunk) {
         const rowToInsert = cleanData(row);

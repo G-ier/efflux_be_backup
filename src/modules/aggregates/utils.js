@@ -66,5 +66,6 @@ function cleanData(parsedData) {
 
 module.exports = {
   preferredOrder,
-  cleanData
+  cleanData,
+  formatDateToISO
 }
