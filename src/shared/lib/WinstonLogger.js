@@ -110,13 +110,13 @@ const streamDestination =
     ? 'cloudwatch'
     : 'console';
 
-const loggingEnv = EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT');
+const loggingEnv = EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT');
 
 // Crossroads Logger
 const CrossroadsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'crossroads',
 });
 
@@ -124,7 +124,7 @@ const CrossroadsLogger = new CustomLogger({
 const FacebookLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'facebook',
 });
 
@@ -132,7 +132,7 @@ const FacebookLogger = new CustomLogger({
 const TiktokLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'tiktok',
 });
 
@@ -140,21 +140,21 @@ const TiktokLogger = new CustomLogger({
 const TaboolaLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'taboola',
 });
 // Capi Logger
 const CapiLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'capi',
 });
 // Aggregates Logger
 const AggregatesLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'aggregates',
 });
 
@@ -162,7 +162,7 @@ const AggregatesLogger = new CustomLogger({
 const FunnelFluxLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'funnelFlux',
 });
 
@@ -170,21 +170,21 @@ const FunnelFluxLogger = new CustomLogger({
 const PostbackLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'postback',
 });
 
 const PostbackTestLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'postback_test',
 });
 // Requests Logger
 const RequestsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'requests',
 });
 
@@ -192,7 +192,7 @@ const RequestsLogger = new CustomLogger({
 const SedoLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'sedo',
 });
 
@@ -200,7 +200,7 @@ const SedoLogger = new CustomLogger({
 const TonicLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'tonic',
 });
 
@@ -208,7 +208,7 @@ const TonicLogger = new CustomLogger({
 const MediaNetLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'medianet',
 });
 
@@ -216,7 +216,7 @@ const MediaNetLogger = new CustomLogger({
 const AnalysisLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'analysis',
 });
 
@@ -224,7 +224,7 @@ const AnalysisLogger = new CustomLogger({
 const dataUpdatesLogger = new CustomLogger({
   destination: streamDestination,
   level: 'info',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'updates',
 });
 
@@ -232,7 +232,7 @@ const dataUpdatesLogger = new CustomLogger({
 const UserLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'user',
 });
 
@@ -240,7 +240,7 @@ const UserLogger = new CustomLogger({
 const OrganizationLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'organization',
 });
 
@@ -248,7 +248,7 @@ const OrganizationLogger = new CustomLogger({
 const InsightsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'insights',
 });
 
@@ -256,7 +256,7 @@ const InsightsLogger = new CustomLogger({
 const AdsetLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'adset',
 });
 
@@ -264,7 +264,7 @@ const AdsetLogger = new CustomLogger({
 const AdsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'ads',
 });
 
@@ -272,7 +272,7 @@ const AdsLogger = new CustomLogger({
 const CampaignsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'campaigns',
 });
 
@@ -280,7 +280,7 @@ const CampaignsLogger = new CustomLogger({
 const PixelsLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'pixels',
 });
 
@@ -288,7 +288,7 @@ const PixelsLogger = new CustomLogger({
 const UserAccountLogger = new CustomLogger({
   destination: streamDestination,
   level: 'debug',
-  logGroupName: '/aws/ec2/efflux-cronus-' + loggingEnv,
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
   logStreamName: 'userAccount',
 });
 
