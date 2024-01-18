@@ -426,6 +426,7 @@ class CompositeService {
       CapiLogger.info(`No events found for date ${date}.`);
       return;
     }
+
     CapiLogger.info(`Done fetching ${data.length} session from DB.`);
 
     // Fetch pixels from database

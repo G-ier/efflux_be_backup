@@ -17,6 +17,19 @@ class CampaignService extends BaseService {
     return data.campaigns;
   }
 
+  async updateCampaignById(campaignId, fieldName, newValue) {
+    const criteria = { id: campaignId };
+    const data = { [fieldName]: newValue };
+  
+    try {
+      const updatedCampaign = await this.repository.update(data, criteria);
+      return updatedCampaign;
+    } catch (error) {
+      // Handle the error, log it, or throw a custom error as needed
+      this.logger.error('Error updating campaign:', error);
+    }
+  }
+
   async updateCampaigns(key) {
 
     const campaigns = await this.getCrossroadsCampaigns(key);
@@ -35,7 +48,7 @@ class CampaignService extends BaseService {
   }
 
   async getAllCampaigns() {
-    return this.repository.fetchCampaigns(); // Fetch all campaigns without any filters or limits
+    return await this.repository.fetchCampaigns(); // Fetch all campaigns without any filters or limits
   }
 
   async deleteCampaignById(id) {

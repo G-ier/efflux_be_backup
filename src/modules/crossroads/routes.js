@@ -26,13 +26,7 @@ route.get('/traffic-source-naked-links', async (req, res) =>
 // @desc      GET fetch all campaigns
 // @Access    Private
 route.get("/campaigns", async (req, res) => {
-  try {
-    const campaigns = await campaignController.getAllCampaigns(req, res);
-    res.status(200).json(campaigns);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: err.message });
-  }
+  await campaignController.getAllCampaigns(req, res);
 });
 
 // @route     /api/crossroads/campaign
@@ -59,6 +53,13 @@ route.get("/campaign/:id", async (req, res) => {
     console.log(err);
     res.status(500).json({ message: err.message });
   }
+});
+
+// @route     POST /api/crossroads/assign
+// @desc      POST assign category or vertical to crossroads campaign
+// @Access    Private
+route.post("/assign", async (req, res) => {
+    await campaignController.updateCampaignById(req, res);
 });
 
 // @route     /api/crossroads/campaign/:id

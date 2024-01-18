@@ -32,6 +32,19 @@ class CampaignController {
     }
   }
 
+  async updateCampaignById(req, res){
+    try{
+      const { id, field, value } = req.body;
+
+      const campaign = await this.campaignService.updateCampaignById(id, field, value);
+
+      res.json(campaign);
+    }
+    catch(error){
+      res.status(500).json({ error: error.message });
+    }
+  }
+
   async deleteCampaignById(req, res) {
     try {
       await this.campaignService.deleteCampaignById(req.params.id);

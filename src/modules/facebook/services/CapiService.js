@@ -64,7 +64,6 @@ class CapiService extends BaseService {
     async postCapiEvents(token, pixel, data) {
 
       this.logger.info(`Sending ${data.data.length} events to Facebook CAPI for pixel ${pixel}`);
-      console.log(data);
       const url = `${FB_API_URL}/${pixel}/events`;
       const response = await this.postToApi(url, {
           data: data.data,
@@ -162,15 +161,13 @@ class CapiService extends BaseService {
               currency: 'USD',
               value: `${(event.purchase_event_value / event.purchase_event_count)}`,
               content_name: event.keyword,
+              content_type: event.vertical,
+              content_category: event.category
             }
           }
 
-          if (event.vertical) {
-            eventPayload.custom_data.content_type = event.vertical
-          }
           currentPayload.data.push(eventPayload)
         }
-
       })
 
       // Add the last payload if it has any events

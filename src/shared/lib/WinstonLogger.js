@@ -1,10 +1,4 @@
 // Third party imports
-const AWS = require('aws-sdk');
-
-AWS.config.update({
-  region: 'us-east-1',
-});
-
 const { createLogger, format, transports } = require('winston');
 const WinstonCloudWatch = require('winston-cloudwatch');
 const path = require('path');
@@ -23,11 +17,9 @@ class CustomLogger {
       const logStreamName = `${today}-${options.logStreamName}`; // Append the date to the log stream name  (e.g. '2020-01-01-logs')
       logTransports.push(
         new WinstonCloudWatch({
+          awsRegion: 'us-east-1',
           logGroupName: logGroupName,
           logStreamName: logStreamName,
-          awsOptions: {
-            region: 'us-east-1',
-          },
           jsonMessage: false,
           createLogGroup: true,
           createLogStream: true,
@@ -35,8 +27,11 @@ class CustomLogger {
       );
     } else {
       logTransports = new transports.Console({
-        timestamp: true,
-        colorize: true,
+        format: format.combine(
+          format.timestamp(),
+          format.colorize(),
+          format.printf(({ level, message, timestamp }) => `${timestamp} - ${level}: ${message}`),
+        ),
       });
     }
 
