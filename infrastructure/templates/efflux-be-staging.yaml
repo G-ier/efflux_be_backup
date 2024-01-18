@@ -125,9 +125,6 @@ Resources:
             sudo ./install auto && \
             sudo service codedeploy-agent start
 
-            # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-staging
-
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
             echo "alias htop='sudo htop'" >> ~/.bashrc
@@ -142,7 +139,7 @@ Resources:
             source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
