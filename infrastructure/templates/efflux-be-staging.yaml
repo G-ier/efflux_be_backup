@@ -15,6 +15,10 @@ Parameters:
     Type: String
     MinLength: "8"
     MaxLength: "41"
+  LogsRetentionInDays:
+    Type: Number
+    Default: 30
+    Description: Number of days to retain logs in CloudWatch Logs
 
 ####################
 # Resources
@@ -638,6 +642,85 @@ Resources:
       Roles:
         - !Ref CodeDeployRole
       InstanceProfileName: Efflux-Staging
+
+  FirewallProtection:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Description: Firewall protection for Efflux BE Staging
+      Name: Efflux-BE-Staging-WebACL
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: Efflux-BE-Staging-WebACL
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: firewall
+      Rules:
+        - Name: AWS-AWSManagedRulesCommonRuleSet
+          Priority: 1
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: false
+            CloudWatchMetricsEnabled: false
+            MetricName: AWS-AWSManagedRulesCommonRuleSet
+        - Name: AWS-AWSManagedRulesSQLiRuleSet
+          Priority: 2
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesSQLiRuleSet
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: false
+            CloudWatchMetricsEnabled: false
+            MetricName: AWS-AWSManagedRulesSQLiRuleSet
+        - Name: AWS-AWSManagedRulesAdminProtectionRuleSet
+          Priority: 3
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesAdminProtectionRuleSet
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: false
+            CloudWatchMetricsEnabled: false
+            MetricName: AWS-AWSManagedRulesAdminProtectionRuleSet
+
+  FirewallProtectionLogging:
+    Type: AWS::WAFv2::LoggingConfiguration
+    Properties:
+      LogDestinationConfigs:
+        - !GetAtt FirewallProtectionLogGroup.Arn
+      ResourceArn: !GetAtt FirewallProtection.Arn
+
+  FirewallProtectionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "aws-waf-logs-efflux-be-staging/firewall-protection"
+      RetentionInDays: !Ref LogsRetentionInDays
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: firewall
+
+  FirewallProtectionAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Ref ApplicationLoadBalancer
+      WebACLArn: !GetAtt FirewallProtection.Arn
 
 ####################
 # Outputs
