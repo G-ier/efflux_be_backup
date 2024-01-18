@@ -16,6 +16,7 @@ class CompositeService {
     }
     CrossroadsLogger.info(`Done syncing Crossroads data for date ${request_date}`);
   }
+  
 }
 
 module.exports = CompositeService;

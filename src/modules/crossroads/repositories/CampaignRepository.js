@@ -55,6 +55,8 @@ class CampaignRepository {
     return new Campaign(
       dbObject.id,
       dbObject.name,
+      dbObject.vertical,
+      dbObject.category,
       dbObject.type,
       dbObject.user_id,
       dbObject.account_id,
