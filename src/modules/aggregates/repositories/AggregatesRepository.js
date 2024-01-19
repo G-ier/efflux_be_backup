@@ -13,12 +13,15 @@ const trafficSourceNetworkHourly = require('../reports/trafficSourceNetworkHourl
 const compileAggregates = require('../reports/compileAggregates');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
+const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
+const { cleanData } = require('../utils');
 // const SqsService = require('../../../shared/lib/SQSPusher');
 
 class AggregatesRepository {
   constructor(database) {
     this.tableName = 'insights';
     this.database = database || new DatabaseRepository();
+    this.clickhouse = new ClickhouseRepository();
 
     // const queueUrl =
     //   process.env.INSIGHTS_QUEUE_URL ||
@@ -141,6 +144,13 @@ class AggregatesRepository {
       // await this.sqsService.sendMessageToQueue(chunk);
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
+
+      // push to clickhouse
+      for (const row of chunk) {
+        const rowToInsert = cleanData(row);
+        const query = `INSERT INTO efflux.${this.tableName} (org_id, event_timestamp, campaign_id, campaign_name, adset_id, adset_name, user_id, ad_account_id, revenue, spend, spend_plus_fee, link_clicks, traffic_source_conversions, network_conversions, network_uniq_conversions, postback_conversions, nbr_of_searches, nbr_of_lander_visits, nbr_of_visitors, nbr_of_tracked_visitors, nbr_of_impressions, traffic_source, unique_identifier, unallocated_revenue, unallocated_spend, unallocated_spend_plus_fee, traffic_source_clicks, traffic_source_updated_at, postback_lander_conversions, postback_serp_conversions, network_updated_at, network)`;
+        await this.clickhouse.insertData(query, rowToInsert);
+      }
     }
     return dataChunks;
   }
