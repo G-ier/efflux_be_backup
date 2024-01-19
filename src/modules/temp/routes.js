@@ -9,6 +9,7 @@ route.get(
   async (req, res) => await temporaryController.fetchAdAccountsFromDatabase(req, res),
 );
 route.post('/adAccounts', async (req, res) => await temporaryController.updateAdAccount(req, res));
+route.delete('/adAccounts', async (req, res) => await temporaryController.deleteAdAccountUserMap(req, res));
 
 // Find the users with ad accounts and return them.
 route.get(

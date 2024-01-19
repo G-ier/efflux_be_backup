@@ -1,28 +1,52 @@
 // Third party imports
-const _                                         = require('lodash');
+const _ = require('lodash');
 
 // Local application imports
-const campaignAdsets                            = require('../reports/campaignAdsets');
-const campaignDaily                             = require('../reports/campaignDaily');
-const campaignHourly                            = require('../reports/campaignHourly');
-const revealBotSheets                           = require('../reports/revealBotSheets');
-const trafficSourceNetowrkCampaignsAdsetsStats  = require('../reports/trafficSourceNetowrkCampaignsAdsetsStats');
-const trafficSourceNetworkCampaignsStats        = require('../reports/trafficSourceNetworkCampaignsStats');
-const trafficSourceNetworkDaily                 = require('../reports/trafficSourceNetworkDaily');
-const trafficSourceNetworkHourly                = require('../reports/trafficSourceNetworkHourly');
-const compileAggregates                        = require('../reports/compileAggregates');
-const DatabaseRepository                        = require("../../../shared/lib/DatabaseRepository");
-const adsetsByCampaignId = require("../reports/adsetsByCampaignId")
+const campaignAdsets = require('../reports/campaignAdsets');
+const campaignDaily = require('../reports/campaignDaily');
+const campaignHourly = require('../reports/campaignHourly');
+const revealBotSheets = require('../reports/revealBotSheets');
+const trafficSourceNetowrkCampaignsAdsetsStats = require('../reports/trafficSourceNetowrkCampaignsAdsetsStats');
+const trafficSourceNetworkCampaignsStats = require('../reports/trafficSourceNetworkCampaignsStats');
+const trafficSourceNetworkDaily = require('../reports/trafficSourceNetworkDaily');
+const trafficSourceNetworkHourly = require('../reports/trafficSourceNetworkHourly');
+const compileAggregates = require('../reports/compileAggregates');
+const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
+const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
+const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
+const { cleanData } = require('../utils');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class AggregatesRepository {
-
   constructor(database) {
-    this.tableName = "insights";
+    this.tableName = 'insights';
     this.database = database || new DatabaseRepository();
+    this.clickhouse = new ClickhouseRepository();
+
+    // const queueUrl =
+    //   process.env.INSIGHTS_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/efflux-insights-to-clickhouse';
+
+    // this.sqsService = new SqsService(queueUrl);
   }
 
-  async revealBotSheets(startDate, endDate, aggregateBy="campaigns", trafficSource="facebook", network='crossroads', today =false) {
-    return await revealBotSheets(this.database, startDate, endDate, aggregateBy, trafficSource, network, today);
+  async revealBotSheets(
+    startDate,
+    endDate,
+    aggregateBy = 'campaigns',
+    trafficSource = 'facebook',
+    network = 'crossroads',
+    today = false,
+  ) {
+    return await revealBotSheets(
+      this.database,
+      startDate,
+      endDate,
+      aggregateBy,
+      trafficSource,
+      network,
+      today,
+    );
   }
 
   async campaignAdsets(params) {
@@ -30,7 +54,7 @@ class AggregatesRepository {
 
     // Check if campaignId is an array
     if (Array.isArray(campaignId)) {
-      return await adsetsByCampaignId(this.database, startDate, endDate,campaignId);
+      return await adsetsByCampaignId(this.database, startDate, endDate, campaignId);
     } else {
       return await campaignAdsets(this.database, startDate, endDate, campaignId);
     }
@@ -47,66 +71,101 @@ class AggregatesRepository {
 
   async trafficSourceNetowrkCampaignsAdsetsStats(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetowrkCampaignsAdsetsStats(this.database,
-      startDate, endDate,
-      network, trafficSource,
-      mediaBuyer, adAccountId, q)
-    ;
+    return await trafficSourceNetowrkCampaignsAdsetsStats(
+      this.database,
+      startDate,
+      endDate,
+      network,
+      trafficSource,
+      mediaBuyer,
+      adAccountId,
+      q,
+    );
   }
 
   async trafficSourceNetworkCampaignsStats(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetworkCampaignsStats(this.database,
-      startDate, endDate,
-      network, trafficSource,
-      mediaBuyer, adAccountId, q)
-    ;
+    return await trafficSourceNetworkCampaignsStats(
+      this.database,
+      startDate,
+      endDate,
+      network,
+      trafficSource,
+      mediaBuyer,
+      adAccountId,
+      q,
+    );
   }
 
   async trafficSourceNetworkDaily(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetworkDaily(this.database,
-      startDate, endDate,
-      network, trafficSource,
-      mediaBuyer, adAccountId, q
+    return await trafficSourceNetworkDaily(
+      this.database,
+      startDate,
+      endDate,
+      network,
+      trafficSource,
+      mediaBuyer,
+      adAccountId,
+      q,
     );
   }
 
   async trafficSourceNetworkHourly(params) {
     const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
-    return await trafficSourceNetworkHourly(this.database,
-      startDate, endDate,
-      network, trafficSource,
-      mediaBuyer, adAccountId, q
+    return await trafficSourceNetworkHourly(
+      this.database,
+      startDate,
+      endDate,
+      network,
+      trafficSource,
+      mediaBuyer,
+      adAccountId,
+      q,
     );
   }
 
   async compileAggregates(network, trafficSource, startDate, endDate, campaignIdsRestriction) {
-    return await compileAggregates(this.database, network, trafficSource, startDate, endDate, campaignIdsRestriction);
+    return await compileAggregates(
+      this.database,
+      network,
+      trafficSource,
+      startDate,
+      endDate,
+      campaignIdsRestriction,
+    );
   }
 
   async upsert(data, trafficSource, network, chunkSize = 500) {
-    const mappedData = data.map(row => this.toDatabaseDTO(row, trafficSource, network))
+    const mappedData = data.map((row) => this.toDatabaseDTO(row, trafficSource, network));
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
-        await this.database.upsert(this.tableName, chunk, "unique_identifier");
+      // push to SQS queue (for storing in data lake)
+      // await this.sqsService.sendMessageToQueue(chunk);
+
+      await this.database.upsert(this.tableName, chunk, 'unique_identifier');
+
+      // push to clickhouse
+      for (const row of chunk) {
+        const rowToInsert = cleanData(row);
+        const query = `INSERT INTO efflux.${this.tableName} (org_id, event_timestamp, campaign_id, campaign_name, adset_id, adset_name, user_id, ad_account_id, revenue, spend, spend_plus_fee, link_clicks, traffic_source_conversions, network_conversions, network_uniq_conversions, postback_conversions, nbr_of_searches, nbr_of_lander_visits, nbr_of_visitors, nbr_of_tracked_visitors, nbr_of_impressions, traffic_source, unique_identifier, unallocated_revenue, unallocated_spend, unallocated_spend_plus_fee, traffic_source_clicks, traffic_source_updated_at, postback_lander_conversions, postback_serp_conversions, network_updated_at, network)`;
+        await this.clickhouse.insertData(query, rowToInsert);
+      }
     }
     return dataChunks;
   }
 
   toDatabaseDTO(row, trafficSource, network) {
-    row.network = network
-    row.traffic_source = trafficSource
-    if (trafficSource === 'taboola'){
-      row.unique_identifier = `${row.campaign_id}-${row.date}-${row.hour}`
-    }
-    else{
-      row.unique_identifier = `${row.adset_id}-${row.date}-${row.hour}`
+    row.network = network;
+    row.traffic_source = trafficSource;
+    if (trafficSource === 'taboola') {
+      row.unique_identifier = `${row.campaign_id}-${row.date}-${row.hour}`;
+    } else {
+      row.unique_identifier = `${row.adset_id}-${row.date}-${row.hour}`;
     }
     delete row.ad_account_name;
-    return row
+    return row;
   }
-
 }
 
 module.exports = AggregatesRepository;

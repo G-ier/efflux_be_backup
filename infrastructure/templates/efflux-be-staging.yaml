@@ -15,6 +15,10 @@ Parameters:
     Type: String
     MinLength: "8"
     MaxLength: "41"
+  LogsRetentionInDays:
+    Type: Number
+    Default: 30
+    Description: Number of days to retain logs in CloudWatch Logs
 
 ####################
 # Resources
@@ -76,7 +80,7 @@ Resources:
         BlockDeviceMappings:
           - DeviceName: /dev/sda1
             Ebs:
-              VolumeSize: 20
+              VolumeSize: 33
               VolumeType: gp3
               DeleteOnTermination: yes
               Encrypted: false
@@ -90,7 +94,7 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-staging
-        InstanceType: t3.medium
+        InstanceType: t3.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -121,21 +125,32 @@ Resources:
             sudo ./install auto && \
             sudo service codedeploy-agent start
 
-            # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-staging
-
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
+            echo "alias htop='sudo htop'" >> ~/.bashrc
+            source ~/.bashrc
 
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             source ~/.bashrc
 
-            # Set environment variables
-            NEWRELIC_ENVIRONMENT=staging
+            # Add alias for quickly resetting the application
+            echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env staging && pm2 save && pm2 logs'" >> ~/.bashrc
+            source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+
+            # Create a dummy Express Js app on port 3500 for the health check
+            sudo mkdir -p /var/www/health-check
+            cd /var/www/health-check
+            sudo npm init -y
+            sudo npm install express
+            sudo sh -c 'echo "const express = require('\''express'\''); const app = express(); app.get('\''/'\'', (req, res) => { res.send('\''The World is Yours!'\''); }); app.listen(3500, () => { console.log('\''Example app listening on port 3500'\''); });" > app.js'
+
+            # Start the app
+            cd /var/www/health-check
+            sudo pm2 start app.js --name health-check
 
         TagSpecifications:
           - ResourceType: volume
@@ -402,6 +417,18 @@ Resources:
         - Key: project
           Value: efflux-staging
 
+  # a cloudwatch log group for the application
+  ApplicationLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /aws/ec2/efflux-be-staging
+      RetentionInDays: 30
+      Tags:
+        - Key: Name
+          Value: Efflux-Staging-EC2LogGroup
+        - Key: project
+          Value: efflux
+
   # Create an ElastiCache Redis Cluster
   RedisCluster:
     Type: AWS::ElastiCache::CacheCluster
@@ -524,6 +551,7 @@ Resources:
                   - s3:*
                   - iam:PassRole
                   - sns:*
+                  - logs:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
@@ -568,6 +596,7 @@ Resources:
                   - s3:Get*
                   - s3:List*
                   - sns:*
+                  - logs:*
                   - cloudwatch:*
                   - cloudformation:*
                   - codedeploy:*
@@ -592,6 +621,7 @@ Resources:
               - s3:Get*
               - s3:List*
               - sns:*
+              - logs:*
               - cloudwatch:*
               - cloudformation:*
               - codedeploy:*
@@ -609,6 +639,116 @@ Resources:
       Roles:
         - !Ref CodeDeployRole
       InstanceProfileName: Efflux-Staging
+
+  FirewallProtection:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Description: Firewall protection for Efflux BE Staging
+      Name: Efflux-BE-Staging-WebACL
+      Scope: REGIONAL
+      DefaultAction:
+        Allow: {}
+      VisibilityConfig:
+        SampledRequestsEnabled: true
+        CloudWatchMetricsEnabled: true
+        MetricName: Efflux-BE-Staging-WebACL
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: firewall
+      Rules:
+        - Name: AWS-AWSManagedRulesCommonRuleSet
+          Priority: 1
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesCommonRuleSet
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: false
+            CloudWatchMetricsEnabled: false
+            MetricName: AWS-AWSManagedRulesCommonRuleSet
+        - Name: AWS-AWSManagedRulesAdminProtectionRuleSet
+          Priority: 2
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesAdminProtectionRuleSet
+          OverrideAction:
+            Count: {}
+          VisibilityConfig:
+            SampledRequestsEnabled: false
+            CloudWatchMetricsEnabled: false
+            MetricName: AWS-AWSManagedRulesAdminProtectionRuleSet
+        - Name: BlockMaliciousPaths
+          Priority: 0
+          Action:
+            Block: {}
+          Statement:
+            OrStatement:
+              Statements:
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/.env"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/php.php"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/php_info"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: STARTS_WITH
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "/_profiler"
+          VisibilityConfig:
+            SampledRequestsEnabled: true
+            CloudWatchMetricsEnabled: false
+            MetricName: BlockMaliciousPaths
+
+  FirewallProtectionLogging:
+    Type: AWS::WAFv2::LoggingConfiguration
+    Properties:
+      LogDestinationConfigs:
+        - !GetAtt FirewallProtectionLogGroup.Arn
+      ResourceArn: !GetAtt FirewallProtection.Arn
+
+  FirewallProtectionLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: "aws-waf-logs-efflux-be-staging/firewall-protection"
+      RetentionInDays: !Ref LogsRetentionInDays
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: firewall
+
+  FirewallProtectionAssociation:
+    Type: AWS::WAFv2::WebACLAssociation
+    Properties:
+      ResourceArn: !Ref ApplicationLoadBalancer
+      WebACLArn: !GetAtt FirewallProtection.Arn
 
 ####################
 # Outputs

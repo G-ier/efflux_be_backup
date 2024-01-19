@@ -22,7 +22,6 @@ class CompositeController {
   async updateFacebookData(req, res) {
     const { startDate, endDate } = req.query;
     const updateResult = await this.compositeService.updateFacebookData(startDate, endDate, {
-      updatePixels: true,
       updateCampaigns: true,
       updateAdsets: true,
       updateInsights: true,
@@ -49,7 +48,6 @@ class CompositeController {
     // 2. Sync the facebook data of the account without insights
     const today = new Date().toISOString().split("T")[0];
     const syncEntityResult = await this.compositeService.syncUserAccountsData(account, today, today, {
-      updatePixels: true,
       updateCampaigns: true,
       updateAdsets: true,
       updateInsights: false,
@@ -62,7 +60,6 @@ class CompositeController {
 
     // 4. Sync the facebook data of the account with insights
     const syncInsightsResult = await this.compositeService.syncUserAccountsData(account, startTime, today, {
-      updatePixels: false,
       updateCampaigns: false,
       updateAdsets: false,
       updateInsights: true,
@@ -80,6 +77,16 @@ class CompositeController {
     await new AggregatesService().updateFacebookUserAccountAggregates(startTime, today, campaignIdsRestriction);
 
     res.status(200).send("Facebook data synced");
+  }
+
+  async syncPixels(req, res) {
+    try {
+      await this.compositeService.syncPixels();
+      res.json(true);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send("Internal Server Error");
+    }
   }
 
   async syncPages(req, res) {
@@ -521,12 +528,18 @@ class CompositeController {
   }
 
   async routeConversions(req, res) {
-    const body = req.body;
-    body.purchase_event_value = body.revenue; delete body.revenue;
-    body.purchase_event_count = body.conversions; delete body.conversions;
-    body.state = body.region; delete body.region;
-    const response = await this.compositeService.routeConversions(body, body.network);
-    res.json(response);
+    try {
+      const body = req.body;
+      body.purchase_event_value = body.revenue; delete body.revenue;
+      body.purchase_event_count = body.conversions; delete body.conversions;
+      body.state = body.region; delete body.region;
+      const response = await this.compositeService.routeConversions(body, body.network);
+      res.json(response);
+    } catch (error) {
+      FacebookLogger.error(`Error during routeConversions: ${error.response.data.error.error_user_msg}`);
+      console.log({error : error.response.data.error});
+      res.status(500).send("Internal Server Error");
+    }
   }
 
   async reportConversions(req, res) {

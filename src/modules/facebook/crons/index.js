@@ -12,6 +12,7 @@ const {
   FACEBOOK_UPDATE_YESTERDAY_BEFORE_MIDNIGHT_CRON,
   FACEBOOK_UPDATE_YESTERDAY_AFTER_MIDNIGHT_2_CRON,
   FACEBOOK_UPDATE_EVERY_SIX_HOURS_CRON,
+  FACEBOOK_PIXEL_UPDATE_EVERY_SIX_HOURS_CRON,
   FACEBOOK_REPORT_CONVERSIONS_HOUR_CRON,
   FACEBOOK_REPORT_CONVERSIONS_YESTERDAY
 }                                                                = require('./rules');
@@ -28,7 +29,6 @@ const compositeService            = new CompositeService();
 async function updateFacebookData(day) {
 
   const insightsUpdate = {
-    updatePixels: false,
     updateCampaigns: false,
     updateAdsets: false,
     updateInsights: true,
@@ -41,7 +41,6 @@ async function updateFacebookData(day) {
     else if (day === "yesterday")
       await compositeService.updateFacebookData(dayBeforeYesterdayYMD(null, 'UTC'), dayBeforeYesterdayYMD(null, 'UTC'), insightsUpdate);
     await compositeService.updateFacebookData(todayYMD(), todayYMD(), {
-      updatePixels: true,
       updateCampaigns: true,
       updateAdsets: true,
       updateInsights: true,
@@ -166,6 +165,20 @@ const updatePagesRegular = new CronJob(
   }
 ));
 
+const updatePixelsRegular = new CronJob(
+  FACEBOOK_PIXEL_UPDATE_EVERY_SIX_HOURS_CRON,
+  (async () =>{
+    try{
+      await compositeService.syncPixels();
+      dataUpdatesLogger.info(`COMPLETED | PIXELS | today`);
+    } catch (error) {
+      dataUpdatesLogger.warn(`FAILED | PIXELS | today | ${error}`);
+      await sendSlackNotification(`FAILED | PIXELS | today`)
+      console.log(error);
+    };
+  }
+));
+
 const initializeFacebookCron = () => {
 
   // If both are disabled, return immediately
@@ -176,6 +189,7 @@ const initializeFacebookCron = () => {
   updateYesterdayDataAfterMidnightPST2.start();
   updateTodayDataRegular.start();
   updatePagesRegular.start();
+  updatePixelsRegular.start();
 
   // LEAVE ONLY IN PRODUCTION POST-PRODUCTION MERGE
   if (CRON_ENVIRONMENT === 'production') {

@@ -1,15 +1,11 @@
-const AWS = require('aws-sdk');
+const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 
-AWS.config.update({
-  accessKeyId: process.env.SQS_PUSHER_ACCESS_KEY_ID,
-  secretAccessKey: process.env.SQS_PUSHER_SECRET_KEY,
+const sqsClient = new SQSClient({
   region: 'us-east-1',
 });
 
-// Now you can create service clients or call AWS services.
 class SqsService {
   constructor(queueUrl) {
-    this.sqs = new AWS.SQS();
     this.queueUrl = queueUrl;
   }
 
@@ -20,7 +16,8 @@ class SqsService {
     };
 
     try {
-      const data = await this.sqs.sendMessage(params).promise();
+      const data = await sqsClient.send(new SendMessageCommand(params));
+      console.log(`Message sent to SQS queue: ${data.MessageId}`);
     } catch (error) {
       console.error(`Error sending message to SQS queue: ${error}`);
     }

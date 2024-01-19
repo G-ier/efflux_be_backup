@@ -4,8 +4,10 @@
         "Adsets",
         "DUSEIP",
         "effluxapp",
+        "facebookexternalhit",
         "Metabase",
         "newrelic",
+        "postback",
         "runas"
     ]
 }

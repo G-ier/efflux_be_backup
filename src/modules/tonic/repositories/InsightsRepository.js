@@ -4,7 +4,7 @@ const _ = require('lodash');
 // Local Imports
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const { isNotNumeric } = require('../../../shared/helpers/Utils');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightsRepository {
   constructor() {
@@ -12,11 +12,11 @@ class InsightsRepository {
     this.aggregatesTableName = 'tonic';
     this.database = new DatabaseRepository();
 
-    const queueUrl =
-      process.env.TONIC_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-tonic-queue';
+    // const queueUrl =
+    //   process.env.TONIC_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-tonic-queue';
 
-    this.sqsService = new SqsService(queueUrl);
+    // this.sqsService = new SqsService(queueUrl);
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {
@@ -123,17 +123,18 @@ class InsightsRepository {
     };
   }
 
-  processTonicData(data) {
+  async processTonicData(data) {
     // Process raw data and aggregated data in a single loop
     const hourlyAdsets = {};
     const rawData = [];
-    data.forEach((insight) => {
+
+    for (const insight of data) {
       // Save raw data
       const parsedInsight = this.parseTonicAPIData(insight);
       rawData.push(parsedInsight);
 
       // push to SQS queue
-      this.sqsService.sendMessageToQueue(parsedInsight);
+      // await this.sqsService.sendMessageToQueue(parsedInsight);
 
       // Clean insight data
       const cleansedInsight = this.cleanseData(parsedInsight);
@@ -145,13 +146,14 @@ class InsightsRepository {
       } else {
         hourlyAdsets[adsetHourKey] = cleansedInsight;
       }
-    });
+    }
+
     return [rawData, Object.values(hourlyAdsets)];
   }
 
   async upsert(insights, chunkSize = 500) {
     // Process Tonic Data
-    const [rawData, adsetAggregatedData] = this.processTonicData(insights);
+    const [rawData, adsetAggregatedData] = await this.processTonicData(insights);
 
     // Upsert raw user session data
     const dataChunks = _.chunk(rawData, chunkSize);

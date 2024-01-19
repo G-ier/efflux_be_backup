@@ -1,20 +1,22 @@
 // Third party imports
 require('dotenv');
-const jwt = require('express-jwt');
-const jwks = require('jwks-rsa');
+const { expressjwt: jwt } = require('express-jwt');
+const jwksRsa = require('jwks-rsa');
 
 // Local imports
 const EnvironmentVariablesManager = require('../src/shared/services/EnvironmentVariablesManager');
 
-
 module.exports = jwt({
-  secret: jwks.expressJwtSecret({
-      cache: true,
-      rateLimit: true,
-      jwksRequestsPerMinute: 5,
-      jwksUri: `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/.well-known/jwks.json`
+  secret: jwksRsa.expressJwtSecret({
+    cache: true,
+    rateLimit: true,
+    jwksRequestsPerMinute: 5,
+    jwksUri: `https://${EnvironmentVariablesManager.getEnvVariable(
+      'AUTH0_DOMAIN',
+    )}/.well-known/jwks.json`,
   }),
+  // Validate the audience and the issuer.
   audience: EnvironmentVariablesManager.getEnvVariable('AUTH0_AUDIENCE'),
   issuer: `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/`,
-  algorithms: ['RS256']
+  algorithms: ['RS256'],
 });

@@ -3,11 +3,13 @@ const axios = require('axios');
 
 // Local application imports
 const UserService = require('./UserService');
+const RoleService = require('./RoleService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 class Auth0Service {
   constructor() {
     this.userService = new UserService();
+    this.roleService = new RoleService()
   }
 
   async getAuth0AccessToken() {
@@ -87,13 +89,15 @@ class Auth0Service {
 
   async login(reqUser, account) {
     const { name, email, image_url, nickname, sub } = account;
-    const acct_type = reqUser.roles.includes('admin') ? 'admin' : 'media_buyer';
+    const acct_type = reqUser?.roles?.includes('admin') ? 'admin' : 'media_buyer';
     const userFromAuth0 = await this.getAuth0User(sub);
     const identity = this.getUserIdentity(userFromAuth0);
-    const user = await this.userService.fetchOne(['*'], identity);
-    
+
+    const user = await this.userService.fetchOne(['*'], {email});
+
     // If it doesn't exist, create a user in the database
     if (!user) {
+      const role = await this.roleService.fetchOne(["*"],{name:acct_type?.replace("_"," ")})
       const userId = await this.userService.saveUser({
         name,
         nickname,
@@ -101,8 +105,11 @@ class Auth0Service {
         image_url,
         sub,
         acct_type,
+        role:role?.id,
+        org_id:1,
         ...identity,
       });
+
       return { id: userId,...user, ...userFromAuth0, };
     }
     // If the user exists but his permissions are different, update them

@@ -13,6 +13,12 @@ class EnvironmentVariablesManager {
     'DATABASE_URL_STAGING',
     'OLD_PRODUCTION_DATABASE_URL',
 
+    // Clickhouse
+    'CLICKHOUSE_URL',
+    'CLICKHOUSE_USER',
+    'CLICKHOUSE_PASSWORD',
+    'CLICKHOUSE_DB',
+
     // Facebook
     'FACEBOOK_APP_ID',
     'FACEBOOK_APP_SECRET',
@@ -38,6 +44,7 @@ class EnvironmentVariablesManager {
     // REDIS
     'REDIS_CLUSTER_URL_STAGING',
     'REDIS_CLUSTER_URL_PRODUCTION',
+    'REDIS_CLUSTER_URL_LOCAL',
 
     // MediaNet
     'MEDIANET_EMAIL',
@@ -45,10 +52,6 @@ class EnvironmentVariablesManager {
 
     // Google API Key File
     'GOOGLE_API_KEY_FILE',
-
-    // SQS Pusher Credentials
-    'SQS_PUSHER_ACCESS_KEY_ID',
-    'SQS_PUSHER_SECRET_KEY',
   ];
 
   static parameters = [
@@ -74,12 +77,14 @@ class EnvironmentVariablesManager {
     'PORT',
     'DISABLE_SLACK_NOTIFICATION',
     'CRON_ENVIRONMENT',
+    'NEWRELIC_ENVIRONMENT',
     'DISABLE_AUTH_DEADLOCK',
 
     // SQS Queues
     'CROSSROAD_QUEUE_URL',
     'TONIC_QUEUE_URL',
     'SEDO_QUEUE_URL',
+    'INSIGHTS_QUEUE_URL',
 
     // Redis
     'REDIS_ENVIRONMENT',
@@ -96,6 +101,10 @@ class EnvironmentVariablesManager {
     'MEDIA_LIBRARY_SERVICE_ENDPOINT',
     'NOTIFICATIONS_SERVICE_ENDPOINT',
     'EMAILS_SERVICE_ENDPOINT',
+
+    // SQS Pusher Credentials
+    'SQS_PUSHER_ACCESS_KEY_ID',
+    'SQS_PUSHER_SECRET_KEY',
   ];
 
   get isInitialized() {
@@ -185,6 +194,7 @@ class EnvironmentVariablesManager {
         'CRON_ENVIRONMENT',
         'DATABASE_ENVIRONMENT',
         'REDIS_ENVIRONMENT',
+        'NEWRELIC_ENVIRONMENT',
         'STACK',
       ];
 
@@ -207,6 +217,8 @@ class EnvironmentVariablesManager {
           Example:
           CRON_ENVIRONMENT=staging
           DATABASE_ENVIRONMENT=staging
+          REDIS_ENVIRONMENT=staging
+          NEWRELIC_ENVIRONMENT=staging
           STACK=BE
         `);
       }
@@ -218,8 +230,9 @@ class EnvironmentVariablesManager {
         throw new Error(
           `DATABASE_ENVIRONMENT must be either 'staging', 'production' or 'development'`,
         );
-      if (!['BE', 'DUS'].includes(envConfig['STACK']))
-        throw new Error(`STACK must be either 'BE' or 'DUS'`);
+
+      if (envConfig['STACK'] !== 'BE') throw new Error(`STACK must be 'BE'`);
+
       for (const [key, value] of Object.entries(envConfig)) {
         this.cachedValues[key] = value;
       }

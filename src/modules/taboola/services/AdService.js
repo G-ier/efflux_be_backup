@@ -50,14 +50,14 @@ class AdService extends BaseService {
           if (data?.results?.length) {
             const modifiedAds = data.results.map(ad => ({
               ...ad,  // Copy existing properties
-              account_id: campaign.adAccountId,  
+              ad_account_id: campaign.adAccountId,
               provider_id: campaign.providerId
             }));
-          
+
             ads.push(...modifiedAds);
           }
-          
-        } while (paging?.next); 
+
+        } while (paging?.next);
         return ads;
       });
       if (results.sucess.length === 0) throw new Error("All campaigns failed to fetch ads");

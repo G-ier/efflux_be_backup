@@ -4,7 +4,7 @@ const _ = require('lodash');
 // Local Imports
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const { extractDateHourFromUnixTimestamp, isNotNumeric } = require('../../../shared/helpers/Utils');
-const SqsService = require('../../../shared/lib/SQSPusher');
+// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class InsightRepository {
   constructor() {
@@ -12,11 +12,11 @@ class InsightRepository {
     this.aggregatesTableName = 'medianet';
     this.database = new DatabaseRepository();
 
-    const queueUrl =
-      process.env.CROSSROAD_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-medianet-queue';
+    // const queueUrl =
+    //   process.env.CROSSROAD_QUEUE_URL ||
+    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-medianet-queue';
 
-    this.sqsService = new SqsService(queueUrl);
+    // this.sqsService = new SqsService(queueUrl);
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {
@@ -115,19 +115,23 @@ class InsightRepository {
     });
   }
 
-  processMediaNetData(insights) {
+  async processMediaNetData(insights) {
     // Process raw data and aggregated data in a single loop
     const hourlyAdsets = {};
     const rawData = [];
-    insights.forEach((insight) => {
+
+    for (const insight of insights) {
       // Save raw data
       const parsedInsight = this.parseMediaNetAPIData(insight);
-      console.log(parsedInsight);
       if (
         parsedInsight.session_id != 'Unknown' &&
         !parsedInsight.user_agent.includes('facebookexternalhit')
-      )
+      ) {
         rawData.push(parsedInsight);
+        // push to SQS queue (for storing in data lake)
+        //
+        // await this.sqsService.sendMessageToQueue(parsedInsight);
+      }
 
       // Clean insight data
       const cleansedInsight = this.cleanseData(parsedInsight);
@@ -139,21 +143,19 @@ class InsightRepository {
       } else {
         hourlyAdsets[adsetHourKey] = cleansedInsight;
       }
-    });
+    }
+
     return [rawData, Object.values(hourlyAdsets)];
   }
 
   async upsert(insights, chunkSize = 500) {
     // Process Tonic Data
-    const [rawData, adsetAggregatedData] = this.processMediaNetData(insights);
+    const [rawData, adsetAggregatedData] = await this.processMediaNetData(insights);
     console.log(rawData);
     console.log(adsetAggregatedData);
     // Upsert raw user session data
     const dataChunks = _.chunk(rawData, chunkSize);
     for (const chunk of dataChunks) {
-      // push to SQS queue (for storing in data lake)
-      await this.sqsService.sendMessageToQueue(chunk);
-
       // upsert to database
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
     }

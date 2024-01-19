@@ -1,5 +1,3 @@
-const { yesterdayYMD, dayBeforeYesterdayYMD } = require("../../../shared/helpers/calendar");
-
 function castSum(column, type = "INTEGER") {
   return `CAST(SUM(${column}) AS ${type})`;
 }
@@ -39,9 +37,16 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
   } else {
     adAccountCondition = "";
   }
-
   return {
-    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND insights.user_id = ${mediaBuyer}` : "",
+    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND insights.ad_account_id IN (
+      SELECT
+        map.aa_id
+      FROM
+        u_aa_map map
+      WHERE
+        map.u_id = ${mediaBuyer}
+    )
+    ` : "",
     adAccountCondition: adAccountCondition,
     queryCondition: q ? `AND insights.campaign_name LIKE '%${q}%'` : "",
   };
