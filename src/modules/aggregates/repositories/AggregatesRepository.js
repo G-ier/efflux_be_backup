@@ -14,7 +14,7 @@ const compileAggregates = require('../reports/compileAggregates');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
 const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
-const { cleanData } = require('../utils');
+const { cleanData, formatDateToISO } = require('../utils');
 // const SqsService = require('../../../shared/lib/SQSPusher');
 
 class AggregatesRepository {
@@ -137,16 +137,6 @@ class AggregatesRepository {
   }
 
   generateUpsertQuery(rowToInsert) {
-    function formatDataToISO(date) {
-      if (!date) {
-        return 0;
-      }
-
-      const isoDate = new Date(date).toISOString();
-      // Remove the milliseconds and 'Z' (timezone indicator)
-      return isoDate.slice(0, -5);
-    }
-
     return `INSERT INTO efflux.insights (
       org_id, event_timestamp, campaign_id,
       campaign_name, adset_id, adset_name,
@@ -190,7 +180,7 @@ class AggregatesRepository {
       ${rowToInsert.traffic_source_conversions},
       ${rowToInsert.traffic_source ? `'${rowToInsert.traffic_source}'` : null},
       ${rowToInsert.traffic_source_clicks},
-      ${rowToInsert.traffic_source_updated_at ? `'${formatDataToISO(rowToInsert.traffic_source_updated_at)}'` : null},
+      ${rowToInsert.traffic_source_updated_at ? `'${formatDateToISO(rowToInsert.traffic_source_updated_at)}'` : null},
       ${rowToInsert.postback_conversions},
       ${rowToInsert.postback_lander_conversions},
       ${rowToInsert.postback_serp_conversions},
