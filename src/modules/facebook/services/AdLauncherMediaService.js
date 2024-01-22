@@ -155,11 +155,11 @@ class AdLauncherMedia extends BaseService {
     // Process existing content IDs
     await this.processExistingContentIds(filteredExistingContentIds, uploadedMedia);
 
+
     // Process new uploads (Images and Videos)
     if (req.files) {
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
-
     return { uploadedMedia, createdMediaObjects };
   }
 
@@ -282,6 +282,7 @@ class AdLauncherMedia extends BaseService {
   ) {
     for (const file of videos) {
       const videoHash = await this.uploadVideo(file.buffer, file.originalname, adAccountId, token);
+      console.log({videoHash})
       const createdVideo = await this.createContent({
         type: 'video',
         hash: videoHash,
@@ -291,15 +292,15 @@ class AdLauncherMedia extends BaseService {
 
       uploadedMedia.push({ type: 'video', video_id: videoHash });
 
-      await this.uploadToMediaLibrary(
-        'video',
-        file.buffer,
-        file.originalname,
-        adAccountId,
-        'empty',
-        user.id,
-        adsetData,
-      );
+      // await this.uploadToMediaLibrary(
+      //   'video',
+      //   file.buffer,
+      //   file.originalname,
+      //   adAccountId,
+      //   'empty',
+      //   user.id,
+      //   adsetData,
+      // );
 
       createdMediaObjects.push(createdVideo);
     }
