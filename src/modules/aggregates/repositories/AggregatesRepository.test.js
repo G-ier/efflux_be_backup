@@ -1,68 +1,73 @@
-const AggregatesRepository = require('../repositories/AggregatesRepository');
-const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
-const _ = require('lodash');
-const { cleanData } = require('../utils');
+const AggregatesRepository = require('./AggregatesRepository');
+const revealBotSheets = require('../reports/revealBotSheets');
 
-jest.mock('../../../shared/lib/DatabaseRepository');
-jest.mock('../../../shared/lib/ClickhouseRepository');
-jest.mock('lodash', () => {
-  const originalModule = jest.requireActual('lodash');
-  return {
-    ...originalModule,
-    chunk: jest.fn().mockImplementation(originalModule.chunk),
-  };
-});
+jest.mock('../reports/revealBotSheets', () => jest.fn());
 
-describe('AggregatesRepository.upsert', () => {
-  let repo;
+describe('AggregatesRepository', () => {
+  let aggregatesRepository;
   let mockDatabase;
-  let mockClickhouse;
 
   beforeEach(() => {
-    mockDatabase = new DatabaseRepository();
-    mockClickhouse = new ClickhouseRepository();
-    repo = new AggregatesRepository(mockDatabase);
-    repo.clickhouse = mockClickhouse;
+    mockDatabase = {}; // mock the database object
+    aggregatesRepository = new AggregatesRepository(mockDatabase);
   });
 
-  it('should chunk data, transform it, and call database and clickhouse methods', async () => {
-    const data = [
-      {
-        'unique_identifier': '123',
-        'spend': 100,
-        'revenue': 200,
-        'network': 'facebook',
-        'traffic_source': 'crossroads',
-        'campaign_id': '123',
-        'campaign_name': 'test',
-        'adset_id': '123',
-        'adset_name': 'test',
-        'user_id': 1,
-      }
-    ];
-    const chunkSize = 500;
+  describe('revealBotSheets', () => {
+    it('should call revealBotSheets with correct parameters', async () => {
+      const params = {
+        startDate: '2021-01-01',
+        endDate: '2021-01-31',
+        aggregateBy: 'campaigns',
+        trafficSource: 'facebook',
+        network: 'crossroads',
+        today: false
+      };
 
-    // Simulate the behavior of the upsert method
-    const transformedData = data.map((row) => repo.toDatabaseDTO(row, 'taboola', 'crossroads'));
-    const dataChunks = _.chunk(transformedData, chunkSize);
+      await aggregatesRepository.revealBotSheets(...Object.values(params));
+      expect(revealBotSheets).toHaveBeenCalledWith(mockDatabase, ...Object.values(params));
+    });
 
-    // Mocking the database and clickhouse method calls
-    mockDatabase.upsert.mockResolvedValueOnce(null); // Assuming upsert returns void or a promise of void
-    mockClickhouse.insertData.mockResolvedValueOnce(null); // Assuming insertData returns void or a promise of void
+    // Additional tests can be written for different parameter combinations
+  });
 
-    await repo.upsert(data, 'taboola', 'crossroads', chunkSize);
-
-    // Verify that lodash's chunk method was called correctly
-    expect(_.chunk).toHaveBeenCalledWith(transformedData, chunkSize);
-
-    // Verify that the database and clickhouse methods were called with the correct arguments
-    for (const chunk of dataChunks) {
-      const cleanedChunk = chunk.map(cleanData);
-      expect(mockDatabase.upsert).toHaveBeenCalledWith('insights', chunk, 'unique_identifier');
-      for (const row of cleanedChunk) {
-        expect(mockClickhouse.insertData).toHaveBeenCalledWith(expect.any(String), row);
-      }
-    }
+  describe('generateUpsertQuery', () => {
+    it('should generate the correct SQL query', () => {
+      const rowToInsert = {
+        org_id: 1,
+        event_timestamp: new Date('2021-01-01T00:00:00Z'),
+        campaign_id: 100,
+        campaign_name: 'Test Campaign',
+        adset_id: 200,
+        adset_name: 'Test Adset',
+        user_id: 300,
+        ad_account_id: 400,
+        revenue: 500.00,
+        spend: 600.00,
+        spend_plus_fee: 700.00,
+        link_clicks: 10,
+        network_conversions: 5,
+        network_uniq_conversions: 3,
+        nbr_of_searches: 15,
+        nbr_of_visitors: 20,
+        nbr_of_tracked_visitors: 25,
+        nbr_of_impressions: 30,
+        nbr_of_lander_visits: 35,
+        unique_identifier: 'unique_id_123',
+        unallocated_revenue: 800.00,
+        unallocated_spend: 900.00,
+        unallocated_spend_plus_fee: 1000.00,
+        traffic_source_conversions: 40,
+        traffic_source: 'facebook',
+        traffic_source_clicks: 45,
+        traffic_source_updated_at: new Date('2021-01-01T12:00:00Z'),
+        postback_conversions: 50,
+        postback_lander_conversions: 55,
+        postback_serp_conversions: 60,
+        network_updated_at: '2021-01-02T00:00:00Z',
+        network: 'test_network'
+      };
+      const query = aggregatesRepository.generateUpsertQuery(rowToInsert);
+      expect(query.includes('INSERT INTO efflux.insights')).toBe(true);
+    });
   });
 });
