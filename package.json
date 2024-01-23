@@ -20,7 +20,7 @@
     "@aws-sdk/client-cloudwatch": "^3.496.0",
     "@aws-sdk/client-cloudwatch-logs": "^3.495.0",
     "@aws-sdk/client-secrets-manager": "^3.491",
-    "@aws-sdk/client-sqs": "^3.495.0",
+    "@aws-sdk/client-sqs": "^3.496.0",
     "@aws-sdk/client-ssm": "^3.490",
     "async": "^3.2.5",
     "axios": "^1.6",
