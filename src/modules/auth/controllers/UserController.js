@@ -3,6 +3,8 @@ const Auth0Service = require('../services/Auth0Service');
 const RoleService = require('../services/RoleService');
 const UserService = require('../services/UserService');
 const OrganizationService = require('../../organizations/services/OrganizationService');
+const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
+
 const axios = require('axios');
 const generator = require('generate-password');
 
@@ -47,7 +49,8 @@ class UsersController {
           role_id,
         });
 
-        const emailUrl = process.env.EMAILS_SERVICE_ENDPOINT + 'emails/invitation/new';
+        const emailUrl = EnvironmentVariablesManager.getEnvVariable('EMAILS_SERVICE_ENDPOINT') + 'emails/invitation/new';
+
 
         const emailResponse = await axios.post(emailUrl, {
           to: email,
