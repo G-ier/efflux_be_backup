@@ -207,13 +207,7 @@ class AggregatesRepository {
       // await this.sqsService.sendMessageToQueue(chunk);
 
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
-
-      // push to clickhouse
-      for (const row of chunk) {
-        const rowToInsert = cleanData(row);
-        const query = this.generateUpsertQuery(rowToInsert);
-        await this.clickhouse.insertData(query);
-      }
+      await this.clickhouse.upsertClickHouse(this.tableName, chunk, "unique_identifier");
     }
     return dataChunks;
   }
