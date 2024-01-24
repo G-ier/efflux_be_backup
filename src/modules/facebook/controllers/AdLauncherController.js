@@ -30,6 +30,8 @@ class AdLauncherController {
 
   async launchAd(req, res) {
     try {
+      const timerLabel = 'launchAdExecutionTime';
+      console.time(timerLabel); // Start the timer
       const existingLaunchId = req?.body?.existingLaunchId;
       
       const existingContentIds = req.body.existingContentIds;
@@ -94,6 +96,7 @@ class AdLauncherController {
       // });
 
       // Log the successful creation of an ad
+      console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
       this.notifyUser(
@@ -102,6 +105,7 @@ class AdLauncherController {
         req.user.id,
       );
     } catch (error) {
+      console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithError(res, error);
     }
   }
