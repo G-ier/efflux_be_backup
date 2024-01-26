@@ -220,14 +220,6 @@ const AnalysisLogger = new CustomLogger({
   logStreamName: 'analysis',
 });
 
-// CRON data update Logger
-const dataUpdatesLogger = new CustomLogger({
-  destination: streamDestination,
-  level: 'info',
-  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
-  logStreamName: 'updates',
-});
-
 // User Logger
 const UserLogger = new CustomLogger({
   destination: streamDestination,
@@ -304,7 +296,6 @@ module.exports = {
   PostbackTestLogger,
   RequestsLogger,
   AnalysisLogger,
-  dataUpdatesLogger,
   SedoLogger,
   TonicLogger,
   MediaNetLogger,
