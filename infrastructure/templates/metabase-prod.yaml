@@ -142,10 +142,10 @@ Resources:
       Name: Metabase-TG
       HealthCheckEnabled: true
       HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "5"
+      HealthCheckTimeoutSeconds: "2"
       HealthCheckPath: /api/health
-      Port: "3000"
-      Protocol: HTTP
+      Port: "443"
+      Protocol: HTTPS
       VpcId: !ImportValue Efflux-VPC
       TargetType: instance
       Targets:
