@@ -63,7 +63,6 @@
     "puppeteer": "^14.3",
     "redis": "^4.6.12",
     "sqlite3": "^5.1.7",
-    "stripe": "^8.127.0",
     "ua-parser-js": "^0.7.28",
     "uniqid": "^5.4.0",
     "uuid": "^9.0.1",
