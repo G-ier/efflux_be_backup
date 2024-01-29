@@ -206,7 +206,7 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        InstanceType: t3.medium
+        InstanceType: t3.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -551,7 +551,7 @@ Resources:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
       ClusterName: Efflux-BE
-      CacheNodeType: cache.t3.medium
+      CacheNodeType: cache.t3.small
       Engine: redis
       EngineVersion: 7.1
       NumCacheNodes: 1
