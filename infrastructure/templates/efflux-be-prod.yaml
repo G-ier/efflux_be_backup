@@ -206,7 +206,7 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        InstanceType: t3.medium
+        InstanceType: t3a.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -243,14 +243,11 @@ Resources:
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
             echo "alias htop='sudo htop'" >> ~/.bashrc
-            source ~/.bashrc
-
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
-            source ~/.bashrc
-
             # Add alias for quickly resetting the application
             echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env production && pm2 save && pm2 logs'" >> ~/.bashrc
+            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
             source ~/.bashrc
 
             # Define environment
@@ -405,8 +402,8 @@ Resources:
       AlarmName: Efflux-CPU-Alarm
       EvaluationPeriods: "1"
       Statistic: Average
-      Threshold: "60"
-      AlarmDescription: Alarm set fo 60% of CPU utilization
+      Threshold: "70"
+      AlarmDescription: Alarm set fo 70% of CPU utilization
       Period: "60"
       AlarmActions:
         - !Ref ScalingPolicy
@@ -551,7 +548,7 @@ Resources:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
       ClusterName: Efflux-BE
-      CacheNodeType: cache.t3.medium
+      CacheNodeType: cache.t3.small
       Engine: redis
       EngineVersion: 7.1
       NumCacheNodes: 1
