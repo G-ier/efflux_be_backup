@@ -658,30 +658,6 @@ Resources:
         - Key: operation
           Value: firewall
       Rules:
-        - Name: AWS-AWSManagedRulesCommonRuleSet
-          Priority: 1
-          Statement:
-            ManagedRuleGroupStatement:
-              VendorName: AWS
-              Name: AWSManagedRulesCommonRuleSet
-          OverrideAction:
-            Count: {}
-          VisibilityConfig:
-            SampledRequestsEnabled: false
-            CloudWatchMetricsEnabled: false
-            MetricName: AWS-AWSManagedRulesCommonRuleSet
-        - Name: AWS-AWSManagedRulesAdminProtectionRuleSet
-          Priority: 2
-          Statement:
-            ManagedRuleGroupStatement:
-              VendorName: AWS
-              Name: AWSManagedRulesAdminProtectionRuleSet
-          OverrideAction:
-            Count: {}
-          VisibilityConfig:
-            SampledRequestsEnabled: false
-            CloudWatchMetricsEnabled: false
-            MetricName: AWS-AWSManagedRulesAdminProtectionRuleSet
         - Name: BlockMaliciousPaths
           Priority: 0
           Action:
@@ -704,15 +680,7 @@ Resources:
                     TextTransformations:
                       - Priority: 0
                         Type: NONE
-                    SearchString: "/php.php"
-                - ByteMatchStatement:
-                    FieldToMatch:
-                      UriPath: {}
-                    PositionalConstraint: STARTS_WITH
-                    TextTransformations:
-                      - Priority: 0
-                        Type: NONE
-                    SearchString: "/php_info"
+                    SearchString: "/php"
                 - ByteMatchStatement:
                     FieldToMatch:
                       UriPath: {}

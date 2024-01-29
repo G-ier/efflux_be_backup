@@ -287,7 +287,8 @@ route.get('/tonic', async (req, res) => {
         type = 'Purchase'
       }
     }
-
+    if (type != "Purchase") revenue = 0;
+    
     // New Extracted Fields
     const user_agent = subid1 || 'Unknown';
     let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = subid2 ? subid2.split('_|_') : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
