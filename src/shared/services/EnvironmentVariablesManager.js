@@ -191,7 +191,6 @@ class EnvironmentVariablesManager {
       }
     } else {
       const requiredEnvVariables = [
-        'CRON_ENVIRONMENT',
         'DATABASE_ENVIRONMENT',
         'REDIS_ENVIRONMENT',
         'NEWRELIC_ENVIRONMENT',
@@ -215,7 +214,6 @@ class EnvironmentVariablesManager {
           Please ensure it's/they are set in ${envFilePath}.
 
           Example:
-          CRON_ENVIRONMENT=staging
           DATABASE_ENVIRONMENT=staging
           REDIS_ENVIRONMENT=staging
           NEWRELIC_ENVIRONMENT=staging
@@ -224,8 +222,6 @@ class EnvironmentVariablesManager {
       }
 
       // Throw an error if any of the required env variables is invalid
-      if (!['staging', 'production'].includes(envConfig['CRON_ENVIRONMENT']))
-        throw new Error(`CRON_ENVIRONMENT must be either 'staging' or 'production'`);
       if (!['staging', 'production', 'development'].includes(envConfig['DATABASE_ENVIRONMENT']))
         throw new Error(
           `DATABASE_ENVIRONMENT must be either 'staging', 'production' or 'development'`,
