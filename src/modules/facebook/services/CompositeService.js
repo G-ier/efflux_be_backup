@@ -133,6 +133,7 @@ class CompositeService {
     return true;
   }
 
+  
   async fetchEntitiesOwnerAccount(entityType, entityId) {
 
     const entityConfig = {
@@ -163,13 +164,14 @@ class CompositeService {
     let result;
     try {
       const whereClause = {
-        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : config.tableName === 'fb_pixels' ? "pixel_id" : "provider_id"}`]: entityId,
+        [`${config.tableName}.${config.tableName === "campaigns" || config.tableName === "ad_accounts" ? "id" : config.tableName === 'fb_pixels' ? "pixel_id" : "provider_id"}`]: entityId,
       };
-      result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
+
+      const joins = [
         {
           type: "inner",
-          table: "aa_prioritized_ua_map AS map",
-          first: `${config.tableName}.ad_account_id`,
+          table: "ua_aa_map AS map",
+          first: `${config.tableName}.${config.tableName !== 'ad_accounts' ? 'ad_account_id' : 'id' }`,
           operator: "=",
           second: "map.aa_id",
         },
@@ -180,7 +182,9 @@ class CompositeService {
           operator: "=",
           second: "ua.id",
         },
-      ]);
+      ]
+
+      result = await config.service(["ua.name", "ua.token"], whereClause, 1, joins);
     } catch (e) {
       console.log(e);
       await sendSlackNotification(`Error fetching account for entity ${entityType} with id ${entityId}`);

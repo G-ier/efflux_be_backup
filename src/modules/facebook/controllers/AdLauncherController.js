@@ -6,10 +6,12 @@ const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
+const CompositeService = require('../services/CompositeService');
+const AdQueueService = require('../services/AdQueueService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const _ = require('lodash');
-const AdQueueService = require('../services/AdQueueService');
 const axios = require('axios');
+
 class AdLauncherController {
   constructor() {
     this.adLauncherService = new AdLauncherService();
@@ -19,6 +21,7 @@ class AdLauncherController {
     this.userAccountService = new UserAccountService();
     this.adLauncherMedia = new AdLauncherMedia();
     this.adQueueService = new AdQueueService();
+    this.compositeService = new CompositeService()
   }
 
   getAdAccountId(req) {
@@ -27,7 +30,10 @@ class AdLauncherController {
 
   async launchAd(req, res) {
     try {
+      const timerLabel = 'launchAdExecutionTime';
+      console.time(timerLabel); // Start the timer
       const existingLaunchId = req?.body?.existingLaunchId;
+      
       const existingContentIds = req.body.existingContentIds;
       const contentIds = Array.isArray(existingContentIds)
         ? existingContentIds
@@ -35,11 +41,10 @@ class AdLauncherController {
 
       FacebookLogger.info('Ad launch process initiated.');
       this.validateRequiredParameters(req);
-      const token = await this.getToken();
       const adAccountId = this.getAdAccountId(req);
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
-      // Get the first key from the adAccountsDataMap
       const firstKey = Object.keys(adAccountsDataMap)[0];
+      const token = await this.getToken(adAccountsDataMap[firstKey].id);
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');
       const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
@@ -78,19 +83,20 @@ class AdLauncherController {
         adData,
       });
 
-      await this.adQueueService.saveToQueueFromLaunch({
-        existingLaunchId,
-        adAccountId: firstKey,
-        existingMedia: createdMediaObjects,
-        existingContentIds: contentIds,
-        data: req.body,
-        campaignId: campaignId,
-        adsetId: adSetId,
-        adId: adCreationResult.id,
-        status: 'launched',
-      });
+      // await this.adQueueService.saveToQueueFromLaunch({
+      //   existingLaunchId,
+      //   adAccountId: firstKey,
+      //   existingMedia: createdMediaObjects,
+      //   existingContentIds: contentIds,
+      //   data: req.body,
+      //   campaignId: campaignId,
+      //   adsetId: adSetId,
+      //   adId: adCreationResult.id,
+      //   status: 'launched',
+      // });
 
       // Log the successful creation of an ad
+      console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
       this.notifyUser(
@@ -99,6 +105,7 @@ class AdLauncherController {
         req.user.id,
       );
     } catch (error) {
+      console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithError(res, error);
     }
   }
@@ -157,8 +164,8 @@ class AdLauncherController {
       throw new Error(`Missing required parameters: ${missingParameters.join(', ')}`);
     }
   }
-  async getToken(adminsOnly = true) {
-    return (await this.userAccountService.getFetchingAccount(adminsOnly, false, 20)).token;
+  async getToken(entityId) {
+    return(await this.compositeService.fetchEntitiesOwnerAccount('ad_account',entityId))?.token
   }
 
   getAdAccountId(req) {
@@ -168,14 +175,14 @@ class AdLauncherController {
   async getAdAccountsDataMap(adAccountId) {
     // First try to match using provider_id
     let adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ['id', 'provider_id', 'user_id', 'account_id'],
+      ['id', 'provider_id'],
       { provider_id: adAccountId },
     );
 
     // If no accounts found using provider_id, try to match using id
     if (!adAccounts || adAccounts.length === 0) {
       adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-        ['id', 'provider_id', 'user_id', 'account_id'],
+        ['id', 'provider_id'],
         { id: adAccountId },
       );
     }
