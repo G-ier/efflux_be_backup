@@ -405,8 +405,8 @@ Resources:
       AlarmName: Efflux-CPU-Alarm
       EvaluationPeriods: "1"
       Statistic: Average
-      Threshold: "60"
-      AlarmDescription: Alarm set fo 60% of CPU utilization
+      Threshold: "70"
+      AlarmDescription: Alarm set fo 70% of CPU utilization
       Period: "60"
       AlarmActions:
         - !Ref ScalingPolicy
