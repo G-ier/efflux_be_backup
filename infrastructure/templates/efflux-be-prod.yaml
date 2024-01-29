@@ -206,7 +206,7 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        InstanceType: t3.small
+        InstanceType: t3a.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
