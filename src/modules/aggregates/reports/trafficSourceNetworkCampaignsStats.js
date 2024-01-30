@@ -1,9 +1,8 @@
 const { buildConditionsInsights, buildSelectionColumns } = require('./utils');
 
-async function trafficSourceNetworkCampaignsStats(database, startDate, endDate, network = 'crossroads', trafficSource, mediaBuyer, adAccountId, q) {
+async function trafficSourceNetworkCampaignsStats(database, startDate, endDate, network = 'crossroads', trafficSource, mediaBuyer, adAccountId, q, orgId) {
 
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q);
-
+  const { mediaBuyerCondition, adAccountCondition, queryCondition, orgIdCondition} = buildConditionsInsights(mediaBuyer, adAccountId, q, orgId);
   const query = `
     SELECT
       campaign_id,
@@ -14,6 +13,7 @@ async function trafficSourceNetworkCampaignsStats(database, startDate, endDate, 
       ${mediaBuyerCondition}
       ${adAccountCondition}
       ${queryCondition}
+      ${orgIdCondition}
     GROUP BY campaign_id, campaign_name
     ORDER BY SUM(revenue) DESC;
   `;

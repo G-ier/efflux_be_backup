@@ -27,7 +27,7 @@ function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
   `;
 }
 
-function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
+function buildConditionsInsights(mediaBuyer, adAccountIds, q, orgId) {
   let adAccountCondition;
 
   if (Array.isArray(adAccountIds)) {
@@ -37,6 +37,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
   } else {
     adAccountCondition = "";
   }
+  let orgIdCondition = orgId ? `AND insights.org_id = ${orgId}` : "";
   return {
     mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND insights.ad_account_id IN (
       SELECT
@@ -49,6 +50,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, q) {
     ` : "",
     adAccountCondition: adAccountCondition,
     queryCondition: q ? `AND insights.campaign_name LIKE '%${q}%'` : "",
+    orgIdCondition: orgIdCondition
   };
 }
 

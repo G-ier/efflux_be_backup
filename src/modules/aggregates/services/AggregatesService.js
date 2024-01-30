@@ -12,7 +12,7 @@ class AggregatesService {
 
   async paramConvertWrapper(callback, params) {
 
-    const { startDate, endDate, campaignId, network, trafficSource, mediaBuyer, adAccountId, q } = params;
+    const { startDate, endDate, campaignId, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
     if (!startDate || !endDate) {
       throw new Error('Missing date parameters, please provide startDate and endDate in url pattern');
     }
@@ -40,7 +40,8 @@ class AggregatesService {
       trafficSource,
       mediaBuyer,
       adAccountId,
-      q
+      q,
+      orgId
     };
     try {
       return await callback(finalParams);
@@ -50,24 +51,24 @@ class AggregatesService {
     }
   }
 
-  async generateCampaignAdsetsReport(startDate, endDate, campaignId) {
+  async generateCampaignAdsetsReport(startDate, endDate, campaignId, orgId) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.campaignAdsets(...args),
-      {startDate, endDate, campaignId}
+      {startDate, endDate, campaignId, orgId}
     );
   }
 
-  async generateCampaignDailyReport(startDate, endDate, campaignId) {
+  async generateCampaignDailyReport(startDate, endDate, campaignId, orgId) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.campaignDaily(...args),
-      {startDate, endDate, campaignId}
+      {startDate, endDate, campaignId, orgId}
     );
   }
 
-  async generateCampaignHourlyReport(startDate, endDate, campaignId) {
+  async generateCampaignHourlyReport(startDate, endDate, campaignId, orgId) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.campaignHourly(...args),
-      {startDate, endDate, campaignId}
+      {startDate, endDate, campaignId, orgId}
     );
   }
 
@@ -84,31 +85,31 @@ class AggregatesService {
 
   async generateTrafficSourceNetworkCampaignsStatsReport(startDate, endDate,
     network="crossroads", trafficSource,
-    mediaBuyer, adAccountId, q
+    mediaBuyer, adAccountId, q, orgId
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkCampaignsStats(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId }
     )
   }
 
   async generateTrafficSourceNetworkDailyReport(startDate, endDate,
     network="crossroads", trafficSource,
-    mediaBuyer, adAccountId, q
+    mediaBuyer, adAccountId, q, orgId
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkDaily(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId }
     )
   }
 
   async generateTrafficSourceNetworkHourlyReport(startDate, endDate,
     network="crossroads", trafficSource,
-    mediaBuyer, adAccountId, q
+    mediaBuyer, adAccountId, q, orgId
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q }
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId }
     )
   }
 
