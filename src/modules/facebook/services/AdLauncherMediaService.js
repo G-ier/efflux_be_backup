@@ -278,7 +278,7 @@ class AdLauncherMedia extends BaseService {
       return uploadVideo(file);
     });
   
-    let videoIdsToCheck = uploadedMedia.map(video => video.video_id);
+    let videoIdsToCheck = uploadedMedia.map(video => video.video_id).filter(id => id);
     let videoStatuses;
 
     while (videoIdsToCheck.length > 0) {
