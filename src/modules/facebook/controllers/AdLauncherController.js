@@ -21,7 +21,7 @@ class AdLauncherController {
     this.userAccountService = new UserAccountService();
     this.adLauncherMedia = new AdLauncherMedia();
     this.adQueueService = new AdQueueService();
-    this.compositeService = new CompositeService()
+    this.compositeService = new CompositeService();
   }
 
   getAdAccountId(req) {
@@ -33,7 +33,8 @@ class AdLauncherController {
       const timerLabel = 'launchAdExecutionTime';
       console.time(timerLabel); // Start the timer
       const existingLaunchId = req?.body?.existingLaunchId;
-      
+
+      //Extracting the url of the ad
       const existingContentIds = req.body.existingContentIds;
       const contentIds = Array.isArray(existingContentIds)
         ? existingContentIds
@@ -71,9 +72,15 @@ class AdLauncherController {
       );
 
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
+
+      // Retrieve the initial URL
+      let url = req.body.url;
+
+      // Replace the placeholders with actual values
+      url = url?.replace('{CAMPAIGN_ID}', campaignId).replace('{ADSET_ID}', adSetId);
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
-      const adData = this.prepareAdData(req, uploadedMedia, adSetId);
+      const adData = this.prepareAdData(req, uploadedMedia, adSetId,url);
 
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
@@ -105,7 +112,7 @@ class AdLauncherController {
         req.user.id,
       );
     } catch (error) {
-      console.timeEnd(timerLabel); // Stop the timer after function execution
+      console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
       this.respondWithError(res, error);
     }
   }
@@ -165,7 +172,7 @@ class AdLauncherController {
     }
   }
   async getToken(entityId) {
-    return(await this.compositeService.fetchEntitiesOwnerAccount('ad_account',entityId))?.token
+    return (await this.compositeService.fetchEntitiesOwnerAccount('ad_account', entityId))?.token;
   }
 
   getAdAccountId(req) {
@@ -181,10 +188,9 @@ class AdLauncherController {
 
     // If no accounts found using provider_id, try to match using id
     if (!adAccounts || adAccounts.length === 0) {
-      adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-        ['id', 'provider_id'],
-        { id: adAccountId },
-      );
+      adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(['id', 'provider_id'], {
+        id: adAccountId,
+      });
     }
 
     // Key the results by provider_id for easy lookup later
@@ -254,7 +260,7 @@ class AdLauncherController {
     }
   }
 
-  prepareAdData(req, uploadedMedia, adSetId) {
+  prepareAdData(req, uploadedMedia, adSetId,newUrl) {
     // Parse adData if it's a string
     let adData = req.body.adData;
 
@@ -284,6 +290,8 @@ class AdLauncherController {
         );
       }
     }
+
+    adData.creative.asset_feed_spec.link_urls = [{ website_url: newUrl }];
 
     // Initialize images array if not already present
     if (!Array.isArray(adData.creative.asset_feed_spec.images)) {
