@@ -156,6 +156,8 @@ class CampaignRepository {
       "budget_remaining",
       "updated_time",
       "ad_account_id",
+      'vertical',
+      'category'
     ]);
 
     dbObject.network = "unkown";
