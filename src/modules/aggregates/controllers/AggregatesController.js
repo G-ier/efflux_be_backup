@@ -33,7 +33,9 @@ class AggregatesController {
   async generateCampaignAdsetsReport(req, res) {
     try{
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.generateCampaignAdsetsReport(startDate, endDate, campaignId);
+      const user = req.user;
+      const orgId = user.org_id || null;
+      const data = await this.aggregatesService.generateCampaignAdsetsReport(startDate, endDate, campaignId, orgId);
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -44,7 +46,9 @@ class AggregatesController {
   async generateCampaignDailyReport(req, res) {
     try {
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.generateCampaignDailyReport(startDate, endDate, campaignId);
+      const user = req.user;
+      const orgId = user.org_id || null;
+      const data = await this.aggregatesService.generateCampaignDailyReport(startDate, endDate, campaignId, orgId);
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -55,7 +59,9 @@ class AggregatesController {
   async generateCampaignHourlyReport(req, res) {
     try {
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.generateCampaignHourlyReport(startDate, endDate, campaignId);
+      const user = req.user;
+      const orgId = user.org_id || null;
+      const data = await this.aggregatesService.generateCampaignHourlyReport(startDate, endDate, campaignId, orgId);
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -79,8 +85,10 @@ class AggregatesController {
   async generateTrafficSourceNetworkCampaignsStatsReport(req, res) {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } = await this.extractRequestDataWithUser(req);
+      const user = req.user;
+      const orgId = user.org_id || null;
       const data = await this.aggregatesService.generateTrafficSourceNetworkCampaignsStatsReport(
-        startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q
+        startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId
       );
       return res.json(data);
     } catch (e) {
@@ -92,8 +100,10 @@ class AggregatesController {
   async generateTrafficSourceNetworkDailyReport(req, res) {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } = await this.extractRequestDataWithUser(req);
+      const user = req.user;
+      const orgId = user.org_id || null;
       const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
-        startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q
+        startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId
       );
       return res.json(data);
     } catch (e) {
@@ -105,8 +115,10 @@ class AggregatesController {
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } = await this.extractRequestDataWithUser(req);
+      const user = req.user;
+      const orgId = user.org_id || null;
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
-        startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q
+        startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId
       );
       return res.json(data);
     } catch (e) {
