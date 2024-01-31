@@ -1,0 +1,10 @@
+{
+    "recommendations": [
+        "editorconfig.editorconfig",
+        "aaron-bond.better-comments",
+        "alefragnani.bookmarks",
+        "usernamehw.errorlens",
+        "oderwat.indent-rainbow",
+        "christian-kohler.path-intellisense"
+    ]
+}
