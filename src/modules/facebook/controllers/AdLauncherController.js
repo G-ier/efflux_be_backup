@@ -11,6 +11,8 @@ const AdQueueService = require('../services/AdQueueService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const _ = require('lodash');
 const axios = require('axios');
+const PixelsService = require('../services/PixelsService');
+const PageService = require('../services/PageService');
 
 class AdLauncherController {
   constructor() {
@@ -22,6 +24,8 @@ class AdLauncherController {
     this.adLauncherMedia = new AdLauncherMedia();
     this.adQueueService = new AdQueueService();
     this.compositeService = new CompositeService();
+    this.pixelService = new PixelsService();
+    this.pageService = new PageService();
   }
 
   getAdAccountId(req) {
@@ -29,7 +33,11 @@ class AdLauncherController {
   }
 
   async launchAd(req, res) {
+    let accountName, pixel, page;
     try {
+      const pixelId = req.body.pixel_id?.toString();
+      const pageId = req.body.page_id?.toString();
+
       const timerLabel = 'launchAdExecutionTime';
       console.time(timerLabel); // Start the timer
       const existingLaunchId = req?.body?.existingLaunchId;
@@ -45,7 +53,14 @@ class AdLauncherController {
       const adAccountId = this.getAdAccountId(req);
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
       const firstKey = Object.keys(adAccountsDataMap)[0];
-      const token = await this.getToken(adAccountsDataMap[firstKey].id);
+
+      const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
+      accountName = userAccountName;
+
+      // Fetch pixel and page details early if they're needed regardless of success or failure
+      pixel = (await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId }, 1))?.[0];
+      page = (await this.pageService.fetchPagesFromDB(['*'], { id: pageId },1))?.[0];
+
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');
       const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
@@ -80,7 +95,7 @@ class AdLauncherController {
       url = url?.replace('{CAMPAIGN_ID}', campaignId).replace('{ADSET_ID}', adSetId);
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
-      const adData = this.prepareAdData(req, uploadedMedia, adSetId,url);
+      const adData = this.prepareAdData(req, uploadedMedia, adSetId, url);
 
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
@@ -113,7 +128,9 @@ class AdLauncherController {
       );
     } catch (error) {
       console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
-      this.respondWithError(res, error);
+      console.log({ error, pixel, page, accountName });
+
+      this.respondWithError(res, { error, pixel, page, accountName });
     }
   }
   // Use Axios to call the notifications service
@@ -172,7 +189,8 @@ class AdLauncherController {
     }
   }
   async getToken(entityId) {
-    return (await this.compositeService.fetchEntitiesOwnerAccount('ad_account', entityId))?.token;
+    const details = await this.compositeService.fetchEntitiesOwnerAccount('ad_account', entityId);
+    return { token: details?.token, userAccountName: details?.name };
   }
 
   getAdAccountId(req) {
@@ -260,7 +278,7 @@ class AdLauncherController {
     }
   }
 
-  prepareAdData(req, uploadedMedia, adSetId,newUrl) {
+  prepareAdData(req, uploadedMedia, adSetId, newUrl) {
     // Parse adData if it's a string
     let adData = req.body.adData;
 
@@ -382,15 +400,48 @@ class AdLauncherController {
     }
   }
 
-  respondWithError(res, error) {
-    // Log any errors encountered during the ad launch process
-    FacebookLogger.error(`Error during ad launch: ${error?.error_user_msg || error.message}`, {
+  respondWithError(res, { error, pixel, page, accountName }) {
+    // Define a mapping of error codes and subcodes to custom messages
+    const errorMessagesMap = {
+      '10_1341012': `Please assign ${accountName || 'the account'} profile to the ${
+        pixel ? pixel.name : 'specified pixel'
+      } and/or ${page ? page.name : 'specified page'} on your Business Manager and try again.
+  If you lack access to the BM or Profile, please contact one of your managers.`,
+      // Add more error code_subcode mappings as needed
+      '200_1815045': `Please assign ${accountName || 'the specific'} ad account to the ${
+        pixel ? pixel.name : 'specified '
+      } pixel/dataset on your Business Manager and try again,
+      If you lack access to the BM or Profile, please contact one of your managers.`,
+    };
+
+    // Construct the error key to look up in the map
+    const errorKey = `${error.code}_${error.error_subcode}`;
+
+    // Use the custom message if available, otherwise fallback to a generic message
+    let customMessage =
+      errorMessagesMap[errorKey] ||
+      `Error during ad launch for account ${accountName || 'Unknown'}: ${
+        error?.error_user_msg || error.message
+      }`;
+
+    // Log the error with additional context
+    FacebookLogger.error(customMessage, {
       error,
+      pixel: pixel ? JSON.stringify(pixel) : 'N/A',
+      page: page ? JSON.stringify(page) : 'N/A',
+      accountName: accountName || 'Unknown',
     });
-    res.status(500).json({
+
+    // Respond with the error and additional details
+    const statusCode = error.code === 200 ? 400 : 500; // Use HTTP 400 for client errors represented by HTTP 200 status in FB API
+    res.status(statusCode).json({
       success: false,
-      message: 'An error occurred while launching the ad.',
-      error: error?.error_user_msg || error.message,
+      message: customMessage,
+      errorDetails: {
+        errorCode: error.code,
+        errorSubcode: error.error_subcode,
+        errorData: error.error_data ? JSON.parse(error.error_data) : {},
+      },
     });
   }
 }
