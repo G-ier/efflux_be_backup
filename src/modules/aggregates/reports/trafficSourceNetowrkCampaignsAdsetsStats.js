@@ -1,7 +1,7 @@
 const { buildConditionsInsights, buildSelectionColumns, castSum } = require("./utils");
 
-async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, endDate, network='crossroads', trafficSource, mediaBuyer, ad_accounts, q) {
-  const { mediaBuyerCondition, adAccountCondition, queryCondition } = buildConditionsInsights(mediaBuyer, ad_accounts, q);
+async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, endDate, network='crossroads', trafficSource, mediaBuyer, ad_accounts, q, orgId) {
+  const { mediaBuyerCondition, adAccountCondition, queryCondition, orgIdCondition } = buildConditionsInsights(mediaBuyer, ad_accounts, q, orgId);
 
   const query = `
   WITH adset_data AS (
@@ -11,7 +11,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       MAX(campaign_name) as campaign_name,
       ${trafficSource != 'taboola' ? `
       MAX(adsets.status) as status,
-      CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,` : 
+      CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,` :
       `MAX(c.status) as status,
       CAST(COALESCE(MAX(c.daily_budget), '0') AS FLOAT) * 100 as daily_budget,`}
 
@@ -20,7 +20,9 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       ${buildSelectionColumns("", calculateSpendRevenue=true)}
     FROM insights
     JOIN ${trafficSource != 'taboola' ? `adsets ON insights.adset_id = adsets.provider_id` : `campaigns c ON c.id = insights.campaign_id`}
-    WHERE date > '${startDate}' AND date <= '${endDate}' AND insights.traffic_source = '${trafficSource}' AND insights.network = '${network}'
+    WHERE date > '${startDate}' AND date <= '${endDate}'
+      AND insights.traffic_source = '${trafficSource}' AND insights.network = '${network}'
+      ${orgIdCondition}
       ${mediaBuyerCondition}
       ${adAccountCondition}
       ${queryCondition}

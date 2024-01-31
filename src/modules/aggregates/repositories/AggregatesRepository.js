@@ -50,23 +50,22 @@ class AggregatesRepository {
   }
 
   async campaignAdsets(params) {
-    const { startDate, endDate, campaignId } = params;
-
+    const { startDate, endDate, campaignId, orgId } = params;
     // Check if campaignId is an array
     if (Array.isArray(campaignId)) {
       return await adsetsByCampaignId(this.database, startDate, endDate, campaignId);
     } else {
-      return await campaignAdsets(this.database, startDate, endDate, campaignId);
+      return await campaignAdsets(this.database, startDate, endDate, campaignId, orgId);
     }
   }
   async campaignDaily(params) {
-    const { startDate, endDate, campaignId } = params;
-    return await campaignDaily(this.database, startDate, endDate, campaignId);
+    const { startDate, endDate, campaignId, orgId } = params;
+    return await campaignDaily(this.database, startDate, endDate, campaignId, orgId);
   }
 
   async campaignHourly(params) {
-    const { startDate, endDate, campaignId } = params;
-    return await campaignHourly(this.database, startDate, endDate, campaignId);
+    const { startDate, endDate, campaignId, orgId } = params;
+    return await campaignHourly(this.database, startDate, endDate, campaignId, orgId);
   }
 
   async trafficSourceNetowrkCampaignsAdsetsStats(params) {
@@ -84,7 +83,7 @@ class AggregatesRepository {
   }
 
   async trafficSourceNetworkCampaignsStats(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
     return await trafficSourceNetworkCampaignsStats(
       this.database,
       startDate,
@@ -94,11 +93,12 @@ class AggregatesRepository {
       mediaBuyer,
       adAccountId,
       q,
+      orgId
     );
   }
 
   async trafficSourceNetworkDaily(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
     return await trafficSourceNetworkDaily(
       this.database,
       startDate,
@@ -108,11 +108,12 @@ class AggregatesRepository {
       mediaBuyer,
       adAccountId,
       q,
+      orgId
     );
   }
 
   async trafficSourceNetworkHourly(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
     return await trafficSourceNetworkHourly(
       this.database,
       startDate,
@@ -122,6 +123,7 @@ class AggregatesRepository {
       mediaBuyer,
       adAccountId,
       q,
+      orgId
     );
   }
 
