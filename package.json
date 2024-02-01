@@ -19,9 +19,9 @@
   "dependencies": {
     "@aws-sdk/client-cloudwatch": "^3.504",
     "@aws-sdk/client-cloudwatch-logs": "^3.504",
-    "@aws-sdk/client-secrets-manager": "^3.503",
-    "@aws-sdk/client-sqs": "^3.503",
-    "@aws-sdk/client-ssm": "^3.503",
+    "@aws-sdk/client-secrets-manager": "^3.504",
+    "@aws-sdk/client-sqs": "^3.504",
+    "@aws-sdk/client-ssm": "^3.504",
     "async": "^3.2.5",
     "axios": "^1.6",
     "clickhouse": "^2.6.0",
