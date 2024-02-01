@@ -33,7 +33,7 @@ class AdLauncherController {
   }
 
   async launchAd(req, res) {
-    let accountName, pixel, page;
+    let accountName, pixel, page, adAccountName;
     try {
       const pixelId = req.body.pixel_id?.toString();
       const pageId = req.body.page_id?.toString();
@@ -53,13 +53,16 @@ class AdLauncherController {
       const adAccountId = this.getAdAccountId(req);
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
       const firstKey = Object.keys(adAccountsDataMap)[0];
+      adAccountName = adAccountsDataMap[firstKey]?.name;
 
       const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
       accountName = userAccountName;
 
       // Fetch pixel and page details early if they're needed regardless of success or failure
-      pixel = (await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId }, 1))?.[0];
-      page = (await this.pageService.fetchPagesFromDB(['*'], { id: pageId },1))?.[0];
+      pixel = (
+        await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId }, 1)
+      )?.[0];
+      page = (await this.pageService.fetchPagesFromDB(['*'], { id: pageId }, 1))?.[0];
 
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');
@@ -130,7 +133,7 @@ class AdLauncherController {
       console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
       console.log({ error, pixel, page, accountName });
 
-      this.respondWithError(res, { error, pixel, page, accountName });
+      this.respondWithError(res, { error, pixel, page, accountName, adAccountName });
     }
   }
   // Use Axios to call the notifications service
@@ -200,15 +203,18 @@ class AdLauncherController {
   async getAdAccountsDataMap(adAccountId) {
     // First try to match using provider_id
     let adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ['id', 'provider_id'],
+      ['id', 'provider_id', 'name'],
       { provider_id: adAccountId },
     );
 
     // If no accounts found using provider_id, try to match using id
     if (!adAccounts || adAccounts.length === 0) {
-      adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(['id', 'provider_id'], {
-        id: adAccountId,
-      });
+      adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
+        ['id', 'provider_id', 'name'],
+        {
+          id: adAccountId,
+        },
+      );
     }
 
     // Key the results by provider_id for easy lookup later
@@ -400,18 +406,31 @@ class AdLauncherController {
     }
   }
 
-  respondWithError(res, { error, pixel, page, accountName }) {
+  respondWithError(res, { error, pixel, page, accountName, adAccountName }) {
     // Define a mapping of error codes and subcodes to custom messages
     const errorMessagesMap = {
-      '10_1341012': `Please assign ${accountName || 'the account'} profile to the ${
-        pixel ? pixel.name : 'specified pixel'
-      } and/or ${page ? page.name : 'specified page'} on your Business Manager and try again.
-  If you lack access to the BM or Profile, please contact one of your managers.`,
-      // Add more error code_subcode mappings as needed
-      '200_1815045': `Please assign ${accountName || 'the specific'} ad account to the ${
-        pixel ? pixel.name : 'specified '
-      } pixel/dataset on your Business Manager and try again,
-      If you lack access to the BM or Profile, please contact one of your managers.`,
+      '10_1341012': {
+        message: [
+          `Please`,
+          {
+            bold: ` assign ${accountName || 'the account'} profile to the ${
+              page ? page.name : 'specified page'
+            }  on your Business Manager`,
+          },
+          ` and try again. If you lack access to the BM or Profile, please contact one of your managers.`,
+        ],
+      },
+      '200_1815045': {
+        message: [
+          `Please`,
+          {
+            bold: ` assign ${adAccountName || 'the specific'} ad account to the ${
+              pixel ? pixel.name : 'specified'
+            } pixel/dataset on your Business Manager `,
+          },
+          `and try again. If you lack access to the BM or Profile, please contact one of your managers.`,
+        ],
+      },
     };
 
     // Construct the error key to look up in the map
