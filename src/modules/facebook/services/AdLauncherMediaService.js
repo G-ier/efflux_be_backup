@@ -2,6 +2,7 @@
 const axios = require('axios');
 const _ = require('lodash');
 const FormData = require('form-data');
+const async = require('async'); // Ensure async is imported
 
 // Local application imports
 const AdLauncherMediaRepository = require('../repositories/AdLauncherMediaRepository');
@@ -68,7 +69,6 @@ class AdLauncherMedia extends BaseService {
         },
       });
 
-      console.log(response.data);
       return response.data;
     } catch (error) {
       console.error('Error uploading image to media library: ', error);
@@ -121,7 +121,7 @@ class AdLauncherMedia extends BaseService {
     const formData = new FormData();
     formData.append('file', videoBuffer, filename);
     const url = `${FB_API_URL}/act_${adAccountId}/advideos`;
-
+  
     try {
       const response = await axios.post(url, formData, {
         headers: {
@@ -131,21 +131,13 @@ class AdLauncherMedia extends BaseService {
         maxBodyLength: Infinity,
         maxContentLength: Infinity,
       });
-      const videoId = response.data.id;
-
-      // Check video status until it's ready
-      let videoStatus = await this.checkVideoStatus(videoId, token);
-      while (videoStatus !== 'ready') {
-        await new Promise((resolve) => setTimeout(resolve, 10000)); // Wait 30 seconds before checking again
-        videoStatus = await this.checkVideoStatus(videoId, token);
-      }
-      return videoId;
+      return response.data.id; // Just return the video ID
     } catch (error) {
       console.error('Error uploading video:', error);
       throw error;
     }
   }
-
+  
   async handleMediaUploads(req, adAccountId, token, existingContentIds = []) {
     const uploadedMedia = [];
     const createdMediaObjects = [];
@@ -155,11 +147,11 @@ class AdLauncherMedia extends BaseService {
     // Process existing content IDs
     await this.processExistingContentIds(filteredExistingContentIds, uploadedMedia);
 
+
     // Process new uploads (Images and Videos)
     if (req.files) {
       await this.processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects);
     }
-
     return { uploadedMedia, createdMediaObjects };
   }
 
@@ -200,8 +192,6 @@ class AdLauncherMedia extends BaseService {
 
   async processNewUploads(req, adAccountId, token, uploadedMedia, createdMediaObjects) {
     console.log('Processing new uploads...');
-    console.log(req.body.adsetData);
-    console.log(req.body.adData);
 
     // Process Images
     if (req.files['images']) {
@@ -271,39 +261,81 @@ class AdLauncherMedia extends BaseService {
     }
   }
 
-  async processVideos(
-    videos,
-    adAccountId,
-    token,
-    uploadedMedia,
-    createdMediaObjects,
-    user,
-    adsetData,
-  ) {
-    for (const file of videos) {
+  async processVideos(videos, adAccountId, token, uploadedMedia, createdMediaObjects, user, adsetData) {
+    const MAX_CONCURRENT_UPLOADS = 10; // Adjust based on your requirements
+    
+    // Function to handle individual video upload
+    const uploadVideo = async (file) => {
       const videoHash = await this.uploadVideo(file.buffer, file.originalname, adAccountId, token);
-      const createdVideo = await this.createContent({
-        type: 'video',
-        hash: videoHash,
-        url: 'empty',
-        ad_account_id: adAccountId,
+      uploadedMedia.push({ type: 'video', video_id: videoHash });
+      return videoHash;
+    };
+    
+    // Concurrently upload videos
+    await async.mapLimit(videos, MAX_CONCURRENT_UPLOADS, async (file) => {
+      return uploadVideo(file);
+    });
+  
+    let videoIdsToCheck = uploadedMedia.map(video => video.video_id).filter(id => id);
+    let videoStatuses;
+
+    while (videoIdsToCheck.length > 0) {
+        videoStatuses = await this.batchCheckVideoStatus(videoIdsToCheck, adAccountId, token);
+        
+        // Update the list of videos that are still not ready
+        videoIdsToCheck = videoStatuses.filter(video => video.status !== 'ready').map(video => video.id);
+
+        if (videoIdsToCheck.length > 0) {
+            await new Promise(resolve => setTimeout(resolve, 20000)); // Wait before checking again
+        }
+    }
+
+    // Process videos that are ready
+    for (const video of videoStatuses) {
+        const createdVideo = await this.createContent({
+            type: 'video',
+            hash: video.id,
+            url: 'empty',
+            ad_account_id: adAccountId,
+        });
+        createdMediaObjects.push(createdVideo);
+        console.log(`Video hash: ${video.id} is ready and content created.`);
+    }
+    
+    console.log('Created media objects for all ready videos.');
+}
+
+  
+async batchCheckVideoStatus(videoIds, adAccountId, token) {
+
+  const batchRequests = videoIds.map(videoId => ({
+      method: 'GET',
+      relative_url: `${videoId}?fields=status`
+  }));
+
+  try {
+      const response = await axios.post(FB_API_URL, {
+          access_token: token,
+          batch: JSON.stringify(batchRequests)
       });
 
-      uploadedMedia.push({ type: 'video', video_id: videoHash });
-
-      await this.uploadToMediaLibrary(
-        'video',
-        file.buffer,
-        file.originalname,
-        adAccountId,
-        'empty',
-        user.id,
-        adsetData,
-      );
-
-      createdMediaObjects.push(createdVideo);
-    }
+      // Parse each response to extract video status
+      return response.data.map(item => {
+          if (item.code === 200) {
+              const content = JSON.parse(item.body);
+              const videoStatus = content?.status?.video_status;
+              return { id: content.id, status: videoStatus };
+          } else {
+              const errorContent = JSON.parse(item.body);
+              console.error(`Error checking status for video: ${errorContent.error.message}`);
+          }
+      });
+  } catch (error) {
+      console.error('Error in batch request:', error);
+      throw error;
   }
+}
+
 
   async fetchContentFromDB(fields = ['*'], filters = {}, limit) {
     const results = await this.adLauncherMediaRepository.fetchContents(fields, filters, limit);

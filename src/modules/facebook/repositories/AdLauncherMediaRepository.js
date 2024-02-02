@@ -77,7 +77,7 @@ class AdLauncherMediaRepository {
       type: content.type,
       url: content.url,
       hash: content.hash,
-      ad_account_id: content.ad_account_id,
+      // ad_account_id: content.ad_account_id,
       created_at: content.created_at || new Date(),
       updated_at: new Date(),
     };

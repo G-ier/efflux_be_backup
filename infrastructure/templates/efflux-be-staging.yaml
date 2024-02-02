@@ -94,7 +94,7 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-staging
-        InstanceType: t3a.small
+        InstanceType: t4g.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -131,7 +131,7 @@ Resources:
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
             # Add alias for quickly resetting the application
-            echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env production && pm2 save && pm2 logs'" >> ~/.bashrc
+            echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env staging && pm2 save && pm2 logs'" >> ~/.bashrc
             echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
             source ~/.bashrc
 

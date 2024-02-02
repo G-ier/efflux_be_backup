@@ -6,10 +6,14 @@ const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
+const CompositeService = require('../services/CompositeService');
+const AdQueueService = require('../services/AdQueueService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const _ = require('lodash');
-const AdQueueService = require('../services/AdQueueService');
 const axios = require('axios');
+const PixelsService = require('../services/PixelsService');
+const PageService = require('../services/PageService');
+
 class AdLauncherController {
   constructor() {
     this.adLauncherService = new AdLauncherService();
@@ -19,6 +23,9 @@ class AdLauncherController {
     this.userAccountService = new UserAccountService();
     this.adLauncherMedia = new AdLauncherMedia();
     this.adQueueService = new AdQueueService();
+    this.compositeService = new CompositeService();
+    this.pixelService = new PixelsService();
+    this.pageService = new PageService();
   }
 
   getAdAccountId(req) {
@@ -26,8 +33,16 @@ class AdLauncherController {
   }
 
   async launchAd(req, res) {
+    let accountName, pixel, page, adAccountName;
     try {
+      const pixelId = req.body.pixel_id?.toString();
+      const pageId = req.body.page_id?.toString();
+
+      const timerLabel = 'launchAdExecutionTime';
+      console.time(timerLabel); // Start the timer
       const existingLaunchId = req?.body?.existingLaunchId;
+
+      //Extracting the url of the ad
       const existingContentIds = req.body.existingContentIds;
       const contentIds = Array.isArray(existingContentIds)
         ? existingContentIds
@@ -35,11 +50,20 @@ class AdLauncherController {
 
       FacebookLogger.info('Ad launch process initiated.');
       this.validateRequiredParameters(req);
-      const token = await this.getToken();
       const adAccountId = this.getAdAccountId(req);
       const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
-      // Get the first key from the adAccountsDataMap
       const firstKey = Object.keys(adAccountsDataMap)[0];
+      adAccountName = adAccountsDataMap[firstKey]?.name;
+
+      const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
+      accountName = userAccountName;
+
+      // Fetch pixel and page details early if they're needed regardless of success or failure
+      pixel = (
+        await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId }, 1)
+      )?.[0];
+      page = (await this.pageService.fetchPagesFromDB(['*'], { id: pageId }, 1))?.[0];
+
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');
       const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
@@ -66,9 +90,15 @@ class AdLauncherController {
       );
 
       FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
+
+      // Retrieve the initial URL
+      let url = req.body.url;
+
+      // Replace the placeholders with actual values
+      url = url?.replace('{CAMPAIGN_ID}', campaignId).replace('{ADSET_ID}', adSetId);
       // Log the start of ad data preparation
       FacebookLogger.info('Preparing ad data.');
-      const adData = this.prepareAdData(req, uploadedMedia, adSetId);
+      const adData = this.prepareAdData(req, uploadedMedia, adSetId, url);
 
       // Log the start of ad creation
       FacebookLogger.info('Starting ad creation.');
@@ -78,19 +108,20 @@ class AdLauncherController {
         adData,
       });
 
-      await this.adQueueService.saveToQueueFromLaunch({
-        existingLaunchId,
-        adAccountId: firstKey,
-        existingMedia: createdMediaObjects,
-        existingContentIds: contentIds,
-        data: req.body,
-        campaignId: campaignId,
-        adsetId: adSetId,
-        adId: adCreationResult.id,
-        status: 'launched',
-      });
+      // await this.adQueueService.saveToQueueFromLaunch({
+      //   existingLaunchId,
+      //   adAccountId: firstKey,
+      //   existingMedia: createdMediaObjects,
+      //   existingContentIds: contentIds,
+      //   data: req.body,
+      //   campaignId: campaignId,
+      //   adsetId: adSetId,
+      //   adId: adCreationResult.id,
+      //   status: 'launched',
+      // });
 
       // Log the successful creation of an ad
+      console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
       this.notifyUser(
@@ -99,7 +130,8 @@ class AdLauncherController {
         req.user.id,
       );
     } catch (error) {
-      this.respondWithError(res, error);
+      console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
+      this.respondWithError(res, { error, pixel, page, accountName, adAccountName });
     }
   }
   // Use Axios to call the notifications service
@@ -157,8 +189,9 @@ class AdLauncherController {
       throw new Error(`Missing required parameters: ${missingParameters.join(', ')}`);
     }
   }
-  async getToken(adminsOnly = true) {
-    return (await this.userAccountService.getFetchingAccount(adminsOnly, false, 20)).token;
+  async getToken(entityId) {
+    const details = await this.compositeService.fetchEntitiesOwnerAccount('ad_account', entityId);
+    return { token: details?.token, userAccountName: details?.name };
   }
 
   getAdAccountId(req) {
@@ -168,15 +201,17 @@ class AdLauncherController {
   async getAdAccountsDataMap(adAccountId) {
     // First try to match using provider_id
     let adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-      ['id', 'provider_id', 'user_id', 'account_id'],
+      ['id', 'provider_id', 'name'],
       { provider_id: adAccountId },
     );
 
     // If no accounts found using provider_id, try to match using id
     if (!adAccounts || adAccounts.length === 0) {
       adAccounts = await this.adAccountService.fetchAdAccountsFromDatabase(
-        ['id', 'provider_id', 'user_id', 'account_id'],
-        { id: adAccountId },
+        ['id', 'provider_id', 'name'],
+        {
+          id: adAccountId,
+        },
       );
     }
 
@@ -247,7 +282,7 @@ class AdLauncherController {
     }
   }
 
-  prepareAdData(req, uploadedMedia, adSetId) {
+  prepareAdData(req, uploadedMedia, adSetId, newUrl) {
     // Parse adData if it's a string
     let adData = req.body.adData;
 
@@ -277,6 +312,8 @@ class AdLauncherController {
         );
       }
     }
+
+    adData.creative.asset_feed_spec.link_urls = [{ website_url: newUrl }];
 
     // Initialize images array if not already present
     if (!Array.isArray(adData.creative.asset_feed_spec.images)) {
@@ -367,15 +404,61 @@ class AdLauncherController {
     }
   }
 
-  respondWithError(res, error) {
-    // Log any errors encountered during the ad launch process
-    FacebookLogger.error(`Error during ad launch: ${error?.error_user_msg || error.message}`, {
+  respondWithError(res, { error, pixel, page, accountName, adAccountName }) {
+    // Define a mapping of error codes and subcodes to custom messages
+    const errorMessagesMap = {
+      '10_1341012': {
+        message: [
+          `Please`,
+          {
+            bold: ` assign ${accountName || 'the account'} profile to the ${
+              page ? page.name : 'specified page'
+            }  on your Business Manager`,
+          },
+          ` and try again. If you lack access to the BM or Profile, please contact one of your managers.`,
+        ],
+      },
+      '200_1815045': {
+        message: [
+          `Please`,
+          {
+            bold: ` assign ${adAccountName || 'the specific'} ad account to the ${
+              pixel ? pixel.name : 'specified'
+            } pixel/dataset on your Business Manager `,
+          },
+          `and try again. If you lack access to the BM or Profile, please contact one of your managers.`,
+        ],
+      },
+    };
+
+    // Construct the error key to look up in the map
+    const errorKey = `${error.code}_${error.error_subcode}`;
+
+    // Use the custom message if available, otherwise fallback to a generic message
+    let customMessage =
+      errorMessagesMap[errorKey] ||
+      `Error during ad launch for account ${accountName || 'Unknown'}: ${
+        error?.error_user_msg || error.message
+      }`;
+
+    // Log the error with additional context
+    FacebookLogger.error(customMessage, {
       error,
+      pixel: pixel ? JSON.stringify(pixel) : 'N/A',
+      page: page ? JSON.stringify(page) : 'N/A',
+      accountName: accountName || 'Unknown',
     });
-    res.status(500).json({
+
+    // Respond with the error and additional details
+    const statusCode = error.code === 200 ? 400 : 500; // Use HTTP 400 for client errors represented by HTTP 200 status in FB API
+    res.status(statusCode).json({
       success: false,
-      message: 'An error occurred while launching the ad.',
-      error: error?.error_user_msg || error.message,
+      message: customMessage,
+      errorDetails: {
+        errorCode: error.code,
+        errorSubcode: error.error_subcode,
+        errorData: error.error_data ? JSON.parse(error.error_data) : {},
+      },
     });
   }
 }

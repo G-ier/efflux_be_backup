@@ -19,7 +19,6 @@ class AdCreativeRepository {
 
   async updateOne(creativeId, adCreativeData) {
     const dbObject = this.toDatabaseDTO(adCreativeData);
-    console.log(dbObject);
     return await this.database.update(this.tableName, dbObject, { id: creativeId });
   }
 

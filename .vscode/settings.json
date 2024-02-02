@@ -2,12 +2,26 @@
     "cSpell.words": [
         "adset",
         "Adsets",
+        "autoclean",
+        "autoremove",
+        "clickhouse",
+        "dearmor",
         "DUSEIP",
         "effluxapp",
         "facebookexternalhit",
+        "FNAH",
+        "isbot",
+        "jwks",
+        "keyrings",
+        "mbapp",
+        "mbdb",
         "Metabase",
         "newrelic",
+        "nodesource",
+        "nodistro",
         "postback",
-        "runas"
+        "runas",
+        "uniqid",
+        "upup"
     ]
 }

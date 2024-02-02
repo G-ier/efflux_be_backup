@@ -1,12 +1,14 @@
 const CompositeController = require("./controllers/CompositeController");
 const CampaignController = require("./controllers/CampaignController");
 const InsightsController = require("./controllers/InsightsController");
+const VerticalController = require("./controllers/VerticalController");
 
 const route = require("express").Router();
 
 const compositeController = new CompositeController();
 const campaignController = new CampaignController();
 const insightsController = new InsightsController();
+const verticalController = new VerticalController();
 
 // @route     /api/crossroads/update-data
 // @desc     POST crossroads update-data
@@ -133,6 +135,34 @@ route.get("/insights", async (req, res) => {
 // @Access    Private
 route.delete("/insight/:id", async (req, res) => {
   return await insightsController.deleteCrossroadsById(req, res);
+});
+
+// @route     /api/crossroads/verticals/sync
+// @desc      POST Sync verticals from Crossroads
+// @Access    Private
+route.post("/verticals/sync", async (req, res) => {
+  await verticalController.syncVerticalsFromCrossroads(req, res);
+});
+
+// @route     /api/crossroads/verticals
+// @desc      GET all verticals
+// @Access    Private
+route.get("/verticals", async (req, res) => {
+  await verticalController.getAllVerticals(req, res);
+});
+
+// @route     /api/crossroads/vertical/:id
+// @desc      GET specific vertical by ID
+// @Access    Private
+route.get("/vertical/:id", async (req, res) => {
+  await verticalController.getVerticalById(req, res);
+});
+
+// @route     /api/crossroads/vertical/:id
+// @desc      DELETE a vertical by ID
+// @Access    Private
+route.delete("/vertical/:id", async (req, res) => {
+  await verticalController.deleteVerticalById(req, res);
 });
 
 

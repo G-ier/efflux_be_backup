@@ -126,7 +126,6 @@ class CampaignsService extends BaseService {
         );
       return { successful: true };
     } catch ({ response }) {
-      console.log("here", response);
       return false;
     }
   }
@@ -151,21 +150,29 @@ class CampaignsService extends BaseService {
 
   async createCampaign(access_token, adAccountId, campaignData, adAccountsDataMap) {
     try {
-      const facebookResponse = await this.createCampaignInFacebook(access_token, adAccountId, campaignData);
-      const dbObject = { ...facebookResponse, ...campaignData, account_id: adAccountId };
+      // Extract vertical and category from campaignData
+      const { vertical, category, ...facebookCampaignData } = campaignData;
+      
+      // Create campaign in Facebook without vertical and category
+      const facebookResponse = await this.createCampaignInFacebook(access_token, adAccountId, facebookCampaignData);
+      
+      // Prepare the database object including vertical and category
+      const dbObject = { ...facebookResponse, vertical, category, account_id: adAccountId, ...facebookCampaignData };
+      
+      // Save the campaign data to the local database
       await this.campaignRepository.saveOne(dbObject, adAccountsDataMap);
-
+  
       return {
         success: true,
         message: "Campaign successfully created in Facebook and saved to the database.",
         data: facebookResponse,
       };
     } catch (err) {
-      // Log the error and throw it to be handled by the caller
       console.error("Error in createCampaign service method:", err.message);
       throw err; // Rethrow the error to maintain the stack trace
     }
   }
+  
 
 }
 

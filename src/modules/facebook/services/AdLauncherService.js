@@ -39,7 +39,6 @@ class AdLauncherService extends BaseService {
         id: createdAdId,
       };
     } catch (error) {
-      console.log({error})
       // Log the error and throw it to be handled by the caller
       this.logger.error(`Error creating ad: ${error.response}`);
       throw error?.response?.data?.error;
