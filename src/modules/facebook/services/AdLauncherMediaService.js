@@ -69,7 +69,6 @@ class AdLauncherMedia extends BaseService {
         },
       });
 
-      console.log(response.data);
       return response.data;
     } catch (error) {
       console.error('Error uploading image to media library: ', error);
@@ -111,7 +110,6 @@ class AdLauncherMedia extends BaseService {
     const statusUrl = `${FB_API_URL}/${videoId}?fields=status&access_token=${token}`;
     try {
       const response = await axios.get(statusUrl);
-      console.log({test:response.data})
       return response.data.status.video_status;
     } catch (error) {
       console.error('Error checking video status:', error);

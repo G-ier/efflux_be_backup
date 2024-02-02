@@ -63,7 +63,6 @@ class CampaignRepository {
   }
 
   async duplicateShallowCampaignOnDb(newCampaignId, entity_id, rename_options) {
-    console.log(entity_id);
     // Fetch the existing campaign using the fetchCampaigns method
     const existingCampaigns = await this.fetchCampaigns(["*"], { id: entity_id });
     const existingCampaign = existingCampaigns[0];
@@ -116,7 +115,6 @@ class CampaignRepository {
 
     // Iterate through the adsets and make necessary changes
     const newAdsets = existingAdsets.map(async (adset) => {
-      console.log(adset);
 
       await this.adsetService.duplicateAdset({
         deep_copy: false,

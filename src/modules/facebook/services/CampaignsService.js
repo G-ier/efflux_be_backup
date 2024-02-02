@@ -126,7 +126,6 @@ class CampaignsService extends BaseService {
         );
       return { successful: true };
     } catch ({ response }) {
-      console.log("here", response);
       return false;
     }
   }

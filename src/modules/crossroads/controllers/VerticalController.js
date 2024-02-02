@@ -36,7 +36,6 @@ class VerticalService extends BaseService {
         res.json({ message: 'Verticals synced successfully.' });
     } catch (error) {
         CrossroadsLogger.error('Error syncing verticals from Crossroads', error);
-        console.log({error:error})
         res.status(500).json({ error: 'Failed to sync verticals from Crossroads.' });
     }
 }

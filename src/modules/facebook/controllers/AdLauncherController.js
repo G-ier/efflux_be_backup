@@ -131,8 +131,6 @@ class AdLauncherController {
       );
     } catch (error) {
       console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
-      console.log({ error, pixel, page, accountName });
-
       this.respondWithError(res, { error, pixel, page, accountName, adAccountName });
     }
   }
