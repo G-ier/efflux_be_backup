@@ -88,15 +88,14 @@ Resources:
           # Update and install initial packages
           sudo apt-get update && \
           sudo apt-get upgrade -y && \
-          sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+          sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby
 
-          # Add alias for pm2
           echo "alias htop='sudo htop'" >> ~/.bashrc
           echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
           source ~/.bashrc
       Tags:
         - Key: Name
-          Value: Metabase
+          Value: Metabase Instance
         - Key: project
           Value: metabase
         - Key: operation
@@ -141,16 +140,18 @@ Resources:
     Properties:
       Name: Metabase-TG
       HealthCheckEnabled: true
-      HealthCheckIntervalSeconds: "30"
-      HealthCheckTimeoutSeconds: "2"
+      HealthCheckIntervalSeconds: 5
+      HealthCheckTimeoutSeconds: 2
       HealthCheckPath: /api/health
-      Port: "443"
-      Protocol: HTTPS
+      HealthCheckPort: 80
+      HealthyThresholdCount: 2
+      Port: 80
+      Protocol: HTTP
       VpcId: !ImportValue Efflux-VPC
       TargetType: instance
       Targets:
         - Id: !Ref MetabaseInstance
-          Port: "3000"
+          Port: "80"
       Tags:
         - Key: Name
           Value: Metabase-TG
@@ -231,16 +232,16 @@ Resources:
           Value: analytics
 
   # Route 53 Record A for Metabase
-  # MetaBaseDNSRecord:
-  #   Type: AWS::Route53::RecordSet
-  #   Properties:
-  #     HostedZoneName: "efflux.com."
-  #     Comment: "DNS name for Metabase"
-  #     Name: "mb.efflux.com"
-  #     Type: A
-  #     AliasTarget:
-  #       DNSName: !GetAtt MetaBaseALB.DNSName
-  #       HostedZoneId: "Z05961063BF8N2FNAH79L"
+  MetaBaseDNSRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneName: "efflux.com."
+      Comment: "DNS name for Metabase"
+      Name: "mb.efflux.com"
+      Type: A
+      AliasTarget:
+        DNSName: !GetAtt MetaBaseALB.DNSName
+        HostedZoneId: !GetAtt MetaBaseALB.CanonicalHostedZoneID
 
 ####################
 # Outputs
