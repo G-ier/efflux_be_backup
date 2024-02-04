@@ -41,7 +41,7 @@ class AggregatesService {
       mediaBuyer,
       adAccountId,
       q,
-      orgId
+      // orgId I'm disabling this for now
     };
     try {
       return await callback(finalParams);
