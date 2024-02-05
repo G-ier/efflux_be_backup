@@ -20,7 +20,6 @@ class AggregatesService {
       adAccountId,
       q,
       orgId,
-      orgId,
     } = params;
     if (!startDate || !endDate) {
       throw new Error(
