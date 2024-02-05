@@ -60,7 +60,6 @@ class CampaignRepository {
   }
 
   async duplicateShallowCampaignOnDb(newCampaignId, entity_id, rename_options) {
-    console.log(entity_id);
     // Fetch the existing campaign using the fetchCampaigns method
     const existingCampaigns = await this.fetchCampaigns(["*"], { id: entity_id });
     const existingCampaign = existingCampaigns[0];

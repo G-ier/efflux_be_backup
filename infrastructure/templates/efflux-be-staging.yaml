@@ -94,7 +94,8 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-staging
-        InstanceType: t3a.small
+        # TODO: investigate the usage of t4g.small
+        InstanceType: t3a.micro
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -130,13 +131,13 @@ Resources:
             echo "alias htop='sudo htop'" >> ~/.bashrc
             # Add alias for quickly accessing the project directory
             echo "alias efflux='cd /var/www/efflux-backend && ll'" >> ~/.bashrc
-            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
             # Add alias for quickly resetting the application
             echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env staging && pm2 save && pm2 logs'" >> ~/.bashrc
+            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
             source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "DATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=production\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
@@ -375,7 +376,7 @@ Resources:
     Properties:
       AllocatedStorage: 53
       DeletionProtection: false
-      DBInstanceClass: db.t3.small
+      DBInstanceClass: db.t4g.small
       Engine: postgres
       EngineVersion: 16.1
       DBInstanceIdentifier: efflux-staging

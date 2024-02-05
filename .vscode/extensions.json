@@ -1,0 +1,9 @@
+{
+    "recommendations": [
+        "editorconfig.editorconfig",
+        "aaron-bond.better-comments",
+        "alefragnani.bookmarks",
+        "usernamehw.errorlens",
+        "christian-kohler.path-intellisense"
+    ]
+}
