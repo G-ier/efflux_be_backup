@@ -465,7 +465,7 @@ Resources:
     Properties:
       AllocatedStorage: 70
       DeletionProtection: false
-      DBInstanceClass: db.t4g.large
+      DBInstanceClass: db.t4g.2xlarge
       Engine: postgres
       EngineVersion: 16.1
       DBInstanceIdentifier: efflux-be
