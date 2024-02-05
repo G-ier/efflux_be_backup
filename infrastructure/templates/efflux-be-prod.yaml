@@ -206,7 +206,8 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        InstanceType: t4g.small
+        # TODO: investigate the usage of t4g.small
+        InstanceType: t3a.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -464,7 +465,7 @@ Resources:
     Properties:
       AllocatedStorage: 70
       DeletionProtection: false
-      DBInstanceClass: db.t4g.large
+      DBInstanceClass: db.t4g.2xlarge
       Engine: postgres
       EngineVersion: 16.1
       DBInstanceIdentifier: efflux-be
