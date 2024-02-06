@@ -117,6 +117,7 @@ const callServerlessHandler = async (event, network) => {
   };
 
   API_GATEWAY_URL += networkPaths[network] || '';
+  console.log('Calling: ', API_GATEWAY_URL);
 
   event.event_network = network;
 
@@ -128,6 +129,8 @@ const callServerlessHandler = async (event, network) => {
       'Content-Type': 'application/json',
     },
   });
+
+  console.log('Serverless function response:', response);
 };
 
 // @route     /trk
