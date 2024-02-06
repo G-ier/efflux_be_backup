@@ -21,37 +21,40 @@ const postbackQueue = new PostbackQueue();
 const callServerlessHandler = async (event, network) => {
   let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
 
-  let networkPaths = {
+  const networkPaths = {
     crossroads: '/da',
     tonic: '/tonic',
     sedo: '/sedo',
     medianet: '/mn',
   };
 
-  API_GATEWAY_URL += networkPaths[network] || '';
+  API_GATEWAY_URL += networkPaths[network] || '/';
   console.log('Calling: ', API_GATEWAY_URL);
   PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
   event.event_network = network;
-
-  // Call an API gateway endpoint. This will trigger the serverless function
-  const response = await fetch(API_GATEWAY_URL, {
-    method: 'POST',
-    body: JSON.stringify(event),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  delete event.event_network;
-
-  return response;
+  // ?: I wanted to use Axios but it was not working with the serverless function
+  // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
+  try {
+    await fetch(API_GATEWAY_URL, {
+      method: 'POST',
+      body: event,
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+  } catch (error) {
+    console.error('❌ Error calling serverless function: ', error);
+    PostbackLogger.error(`❌ Error calling serverless function: ${error}`);
+  }
 };
 
 // @route     /trk
 // @desc     GET track
 // @Access   Public
 route.get('/', async (req, res) => {
+  await callServerlessHandler(req, 'crossroads');
+
   try {
     const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const client_user_agent = req.headers['user-agent'];
@@ -122,7 +125,6 @@ route.get('/', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
-    await callServerlessHandler(pb_conversion, 'crossroads');
     await postbackQueue.processQueue(db);
 
     res
@@ -141,6 +143,7 @@ route.get('/', async (req, res) => {
 // @desc     POST track
 // @Access   Public
 route.post('/', async (req, res) => {
+  await callServerlessHandler(req, 'crossroads');
   try {
     const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const client_user_agent = req.headers['user-agent'];
@@ -211,7 +214,6 @@ route.post('/', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
-    await callServerlessHandler(pb_conversion, 'crossroads');
     await postbackQueue.processQueue(db);
 
     res
@@ -227,6 +229,7 @@ route.post('/', async (req, res) => {
 });
 
 route.get('/sedo', async (req, res) => {
+  await callServerlessHandler(req, 'sedo');
   try {
     const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const client_user_agent = req.headers['user-agent'];
@@ -281,7 +284,6 @@ route.get('/sedo', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
-    await callServerlessHandler(pb_conversion, 'sedo');
     await postbackQueue.processQueue(db);
 
     res.status(200).json({ message: 'success' });
@@ -294,6 +296,7 @@ route.get('/sedo', async (req, res) => {
 });
 
 route.get('/tonic', async (req, res) => {
+  await callServerlessHandler(req, 'tonic');
   try {
     const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const client_user_agent = req.headers['user-agent'];
@@ -378,7 +381,6 @@ route.get('/tonic', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
-    await callServerlessHandler(pb_conversion, 'tonic');
     await postbackQueue.processQueue(db);
 
     res.status(200).json({ message: 'success' });
@@ -393,6 +395,7 @@ route.get('/tonic', async (req, res) => {
 // @desc     Get track
 // @Access   Public
 route.get('/pb_test', async (req, res) => {
+  await callServerlessHandler(req, 'pb_test');
   try {
     const headers = req.headers;
     const data = req.query;
@@ -411,6 +414,7 @@ route.get('/pb_test', async (req, res) => {
 // @desc     post track
 // @Access   Public
 route.post('/pb_test', async (req, res) => {
+  await callServerlessHandler(req, 'pb_test');
   try {
     const headers = req.headers;
     const data = req.body;
