@@ -32,12 +32,12 @@ const callServerlessHandler = async (request, network) => {
   console.log('Calling: ', API_GATEWAY_URL);
   PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
-  request.event_network = network;
   try {
     // ?: I wanted to use Axios but it was not working with the serverless function
     // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
 
-    body = request.query ? JSON.stringify(request.query) : JSON.stringify(request.body);
+    request.event_network = network;
+    body = request.query ? request.query : request.body;
     headers = {
       request: JSON.stringify(request.headers),
     };
