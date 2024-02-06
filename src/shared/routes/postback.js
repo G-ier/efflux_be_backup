@@ -19,9 +19,9 @@ const db = new DatabaseRepository();
 const postbackQueue = new PostbackQueue();
 
 const callServerlessHandler = async (event, network) => {
-  const API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
+  let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
 
-  const networkPaths = {
+  let networkPaths = {
     crossroads: '/da',
     tonic: '/tonic',
     sedo: '/sedo',
@@ -30,6 +30,7 @@ const callServerlessHandler = async (event, network) => {
 
   API_GATEWAY_URL += networkPaths[network] || '';
   console.log('Calling: ', API_GATEWAY_URL);
+  PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
   event.event_network = network;
 
@@ -43,6 +44,9 @@ const callServerlessHandler = async (event, network) => {
   });
 
   console.log('Serverless function response:', response);
+  PostbackLogger.info(`Serverless function response: ${response}`);
+
+  return response;
 };
 
 // @route     /trk
