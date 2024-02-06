@@ -36,11 +36,17 @@ const callServerlessHandler = async (request, network) => {
   try {
     // ?: I wanted to use Axios but it was not working with the serverless function
     // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
+
+    body = request.query ? JSON.stringify(request.query) : JSON.stringify(request.body);
+    headers = {
+      request: JSON.stringify(request.headers),
+    };
     await fetch(API_GATEWAY_URL, {
       method: 'POST',
-      body: request.body ? JSON.stringify(request.body) : JSON.stringify(request.query),
+      body: body,
       headers: {
         'Content-Type': 'application/json',
+        ...headers,
       },
     });
   } catch (error) {
