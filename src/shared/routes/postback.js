@@ -18,7 +18,7 @@ const reporting = require('./reporting');
 const db = new DatabaseRepository();
 const postbackQueue = new PostbackQueue();
 
-const callServerlessHandler = async (event, network) => {
+const callServerlessHandler = async (request, network) => {
   let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
 
   const networkPaths = {
@@ -32,13 +32,13 @@ const callServerlessHandler = async (event, network) => {
   console.log('Calling: ', API_GATEWAY_URL);
   PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
-  event.event_network = network;
-  // ?: I wanted to use Axios but it was not working with the serverless function
-  // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
+  request.event_network = network;
   try {
+    // ?: I wanted to use Axios but it was not working with the serverless function
+    // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
     await fetch(API_GATEWAY_URL, {
       method: 'POST',
-      body: event,
+      body: request.body ? JSON.stringify(request.body) : JSON.stringify(request.query),
       headers: {
         'Content-Type': 'application/json',
       },
