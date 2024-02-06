@@ -92,6 +92,7 @@ route.get('/', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
+    await callServerlessHandler(pb_conversion, 'crossroads');
     await postbackQueue.processQueue(db);
 
     res
