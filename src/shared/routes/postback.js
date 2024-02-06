@@ -18,6 +18,33 @@ const reporting = require('./reporting');
 const db = new DatabaseRepository();
 const postbackQueue = new PostbackQueue();
 
+const callServerlessHandler = async (event, network) => {
+  const API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
+
+  const networkPaths = {
+    crossroads: '/da',
+    tonic: '/tonic',
+    sedo: '/sedo',
+    medianet: '/mn',
+  };
+
+  API_GATEWAY_URL += networkPaths[network] || '';
+  console.log('Calling: ', API_GATEWAY_URL);
+
+  event.event_network = network;
+
+  // Call an API gateway endpoint. This will trigger the serverless function
+  const response = await fetch(API_GATEWAY_URL, {
+    method: 'POST',
+    body: JSON.stringify(event),
+    headers: {
+      'Content-Type': 'application/json',
+    },
+  });
+
+  console.log('Serverless function response:', response);
+};
+
 // @route     /trk
 // @desc     GET track
 // @Access   Public
@@ -106,33 +133,6 @@ route.get('/', async (req, res) => {
     res.status(500).json(err.message);
   }
 });
-
-const callServerlessHandler = async (event, network) => {
-  const API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
-
-  const networkPaths = {
-    crossroads: '/da',
-    tonic: '/tonic',
-    sedo: '/sedo',
-    medianet: '/mn',
-  };
-
-  API_GATEWAY_URL += networkPaths[network] || '';
-  console.log('Calling: ', API_GATEWAY_URL);
-
-  event.event_network = network;
-
-  // Call an API gateway endpoint. This will trigger the serverless function
-  const response = await fetch(API_GATEWAY_URL, {
-    method: 'POST',
-    body: JSON.stringify(event),
-    headers: {
-      'Content-Type': 'application/json',
-    },
-  });
-
-  console.log('Serverless function response:', response);
-};
 
 // @route     /trk
 // @desc     POST track
