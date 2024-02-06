@@ -43,6 +43,8 @@ const callServerlessHandler = async (event, network) => {
     },
   });
 
+  delete event.event_network;
+
   return response;
 };
 
