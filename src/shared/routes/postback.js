@@ -2,7 +2,7 @@
 const route = require('express').Router();
 const parser = require('ua-parser-js');
 const md5 = require('md5');
-const fetch = require('node-fetch');
+const fetch = require('node-fetch-commonjs');
 
 // Local imports
 const { todayHH, todayYMD } = require('../../shared/helpers/calendar');
