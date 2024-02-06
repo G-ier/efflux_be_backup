@@ -87,6 +87,12 @@ class EnvironmentVariablesManager {
     // SQS Pusher Credentials
     'SQS_PUSHER_ACCESS_KEY_ID',
     'SQS_PUSHER_SECRET_KEY',
+
+    // Clickhouse
+    'CLICKHOUSE_URL',
+    'CLICKHOUSE_USER',
+    'CLICKHOUSE_PASSWORD',
+    'CLICKHOUSE_DB',
   ];
 
   get isInitialized() {
