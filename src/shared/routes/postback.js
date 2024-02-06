@@ -37,7 +37,7 @@ const callServerlessHandler = async (request, network) => {
     // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
 
     request.event_network = network;
-    body = request.query ? request.query : request.body;
+    body = request.query ? JSON.stringify(request.query) : JSON.stringify(request.body);
     headers = {
       request: JSON.stringify(request.headers),
     };
