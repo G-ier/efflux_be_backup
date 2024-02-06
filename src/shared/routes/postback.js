@@ -43,9 +43,6 @@ const callServerlessHandler = async (event, network) => {
     },
   });
 
-  console.log('Serverless function response:', response);
-  PostbackLogger.info(`Serverless function response: ${response}`);
-
   return response;
 };
 
