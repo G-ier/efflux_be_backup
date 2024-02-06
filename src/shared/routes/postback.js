@@ -204,7 +204,7 @@ route.post('/', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
-    callServerlessHandler(pb_conversion, 'crossroads');
+    await callServerlessHandler(pb_conversion, 'crossroads');
     await postbackQueue.processQueue(db);
 
     res
@@ -274,6 +274,7 @@ route.get('/sedo', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
+    await callServerlessHandler(pb_conversion, 'sedo');
     await postbackQueue.processQueue(db);
 
     res.status(200).json({ message: 'success' });
@@ -370,6 +371,7 @@ route.get('/tonic', async (req, res) => {
 
     // Upsert into database
     postbackQueue.push(pb_conversion);
+    await callServerlessHandler(pb_conversion, 'tonic');
     await postbackQueue.processQueue(db);
 
     res.status(200).json({ message: 'success' });
