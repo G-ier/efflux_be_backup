@@ -55,6 +55,7 @@ class EnvironmentVariablesManager {
   ];
 
   static parameters = [
+    'WRITE_POSTBACKS_TO_CLICKHOUSE',
     // Server settings
     'DATABASE_ENVIRONMENT',
     'PORT',

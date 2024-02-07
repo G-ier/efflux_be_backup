@@ -12,13 +12,19 @@ const { sendSlackNotification } = require('../lib/SlackNotificationService');
 const { PostbackLogger, PostbackTestLogger } = require('../../shared/lib/WinstonLogger');
 const { PostbackQueue } = require('../helpers/Queue');
 const { isNotNumeric } = require('../helpers/Utils');
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
+const writePostbacksToClickhouse = EnvironmentVariablesManager.getEnvVariable(
+  'WRITE_POSTBACKS_TO_CLICKHOUSE',
+);
 const reporting = require('./reporting');
 
 const db = new DatabaseRepository();
 const postbackQueue = new PostbackQueue();
 
 const callServerlessHandler = async (request, network) => {
+  if (writePostbacksToClickhouse == 'false') return;
+
   let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
 
   const networkPaths = {
