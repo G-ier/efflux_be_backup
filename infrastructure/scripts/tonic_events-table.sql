@@ -18,7 +18,9 @@ CREATE TABLE tonic_events (
   external String,
   conversions Int32,
   revenue Float32,
-  keyword_clicked String,  
+  keyword_clicked String,
+  direct_traffic Int8,
+  posted_to_fb Int8,
   is_fb_crawler Int8,
 )
 engine = MergeTree
