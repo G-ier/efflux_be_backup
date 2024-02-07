@@ -2,11 +2,9 @@ CREATE TABLE tonic_events (
   event_id String,
   received_timestamp String,
   event_timestamp String,
+  event_type String,
   network_campaign_id String,
   network_campaign_name String,
-  ad_type String,
-  advertiser String,
-  template String,
   pixel_id String,
   adset_id String,
   adset_name String,
@@ -18,11 +16,10 @@ CREATE TABLE tonic_events (
   region String,
   city String,
   external String,
-  user_agent String,
   conversions Int32,
   revenue Float32,
-  keyword_clicked String,
-  event_type String
+  keyword_clicked String,  
+  is_fb_crawler Int8,
 )
 engine = MergeTree
 PRIMARY KEY (event_timestamp, network_campaign_id, session_id)
