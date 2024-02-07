@@ -22,7 +22,7 @@ const reporting = require('./reporting');
 const db = new DatabaseRepository();
 const postbackQueue = new PostbackQueue();
 
-const callServerlessHandler = async (request, network) => {
+const callServerlessHandler = async (request, network, isConversion = 'false') => {
   if (writePostbacksToClickhouse == 'false') return;
 
   let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
@@ -43,6 +43,7 @@ const callServerlessHandler = async (request, network) => {
     // ?: It kept exceeding memory limit, so I fell back on node-fetch for the time being
 
     request.event_network = network;
+    request.is_conversion = isConversion;
     body = request.query ? JSON.stringify(request.query) : JSON.stringify(request.body);
     headers = {
       request: JSON.stringify(request.headers),
@@ -154,8 +155,9 @@ route.get('/', async (req, res) => {
 // @route     /trk
 // @desc     POST track
 // @Access   Public
+// Conversion Event
 route.post('/', async (req, res) => {
-  await callServerlessHandler(req, 'crossroads');
+  await callServerlessHandler(req, 'crossroads', true);
   try {
     const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
     const client_user_agent = req.headers['user-agent'];
