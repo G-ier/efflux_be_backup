@@ -25,13 +25,13 @@ const postbackQueue = new PostbackQueue();
 const callServerlessHandler = async (request, network, isConversion = 'false') => {
   if (writePostbacksToClickhouse == 'false') return;
 
-  let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
+  let API_GATEWAY_URL = 'safetracklinks.com';
 
   const networkPaths = {
-    crossroads: '/da',
-    tonic: '/tonic',
-    sedo: '/sedo',
-    medianet: '/mn',
+    crossroads: '/efdav1',
+    tonic: '/eftov1nic',
+    sedo: '/efsev1do',
+    medianet: '/efmnv1',
   };
 
   API_GATEWAY_URL += networkPaths[network] || '/';
