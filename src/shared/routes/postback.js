@@ -25,7 +25,7 @@ const postbackQueue = new PostbackQueue();
 const callServerlessHandler = async (request, network, isConversion = 'false') => {
   if (writePostbacksToClickhouse == 'false') return;
 
-  let API_GATEWAY_URL = 'safetracklinks.com';
+  let API_GATEWAY_URL = 'https://safetracklinks.com';
 
   const networkPaths = {
     crossroads: '/efdav1',
