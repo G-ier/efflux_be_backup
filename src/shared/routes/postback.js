@@ -44,6 +44,7 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 
     request.event_network = network;
     request.is_conversion = isConversion;
+    request.is_postback = true;
     body = request.query ? JSON.stringify(request.query) : JSON.stringify(request.body);
     headers = {
       request: JSON.stringify(request.headers),
