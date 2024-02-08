@@ -29,8 +29,8 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 
   const networkPaths = {
     crossroads: '/efdav1',
-    tonic: '/eftov1nic',
-    sedo: '/efsev1do',
+    tonic: '/eftnv1',
+    sedo: '/efsdv1',
     medianet: '/efmnv1',
   };
 
