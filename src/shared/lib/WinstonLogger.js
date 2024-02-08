@@ -220,14 +220,6 @@ const AnalysisLogger = new CustomLogger({
   logStreamName: 'analysis',
 });
 
-// CRON data update Logger
-const dataUpdatesLogger = new CustomLogger({
-  destination: streamDestination,
-  level: 'info',
-  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
-  logStreamName: 'updates',
-});
-
 // User Logger
 const UserLogger = new CustomLogger({
   destination: streamDestination,
@@ -292,6 +284,14 @@ const UserAccountLogger = new CustomLogger({
   logStreamName: 'userAccount',
 });
 
+// Clickhouse Logger
+const ClickhouseLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'debug',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'clickhouse',
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -304,7 +304,6 @@ module.exports = {
   PostbackTestLogger,
   RequestsLogger,
   AnalysisLogger,
-  dataUpdatesLogger,
   SedoLogger,
   TonicLogger,
   MediaNetLogger,
@@ -316,4 +315,5 @@ module.exports = {
   AdsLogger,
   CampaignsLogger,
   UserAccountLogger,
+  ClickhouseLogger,
 };

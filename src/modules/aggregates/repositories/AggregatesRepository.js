@@ -15,19 +15,12 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
 const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
 const { cleanData, formatDateToISO } = require('../utils');
-// const SqsService = require('../../../shared/lib/SQSPusher');
 
 class AggregatesRepository {
   constructor(database) {
     this.tableName = 'insights';
     this.database = database || new DatabaseRepository();
     this.clickhouse = new ClickhouseRepository();
-
-    // const queueUrl =
-    //   process.env.INSIGHTS_QUEUE_URL ||
-    //   'https://sqs.us-east-1.amazonaws.com/524744845066/efflux-insights-to-clickhouse';
-
-    // this.sqsService = new SqsService(queueUrl);
   }
 
   async revealBotSheets(
@@ -83,7 +76,8 @@ class AggregatesRepository {
   }
 
   async trafficSourceNetworkCampaignsStats(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } =
+      params;
     return await trafficSourceNetworkCampaignsStats(
       this.database,
       startDate,
@@ -93,12 +87,13 @@ class AggregatesRepository {
       mediaBuyer,
       adAccountId,
       q,
-      orgId
+      orgId,
     );
   }
 
   async trafficSourceNetworkDaily(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } =
+      params;
     return await trafficSourceNetworkDaily(
       this.database,
       startDate,
@@ -108,12 +103,13 @@ class AggregatesRepository {
       mediaBuyer,
       adAccountId,
       q,
-      orgId
+      orgId,
     );
   }
 
   async trafficSourceNetworkHourly(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId } =
+      params;
     return await trafficSourceNetworkHourly(
       this.database,
       startDate,
@@ -123,7 +119,7 @@ class AggregatesRepository {
       mediaBuyer,
       adAccountId,
       q,
-      orgId
+      orgId,
     );
   }
 
@@ -182,7 +178,11 @@ class AggregatesRepository {
       ${rowToInsert.traffic_source_conversions},
       ${rowToInsert.traffic_source ? `'${rowToInsert.traffic_source}'` : null},
       ${rowToInsert.traffic_source_clicks},
-      ${rowToInsert.traffic_source_updated_at ? `'${formatDateToISO(rowToInsert.traffic_source_updated_at)}'` : null},
+      ${
+        rowToInsert.traffic_source_updated_at
+          ? `'${formatDateToISO(rowToInsert.traffic_source_updated_at)}'`
+          : null
+      },
       ${rowToInsert.postback_conversions},
       ${rowToInsert.postback_lander_conversions},
       ${rowToInsert.postback_serp_conversions},
@@ -205,11 +205,8 @@ class AggregatesRepository {
     const mappedData = data.map((row) => this.toDatabaseDTO(row, trafficSource, network));
     const dataChunks = _.chunk(mappedData, chunkSize);
     for (const chunk of dataChunks) {
-      // push to SQS queue (for storing in data lake)
-      // await this.sqsService.sendMessageToQueue(chunk);
-
       await this.database.upsert(this.tableName, chunk, 'unique_identifier');
-      await this.clickhouse.upsertClickHouse(this.tableName, chunk, "unique_identifier");
+      await this.clickhouse.upsertClickHouse(this.tableName, chunk, 'unique_identifier');
     }
     return dataChunks;
   }

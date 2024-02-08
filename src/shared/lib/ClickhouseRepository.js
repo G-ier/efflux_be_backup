@@ -1,4 +1,5 @@
-const ClickhouseConnection = require("./ClickhouseConnection");
+const ClickhouseConnection = require('./ClickhouseConnection');
+const { ClickhouseLogger } = require('./WinstonLogger');
 
 class ClickhouseRepository {
   constructor() {
@@ -8,7 +9,14 @@ class ClickhouseRepository {
   async upsertClickHouse(tableName, data, conflictTarget = null, excludeFields = [], trx = null) {
     try {
       const columns = Object.keys(data[0]);
-      const values = data.map(row => `(${columns.map(col => trx ? trx.raw('?', [row[col]]) : `'${row[col]}'`).join(', ')})`).join(', ');
+      const values = data
+        .map(
+          (row) =>
+            `(${columns
+              .map((col) => (trx ? trx.raw('?', [row[col]]) : `'${row[col]}'`))
+              .join(', ')})`,
+        )
+        .join(', ');
 
       // If conflictTarget is not provided, simply execute the insert query
       if (!conflictTarget) {
@@ -21,10 +29,12 @@ class ClickhouseRepository {
         return;
       }
 
-      const updateColumns = columns.filter(key => !excludeFields.includes(key)).map(key => `${key} = ${tableName}.${key}`);
+      const updateColumns = columns
+        .filter((key) => !excludeFields.includes(key))
+        .map((key) => `${key} = ${tableName}.${key}`);
 
       if (updateColumns.length === 0) {
-        throw new Error("No fields left to update after excluding.");
+        throw new Error('Clickhouse: No fields left to update after excluding.');
       }
 
       const updateValues = updateColumns.join(', ');
@@ -42,7 +52,8 @@ class ClickhouseRepository {
         this.connection.insert(query, data);
       }
     } catch (error) {
-      console.error("❌ Error upserting row/s on Clickhouse: ", error);
+      console.error('❌ Error upserting row/s on Clickhouse: ', error);
+      ClickhouseLogger.error('❌ Error upserting row/s on Clickhouse: ', error);
       throw error;
     }
   }
@@ -50,10 +61,12 @@ class ClickhouseRepository {
   async insertData(query, data) {
     try {
       const result = await this.connection.insert(query, data).toPromise();
-      console.log('Clickhouse Inserted successfully', result);
+      console.info('✅ Clickhouse Inserted successfully', result);
+      ClickhouseLogger.info('✅ Clickhouse Inserted successfully', result);
       return result;
     } catch (error) {
-      console.error('Error executing insert query:', error);
+      console.error('❌ Error executing insert query:', error);
+      ClickhouseLogger.error('❌ Error executing insert query:', error);
       throw error;
     }
   }
@@ -61,10 +74,13 @@ class ClickhouseRepository {
   async queryData(query, data) {
     try {
       const result = await this.connection.query(query, data).toPromise();
-      console.log('Clickhouse queried successfully', result);
+      console.info('✅ Clickhouse queried successfully', result);
+      ClickhouseLogger.info('✅ Clickhouse queried successfully', result);
+
       return result;
     } catch (error) {
-      console.error('Error executing query:', error);
+      console.error('❌ Error executing query:', error);
+      ClickhouseLogger.error('❌ Error executing query:', error);
       throw error;
     }
   }

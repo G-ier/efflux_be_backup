@@ -1,85 +1,85 @@
 // Third party imports
-require("dotenv").config();
-const pg = require("pg");
+require('dotenv').config();
+const pg = require('pg');
 
 // Local imports
-const EnvironmentVariablesManager = require("./src/shared/services/EnvironmentVariablesManager");
+const EnvironmentVariablesManager = require('./src/shared/services/EnvironmentVariablesManager');
 
-if (EnvironmentVariablesManager.getEnvVariable("DATABASE_ENVIRONMENT") !== "development") {
+if (EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') !== 'development') {
   pg.defaults.ssl = { rejectUnauthorized: false };
 }
 
 module.exports = {
   production: {
-    client: "pg",
-    connection: EnvironmentVariablesManager.getEnvVariable("DATABASE_URL"),
+    client: 'pg',
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
     pool: {
       min: 2,
       max: 40,
-      acquireTimeoutMillis: 120000
+      acquireTimeoutMillis: 120000,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: "./migrations/production",
+      tableName: 'knex_migrations',
+      directory: './migrations/production',
     },
     seeds: {
-      directory: "./seeds",
+      directory: './seeds',
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
   staging: {
-    client: "pg",
-    connection: EnvironmentVariablesManager.getEnvVariable("DATABASE_URL_STAGING"),
+    client: 'pg',
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING'),
     pool: {
       min: 2,
       max: 20,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: "./migrations/staging",
+      tableName: 'knex_migrations',
+      directory: './migrations/staging',
     },
     seeds: {
-      directory: "./seeds",
+      directory: './seeds',
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
   development: {
-    client: "pg",
+    client: 'pg',
     connection: process.env.DATABASE_URL_LOCAL,
     pool: {
       min: 2,
       max: 20,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: "./migrations/staging", // Updated to match environment
+      tableName: 'knex_migrations',
+      directory: './migrations/staging', // Updated to match environment
     },
     seeds: {
-      directory: "./seeds",
+      directory: './seeds',
     },
     useNullAsDefault: true,
-    ssl: false
+    ssl: false,
   },
   oldproduction: {
-    client: "pg",
-    connection: EnvironmentVariablesManager.getEnvVariable("OLD_PRODUCTION_DATABASE_URL"),
+    client: 'pg',
+    connection: EnvironmentVariablesManager.getEnvVariable('OLD_PRODUCTION_DATABASE_URL'),
     pool: {
       min: 2,
       max: 20,
     },
     migrations: {
-      tableName: "knex_migrations",
-      directory: "./data/migrations",
+      tableName: 'knex_migrations',
+      directory: './data/migrations',
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
-  onUpdateTrigger: table => `
+  onUpdateTrigger: (table) => `
     CREATE TRIGGER updated_at
     BEFORE UPDATE ON ${table}
     FOR EACH ROW
     EXECUTE PROCEDURE updated_at_column();
-  `
+  `,
 };

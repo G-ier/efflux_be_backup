@@ -34,8 +34,6 @@ const initializeAPI = async () => {
   server.listen(port, async () => {
     console.log(`🔥 ---------- Server started ------------ 🔥`);
 
-    const DISABLE_CRON = 'true';
-
     const DISABLE_SLACK_NOTIFICATION = EnvironmentVariablesManager.getEnvVariable(
       'DISABLE_SLACK_NOTIFICATION',
     );
