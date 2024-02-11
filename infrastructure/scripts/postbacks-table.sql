@@ -1,8 +1,9 @@
-CREATE TABLE postbacks (
+CREATE TABLE postbacks_2 (
   event_id String,
   event_timestamp String,
   received_at Nullable(String),
   event_type Nullable(String),
+  step Nullable(Int8),
   event_network Nullable(String),
   network_campaign_id String,
   network_campaign_name Nullable(String),
@@ -27,12 +28,10 @@ CREATE TABLE postbacks (
   country Nullable(String),
   region Nullable(String),
   city Nullable(String),
-  is_direct Nullable(Int8),
-  is_conversion Nullable(Int8),
+  revenue Nullable(Float32),
+  estimated_revenue_5h Nullable(Float32),
   preestimated_revenue Nullable(Float32),
   estimated_revenue Nullable(Float32),
-  estimated_revenue_5h Nullable(Float32),
-  revenue Nullable(Float32)
   domain Nullable(String),
   pixel_id Nullable(String),
   external Nullable(String),
@@ -40,7 +39,9 @@ CREATE TABLE postbacks (
   transaction_id Nullable(String),
   conversions Nullable(Int32),
   posted_to_fb Nullable(Int8),
+  is_direct Nullable(Int8),
   is_fb_crawler Nullable(Int8),
+  is_conversion Nullable(Int8)
 )
 engine = MergeTree
 PRIMARY KEY (event_timestamp, network_campaign_id)
