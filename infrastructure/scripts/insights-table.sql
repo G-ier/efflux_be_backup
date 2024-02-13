@@ -1,6 +1,6 @@
 CREATE TABLE insights (
     org_id Int32,
-    event_timestamp String,
+    visit_id String, -- calculate elapsed time between visit_id and event_time
     campaign_id String,
     campaign_name String,
     adset_id String,
@@ -23,13 +23,13 @@ CREATE TABLE insights (
     traffic_source_conversions Nullable(Int32),
     traffic_source String,
     traffic_source_clicks Int32,
-    traffic_source_updated_at timestamp,
+    traffic_source_updated_at DateTime,
     postback_conversions Int32,
     postback_lander_conversions Int32,
     postback_serp_conversions Int32,
     network_conversions Nullable(Int32),
     network_uniq_conversions Nullable(Int32),
-    network_updated_at timestamp,
+    network_updated_at DateTime,
     network String
 )
     engine = MergeTree
