@@ -955,6 +955,20 @@ Resources:
           Value: efflux
         - Key: operation
           Value: analytics
+
+  MaliciousClicksBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: events-malicious-clicks
+      AccessControl: AwsExecRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
 ####################
 # Outputs
 ####################
@@ -1044,3 +1058,15 @@ Outputs:
     Value: !GetAtt AnalyticsBucket.Arn
     Export:
       Name: AnalyticsBucketArn
+
+  MaliciousClicksBucketName:
+    Description: "MaliciousClicksBucket Name"
+    Value: !Ref MaliciousClicksBucket
+    Export:
+      Name: MaliciousClicksBucketName
+
+  MaliciousClicksBucketArn:
+    Description: "MaliciousClicksBucket ARN"
+    Value: !GetAtt MaliciousClicksBucket.Arn
+    Export:
+      Name: MaliciousClicksBucketArn
