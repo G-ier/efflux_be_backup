@@ -1084,3 +1084,15 @@ Outputs:
     Value: !GetAtt MaliciousClicksBucket.Arn
     Export:
       Name: MaliciousClicksBucketArn
+
+  RocketEventsBucketName:
+    Description: "RocketEventsBucket Name"
+    Value: !Ref RocketEventsBucket
+    Export:
+      Name: RocketEventsBucketName
+
+  RocketEventsBucketArn:
+    Description: "RocketEventsBucket ARN"
+    Value: !GetAtt RocketEventsBucket.Arn
+    Export:
+      Name: RocketEventsBucketArn
