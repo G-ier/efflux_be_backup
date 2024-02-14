@@ -17,11 +17,11 @@
     "testFFDataService": "node src/modules/funnelFlux/services/FunnelFluxDataService.js"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.507",
-    "@aws-sdk/client-cloudwatch-logs": "^3.507",
-    "@aws-sdk/client-secrets-manager": "^3.507",
-    "@aws-sdk/client-sqs": "^3.507",
-    "@aws-sdk/client-ssm": "^3.507",
+    "@aws-sdk/client-cloudwatch": "^3.513",
+    "@aws-sdk/client-cloudwatch-logs": "^3.513",
+    "@aws-sdk/client-secrets-manager": "^3.513",
+    "@aws-sdk/client-sqs": "^3.513",
+    "@aws-sdk/client-ssm": "^3.513",
     "async": "^3.2.5",
     "axios": "^1.6",
     "clickhouse": "^2.6.0",
