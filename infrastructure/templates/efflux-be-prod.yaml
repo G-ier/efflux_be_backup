@@ -1003,19 +1003,6 @@ Resources:
         - Key: operation
           Value: analytics
 
-  RocketEventsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: events-for-rocket
-      AccessControl: AwsExecRead
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
 ####################
 # Outputs
 ####################
@@ -1117,15 +1104,3 @@ Outputs:
     Value: !GetAtt MaliciousClicksBucket.Arn
     Export:
       Name: MaliciousClicksBucketArn
-
-  RocketEventsBucketName:
-    Description: "RocketEventsBucket Name"
-    Value: !Ref RocketEventsBucket
-    Export:
-      Name: RocketEventsBucketName
-
-  RocketEventsBucketArn:
-    Description: "RocketEventsBucket ARN"
-    Value: !GetAtt RocketEventsBucket.Arn
-    Export:
-      Name: RocketEventsBucketArn

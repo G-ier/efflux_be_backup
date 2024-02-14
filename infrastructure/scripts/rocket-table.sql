@@ -1,4 +1,5 @@
 CREATE TABLE rocket_events (
+  org_id String,
   key String,
   client_ip Nullable(String),
   received_at Nullable(String),
@@ -11,4 +12,4 @@ CREATE TABLE rocket_events (
   waf_thinks Nullable(String)
 )
 engine = MergeTree
-PRIMARY KEY (key)
+PRIMARY KEY (org_id, key)
