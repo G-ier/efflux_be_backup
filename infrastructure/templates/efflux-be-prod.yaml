@@ -950,6 +950,39 @@ Resources:
         QueueConfigurations:
           - Event: s3:ObjectCreated:Put
             Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: crossroads/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: sedo/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: tonic/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: medianet/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue RocketClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: rockets/
       Tags:
         - Key: project
           Value: efflux
