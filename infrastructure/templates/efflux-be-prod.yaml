@@ -969,6 +969,20 @@ Resources:
           Value: efflux
         - Key: operation
           Value: analytics
+
+  RocketEventsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: events-for-rocket
+      AccessControl: AwsExecRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
 ####################
 # Outputs
 ####################
