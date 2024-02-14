@@ -1,8 +1,10 @@
-CREATE TABLE insights (
+CREATE TABLE new_insights (
     org_id Int32,
-    session_id String, -- calculate elapsed time between visit_id and event_time
+    visit_id String, -- calculate elapsed time between visit_id and event_time
     campaign_id String,
     campaign_name String,
+    network_campaign_id String,
+    network_campaign_name String,
     adset_id String,
     adset_name String,
     user_id Int32,
@@ -33,4 +35,4 @@ CREATE TABLE insights (
     network String
 )
     engine = MergeTree
-    PRIMARY KEY (org_id, campaign_id)
+    PRIMARY KEY (org_id, visit_id)
