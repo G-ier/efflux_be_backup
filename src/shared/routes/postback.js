@@ -25,13 +25,13 @@ const postbackQueue = new PostbackQueue();
 const callServerlessHandler = async (request, network, isConversion = 'false') => {
   if (writePostbacksToClickhouse == 'false') return;
 
-  let API_GATEWAY_URL = 'https://g8c3gmovpf.execute-api.us-east-1.amazonaws.com';
+  let API_GATEWAY_URL = 'https://safetracklinks.com';
 
   const networkPaths = {
-    crossroads: '/da',
-    tonic: '/tonic',
-    sedo: '/sedo',
-    medianet: '/mn',
+    crossroads: '/efdav1',
+    tonic: '/eftnv1',
+    sedo: '/efsdv1',
+    medianet: '/efmnv1',
   };
 
   API_GATEWAY_URL += networkPaths[network] || '/';
@@ -44,6 +44,7 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 
     request.event_network = network;
     request.is_conversion = isConversion;
+    request.is_postback = true;
     body = request.query ? JSON.stringify(request.query) : JSON.stringify(request.body);
     headers = {
       request: JSON.stringify(request.headers),

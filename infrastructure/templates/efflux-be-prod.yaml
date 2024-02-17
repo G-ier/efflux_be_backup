@@ -835,6 +835,174 @@ Resources:
       ResourceArn: !Ref ApplicationLoadBalancer
       WebACLArn: !GetAtt FirewallProtection.Arn
 
+  DataLakeBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: events-raw
+      AccessControl: AwsExecRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:Put
+            Queue: !GetAtt RedirectionsWranglerQueue.Arn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: redirections/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue PostbacksWranglerQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: medianet/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue PostbacksWranglerQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: tonic/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue PostbacksWranglerQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: sedo/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue PostbacksWranglerQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: crossroads/
+      Tags:
+        - Key: project
+          Value: efflux-on-edge
+        - Key: operation
+          Value: analytics
+
+  # Allow DataLakeBucket To send notifications to RedirectionsWranglerQueue
+  SQSQueuePolicy:
+    Type: AWS::SQS::QueuePolicy
+    Properties:
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: s3.amazonaws.com
+            Action:
+              - sqs:SendMessage
+              - sqs:Publish
+            Resource:
+              - !GetAtt RedirectionsWranglerQueue.Arn
+              - !ImportValue PostbacksWranglerQueueArn
+            Condition:
+              ArnEquals:
+                aws:SourceArn: !GetAtt DataLakeBucket.Arn
+      Queues:
+        - !Ref RedirectionsWranglerQueue
+        - !ImportValue PostbacksWranglerQueueUrl
+
+  RedirectionsWranglerQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: redirections-wrangler-queue
+      VisibilityTimeout: 1800 # 30 minutes
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt RedirectionsWranglerQueueDLQ.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: project
+          Value: efflux-on-edge
+        - Key: component
+          Value: events-wrangler
+        - Key: operation
+          Value: analytics
+  # Add a DLQ to the EventsWranglerQueue
+  RedirectionsWranglerQueueDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: redirections-wrangler-queue-dlq
+      VisibilityTimeout: 43200 # 12 hours
+      Tags:
+        - Key: project
+          Value: efflux-on-edge
+        - Key: component
+          Value: events-wrangler
+        - Key: operation
+          Value: analytics
+
+  AnalyticsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: events-for-analytics
+      AccessControl: AwsExecRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      NotificationConfiguration:
+        QueueConfigurations:
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: crossroads/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: sedo/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: tonic/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue ClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: medianet/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue RocketClickhouseEventsQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: rockets/
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  MaliciousClicksBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: events-malicious-clicks
+      AccessControl: AwsExecRead
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerPreferred
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
 ####################
 # Outputs
 ####################
@@ -882,3 +1050,57 @@ Outputs:
     Value: !GetAtt RDSPostgresDB.Endpoint.Address
     Export:
       Name: EffluxRDSPostgresEndpoint
+
+  SqsWranglerQueueArn:
+    Description: SQS Queue ARN
+    Value: !GetAtt RedirectionsWranglerQueue.Arn
+    Export:
+      Name: EventsWranglerQueueArn
+
+  SqsWranglerQueueUrl:
+    Description: SQS Queue URL
+    Value: !Ref RedirectionsWranglerQueue
+    Export:
+      Name: EventsWranglerQueueUrl
+
+  SqsWranglerQueueName:
+    Description: SQS Queue Name
+    Value: !GetAtt RedirectionsWranglerQueue.QueueName
+    Export:
+      Name: RedirectionsToWranglerQueueName
+
+  DataLakeBucketArn:
+    Description: Data Lake Bucket ARN
+    Value: !GetAtt DataLakeBucket.Arn
+    Export:
+      Name: DataLakeBucketArn
+
+  DataLakeBucketName:
+    Description: Data Lake Bucket Name
+    Value: !Ref DataLakeBucket
+    Export:
+      Name: DataLakeBucketName
+
+  AnalyticsBucketName:
+    Description: "AnalyticsBucket Name"
+    Value: !Ref AnalyticsBucket
+    Export:
+      Name: AnalyticsBucketName
+
+  AnalyticsBucketArn:
+    Description: "AnalyticsBucket ARN"
+    Value: !GetAtt AnalyticsBucket.Arn
+    Export:
+      Name: AnalyticsBucketArn
+
+  MaliciousClicksBucketName:
+    Description: "MaliciousClicksBucket Name"
+    Value: !Ref MaliciousClicksBucket
+    Export:
+      Name: MaliciousClicksBucketName
+
+  MaliciousClicksBucketArn:
+    Description: "MaliciousClicksBucket ARN"
+    Value: !GetAtt MaliciousClicksBucket.Arn
+    Export:
+      Name: MaliciousClicksBucketArn

@@ -68,7 +68,7 @@ Resources:
     Type: AWS::EC2::Instance
     Properties:
       ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-      InstanceType: t3a.small
+      InstanceType: t3a.medium
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
