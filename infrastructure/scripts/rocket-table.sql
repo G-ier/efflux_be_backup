@@ -1,8 +1,9 @@
 CREATE TABLE rocket_events (
   org_id String,
   key String,
+  querystring Nullable(String),
   client_ip Nullable(String),
-  received_at Nullable(String),
+  received_at Nullable(DateTime),
   cfn_distribution Nullable(String),
   device Nullable(String),
   country Nullable(String),
