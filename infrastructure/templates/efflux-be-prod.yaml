@@ -1003,34 +1003,6 @@ Resources:
         - Key: operation
           Value: analytics
 
-  RawNetworkEventsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: events-from-networks-raw
-      AccessControl: AwsExecRead
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
-  RawTrafficSourceEventsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: events-from-traffic-sources-raw
-      AccessControl: AwsExecRead
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
 ####################
 # Outputs
 ####################
