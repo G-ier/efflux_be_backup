@@ -53,7 +53,7 @@ class Auth0Service {
     return user;
   }
 
-  async createAuth0User({ email, password, fullName }) {
+  async createAuth0User({ email, password, fullName, orgId, roles = []}) {
     const Authorization = await this.getAuth0AccessToken();
     return axios.post(
       `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users`,
@@ -61,6 +61,12 @@ class Auth0Service {
         email,
         password,
         name: fullName,
+        user_metadata: {
+          orgId
+        },
+        app_metadata: {
+          roles,
+        },
         connection: 'Username-Password-Authentication',
       },
       {
@@ -70,7 +76,7 @@ class Auth0Service {
       },
     );
   }
-  
+
 
   getUserIdentity(userFromAuth0) {
     const oauthProviders = ['facebook', 'google'];
