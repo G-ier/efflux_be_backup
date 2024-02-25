@@ -6,6 +6,11 @@ class OrganizationService {
     this.organizationRepository = new OrganizationRepository();
   }
 
+  // create a new organization
+  async createOrganization(organization) {
+    return await this.organizationRepository.create(organization);
+  }
+
   // Save a single organization to the database
   async saveOrganization(organization) {
     return await this.organizationRepository.saveOne(organization);
