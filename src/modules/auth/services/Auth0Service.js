@@ -4,12 +4,14 @@ const axios = require('axios');
 // Local application imports
 const UserService = require('./UserService');
 const RoleService = require('./RoleService');
+const OrganizationService = require('../../organizations/services/OrganizationService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 class Auth0Service {
   constructor() {
     this.userService = new UserService();
     this.roleService = new RoleService()
+    this.organizationService = new OrganizationService()
   }
 
   async getAuth0AccessToken() {
@@ -101,18 +103,27 @@ class Auth0Service {
 
     const user = await this.userService.fetchOne(['*'], {email});
 
-    // If it doesn't exist, create a user in the database
+    // If it doesn't exist, create it and assign them to a new organization
+
     if (!user) {
-      const role = await this.roleService.fetchOne(["*"],{name:acct_type?.replace("_"," ")})
+
+      // new sign up users are assigned as the admin of the new organization
+      const role = await this.roleService.fetchOne(["*"],{ name: 'admin' })
+
+      const newOrg = await this.organizationService.createOrganization({
+        name: "Default",
+        is_active: true,
+      })
+
       const userId = await this.userService.saveUser({
         name,
         nickname,
         email,
         image_url,
         sub,
-        acct_type,
-        role:role?.id,
-        org_id:1,
+        acct_type: 'admin', // new sign up users are assigned as the admin of the new organization
+        role_id: role.id,
+        org_id: newOrg.id,
         ...identity,
       });
 
