@@ -79,8 +79,6 @@ class UserRepository {
       sqlQuery += ` LIMIT ${limit}`;
   }
 
-  console.log('sqlQuery:', sqlQuery);
-
   return { sqlQuery, cache };
 }
 

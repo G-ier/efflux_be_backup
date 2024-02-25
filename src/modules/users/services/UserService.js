@@ -9,7 +9,12 @@ class UserService {
     // get org info from the request
     const user = req.user;
     const orgId = user.org_id || null;
-    return await this.userRepository.getAllUsers(orgId);
+    const { acct_type: accountType } = req.query;
+    return await this.userRepository.getAllUsers(orgId, accountType);
+  }
+
+  async getUserById(id) {
+    return await this.userRepository.getUserById(id);
   }
 }
 
