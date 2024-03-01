@@ -29,6 +29,7 @@ const funnelFlux = require('../src/modules/funnelFlux/routes');
 const tonic = require('../src/modules/tonic/routes');
 const medianet = require('../src/modules/mediaNet/routes');
 const management = require('../src/shared/routes/management');
+const users = require('../src/modules/users/routes');
 
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
@@ -87,6 +88,7 @@ function configureMiddleware(server) {
   server.use('/api/ff', funnelFlux);
   server.use('/api/tonic', tonic);
   server.use('/api/medianet', medianet);
+  server.use('/api/users', users);
   server.use(ErrorHandler);
 }
 

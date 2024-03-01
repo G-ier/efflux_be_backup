@@ -32,7 +32,7 @@ route.get('/:id', checkPermission(['read_pixels']), async (req, res) => {
 // @desc     Add a new pixel
 // @Access   Private
 route.post('/', checkPermission(['create_pixels']), async (req, res) => {
-  await pixelsController.createPixel(req, res);
+  await pixelsController.addPixel(req, res);
 });
 
 // @route    POST /api/facebook/pixels/:id

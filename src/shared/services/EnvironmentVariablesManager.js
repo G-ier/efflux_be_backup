@@ -52,6 +52,10 @@ class EnvironmentVariablesManager {
 
     // Google API Key File
     'GOOGLE_API_KEY_FILE',
+
+    // MediaConvert
+    'MEDIA_CONVERT_ACCESS_KEY',
+    'MEDIA_CONVERT_SECRET_ACCESS_KEY'
   ];
 
   static parameters = [
