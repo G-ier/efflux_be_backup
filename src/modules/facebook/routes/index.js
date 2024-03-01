@@ -11,6 +11,12 @@ const ads = require('./ads')
 const CompositeController = require("../controllers/CompositeController");
 const compositeController = new CompositeController();
 
+// New route for generating pre-signed URLs for media upload
+route.get("/media/generate-presigned-url", async (req, res) => {
+  compositeController.generatePreSignedUrl(req, res);
+});
+
+
 // @route    /api/facebook/refresh
 // @desc     POST facebook refresh data
 // @Access   Private
