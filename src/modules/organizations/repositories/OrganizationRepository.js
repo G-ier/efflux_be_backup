@@ -7,16 +7,6 @@ class OrganizationRepository {
     this.database = database || new DatabaseRepository();
   }
 
-  async create(organization) {
-    const sql = `
-      INSERT INTO ${this.tableName} (id, name, is_active, created_at, updated_at) VALUES
-      (DEFAULT, '${organization.name}', ${organization.is_active}, DEFAULT, DEFAULT) RETURNING *;
-    `
-    const result = await this.database.raw(sql);
-    return result.rows[0]
-  }
-
-  // We can deprecate once all use cases are handled by create
   async saveOne(organization) {
     const dbObject = this.toDatabaseDTO(organization);
     return await this.database.insert(this.tableName, dbObject);

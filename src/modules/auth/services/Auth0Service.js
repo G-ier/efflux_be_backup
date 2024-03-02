@@ -4,14 +4,12 @@ const axios = require('axios');
 // Local application imports
 const UserService = require('./UserService');
 const RoleService = require('./RoleService');
-const OrganizationService = require('../../organizations/services/OrganizationService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 class Auth0Service {
   constructor() {
     this.userService = new UserService();
     this.roleService = new RoleService()
-    this.organizationService = new OrganizationService()
   }
 
   async getAuth0AccessToken() {
@@ -55,7 +53,7 @@ class Auth0Service {
     return user;
   }
 
-  async createAuth0User({ email, password, fullName, orgId, roles = []}) {
+  async createAuth0User({ email, password, fullName }) {
     const Authorization = await this.getAuth0AccessToken();
     return axios.post(
       `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users`,
@@ -63,12 +61,6 @@ class Auth0Service {
         email,
         password,
         name: fullName,
-        user_metadata: {
-          orgId
-        },
-        app_metadata: {
-          roles,
-        },
         connection: 'Username-Password-Authentication',
       },
       {
@@ -78,7 +70,7 @@ class Auth0Service {
       },
     );
   }
-
+  
 
   getUserIdentity(userFromAuth0) {
     const oauthProviders = ['facebook', 'google'];
@@ -103,27 +95,18 @@ class Auth0Service {
 
     const user = await this.userService.fetchOne(['*'], {email});
 
-    // If it doesn't exist, create it and assign them to a new organization
-
+    // If it doesn't exist, create a user in the database
     if (!user) {
-
-      // new sign up users are assigned as the admin of the new organization
-      const role = await this.roleService.fetchOne(["*"],{ name: 'admin' })
-
-      const newOrg = await this.organizationService.createOrganization({
-        name: "Default",
-        is_active: true,
-      })
-
+      const role = await this.roleService.fetchOne(["*"],{name:acct_type?.replace("_"," ")})
       const userId = await this.userService.saveUser({
         name,
         nickname,
         email,
         image_url,
         sub,
-        acct_type: 'admin', // new sign up users are assigned as the admin of the new organization
-        role_id: role.id,
-        org_id: newOrg.id,
+        acct_type,
+        role:role?.id,
+        org_id:1,
         ...identity,
       });
 

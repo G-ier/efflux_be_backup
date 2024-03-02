@@ -29,14 +29,14 @@ class UserRepository {
         for (const update of updated) {
           const x = await RedisConnection.delAsync(`user:${update.providerId}`);
         }
-      }
+      } 
       return updated;
     } catch (error) {
       console.error(`Error updating data in ${this.tableName}:`, error);
       throw error;  // Rethrow or handle the error as appropriate for your application
     }
   }
-
+  
   async delete(criteria) {
     return await this.database.delete(this.tableName, criteria);
   }
@@ -56,9 +56,9 @@ class UserRepository {
   const userFields = fields.map((field) => `${tableName}.${field}`);
 
   let sqlQuery = `
-      SELECT
-      ${userFields.join(', ')},
-      ARRAY_AGG(DISTINCT roles.name) as roles,
+      SELECT 
+      ${userFields.join(', ')}, 
+      ARRAY_AGG(DISTINCT roles.name) as roles, 
           ARRAY_AGG(DISTINCT permissions.name) as permissions
       FROM ${tableName}
       LEFT JOIN roles ON ${tableName}.role_id = roles.id

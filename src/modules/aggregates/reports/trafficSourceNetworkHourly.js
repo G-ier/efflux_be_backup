@@ -3,7 +3,6 @@ const { buildConditionsInsights, buildSelectionColumns } = require('./utils');
 async function trafficSourceNetworkHourly(database, startDate, endDate, network = 'crossroads', trafficSource, mediaBuyer, adAccountIds, q, orgId) {
 
   const { mediaBuyerCondition, adAccountCondition, queryCondition, orgIdCondition } = buildConditionsInsights(mediaBuyer, adAccountIds, q, orgId);
-  // TODO: add ${orgIdCondition} in the next PR
   const query = `
     SELECT
       hour,
@@ -13,6 +12,7 @@ async function trafficSourceNetworkHourly(database, startDate, endDate, network 
       ${mediaBuyerCondition}
       ${adAccountCondition}
       ${queryCondition}
+      ${orgIdCondition}
     GROUP BY hour
     ORDER BY hour;
   `;

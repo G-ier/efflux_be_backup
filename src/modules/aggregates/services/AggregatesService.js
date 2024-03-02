@@ -27,10 +27,6 @@ class AggregatesService {
       );
     }
 
-    if (!orgId) {
-      throw new Error('Missing orgId, please provide orgId in url pattern');
-    }
-
     const pattern = /^(?:\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}:\d{2}(?:\.\d{1,3})?Z)?)$/;
     if (!pattern.test(startDate) || !pattern.test(endDate)) {
       throw new Error('Invalid date format');
@@ -55,7 +51,7 @@ class AggregatesService {
       mediaBuyer,
       adAccountId,
       q,
-      orgId
+      // orgId I'm disabling this for now
     };
     try {
       return await callback(finalParams);
