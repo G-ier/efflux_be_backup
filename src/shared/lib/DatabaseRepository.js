@@ -29,6 +29,10 @@ class DatabaseRepository {
       return this.connection;
     }
 
+    if (trx) {
+      console.debug('Using TRX: ', trx);
+    }
+
     console.debug(`Using ${type} connection`);
     return trx || (type === 'write' ? this.connectionRW : this.connectionRO);
   }
