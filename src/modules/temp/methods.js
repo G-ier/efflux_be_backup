@@ -23,7 +23,7 @@ class TemporaryService {
 
   // Use static method to get the connection where needed
   get database() {
-    return DatabaseConnection.getReadWriteConnection(); // Assuming all operations require read-write access
+    return DatabaseConnection.getReadWriteConnection();
   }
 
   // This will be used to get ad accounts from a user_id. If the user is admin, it will get all ad accounts.

@@ -5,14 +5,6 @@ const databaseEnvironment =
 
 class DatabaseRepository {
   constructor() {
-    // Add support for read-only replicas in production
-    // if (databaseEnvironment === 'production') {
-    //   this.connectionRO = new DatabaseConnection(true).getConnection();
-    //   this.connectionRW = new DatabaseConnection().getConnection();
-    // } else {
-    //   this.connection = new DatabaseConnection().getConnection();
-    // }
-
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
     // through inheritance. We can parametrize the function to conditionally use cache or not.
     this.enableCache = process.env.ENABLE_CACHE === 'true';

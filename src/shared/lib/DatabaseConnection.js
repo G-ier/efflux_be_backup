@@ -9,12 +9,6 @@ class DatabaseConnection {
   static readOnlyInstance;
   static readWriteInstance;
 
-  // constructor() {
-  //   // this.connection = knex(config);
-  //   this.connection = knex(config);
-  //   console.debug('Database connection created: ', config);
-  // }
-
   static getReadOnlyConnection() {
     if (!DatabaseConnection.readOnlyInstance) {
       let config = { ...knexConfig[databaseEnvironment] };
@@ -47,34 +41,9 @@ class DatabaseConnection {
     }
   }
 
-  // constructor(isReadOnly = false) {
-  //   if (!DatabaseConnection.instance) {
-  //     let config = knexConfig[databaseEnvironment];
-
-  //     if (databaseEnvironment === 'production') {
-  //       if (isReadOnly === true) {
-  //         config.connection = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO');
-  //       }
-  //     }
-
-  //     this.connection = knex(config);
-
-  //     console.debug('Database connection created: ');
-  //     console.debug(config);
-
-  //     DatabaseConnection.instance = this;
-  //   }
-
-  //   return DatabaseConnection.instance;
-  // }
-
   getConnection() {
     return this.connection;
   }
-
-  // closeConnection() {
-  //   return this.connection.destroy();
-  // }
 }
 
 module.exports = DatabaseConnection;
