@@ -55,7 +55,7 @@ class AggregatesService {
       mediaBuyer,
       adAccountId,
       q,
-      orgId
+      orgId,
     };
     try {
       return await callback(finalParams);
@@ -94,10 +94,11 @@ class AggregatesService {
     mediaBuyer,
     adAccountId,
     q,
+    orgId,
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetowrkCampaignsAdsetsStats(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q },
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId },
     );
   }
 
