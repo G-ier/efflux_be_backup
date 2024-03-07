@@ -25,8 +25,11 @@ class DatabaseRepository {
 
   getConnection(type = 'read', trx = null) {
     if (databaseEnvironment !== 'production') {
+      console.debug('Using read-write connection');
       return this.connection;
     }
+
+    console.debug(`Using ${type} connection`);
     return trx || (type === 'write' ? this.connectionRW : this.connectionRO);
   }
 
