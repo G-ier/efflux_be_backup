@@ -87,6 +87,7 @@ class AggregatesController {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
         await this.extractRequestDataWithUser(req);
+      const user = req.user;
       const orgId = user.org_id || 1; // 1 is for default org
       const data =
         await this.aggregatesService.generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
