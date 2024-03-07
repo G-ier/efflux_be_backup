@@ -202,8 +202,8 @@ class CapiService extends BaseService {
       updatedCount = await this.database.update(
         'crossroads_raw_insights',
         {
-          reported_conversions: this.database.ref('conversions'),
-          reported_amount: this.database.ref('revenue'),
+          reported_conversions: this.database.getConnection().ref('conversions'),
+          reported_amount: this.database.getConnection().ref('revenue'),
         },
         {
           unique_identifier: eventIds,
@@ -213,8 +213,8 @@ class CapiService extends BaseService {
       updatedCount = await this.database.update(
         'tonic_raw_insights',
         {
-          reported_conversions: this.database.ref('conversions'),
-          reported_amount: this.database.ref('revenue'),
+          reported_conversions: this.database.getConnection().ref('conversions'),
+          reported_amount: this.database.getConnection().ref('revenue'),
         },
         {
           unique_identifier: eventIds,

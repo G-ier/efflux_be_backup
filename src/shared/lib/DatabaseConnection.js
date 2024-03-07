@@ -30,14 +30,22 @@ class DatabaseConnection {
     return DatabaseConnection.readWriteInstance;
   }
 
-  static closeConnection(connection) {
-    if (connection) {
-      connection.destroy();
+  static closeConnection(isReadOnly = true) {
+    if (isReadOnly && DatabaseConnection.readOnlyInstance) {
+      DatabaseConnection.readOnlyInstance.destroy();
+      DatabaseConnection.readOnlyInstance = null;
+      console.debug('Read-only database connection closed.');
+    } else if (!isReadOnly && DatabaseConnection.readWriteInstance) {
+      DatabaseConnection.readWriteInstance.destroy();
+      DatabaseConnection.readWriteInstance = null;
+      console.debug('Read-write database connection closed.');
     }
   }
 
-  getConnection() {
-    return this.connection;
+  static getConnection(isReadOnly = true) {
+    return isReadOnly
+      ? DatabaseConnection.getReadOnlyConnection()
+      : DatabaseConnection.getReadWriteConnection();
   }
 }
 
