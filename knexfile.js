@@ -14,8 +14,8 @@ module.exports = {
     client: 'pg',
     connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
     pool: {
-      min: 2,
-      max: 40,
+      min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
+      max: 14,
       acquireTimeoutMillis: 120000,
     },
     migrations: {
@@ -32,8 +32,8 @@ module.exports = {
     client: 'pg',
     connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING'),
     pool: {
-      min: 2,
-      max: 20,
+      min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
+      max: 5,
     },
     migrations: {
       tableName: 'knex_migrations',
