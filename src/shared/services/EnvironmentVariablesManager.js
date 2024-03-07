@@ -55,10 +55,11 @@ class EnvironmentVariablesManager {
 
     // MediaConvert
     'MEDIA_CONVERT_ACCESS_KEY',
-    'MEDIA_CONVERT_SECRET_ACCESS_KEY'
+    'MEDIA_CONVERT_SECRET_ACCESS_KEY',
   ];
 
   static parameters = [
+    'DATABASE_URL_BE_RO',
     'WRITE_POSTBACKS_TO_CLICKHOUSE',
     // Server settings
     'DATABASE_ENVIRONMENT',

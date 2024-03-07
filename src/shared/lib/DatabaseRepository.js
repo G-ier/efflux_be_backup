@@ -1,10 +1,17 @@
 const DatabaseConnection = require('./DatabaseConnection');
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
+const databaseEnvironment =
+  EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
 
 class DatabaseRepository {
-
-  constructor(connection) {
-
-    this.connection = connection || new DatabaseConnection().getConnection();
+  constructor() {
+    // Add support for read-only replicas in production
+    if (databaseEnvironment === 'production') {
+      this.connectionRO = new DatabaseConnection(true).getConnection();
+      this.connectionRW = new DatabaseConnection().getConnection();
+    } else {
+      this.connection = new DatabaseConnection().getConnection();
+    }
 
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
     // through inheritance. We can parametrize the function to conditionally use cache or not.
@@ -16,12 +23,19 @@ class DatabaseRepository {
     }
   }
 
+  getConnection(type = 'read', trx = null) {
+    if (databaseEnvironment !== 'production') {
+      return this.connection;
+    }
+    return trx || (type === 'write' ? this.connectionRW : this.connectionRO);
+  }
+
   /**
    * Insert a single row into a table. Returns the inserted row. Deletes the cache for the table.
    */
   async insert(table, dbObject, trx = null) {
     try {
-      const connection = trx || this.connection;
+      const connection = this.getConnection('write', trx);
       const insertResult = await connection(table).insert(dbObject).returning('*');
 
       // Delete cache for the table
@@ -38,7 +52,8 @@ class DatabaseRepository {
 
   async upsert(tableName, data, conflictTarget = null, excludeFields = [], trx = null) {
     try {
-      const insert = this.connection(tableName).insert(data).toString();
+      const connection = this.getConnection('write', trx);
+      const insert = connection(tableName).insert(data).toString();
 
       // If conflictTarget is not provided, simply execute the insert query
       if (!conflictTarget) {
@@ -64,7 +79,7 @@ class DatabaseRepository {
       if (trx) {
         await trx.raw(query);
       } else {
-        await this.connection.raw(query);
+        await connection.raw(query);
       }
     } catch (error) {
       console.error('Error upserting row/s: ', error);
@@ -81,7 +96,8 @@ class DatabaseRepository {
         const cachedUsers = await this.redis.getAsync(cacheKey);
         return JSON.parse(cachedUsers);
       }
-      let queryBuilder = this.connection(tableName).select(fields);
+      const connection = this.getConnection();
+      let queryBuilder = connection(tableName).select(fields);
 
       // Handling joins
       for (const join of joins) {
@@ -137,7 +153,7 @@ class DatabaseRepository {
   /** Delete rows from a table. Returns the number of deleted rows. Deletes the cache for the table. Returns the number of deleted rows. */
   async delete(tableName, filters, trx = null) {
     try {
-      const connection = trx || this.connection;
+      const connection = this.getConnection('write', trx);
       let queryBuilder = connection(tableName);
 
       // Apply filters to the query
@@ -167,10 +183,8 @@ class DatabaseRepository {
 
   async update(tableName, updatedFields, filters) {
     try {
-      let queryBuilder = this.connection(tableName);
-
-      // Update the fields
-      queryBuilder = queryBuilder.update(updatedFields).returning('*');
+      const connection = this.getConnection('write', trx);
+      let queryBuilder = connection(tableName).update(updatedFields).returning('*');
 
       // Apply filters to the query
       for (const [key, value] of Object.entries(filters)) {
@@ -202,7 +216,8 @@ class DatabaseRepository {
         return JSON.parse(cachedUsers);
       }
 
-      let queryBuilder = this.connection(tableName).select(fields);
+      const connection = this.getConnection();
+      let queryBuilder = connection(tableName).select(fields);
 
       for (const [key, value] of Object.entries(filters)) {
         if (Array.isArray(value)) {
@@ -231,13 +246,17 @@ class DatabaseRepository {
   }
 
   async startTransaction() {
-    return this.connection.transaction();
+    if (databaseEnvironment === 'production') {
+      return this.connectionRW.transaction();
+    } else {
+      return this.connection.transaction();
+    }
   }
 
-  async raw(query) {
+  async raw(query, type = 'read') {
     try {
-      const result = await this.connection.raw(query);
-      return result;
+      const connection = this.getConnection(type);
+      return await connection.raw(query);
     } catch (error) {
       console.error('Error executing raw query: ', error);
       throw error;
