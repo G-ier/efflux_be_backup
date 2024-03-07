@@ -6,12 +6,12 @@ const databaseEnvironment =
 class DatabaseRepository {
   constructor() {
     // Add support for read-only replicas in production
-    if (databaseEnvironment === 'production') {
-      this.connectionRO = new DatabaseConnection(true).getConnection();
-      this.connectionRW = new DatabaseConnection().getConnection();
-    } else {
-      this.connection = new DatabaseConnection().getConnection();
-    }
+    // if (databaseEnvironment === 'production') {
+    //   this.connectionRO = new DatabaseConnection(true).getConnection();
+    //   this.connectionRW = new DatabaseConnection().getConnection();
+    // } else {
+    //   this.connection = new DatabaseConnection().getConnection();
+    // }
 
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
     // through inheritance. We can parametrize the function to conditionally use cache or not.
@@ -24,17 +24,17 @@ class DatabaseRepository {
   }
 
   getConnection(type = 'read', trx = null) {
-    if (databaseEnvironment !== 'production') {
-      console.debug('Using read-write connection');
-      return this.connection;
-    }
-
+    // Use transactions directly if provided
     if (trx) {
-      console.debug('Using TRX: ', trx);
+      console.debug('Using transaction: ', trx);
+      return trx;
     }
 
     console.debug(`Using ${type} connection`);
-    return trx || (type === 'write' ? this.connectionRW : this.connectionRO);
+    // Use static methods to obtain connections
+    return type === 'write'
+      ? DatabaseConnection.getReadWriteConnection()
+      : DatabaseConnection.getReadOnlyConnection();
   }
 
   /**
@@ -253,11 +253,7 @@ class DatabaseRepository {
   }
 
   async startTransaction() {
-    if (databaseEnvironment === 'production') {
-      return this.connectionRW.transaction();
-    } else {
-      return this.connection.transaction();
-    }
+    return DatabaseConnection.getReadWriteConnection().transaction();
   }
 
   async raw(query, type = 'read') {
