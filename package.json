@@ -17,13 +17,11 @@
     "testFFDataService": "node src/modules/funnelFlux/services/FunnelFluxDataService.js"
   },
   "dependencies": {
-    "@aws-sdk/client-cloudwatch": "^3.515",
-    "@aws-sdk/client-cloudwatch-logs": "^3.515",
-    "@aws-sdk/client-s3": "^3.515.0",
-    "@aws-sdk/client-secrets-manager": "^3.515",
-    "@aws-sdk/client-sqs": "^3.515",
-    "@aws-sdk/client-ssm": "^3.515",
-    "@aws-sdk/s3-request-presigner": "^3.515.0",
+    "@aws-sdk/client-cloudwatch": "^3.523",
+    "@aws-sdk/client-cloudwatch-logs": "^3.523",
+    "@aws-sdk/client-secrets-manager": "^3.523",
+    "@aws-sdk/client-sqs": "^3.523",
+    "@aws-sdk/client-ssm": "^3.523",
     "async": "^3.2.5",
     "axios": "^1.6",
     "clickhouse": "^2.6.0",
@@ -58,7 +56,7 @@
     "moment-timezone": "^0.5.45",
     "morgan": "^1.10",
     "multer": "^1.4.5-lts.1",
-    "newrelic": "^11.10",
+    "newrelic": "^11.11",
     "node-fetch-commonjs": "^3.3.2",
     "node-mocks-http": "^1.14",
     "oauth-1.0a": "^2.2.6",
@@ -76,7 +74,7 @@
   "devDependencies": {
     "@types/express-jwt": "^7.4.2",
     "jest": "^29.7",
-    "nodemon": "^3.0",
+    "nodemon": "^3.1",
     "supertest": "^6.3"
   }
 }

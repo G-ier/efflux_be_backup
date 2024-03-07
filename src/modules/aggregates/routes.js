@@ -1,6 +1,5 @@
 // Third party imports
 const route = require('express').Router();
-const checkPermission = require('../../../middleware/checkPermissions');
 
 // Local imports
 const AggregatesController = require('./controllers/AggregatesController');
@@ -28,16 +27,12 @@ route.get('/campaigns-report', async (req, res) =>
   await aggregatesController.generateTrafficSourceNetworkCampaignsStatsReport(req, res)
 );
 
-route.get(
-  '/daily-report',
-  checkPermission(['read_reports']),
-  async (req, res) => await aggregatesController.generateTrafficSourceNetworkDailyReport(req, res)
+route.get('/daily-report', async (req, res) =>
+  await aggregatesController.generateTrafficSourceNetworkDailyReport(req, res)
 );
 
-route.get(
-  '/hourly-report',
-  checkPermission(['read_reports']),
-  async (req, res) => await aggregatesController.generateTrafficSourceNetworkHourlyReport(req, res)
+route.get('/hourly-report', async (req, res) =>
+  await aggregatesController.generateTrafficSourceNetworkHourlyReport(req, res)
 );
 
 route.get('/sync-data', async (req, res) =>

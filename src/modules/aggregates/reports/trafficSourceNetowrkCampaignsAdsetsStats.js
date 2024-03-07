@@ -14,7 +14,6 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,` :
       `MAX(c.status) as status,
       CAST(COALESCE(MAX(c.daily_budget), '0') AS FLOAT) * 100 as daily_budget,`}
-
       MAX(insights.adset_name) as adset_name,
       ${castSum(`nw_uniq_conversions`)} as nw_uniq_conversions,
       ${buildSelectionColumns("", calculateSpendRevenue=true)}
@@ -30,7 +29,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
   )
   SELECT
     ad.campaign_id,
-    MAX(ad.campaign_name) as campaign_name,
+    COALESCE(MAX(ad.campaign_name), MAX(c.name)) as campaign_name,
     MAX(c.status) as status,
     MAX(c.created_at) as created_at,
     ${castSum("ad.spend", "FLOAT")} as spend,

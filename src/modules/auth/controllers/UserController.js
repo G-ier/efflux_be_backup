@@ -38,9 +38,7 @@ class UsersController {
       });
 
       // Create user in Auth0
-      const orgId = req.user.org_id
-      const roles = [role_name]
-      const auth0User = await this.auth0Service.createAuth0User({ email, password, fullName, orgId, roles });
+      const auth0User = await this.auth0Service.createAuth0User({ email, password, fullName });
 
       // If Auth0 user creation is successful, create the user locally
       if (auth0User) {
@@ -50,7 +48,6 @@ class UsersController {
           org_id: req.user.org_id,
           role_id,
         });
-
 
         const emailUrl = EnvironmentVariablesManager.getEnvVariable('EMAILS_SERVICE_ENDPOINT') + 'emails/invitation/new';
 

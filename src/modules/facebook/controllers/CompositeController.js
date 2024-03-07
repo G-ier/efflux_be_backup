@@ -6,10 +6,7 @@ const AdAccountService = require("../services/AdAccountService");
 const AdsetsService = require("../services/AdsetsService");
 const _ = require("lodash");
 const AdCreativesService = require("../services/AdCreativesService");
-const { FacebookLogger } = require("../../../shared/lib/WinstonLogger")
-const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager")
-const { S3Client, PutObjectCommand } = require("@aws-sdk/client-s3");
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 
 class CompositeController {
 
@@ -555,51 +552,6 @@ class CompositeController {
       res.status(500).send("Internal Server Error");
     }
   }
-  
-  async generatePreSignedUrl(req, res) {
-    const s3Client = new S3Client({
-      region: "us-east-1",
-      credentials: {
-        accessKeyId: EnvironmentVariablesManager.getEnvVariable('MEDIA_CONVERT_ACCESS_KEY'),
-        secretAccessKey: EnvironmentVariablesManager.getEnvVariable("MEDIA_CONVERT_SECRET_ACCESS_KEY")
-      }
-    });
-  
-    const bucketName = "efflux-media-convert"; // Your S3 bucket name
-    const contentType = req.query.contentType || req.body.contentType;
-    const orgId = req.user.org_id || 1; // Assuming req.user is populated
-    const accountId = req.query.accountId || req.body.accountId; // Get account_id from the query or body
-    const fileNameHash = req.query.fileNameHash || req.body.fileNameHash; // Get the hash from the query or body
-    // Validate necessary information
-    if (!orgId || !accountId || !fileNameHash) {
-      return res.status(400).json({ message: "Missing required information (organization, account ID, or file hash)" });
-    }
-    if (!contentType) {
-      return res.status(400).json({ message: "Missing content type" });
-    }
-  
-    // Determine the directory based on content type
-    const directory = contentType.startsWith('video/') ? 'videos' : 'images';
-  
-    const dayDate = new Date().toISOString().slice(0, 10); // Format: YYYY-MM-DD
-    const objectName = `raw/${orgId}/${accountId}/${directory}/${dayDate}/${fileNameHash}`;
-  
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: objectName,
-      ContentType: contentType,
-      // ACL: 'public-read' // or 'private', depending on your needs
-    });
-  
-    try {
-      const url = await getSignedUrl(s3Client, command, { expiresIn: 3600 }); // URL expires in 1 hour
-      res.json({ url, bucketName, objectName });
-    } catch (error) {
-      console.error("Error generating pre-signed URL: ", error);
-      res.status(500).json({ message: "Failed to generate pre-signed URL" });
-    }
-  }
-  
 
 }
 
