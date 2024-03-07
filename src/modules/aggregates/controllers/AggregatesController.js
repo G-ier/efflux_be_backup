@@ -33,7 +33,7 @@ class AggregatesController {
     try {
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
       const user = req.user;
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateCampaignAdsetsReport(
         startDate,
         endDate,
@@ -51,7 +51,7 @@ class AggregatesController {
     try {
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
       const user = req.user;
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateCampaignDailyReport(
         startDate,
         endDate,
@@ -69,7 +69,7 @@ class AggregatesController {
     try {
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
       const user = req.user;
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateCampaignHourlyReport(
         startDate,
         endDate,
@@ -87,7 +87,7 @@ class AggregatesController {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
         await this.extractRequestDataWithUser(req);
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data =
         await this.aggregatesService.generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
           startDate,
@@ -111,7 +111,7 @@ class AggregatesController {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
         await this.extractRequestDataWithUser(req);
       const user = req.user;
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateTrafficSourceNetworkCampaignsStatsReport(
         startDate,
         endDate,
@@ -134,7 +134,7 @@ class AggregatesController {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
         await this.extractRequestDataWithUser(req);
       const user = req.user;
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
         startDate,
         endDate,
@@ -157,7 +157,7 @@ class AggregatesController {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
         await this.extractRequestDataWithUser(req);
       const user = req.user;
-      const orgId = user.org_id || null;
+      const orgId = user.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
         startDate,
         endDate,
