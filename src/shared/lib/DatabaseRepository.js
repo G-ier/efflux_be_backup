@@ -59,7 +59,7 @@ class DatabaseRepository {
         if (trx) {
           await trx.raw(insert);
         } else {
-          await this.connection.raw(insert);
+          await connection.raw(insert);
         }
         return;
       }
