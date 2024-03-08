@@ -1,11 +1,11 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const RedisConnection = require("../../../shared/lib/RedisConnection")
+const RedisConnection = require('../../../shared/lib/RedisConnection');
 const User = require('../entities/User');
-class UserRepository {
 
-  constructor(database) {
+class UserRepository {
+  constructor() {
     this.tableName = 'users';
-    this.database = database || new DatabaseRepository();
+    this.database = new DatabaseRepository();
   }
 
   async saveOne(user) {
@@ -29,14 +29,14 @@ class UserRepository {
         for (const update of updated) {
           const x = await RedisConnection.delAsync(`user:${update.providerId}`);
         }
-      } 
+      }
       return updated;
     } catch (error) {
       console.error(`Error updating data in ${this.tableName}:`, error);
-      throw error;  // Rethrow or handle the error as appropriate for your application
+      throw error; // Rethrow or handle the error as appropriate for your application
     }
   }
-  
+
   async delete(criteria) {
     return await this.database.delete(this.tableName, criteria);
   }
@@ -49,16 +49,15 @@ class UserRepository {
     }
   }
 
+  // Reusable function to build SQL query and group by fields
+  buildQueryAndGroupBy(tableName, fields, filters, groupByFields = [], limit = null) {
+    const cache = true;
+    const userFields = fields.map((field) => `${tableName}.${field}`);
 
-// Reusable function to build SQL query and group by fields
- buildQueryAndGroupBy(tableName, fields, filters, groupByFields = [], limit = null) {
-  const cache = true;
-  const userFields = fields.map((field) => `${tableName}.${field}`);
-
-  let sqlQuery = `
-      SELECT 
-      ${userFields.join(', ')}, 
-      ARRAY_AGG(DISTINCT roles.name) as roles, 
+    let sqlQuery = `
+      SELECT
+      ${userFields.join(', ')},
+      ARRAY_AGG(DISTINCT roles.name) as roles,
           ARRAY_AGG(DISTINCT permissions.name) as permissions
       FROM ${tableName}
       LEFT JOIN roles ON ${tableName}.role_id = roles.id
@@ -66,63 +65,63 @@ class UserRepository {
       LEFT JOIN permissions ON role_permissions.permission_id = permissions.id
   `;
 
-  if (Object.keys(filters).length) {
-      const filterConditions = Object.entries(filters).map(([key, value]) => `${tableName}."${key}" = '${value}'`);
+    if (Object.keys(filters).length) {
+      const filterConditions = Object.entries(filters).map(
+        ([key, value]) => `${tableName}."${key}" = '${value}'`,
+      );
       sqlQuery += ` WHERE ${filterConditions.join(' AND ')}`;
-  }
+    }
 
-  // Group by user ID by default
-  const groupBy = ['users.id', ...groupByFields];
-  sqlQuery += ` GROUP BY ${groupBy.join(', ')}`;
+    // Group by user ID by default
+    const groupBy = ['users.id', ...groupByFields];
+    sqlQuery += ` GROUP BY ${groupBy.join(', ')}`;
 
-  if (limit) {
+    if (limit) {
       sqlQuery += ` LIMIT ${limit}`;
+    }
+
+    return { sqlQuery, cache };
   }
 
-  return { sqlQuery, cache };
-}
-
-async fetchUsers(fields = ['*'], filters = {}, limit) {
-  const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
-  const results = await this.database.raw(sqlQuery, cache);
-  return results?.rows;
-}
-
-async fetchOne(fields = ['*'], filters = {}) {
-  try {
-    // Check if providerId is provided in filters and is valid
-    const providerId = filters.providerId;
-    let cachedObject = null;
-
-    if (providerId) {
-      // Retrieve from cache if providerId is valid
-      cachedObject = await RedisConnection.getAsync(`user:${providerId}`);
-      if (cachedObject) {
-        // Return cached object if available
-        return JSON.parse(cachedObject);
-      }
-    }
-    // Build SQL query
+  async fetchUsers(fields = ['*'], filters = {}, limit) {
     const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
-
-    // Execute query against the database
-    const result = await this.database.raw(sqlQuery, cache);
-    const object = result?.rows?.[0];
-
-    if (object && object.providerId) {
-      // Cache the result if object is valid and has a providerId
-      await RedisConnection.setAsync(`user:${object.providerId}`, JSON.stringify(object));
-    }
-
-    return object;
-  } catch (error) {
-    // Handle errors such as database connection issues
-    console.error('Error in fetchOne:', error);
-    throw error;
+    const results = await this.database.raw(sqlQuery, cache);
+    return results?.rows;
   }
-}
 
+  async fetchOne(fields = ['*'], filters = {}) {
+    try {
+      // Check if providerId is provided in filters and is valid
+      const providerId = filters.providerId;
+      let cachedObject = null;
 
+      if (providerId) {
+        // Retrieve from cache if providerId is valid
+        cachedObject = await RedisConnection.getAsync(`user:${providerId}`);
+        if (cachedObject) {
+          // Return cached object if available
+          return JSON.parse(cachedObject);
+        }
+      }
+      // Build SQL query
+      const { sqlQuery, cache } = this.buildQueryAndGroupBy('users', fields, filters);
+
+      // Execute query against the database
+      const result = await this.database.raw(sqlQuery, cache);
+      const object = result?.rows?.[0];
+
+      if (object && object.providerId) {
+        // Cache the result if object is valid and has a providerId
+        await RedisConnection.setAsync(`user:${object.providerId}`, JSON.stringify(object));
+      }
+
+      return object;
+    } catch (error) {
+      // Handle errors such as database connection issues
+      console.error('Error in fetchOne:', error);
+      throw error;
+    }
+  }
 
   // Tested by calling the route "http://localhost:5011/api/temp/user/23/organization"
   async fetchUserOrganization(id) {
@@ -137,8 +136,6 @@ async fetchOne(fields = ['*'], filters = {}) {
     // Step 3: Return the organization
     return organization;
   }
-
-
 
   async fetchUserPermissions(userId) {
     // Check if user permissions are in cache

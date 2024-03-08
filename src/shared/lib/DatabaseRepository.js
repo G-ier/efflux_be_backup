@@ -1,7 +1,4 @@
 const DatabaseConnection = require('./DatabaseConnection');
-const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
-const databaseEnvironment =
-  EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
 
 class DatabaseRepository {
   constructor() {
@@ -248,10 +245,15 @@ class DatabaseRepository {
     return DatabaseConnection.getReadWriteConnection().transaction();
   }
 
-  async raw(query, type = 'read') {
+  async raw(query, cache = false, type = 'read') {
+    console.debug('Executing raw query: ', query);
+    console.debug('Cache: ', cache);
+    console.debug('Type: ', type);
     try {
       const connection = this.getConnection(type);
-      return await connection.raw(query);
+      console.debug('Connection: ', connection);
+      const result = await connection.raw(query);
+      return result;
     } catch (error) {
       console.error('Error executing raw query: ', error);
       throw error;
