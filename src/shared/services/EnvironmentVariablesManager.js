@@ -95,6 +95,12 @@ class EnvironmentVariablesManager {
     'SQS_PUSHER_ACCESS_KEY_ID',
     'SQS_PUSHER_SECRET_KEY',
 
+    // S3
+    'S3_BUCKET_NAME',
+    'S3_ACCESS_KEY_ID',
+    'S3_SECRET_ACCESS_KEY',
+    'S3_REGION',
+
     // Clickhouse
     'CLICKHOUSE_URL',
     'CLICKHOUSE_USER',
