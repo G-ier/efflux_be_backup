@@ -292,6 +292,14 @@ const ClickhouseLogger = new CustomLogger({
   logStreamName: 'clickhouse',
 });
 
+// Server Logger
+const ServerLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'server',
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -316,4 +324,5 @@ module.exports = {
   CampaignsLogger,
   UserAccountLogger,
   ClickhouseLogger,
+  ServerLogger
 };

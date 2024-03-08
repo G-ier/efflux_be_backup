@@ -5,6 +5,7 @@ const express = require('express');
 // Local imports
 const EnvironmentVariablesManager = require('../src/shared/services/EnvironmentVariablesManager');
 const { initRedis } = require('../src/shared/lib/RedisConnection');
+
 // Initialize API
 const initializeAPI = async () => {
   // Retrieve environment variables
@@ -24,9 +25,18 @@ const initializeAPI = async () => {
   });
 
   const { configureMiddleware } = require('../middleware');
+  const { ServerLogger } = require('../src/shared/lib/WinstonLogger');
 
   // Configuring global middleware
   configureMiddleware(server);
+
+  ServerLogger.info('Server initialized');
+  ServerLogger.info('Database Url being used');
+  ServerLogger.info('DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'));
+  ServerLogger.info('DATABASE_URL: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'));
+  ServerLogger.info('DATABASE_URL_BE_RO: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'));
+  ServerLogger.info('DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'));
+
 
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
