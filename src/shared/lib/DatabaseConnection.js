@@ -1,23 +1,51 @@
-const knex = require("knex");
-const knexConfig = require("../../../knexfile");
-const EnvironmentVariablesManager = require("../services/EnvironmentVariablesManager");
-const databaseEnvironment = EnvironmentVariablesManager.getEnvVariable("DATABASE_ENVIRONMENT") || "development";
+const knex = require('knex');
+const knexConfig = require('../../../knexfile');
+const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
+
+const databaseEnvironment =
+  EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
+
 class DatabaseConnection {
+  static readOnlyInstance;
+  static readWriteInstance;
 
-  constructor(config = knexConfig[databaseEnvironment]) {
-    if (!DatabaseConnection.instance) {
-      this.connection = knex(config);
-      DatabaseConnection.instance = this;
+  static getReadOnlyConnection() {
+    if (!DatabaseConnection.readOnlyInstance) {
+      let config = knexConfig[`${databaseEnvironment}_read_only`];
+      DatabaseConnection.readOnlyInstance = knex(config);
+      console.debug('Read-only database connection created: ', config);
     }
-    return DatabaseConnection.instance;
+
+    return DatabaseConnection.readOnlyInstance;
   }
 
-  getConnection() {
-    return this.connection;
+  static getReadWriteConnection() {
+    if (!DatabaseConnection.readWriteInstance) {
+      let config = knexConfig[databaseEnvironment];
+
+      DatabaseConnection.readWriteInstance = knex(config);
+      console.debug('Read-write database connection created: ', config);
+    }
+
+    return DatabaseConnection.readWriteInstance;
   }
 
-  closeConnection() {
-    return this.connection.destroy();
+  static closeConnection(isReadOnly = true) {
+    if (isReadOnly && DatabaseConnection.readOnlyInstance) {
+      DatabaseConnection.readOnlyInstance.destroy();
+      DatabaseConnection.readOnlyInstance = null;
+      console.debug('Read-only database connection closed.');
+    } else if (!isReadOnly && DatabaseConnection.readWriteInstance) {
+      DatabaseConnection.readWriteInstance.destroy();
+      DatabaseConnection.readWriteInstance = null;
+      console.debug('Read-write database connection closed.');
+    }
+  }
+
+  static getConnection(isReadOnly = true) {
+    return isReadOnly
+      ? DatabaseConnection.getReadOnlyConnection()
+      : DatabaseConnection.getReadWriteConnection();
   }
 }
 

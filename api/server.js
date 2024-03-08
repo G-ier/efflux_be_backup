@@ -48,6 +48,8 @@ const initializeAPI = async () => {
     const databaseEnvironment =
       EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
     const productionDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
+    const productionReadOnlyDatabaseUrl =
+      EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO');
     const stagingDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING');
 
     const databaseUrl =
@@ -55,6 +57,13 @@ const initializeAPI = async () => {
         ? productionDatabaseUrl
         : databaseEnvironment === 'staging'
         ? stagingDatabaseUrl
+        : process.env.DATABASE_URL_LOCAL;
+
+    const roDatabaseUrl =
+      databaseEnvironment === 'production'
+        ? productionReadOnlyDatabaseUrl
+        : databaseEnvironment === 'staging'
+        ? 'N/A'
         : process.env.DATABASE_URL_LOCAL;
 
     const redisEnvironment = EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT');
@@ -80,6 +89,10 @@ const initializeAPI = async () => {
       Database:
         Environment: ${databaseEnvironment || 'development'}
         URL: ${databaseUrl}
+
+      Database RO:
+        Environment: ${databaseEnvironment || 'development'}
+        URL: ${roDatabaseUrl}
 
       Redis:
         Environment: ${redisEnvironment || 'development'}

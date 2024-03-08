@@ -12,7 +12,6 @@ const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
 
 class TemporaryService {
-
   constructor() {
     this.userRepository = new UserRepository();
     this.adAccountRepository = new AdAccountRepository();
@@ -20,7 +19,11 @@ class TemporaryService {
     this.adsetsRepository = new AdsetsRepository();
     this.campaignRepository = new CampaignRepository();
     this.UserAccountRepository = new UserAccountRepository();
-    this.database = new DatabaseConnection().getConnection();
+  }
+
+  // Use static method to get the connection where needed
+  get database() {
+    return DatabaseConnection.getReadWriteConnection();
   }
 
   // This will be used to get ad accounts from a user_id. If the user is admin, it will get all ad accounts.
@@ -38,7 +41,8 @@ class TemporaryService {
   }
 
   async updateAdAccount(filter, updateData) {
-    const userId = updateData.user_id; const adAccountIds = [filter.id];
+    const userId = updateData.user_id;
+    const adAccountIds = [filter.id];
     const uCount = await this.adAccountRepository.upsertUserAssociation(adAccountIds, userId);
     return uCount !== 0;
   }
@@ -46,8 +50,8 @@ class TemporaryService {
   async fetchUsersWithAdAccounts(userId, isAdmin) {
     let userFilters = {};
     if (!isAdmin) userFilters = { id: userId };
-    let users = await this.userRepository.fetchUsers(["*"], userFilters);
-    const userIds = users.map(user => user.id);
+    let users = await this.userRepository.fetchUsers(['*'], userFilters);
+    const userIds = users.map((user) => user.id);
 
     // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
     let whereClause = {};
@@ -59,7 +63,7 @@ class TemporaryService {
         'ad_accounts.provider_id',
         'ad_accounts.name',
         'ad_accounts.provider',
-        'map.u_id AS user_id'
+        'map.u_id AS user_id',
       ],
       whereClause,
       false,
@@ -177,7 +181,6 @@ class TemporaryService {
 }
 
 class TemporaryController {
-
   constructor() {
     this.temporaryService = new TemporaryService();
   }
@@ -303,25 +306,25 @@ class TemporaryController {
 
   async updateUserDetails(req, res) {
     try {
-      const { name,userId } = req.body;
+      const { name, userId } = req.body;
       const user = userId || req.user.sub; // Ensure that the user's ID is available, typically through authentication middleware
 
-        // Validate the input as necessary
-        if (!name) {
-          return res.status(400).json({ message: 'No update parameters provided.' });
-        }
-
-        // Call a service method to update the user details
-        const updateResult = await this.temporaryService.updateUserDetails(user, name);
-        // Construct a response message based on what was updated
-        let message = 'User details updated successfully: ';
-        if (name) message += 'Name ';
-
-        res.status(200).json({ message: message.trim(), updateResult });
-      } catch (error) {
-        console.log('ERROR', error);
-        res.status(500).json({ message: error.message });
+      // Validate the input as necessary
+      if (!name) {
+        return res.status(400).json({ message: 'No update parameters provided.' });
       }
+
+      // Call a service method to update the user details
+      const updateResult = await this.temporaryService.updateUserDetails(user, name);
+      // Construct a response message based on what was updated
+      let message = 'User details updated successfully: ';
+      if (name) message += 'Name ';
+
+      res.status(200).json({ message: message.trim(), updateResult });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
   }
 
   // This will be used to get ad accounts from a user_id. If the user is admin, it will get all ad accounts.
