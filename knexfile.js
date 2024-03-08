@@ -12,7 +12,7 @@ if (EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') !== 'deve
 module.exports = {
   production: {
     client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'),
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
     pool: {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 7,
@@ -30,7 +30,7 @@ module.exports = {
   },
   production_read_only: {
     client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'),
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
     pool: {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 7,
