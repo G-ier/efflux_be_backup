@@ -236,7 +236,7 @@ class AdQueueRepository {
         return adQueue;
       });
     } catch (error) {
-      console.error(`Error executing raw query for table ${this.tableName}:`, error);
+      console.error(`❌ Error executing raw query for table ${this.tableName}:`, error);
       throw error;
     }
   }

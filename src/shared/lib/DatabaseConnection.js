@@ -11,7 +11,12 @@ class DatabaseConnection {
 
   static getReadOnlyConnection() {
     if (!DatabaseConnection.readOnlyInstance) {
-      let config = knexConfig[`${databaseEnvironment}_read_only`];
+      let config;
+      if (databaseEnvironment === 'production') {
+        config = knexConfig[`${databaseEnvironment}_read_only`];
+      } else {
+        config = knexConfig[databaseEnvironment];
+      }
       DatabaseConnection.readOnlyInstance = knex(config);
       console.debug('Read-only database connection created: ', config);
     }

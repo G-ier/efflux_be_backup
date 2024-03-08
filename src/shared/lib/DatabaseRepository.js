@@ -255,7 +255,7 @@ class DatabaseRepository {
       const result = await connection.raw(query);
       return result;
     } catch (error) {
-      console.error('Error executing raw query: ', error);
+      console.error('❌ Error executing raw query: ', error);
       throw error;
     }
   }
