@@ -35,7 +35,7 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
   };
 
   API_GATEWAY_URL += networkPaths[network] || '/';
-  console.log('Calling: ', API_GATEWAY_URL);
+  // console.log('Calling: ', API_GATEWAY_URL);
   PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
   try {
