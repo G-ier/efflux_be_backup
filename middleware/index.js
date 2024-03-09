@@ -60,10 +60,11 @@ function configureMiddleware(server) {
   server.use(helmet());
   server.use(cors());
   server.use(json);
-  server.use(morgan('dev'));
 
   // Postback route
   server.use('/trk', isBot, postback);
+
+  server.use(morgan('dev'));
 
   // Pagination middleware
   server.use(paginate.middleware(10, 50));
