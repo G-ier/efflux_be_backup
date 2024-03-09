@@ -18,7 +18,6 @@ class DatabaseConnection {
         config = knexConfig[databaseEnvironment];
       }
       DatabaseConnection.readOnlyInstance = knex(config);
-      console.debug('Read-only database connection created: ', config);
     }
 
     return DatabaseConnection.readOnlyInstance;
@@ -29,7 +28,6 @@ class DatabaseConnection {
       let config = knexConfig[databaseEnvironment];
 
       DatabaseConnection.readWriteInstance = knex(config);
-      console.debug('Read-write database connection created: ', config);
     }
 
     return DatabaseConnection.readWriteInstance;
@@ -39,11 +37,9 @@ class DatabaseConnection {
     if (isReadOnly && DatabaseConnection.readOnlyInstance) {
       DatabaseConnection.readOnlyInstance.destroy();
       DatabaseConnection.readOnlyInstance = null;
-      console.debug('Read-only database connection closed.');
     } else if (!isReadOnly && DatabaseConnection.readWriteInstance) {
       DatabaseConnection.readWriteInstance.destroy();
       DatabaseConnection.readWriteInstance = null;
-      console.debug('Read-write database connection closed.');
     }
   }
 

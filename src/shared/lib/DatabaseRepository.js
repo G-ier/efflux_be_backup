@@ -15,7 +15,6 @@ class DatabaseRepository {
   getConnection(type = 'read', trx = null) {
     // Use transactions directly if provided
     if (trx) {
-      console.debug('Using transaction: ', trx);
       return trx;
     }
 
@@ -246,12 +245,8 @@ class DatabaseRepository {
   }
 
   async raw(query, cache = false, type = 'read') {
-    console.debug('Executing raw query: ', query);
-    console.debug('Cache: ', cache);
-    console.debug('Type: ', type);
     try {
       const connection = this.getConnection(type);
-      console.debug('Connection: ', connection);
       const result = await connection.raw(query);
       return result;
     } catch (error) {
