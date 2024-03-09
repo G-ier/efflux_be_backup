@@ -178,7 +178,7 @@ class DatabaseRepository {
 
   async update(tableName, updatedFields, filters) {
     try {
-      const connection = this.getConnection('write', trx);
+      const connection = this.getConnection('write');
       let queryBuilder = connection(tableName).update(updatedFields).returning('*');
 
       // Apply filters to the query
