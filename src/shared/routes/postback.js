@@ -69,9 +69,9 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 route.get('/', async (req, res) => {
   await callServerlessHandler(req, 'crossroads');
   res
-  .status(200)
-  .contentType('application/javascript')
-  .send('console.log("Operation successful");');
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
 });
 
 // @route     /trk
@@ -81,9 +81,9 @@ route.get('/', async (req, res) => {
 route.post('/', async (req, res) => {
   await callServerlessHandler(req, 'crossroads', true);
   res
-  .status(200)
-  .contentType('application/javascript')
-  .send('console.log("Operation successful");');
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
 });
 
 route.get('/sedo', async (req, res) => {
