@@ -35,7 +35,7 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
   };
 
   API_GATEWAY_URL += networkPaths[network] || '/';
-  console.log('Calling: ', API_GATEWAY_URL);
+  // console.log('Calling: ', API_GATEWAY_URL);
   PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
   try {
@@ -68,89 +68,10 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 // @Access   Public
 route.get('/', async (req, res) => {
   await callServerlessHandler(req, 'crossroads');
-
-  try {
-    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const client_user_agent = req.headers['user-agent'];
-    const referrer_url = `https://${req.get('host')}${req.originalUrl}`;
-    PostbackLogger.info(`DA PBQP: ${JSON.stringify(req.query)}`);
-    const {
-      tg1,
-      tg2, // campaign_id
-      tg3: fbclid, // fbclid
-      tg5, // adset_id
-      tg6, // ad_id
-      tg7,
-      kwp,
-      src,
-      city,
-      state,
-      country,
-      zipcode,
-      eventType,
-      event_time,
-      running_direct,
-      test_event_code,
-      _: event_timestamp,
-    } = req.query;
-
-    const ua = parser(client_user_agent);
-    const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
-    const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
-
-    // Traffic source labeling based on src
-    let traffic_source;
-    if (src === 'fbk') traffic_source = PROVIDERS.FACEBOOK;
-    else if (src === 'tt') traffic_source = PROVIDERS.TIKTOK;
-    else if (!src) traffic_source = 'unknown';
-    else traffic_source = src;
-
-    // check event_timestamp exist
-    const ts = event_timestamp ? event_timestamp : Math.floor(Date.now() / 1000);
-    let event_id = md5(ts + fbclid + tg2 + tg5 + eventType);
-    const pb_conversion = {
-      fbclid,
-      city,
-      state,
-      country,
-      zipcode,
-      event_timestamp,
-      running_direct: running_direct === 'true',
-      step,
-      referrer_url,
-      pb_value: value,
-      event_type: eventType,
-      date: todayYMD(),
-      hour: todayHH(),
-      ip: client_ip_address,
-      device: ua.device.name,
-      os: `${ua.os.name} - ${ua.os.version}`,
-      browser: ua.browser.name,
-      campaign_name: tg1,
-      campaign_id: tg2,
-      adset_id: tg5,
-      ad_id: tg6,
-      network: 'crossroads',
-      traffic_source,
-      kwp,
-      event_id,
-    };
-    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`);
-
-    // Upsert into database
-    postbackQueue.push(pb_conversion);
-    await postbackQueue.processQueue(db);
-
-    res
-      .status(200)
-      .contentType('application/javascript')
-      .send('console.log("Operation successful");');
-    PostbackLogger.info(`SUCCESS`);
-  } catch (err) {
-    PostbackLogger.error(`POSTBACK CROSSROADS ERROR ${err}`);
-    sendSlackNotification(`Postback Update Error: ${err.message}`);
-    res.status(500).json(err.message);
-  }
+  res
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
 });
 
 // @route     /trk
@@ -159,251 +80,20 @@ route.get('/', async (req, res) => {
 // Conversion Event
 route.post('/', async (req, res) => {
   await callServerlessHandler(req, 'crossroads', true);
-  try {
-    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const client_user_agent = req.headers['user-agent'];
-    const referrer_url = `https://${req.get('host')}${req.originalUrl}`;
-    PostbackLogger.info(`DA PBQP: ${JSON.stringify(req.query)}`);
-    const {
-      tg1,
-      tg2, // campaign_id
-      tg3: fbclid, // fbclid
-      tg5, // adset_id
-      tg6, // ad_id
-      tg7,
-      kwp,
-      src,
-      city,
-      state,
-      country,
-      zipcode,
-      eventType,
-      event_time,
-      running_direct,
-      test_event_code,
-      _: event_timestamp,
-    } = req.query;
-
-    const ua = parser(client_user_agent);
-    const value = isNaN(parseFloat(req.query.value)) ? 0 : parseFloat(req.query.value);
-    const step = isNaN(parseInt(req.query.step)) ? 0 : parseInt(req.query.step);
-
-    // Traffic source labeling based on src
-    let traffic_source;
-    if (src === 'fbk') traffic_source = PROVIDERS.FACEBOOK;
-    else if (src === 'tt') traffic_source = PROVIDERS.TIKTOK;
-    else if (!src) traffic_source = 'unknown';
-    else traffic_source = src;
-
-    // check event_timestamp exist
-    const ts = event_timestamp ? event_timestamp : Date.now();
-    let event_id = md5(ts + fbclid + tg2 + tg5 + eventType);
-    const pb_conversion = {
-      fbclid,
-      city,
-      state,
-      country,
-      zipcode,
-      event_timestamp: ts,
-      running_direct: running_direct === 'true',
-      step,
-      referrer_url,
-      pb_value: value,
-      event_type: eventType,
-      date: todayYMD(),
-      hour: todayHH(),
-      ip: client_ip_address,
-      device: ua.device.name,
-      os: `${ua.os.name} - ${ua.os.version}`,
-      browser: ua.browser.name,
-      campaign_name: tg1,
-      campaign_id: tg2,
-      adset_id: tg5,
-      ad_id: tg6,
-      network: 'crossroads',
-      traffic_source,
-      kwp,
-      event_id,
-    };
-    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`);
-
-    // Upsert into database
-    postbackQueue.push(pb_conversion);
-    await postbackQueue.processQueue(db);
-
-    res
-      .status(200)
-      .contentType('application/javascript')
-      .send('console.log("Operation successful");');
-    PostbackLogger.info(`SUCCESS`);
-  } catch (err) {
-    PostbackLogger.error(`POSTBACK CROSSROADS ERROR ${err}`);
-    sendSlackNotification(`Postback Update Error: ${err.message}`);
-    res.status(500).json(err.message);
-  }
+  res
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
 });
 
 route.get('/sedo', async (req, res) => {
   await callServerlessHandler(req, 'sedo');
-  try {
-    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const client_user_agent = req.headers['user-agent'];
-    const referrer_url = `https://${req.get('host')}${req.originalUrl}`;
-
-    PostbackLogger.info(`SEDO PBQP: ${JSON.stringify(req.query)}`);
-    const {
-      sub1,
-      sub2,
-      sub3,
-      amount,
-      relatedlink,
-      kw,
-      position,
-      url,
-      uniqueTransactionId,
-      clickTimestamp,
-    } = req.query;
-
-    const domain = url;
-    const funnel_id = sub1;
-    const [campaign_id, adset_id, ad_id, traffic_source] = sub2
-      ? sub2.replace(' ', '').split('|')
-      : ['', '', '', ''];
-    const hit_id = sub3;
-    const ua = parser(client_user_agent);
-    const value = isNaN(parseFloat(amount)) ? 0 : parseFloat(amount);
-
-    // We don't know for sure how parameters come, but we need to compose a unique event_id
-    const event_id = md5(clickTimestamp + uniqueTransactionId + campaign_id + adset_id + sub3);
-    const pb_conversion = {
-      fbclid: uniqueTransactionId, // ?
-      event_timestamp: clickTimestamp,
-      referrer_url,
-      pb_value: value,
-      event_type: 'Purchase',
-      date: todayYMD(),
-      hour: todayHH(),
-      ip: client_ip_address,
-      device: ua.device.name,
-      os: `${ua.os.name} - ${ua.os.version}`,
-      browser: ua.browser.name,
-      campaign_id: campaign_id,
-      adset_id: adset_id,
-      ad_id: ad_id,
-      network: 'sedo',
-      traffic_source,
-      kwp: kw,
-      event_id,
-    };
-    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`);
-
-    // Upsert into database
-    postbackQueue.push(pb_conversion);
-    await postbackQueue.processQueue(db);
-
-    res.status(200).json({ message: 'success' });
-    PostbackLogger.info(`SUCCESS`);
-  } catch (err) {
-    PostbackLogger.error(`POSTBACK SEDO ERROR ${err}`);
-    // sendSlackNotification(`Postback Update Error: ${err.message}`)
-    res.status(500).json(err.message);
-  }
+  res.status(200).json({ message: 'success' });
 });
 
 route.get('/tonic', async (req, res) => {
   await callServerlessHandler(req, 'tonic');
-  try {
-    const client_ip_address = req.headers['x-forwarded-for'] || req.socket.remoteAddress;
-    const client_user_agent = req.headers['user-agent'];
-    const referrer_url = `https://${req.get('host')}${req.originalUrl}`;
-    const ua = parser(client_user_agent);
-
-    // MAPPING
-    // subid1: user-agent
-    // subid2: pixel_id_|_campaign_id_|_adset_id_|_ad_id_|_traffic_source_|_external
-    // subid3: hit_id
-    // subid4: ip_|_country_code_|_region_|_city_|_timestamp_|_campaign_name
-
-    PostbackLogger.info(`TONIC PBQP: ${JSON.stringify(req.query)}`);
-    let { subid1, subid2, subid3, subid4, revenue, kwp, type } = req.query;
-
-    // Renaming type to match the rest of the analytics
-    if (type) {
-      if (['view', 'redirect'].includes(type)) type = 'PageView';
-      else if (['viewrt'].includes(type)) type = 'ViewContent';
-      else if (
-        ['click', 'estimated_revenue_5h', 'preestimated_revenue', 'estimated_revenue'].includes(
-          type,
-        )
-      ) {
-        if (type === 'click') revenue = 0;
-        type = 'Purchase';
-      }
-    }
-    if (type != 'Purchase') revenue = 0;
-
-    // New Extracted Fields
-    const user_agent = subid1 || 'Unknown';
-    let [pixel_id, campaign_id, adset_id, ad_id, traffic_source, external] = subid2
-      ? subid2.split('_|_')
-      : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
-    const session_id = subid3 || 'Unknown';
-    let [ip, country_code, region, city, timestamp, campaign_name] = subid4
-      ? subid4.split('_|_')
-      : ['Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown', 'Unknown'];
-
-    if (isNotNumeric(campaign_id)) campaign_id = 'Unknown';
-    if (isNotNumeric(adset_id)) adset_id = 'Unknown';
-    if (isNotNumeric(ad_id)) ad_id = 'Unknown';
-    if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
-
-    // maybe + keyword for eventId since we dont get eventType, to recheck
-    const event_id = md5(timestamp + kwp + session_id + type);
-    if (!['tiktok', 'facebook'].includes(traffic_source)) traffic_source = 'Unknown';
-
-    const pb_conversion = {
-      date: todayYMD(),
-      hour: todayHH(),
-      event_timestamp: timestamp,
-      event_type: type,
-      pixel_id: pixel_id,
-      campaign_id: campaign_id,
-      adset_id: adset_id,
-      ad_id: ad_id,
-      step: 2,
-      searchterm: kwp,
-      referrer_url: referrer_url,
-      pb_value: revenue,
-      city: city,
-      country: country_code,
-      state: region,
-      zipcode: '',
-      traffic_source: traffic_source,
-      running_direct: false,
-      fbclid: external,
-      posted_to_fb: false,
-      os: `${ua.os.name} - ${ua.os.version}`,
-      ip: ip,
-      device: ua.device.name,
-      browser: ua.browser.name,
-      test_event_code: '',
-      network: 'tonic',
-      kwp: kwp,
-      campaign_name: campaign_name,
-      event_id: event_id,
-    };
-    PostbackLogger.info(`PBDB: ${JSON.stringify(pb_conversion)}`);
-
-    // Upsert into database
-    postbackQueue.push(pb_conversion);
-    await postbackQueue.processQueue(db);
-
-    res.status(200).json({ message: 'success' });
-    PostbackLogger.info(`SUCCESS`);
-  } catch (err) {
-    PostbackLogger.error(`POSTBACK TONIC ERROR ${err}`);
-    res.status(500).json(err.message);
-  }
+  res.status(200).json({ message: 'success' });
 });
 
 // @route     /trk/pb_test
@@ -411,18 +101,7 @@ route.get('/tonic', async (req, res) => {
 // @Access   Public
 route.get('/pb_test', async (req, res) => {
   await callServerlessHandler(req, 'pb_test');
-  try {
-    const headers = req.headers;
-    const data = req.query;
-    PostbackTestLogger.info(`Get Request Header: ${JSON.stringify(headers)}`);
-    PostbackTestLogger.info(`Get Request Query: ${JSON.stringify(data)}`);
-    res.status(200).json({ message: 'success' });
-    PostbackTestLogger.info(`SUCCESS`);
-  } catch (err) {
-    PostbackTestLogger.info(`ERROR during GET request`);
-    PostbackTestLogger.error(`ERROR: ${err}`);
-    res.status(500).json(err.message);
-  }
+  res.status(200).json({ message: 'success' });
 });
 
 // @route     /trk/pb_test
@@ -430,18 +109,7 @@ route.get('/pb_test', async (req, res) => {
 // @Access   Public
 route.post('/pb_test', async (req, res) => {
   await callServerlessHandler(req, 'pb_test');
-  try {
-    const headers = req.headers;
-    const data = req.body;
-    PostbackTestLogger.info(`Post Request Header: ${JSON.stringify(headers)}`);
-    PostbackTestLogger.info(`Post Request Body: ${JSON.stringify(data)}`);
-    res.status(200).json({ message: 'success' });
-    PostbackTestLogger.info(`SUCCESS`);
-  } catch (err) {
-    PostbackTestLogger.info(`ERROR during POST request`);
-    PostbackTestLogger.error(`ERROR: ${err}`);
-    res.status(500).json(err.message);
-  }
+  res.status(200).json({ message: 'success' });
 });
 
 // @route     /trk/collect

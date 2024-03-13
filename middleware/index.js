@@ -29,6 +29,7 @@ const funnelFlux = require('../src/modules/funnelFlux/routes');
 const tonic = require('../src/modules/tonic/routes');
 const medianet = require('../src/modules/mediaNet/routes');
 const management = require('../src/shared/routes/management');
+const adLauncher = require('../src/modules/adLauncher/routes');
 
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
@@ -59,10 +60,11 @@ function configureMiddleware(server) {
   server.use(helmet());
   server.use(cors());
   server.use(json);
-  server.use(morgan('dev'));
 
   // Postback route
   server.use('/trk', isBot, postback);
+
+  server.use(morgan('dev'));
 
   // Pagination middleware
   server.use(paginate.middleware(10, 50));
@@ -87,6 +89,7 @@ function configureMiddleware(server) {
   server.use('/api/ff', funnelFlux);
   server.use('/api/tonic', tonic);
   server.use('/api/medianet', medianet);
+  server.use('/api/add-launcher', adLauncher);
   server.use(ErrorHandler);
 }
 

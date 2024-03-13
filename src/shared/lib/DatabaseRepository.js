@@ -1,7 +1,4 @@
 const DatabaseConnection = require('./DatabaseConnection');
-const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
-const databaseEnvironment =
-  EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
 
 class DatabaseRepository {
   constructor() {
@@ -18,7 +15,6 @@ class DatabaseRepository {
   getConnection(type = 'read', trx = null) {
     // Use transactions directly if provided
     if (trx) {
-      console.debug('Using transaction: ', trx);
       return trx;
     }
 
@@ -182,7 +178,7 @@ class DatabaseRepository {
 
   async update(tableName, updatedFields, filters) {
     try {
-      const connection = this.getConnection('write', trx);
+      const connection = this.getConnection('write');
       let queryBuilder = connection(tableName).update(updatedFields).returning('*');
 
       // Apply filters to the query
@@ -248,12 +244,13 @@ class DatabaseRepository {
     return DatabaseConnection.getReadWriteConnection().transaction();
   }
 
-  async raw(query, type = 'read') {
+  async raw(query, cache = false, type = 'read') {
     try {
       const connection = this.getConnection(type);
-      return await connection.raw(query);
+      const result = await connection.raw(query);
+      return result;
     } catch (error) {
-      console.error('Error executing raw query: ', error);
+      console.error('❌ Error executing raw query: ', error);
       throw error;
     }
   }
