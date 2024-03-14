@@ -1,4 +1,4 @@
-const { getSignedUrl } = require("@aws-sdk/s3-request-presigner");
+const { getSignedUrl } = require('@aws-sdk/s3-request-presigner');
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
@@ -7,10 +7,11 @@ class S3Service {
     this.bucketName = bucketName || EnvironmentVariablesManager.getEnvVariable('S3_BUCKET_NAME');
     this.s3Client = new S3Client({
       region: 'us-east-1',
+      // Todo: @Shadid-Haque: Remove hardcoded credentials for production
       credentials: {
         accessKeyId: EnvironmentVariablesManager.getEnvVariable('S3_ACCESS_KEY_ID'),
         secretAccessKey: EnvironmentVariablesManager.getEnvVariable('S3_SECRET_ACCESS_KEY'),
-      }
+      },
     });
   }
 
@@ -18,10 +19,17 @@ class S3Service {
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: fileName,
-      ContentType: fileType
+      ContentType: fileType,
     });
+
+    console.debug('bucketName:', this.bucketName);
+    console.debug('fileName:', fileName);
+    console.debug('fileType:', fileType);
+
     try {
-      return await getSignedUrl(this.s3Client, command, { expiresIn });
+      const result = await getSignedUrl(this.s3Client, command, { expiresIn });
+      console.debug('Generated presigned url:', result);
+      return result;
     } catch (error) {
       console.error('Error in generating presigned url:', error);
       throw error;
