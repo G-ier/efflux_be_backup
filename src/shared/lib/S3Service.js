@@ -7,11 +7,6 @@ class S3Service {
     this.bucketName = bucketName || EnvironmentVariablesManager.getEnvVariable('S3_BUCKET_NAME');
     this.s3Client = new S3Client({
       region: 'us-east-1',
-      // Todo: @Shadid-Haque: Remove hardcoded credentials for production
-      credentials: {
-        accessKeyId: EnvironmentVariablesManager.getEnvVariable('S3_ACCESS_KEY_ID'),
-        secretAccessKey: EnvironmentVariablesManager.getEnvVariable('S3_SECRET_ACCESS_KEY'),
-      },
     });
   }
 
