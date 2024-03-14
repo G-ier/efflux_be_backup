@@ -58,11 +58,8 @@ class AdLauncherController {
       const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
       accountName = userAccountName;
 
-      // Fetch pixel and page details early if they're needed regardless of success or failure
-      pixel = (
-        await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId }, 1)
-      )?.[0];
-      page = (await this.pageService.fetchPagesFromDB(['*'], { id: pageId }, 1))?.[0];
+      pixel = (await this.pixelService.fetchPixelsByPixelId(['*'], { pixel_id: pixelId }, 1))[0];
+      page = (await this.pageService.fetchPageById(['*'], { id: pageId }, 1))[0];
 
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');

@@ -82,6 +82,11 @@ class PageService extends BaseService {
       return pages;
     }
 
+    async fetchPageById(pageId) {
+      const results = await this.pageRepository.fetchPages(['*'], { id: pageId });
+      return results;
+    }
+
     async fetchPagesFromDB(fields = ['*'], filters = {}, limit){
         const results = await this.pageRepository.fetchPages(fields, filters, limit);
         return results;
