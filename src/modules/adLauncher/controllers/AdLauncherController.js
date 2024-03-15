@@ -1,4 +1,3 @@
-const { isArray } = require('lodash');
 const S3Service = require('../../../shared/lib/S3Service');
 
 class AdLauncherController {
