@@ -139,6 +139,7 @@ class AdLauncherController {
       message: message,
     };
 
+    // The URL of the notifications service: https://github.com/roiads/efflux-serverless/blob/20559471b5f97e99a2e8846ba71c2396320d6278/services/efflux-notifications/src/app.js#L32
     const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
 
     try {
