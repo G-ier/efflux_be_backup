@@ -106,6 +106,8 @@ class EnvironmentVariablesManager {
     'CLICKHOUSE_USER',
     'CLICKHOUSE_PASSWORD',
     'CLICKHOUSE_DB',
+
+    'NOTIFICATIONS_SERVICE_URL',
   ];
 
   get isInitialized() {

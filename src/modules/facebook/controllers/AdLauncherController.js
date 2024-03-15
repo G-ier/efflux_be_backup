@@ -9,6 +9,7 @@ const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const CompositeService = require('../services/CompositeService');
 const AdQueueService = require('../services/AdQueueService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
+const { notifyUser } = require('../../../shared/lib/NotificationsService');
 const _ = require('lodash');
 const axios = require('axios');
 const PixelsService = require('../services/PixelsService');
@@ -121,39 +122,14 @@ class AdLauncherController {
       console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
-      this.notifyUser(
-        'Ad Launch Succesful',
+      notifyUser(
+        'Ad Launch Successful',
         `Ad ${adData.name} created with ID: ${adCreationResult.id}`,
         req.user.id,
       );
     } catch (error) {
       console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
       this.respondWithError(res, { error, pixel, page, accountName, adAccountName });
-    }
-  }
-  // Use Axios to call the notifications service
-  async notifyUser(title, message, userId) {
-    const data = {
-      user_id: userId,
-      title: title,
-      message: message,
-    };
-
-    // The URL of the notifications service: https://github.com/roiads/efflux-serverless/blob/20559471b5f97e99a2e8846ba71c2396320d6278/services/efflux-notifications/src/app.js#L32
-    const url = 'https://notifications.efflux.com/create';
-
-    try {
-      const response = await axios.post(url, data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log(response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error sending notification:', error.response.data);
-      throw error;
     }
   }
 
