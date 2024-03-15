@@ -10,16 +10,13 @@ class S3Service {
     });
   }
 
-  async generatePresignedUrl(fileName, fileType, expiresIn = 3600) {
+  async generatePresignedUrl(fileName, fileType, expiresIn = 3600, tagging = null) {
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: fileName,
       ContentType: fileType,
+      Tagging: tagging
     });
-
-    console.debug('bucketName:', this.bucketName);
-    console.debug('fileName:', fileName);
-    console.debug('fileType:', fileType);
 
     try {
       const result = await getSignedUrl(this.s3Client, command, { expiresIn });
