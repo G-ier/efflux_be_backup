@@ -308,6 +308,14 @@ const NotificationsLogger = new CustomLogger({
   logStreamName: 'notifications',
 });
 
+// Emails Logger
+const EmailsLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'emails',
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -334,4 +342,5 @@ module.exports = {
   ClickhouseLogger,
   ServerLogger,
   NotificationsLogger,
+  EmailsLogger,
 };
