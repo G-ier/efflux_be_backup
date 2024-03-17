@@ -3,9 +3,8 @@ const Auth0Service = require('../services/Auth0Service');
 const RoleService = require('../services/RoleService');
 const UserService = require('../services/UserService');
 const OrganizationService = require('../../organizations/services/OrganizationService');
-const { sendInvitationEmail } = require('../../../shared/services/EmailsService');
+const EmailsService = require('../../../shared/lib/EmailsService');
 
-const axios = require('axios');
 const generator = require('generate-password');
 
 class UsersController {
@@ -14,6 +13,7 @@ class UsersController {
     this.auth0Service = new Auth0Service();
     this.roleService = new RoleService();
     this.organizationService = new OrganizationService();
+    this.emailsService = new EmailsService();
   }
 
   async createUser(req, res) {
@@ -51,7 +51,7 @@ class UsersController {
           role_id,
         });
 
-        const emailResponse = await sendInvitationEmail(
+        const emailResponse = await this.emailsService.sendInvitationEmail(
           email,
           fullName,
           organizationName,

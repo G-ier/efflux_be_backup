@@ -1,8 +1,10 @@
 const S3Service = require('../../../shared/lib/S3Service');
+const RedirectUrlsService = require('../service/RedirectUrlsService');
 
 class AdLauncherController {
   constructor() {
     this.s3Service = new S3Service();
+    this.redirectUrlsService = new RedirectUrlsService();
   }
 
   async generatePresignedUrl(req, res) {
@@ -42,6 +44,14 @@ class AdLauncherController {
       mediType = 'images';
     }
     return `raw/${org_id}/${ad_account}/${mediType}/${formattedDate}/${day}/${filename}`;
+  }
+
+  async getRedirectUrls(req, res) {
+    const { campaignId, network } = req.query;
+    const urls = await this.redirectUrlsService.getRedirectUrls(campaignId, network);
+    return res.json({
+      urls,
+    });
   }
 }
 
