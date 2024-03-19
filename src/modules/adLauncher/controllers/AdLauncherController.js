@@ -1,6 +1,6 @@
 const S3Service = require('../../../shared/lib/S3Service');
 
-class AdLancherController {
+class AdLauncherController {
   constructor() {
     this.s3Service = new S3Service();
   }
@@ -16,4 +16,4 @@ class AdLancherController {
   }
 }
 
-module.exports = AdLancherController;
+module.exports = AdLauncherController;
