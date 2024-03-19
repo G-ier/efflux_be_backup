@@ -1,6 +1,6 @@
 const UserService = require('../src/modules/auth/services/UserService');
 const _ = require('lodash');
-const printDebug = true;
+const printDebug = false;
 
 module.exports = async (req, res, next) => {
   req.auth.isAdmin = req.auth.permissions.includes('admin');
