@@ -3,7 +3,6 @@ const _ = require('lodash');
 const printDebug = true;
 
 module.exports = async (req, res, next) => {
-  // TODO: Fix isAdmin
   req.auth.isAdmin = req.auth.permissions.includes('admin');
   if (printDebug) console.debug('req.auth.isAdmin: ', req.auth.isAdmin);
   req.auth.providerId = req.auth.sub.split('|')[1];
