@@ -1,5 +1,6 @@
 // Local application imports
 const { RequestsLogger } = require('../src/shared/lib/WinstonLogger');
+const printDebug = false;
 
 // Third party imports
 const { v4: uuidv4 } = require('uuid');
@@ -13,15 +14,24 @@ const routesLogger = async (req, res, next) => {
     const code = res.statusCode;
     const logMessage = `[${requestId}]: Response - ${req.method} ${req.url}, with status ${res.statusCode} and body ${arguments[0]}`;
     if (code >= 400) RequestsLogger.error(logMessage);
-    // TODO: only log if debug is enabled
-    // else RequestsLogger.info(logMessage);
+
+    // only log if debug is enabled
+    if (printDebug) {
+      console.debug(logMessage);
+      RequestsLogger.debug(logMessage);
+    }
 
     originalSend.apply(res, arguments);
   };
 
-  RequestsLogger.info(
-    `[${requestId}]: Request - ${method} ${url} ${JSON.stringify({ headers, query, body })}`,
-  );
+  if (printDebug) {
+    console.debug(
+      `[${requestId}]: Request - ${method} ${url} ${JSON.stringify({ headers, query, body })}`,
+    );
+    RequestsLogger.info(
+      `[${requestId}]: Request - ${method} ${url} ${JSON.stringify({ headers, query, body })}`,
+    );
+  }
 
   next();
 };
