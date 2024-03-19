@@ -1,10 +1,10 @@
 const checkPermission = (requiredPermissions) => {
   return async (req, res, next) => {
-    const userPermissions = req.user.permissions
+    const userPermissions = req.user.permissions;
 
     // Check if user has any of the required permissions
     const hasPermission = requiredPermissions.some((requiredPermission) =>
-    userPermissions.includes(requiredPermission),
+      userPermissions.includes(requiredPermission),
     );
 
     if (!hasPermission) {
