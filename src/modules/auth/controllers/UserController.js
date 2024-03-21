@@ -3,7 +3,7 @@ const Auth0Service = require('../services/Auth0Service');
 const RoleService = require('../services/RoleService');
 const UserService = require('../services/UserService');
 const OrganizationService = require('../../organizations/services/OrganizationService');
-const EnvironmentVariablesManager = require("../../../shared/services/EnvironmentVariablesManager");
+const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 const axios = require('axios');
 const generator = require('generate-password');
@@ -20,11 +20,13 @@ class UsersController {
     try {
       const { fullName, email, role } = req.body;
       let organizationName = '';
-      const role_name = role?.toLowerCase()
+      const role_name = role?.toLowerCase();
       const role_obj = await this.roleService.fetchOne(['*'], { name: role_name });
-      const role_id = role_obj?.id
+      const role_id = role_obj?.id;
       if (req.user.org_id) {
-        const organization = await this.organizationService.fetchOne(['*'], { id: req.user.org_id });
+        const organization = await this.organizationService.fetchOne(['*'], {
+          id: req.user.org_id,
+        });
         organizationName = organization?.name;
       }
 
@@ -49,8 +51,9 @@ class UsersController {
           role_id,
         });
 
-        const emailUrl = EnvironmentVariablesManager.getEnvVariable('EMAILS_SERVICE_ENDPOINT') + 'emails/invitation/new';
-
+        const emailUrl =
+          EnvironmentVariablesManager.getEnvVariable('EMAILS_SERVICE_ENDPOINT') +
+          'emails/invitation/new';
 
         const emailResponse = await axios.post(emailUrl, {
           to: email,
