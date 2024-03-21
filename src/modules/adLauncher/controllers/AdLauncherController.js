@@ -53,6 +53,13 @@ class AdLauncherController {
       urls,
     });
   }
+
+  async getDomain(req, res) {
+    const domains = await this.redirectUrlsService.getSedoDomain();
+    return res.json({
+      domains,
+    });
+  }
 }
 
 module.exports = AdLauncherController;

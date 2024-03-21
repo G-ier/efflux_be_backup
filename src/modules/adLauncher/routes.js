@@ -14,5 +14,11 @@ route.get('/redirect-urls', async (req, res) => {
   adLauncherController.getRedirectUrls(req, res);
 });
 
+// @route   /api/add-launcher/get-domain
+// @desc    GET Domains
+route.get('/domains', async (req, res) => {
+  adLauncherController.getDomain(req, res);
+});
+
 
 module.exports = route;
