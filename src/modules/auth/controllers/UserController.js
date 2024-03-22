@@ -4,6 +4,7 @@ const RoleService = require('../services/RoleService');
 const UserService = require('../services/UserService');
 const OrganizationService = require('../../organizations/services/OrganizationService');
 const EmailsService = require('../../../shared/lib/EmailsService');
+const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 const generator = require('generate-password');
 
