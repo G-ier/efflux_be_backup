@@ -6,6 +6,8 @@ class AdLauncherService {
     // TODO: Implement this method
     console.log(`Submit Add to Facebook`);
   }
+
+  async storeDataInRds(data) {}
 }
 
 module.exports = AdLauncherService;
