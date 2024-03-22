@@ -2,10 +2,9 @@ class AdLauncherService {
   constructor() {
   }
 
-  async uploadMediaToFacebook(type, adAccountId, imageBuffer) {
+  async submitAdToFacebook(type, adAccountId, imageBuffer) {
     // TODO: Implement this method
-    console.log(`Uploading media to Facebook...`);
-    console.log(`imageBuffer: --> ${imageBuffer}`);
+    console.log(`Submit Add to Facebook`);
   }
 }
 

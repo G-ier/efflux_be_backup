@@ -1,7 +1,5 @@
 const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require("@aws-sdk/client-sqs");
 const sqsClient = new SQSClient({ region: "us-east-1" });
-const { S3Client, GetObjectCommand } = require("@aws-sdk/client-s3");
-const s3Client = new S3Client({ region: "us-east-1" });
 const AdLauncherService = require("../src/modules/adLauncher/service/AdLauncherService");
 
 // TODO: Update these values to use AWS parameter store or environment variables
@@ -22,10 +20,7 @@ async function processMessage(message) {
     // process the message
     const { type, adAccountId, s3Key } = parsedBody;
 
-    const getObjectParams = { Bucket: bucketName, Key: s3Key };
-    const imageBuffer = await getS3Object(getObjectParams);
-
-    adLauncherService.uploadMediaToFacebook(type, adAccountId, imageBuffer);
+    adLauncherService.submitFacebookAd(type, adAccountId, imageBuffer);
 
   } catch (error) {
     console.log(`Error processing message: ${error}`);
