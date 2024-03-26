@@ -16,17 +16,20 @@ class AdLauncherService extends BaseService {
 
   // TODO: Fix this method
   async createAdCreative(token, adAccountId, creativeData) {
+    const { uploadedMedia, pageId } = creativeData;
     const payload = {
       "name": "Sample Image Ad Creative",
       "object_story_spec": {
         "link_data": {
-          "image_hash": creativeData,
+          "image_hash": uploadedMedia[0].hash,
           "link": "app.maximizer.io/176e5d5c/943286260346857/rrt/rtrt/",
           "message": "Try our product now!"
         },
-        "page_id": "110363331724627",
+        "page_id": pageId,
       },
     }
+
+    console.log('Ad-Creative Payload', payload);
 
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
     // Construct the request payload according to the Facebook API specifications
@@ -39,7 +42,6 @@ class AdLauncherService extends BaseService {
       });
       return response.data;
     } catch (error) {
-      this.logger.error(`Error creating Ad Creative: ${error.response}`);
       throw error?.response?.data?.error;
     }
   }

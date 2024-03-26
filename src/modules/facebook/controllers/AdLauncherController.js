@@ -45,7 +45,7 @@ class AdLauncherController {
     const uploadedMedia = images.map((image) => {
       return {
         type: 'image',
-        hash: image.fbhash,
+        hash: image.fbhash.S,
       };
     });
 
@@ -56,6 +56,7 @@ class AdLauncherController {
 
     console.log('Token:', token);
     console.log('User Account Name:', userAccountName);
+    console.log('firstKey', firstKey);
 
     // Step 2: Create Campaign
     // Documentation: https://developers.facebook.com/docs/marketing-api/reference/v19.0
@@ -74,7 +75,12 @@ class AdLauncherController {
     console.log('adSetId Created -->', adSetId);
 
     // Step 4: Create Ad Creative:
-    const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, {});
+    try {
+      const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, { uploadedMedia, pageId });
+      console.log('Ad Creative Created -->', adCreative);
+    } catch (error) {
+      console.log('Error in creating Ad Creative:', error);
+    }
 
     // STEP 5: Create the Ad
     /**
