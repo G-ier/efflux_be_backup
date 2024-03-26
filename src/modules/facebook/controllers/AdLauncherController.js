@@ -5,6 +5,7 @@ const AdsetsService = require('../services/AdsetsService');
 const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
+const DynamoRepository = require('../../../shared/lib/DynamoDBRepository');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const CompositeService = require('../services/CompositeService');
 const AdQueueService = require('../services/AdQueueService');
@@ -27,6 +28,7 @@ class AdLauncherController {
     this.compositeService = new CompositeService();
     this.pixelService = new PixelsService();
     this.pageService = new PageService();
+    this.ddbRepository = new DynamoRepository();
   }
 
   getAdAccountId(req) {
@@ -35,13 +37,19 @@ class AdLauncherController {
 
   async launchAd(req, res) {
     const pixelId = req.body.pixel_id?.toString();
-    const pageId = req.body.page_id?.toString();
+    const pageId = req.body.pageId?.toString();
+    const adAccountId = this.getAdAccountId(req);
 
     // Step 0: Get the Image info from DynamoDB
-
+    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
+    const uploadedMedia = images.map((image) => {
+      return {
+        type: 'image',
+        hash: image.fbhash,
+      };
+    });
 
     // Step 1: Get the Token
-    const adAccountId = this.getAdAccountId(req);
     const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
     const firstKey = Object.keys(adAccountsDataMap)[0];
     const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
@@ -65,8 +73,12 @@ class AdLauncherController {
     );
     console.log('adSetId Created -->', adSetId);
 
-    // Step 4: Upload Media
-    res.json({ success: true, token, campaignId, adSetId });
+    // Step 4: Create Ad Creative:
+    const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, {});
+
+    // STEP 5: Create the Ad
+
+    res.json({ success: true, campaignId, adSetId });
   }
 
   async launchAdOld(req, res) {

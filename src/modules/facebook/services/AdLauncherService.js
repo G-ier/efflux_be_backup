@@ -14,6 +14,36 @@ class AdLauncherService extends BaseService {
     this.contentRepository = new ContentRepository();
   }
 
+  // TODO: Fix this method
+  async createAdCreative(token, adAccountId, creativeData) {
+    const payload = {
+      "name": "Sample Image Ad Creative",
+      "object_story_spec": {
+        "link_data": {
+          "image_hash": creativeData,
+          "link": "app.maximizer.io/176e5d5c/943286260346857/rrt/rtrt/",
+          "message": "Try our product now!"
+        },
+        "page_id": "110363331724627",
+      },
+    }
+
+    const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
+    // Construct the request payload according to the Facebook API specifications
+
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      this.logger.error(`Error creating Ad Creative: ${error.response}`);
+      throw error?.response?.data?.error;
+    }
+  }
+
   async createAd({ token, adAccountId, adData }) {
     const url = `${FB_API_URL}act_${adAccountId}/ads`;
     // Construct the request payload according to the Facebook API specifications
