@@ -16,7 +16,7 @@ class AdLauncherService extends BaseService {
 
   // TODO: Fix this method
   async createAdCreative(token, adAccountId, creativeData) {
-    const { uploadedMedia } = creativeData;
+    const { uploadedMedia, pageId } = creativeData;
     console.log('Uploaded Media', uploadedMedia);
     const payload = {
       "name": "Sample Image Ad Creative",
@@ -26,7 +26,7 @@ class AdLauncherService extends BaseService {
           "link": "app.maximizer.io/176e5d5c/943286260346857/rrt/rtrt/",
           "message": "Try our product now!"
         },
-        "page_id": "206905615844512",
+        "page_id": pageId,
       },
     }
 
@@ -43,8 +43,7 @@ class AdLauncherService extends BaseService {
       });
       return response.data;
     } catch (error) {
-      this.logger.error(`Error creating Ad Creative: ${error.response}`);
-      throw error?.response?.data?.error;
+      console.log('Add Creative Creation Failed', error);
     }
   }
 
