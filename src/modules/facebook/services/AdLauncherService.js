@@ -17,7 +17,6 @@ class AdLauncherService extends BaseService {
   // TODO: Fix this method
   async createAdCreative(token, adAccountId, creativeData) {
     const { uploadedMedia, pageId } = creativeData;
-    console.log('Uploaded Media', uploadedMedia);
     const payload = {
       "name": "Sample Image Ad Creative",
       "object_story_spec": {
@@ -43,7 +42,7 @@ class AdLauncherService extends BaseService {
       });
       return response.data;
     } catch (error) {
-      console.log('Add Creative Creation Failed', error);
+      throw error?.response?.data?.error;
     }
   }
 
