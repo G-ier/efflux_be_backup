@@ -29,7 +29,6 @@ class RedirectUrlRepository {
 
   async fetchRedirectUrls(fields = ["*"], filters = {}, limit = 500) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
-    console.log('----->...', results)
     return results.map(this.toDomainEntity);
   }
 

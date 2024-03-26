@@ -77,6 +77,17 @@ class AdLauncherController {
     const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, {});
 
     // STEP 5: Create the Ad
+    /**
+     * Todo: Make the following API
+     * POST /act_{ad_account_id}/ads
+      {
+        "name": "Sample Ad Name",  // A user-friendly name for the ad
+        "adset_id": "{ad_set_id}",  // The ID of the ad set this ad belongs to
+        "creative": {"creative_id": "{creative_id}"},  // The ID of the ad creative to use
+        "status": "PAUSED",  // Optional: Set the initial status (e.g., ACTIVE, PAUSED)
+        "access_token": "{access_token}"  // Your access token for authentication
+      }
+     */
 
     res.json({ success: true, campaignId, adSetId });
   }
