@@ -76,7 +76,7 @@ class AdLauncherController {
 
     // Step 4: Create Ad Creative:
     try {
-      const adCreative = await this.adLauncherService.createAdCreative(token, adAccountId, { uploadedMedia });
+      const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, { uploadedMedia, pageId });
       console.log('Ad Creative Created -->', adCreative);
     } catch (error) {
       console.log('Error in creating Ad Creative:', error);
