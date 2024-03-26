@@ -5,6 +5,7 @@ const AdsetsService = require('../services/AdsetsService');
 const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
+const DynamoRepository = require('../../../shared/lib/DynamoDBRepository');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const CompositeService = require('../services/CompositeService');
 const AdQueueService = require('../services/AdQueueService');
@@ -27,6 +28,7 @@ class AdLauncherController {
     this.compositeService = new CompositeService();
     this.pixelService = new PixelsService();
     this.pageService = new PageService();
+    this.ddbRepository = new DynamoRepository();
   }
 
   getAdAccountId(req) {
@@ -34,6 +36,63 @@ class AdLauncherController {
   }
 
   async launchAd(req, res) {
+    const pixelId = req.body.pixel_id?.toString();
+    const pageId = req.body.pageId?.toString();
+    const adAccountId = this.getAdAccountId(req);
+
+    // Step 0: Get the Image info from DynamoDB
+    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
+    const uploadedMedia = images.map((image) => {
+      return {
+        type: 'image',
+        hash: image.fbhash,
+      };
+    });
+
+    // Step 1: Get the Token
+    const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
+    const firstKey = Object.keys(adAccountsDataMap)[0];
+    const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
+
+    console.log('Token:', token);
+    console.log('User Account Name:', userAccountName);
+
+    // Step 2: Create Campaign
+    // Documentation: https://developers.facebook.com/docs/marketing-api/reference/v19.0
+
+    const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
+    console.log('Campaign Created -->', campaignId);
+
+    // Step 3: Create Adset
+    const adSetId = await this.handleAdsetCreation(
+      req,
+      token,
+      firstKey,
+      campaignId,
+      adAccountsDataMap,
+    );
+    console.log('adSetId Created -->', adSetId);
+
+    // Step 4: Create Ad Creative:
+    const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, {});
+
+    // STEP 5: Create the Ad
+    /**
+     * Todo: Make the following API
+     * POST /act_{ad_account_id}/ads
+      {
+        "name": "Sample Ad Name",  // A user-friendly name for the ad
+        "adset_id": "{ad_set_id}",  // The ID of the ad set this ad belongs to
+        "creative": {"creative_id": "{creative_id}"},  // The ID of the ad creative to use
+        "status": "PAUSED",  // Optional: Set the initial status (e.g., ACTIVE, PAUSED)
+        "access_token": "{access_token}"  // Your access token for authentication
+      }
+     */
+
+    res.json({ success: true, campaignId, adSetId });
+  }
+
+  async launchAdOld(req, res) {
     let accountName, pixel, page, adAccountName;
     try {
       const pixelId = req.body.pixel_id?.toString();
@@ -164,7 +223,7 @@ class AdLauncherController {
     }
   }
   async getToken(entityId) {
-    const details = await this.compositeService.fetchEntitiesOwnerAccount('ad_account', entityId);
+    const details = await this.compositeService.fetchEntitiesOwnerByAdAccounts(entityId);
     return { token: details?.token, userAccountName: details?.name };
   }
 
