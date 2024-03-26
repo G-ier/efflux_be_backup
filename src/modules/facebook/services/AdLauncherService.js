@@ -16,17 +16,21 @@ class AdLauncherService extends BaseService {
 
   // TODO: Fix this method
   async createAdCreative(token, adAccountId, creativeData) {
+    const { uploadedMedia } = creativeData;
+    console.log('Uploaded Media', uploadedMedia);
     const payload = {
       "name": "Sample Image Ad Creative",
       "object_story_spec": {
         "link_data": {
-          "image_hash": creativeData,
+          "image_hash": uploadedMedia[0].hash,
           "link": "app.maximizer.io/176e5d5c/943286260346857/rrt/rtrt/",
           "message": "Try our product now!"
         },
-        "page_id": "110363331724627",
+        "page_id": "206905615844512",
       },
     }
+
+    console.log('Ad-Creative Payload', payload);
 
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
     // Construct the request payload according to the Facebook API specifications
