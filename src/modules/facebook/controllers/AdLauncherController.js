@@ -113,6 +113,13 @@ class AdLauncherController {
       );
     } catch (error) {
       console.error('Error creating ad', error);
+      if (error.code === 100) {
+        return res.status(200).json({
+          success: true,
+          message: 'No Payment Method Fount. Ad will not be launched. Please add a payment method to your Facebook account.',
+          error: error.error_user_msg,
+        });
+      }
       return res.status(500).json({
         success: false,
         message: 'Error creating ad',
