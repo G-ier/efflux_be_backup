@@ -43,8 +43,9 @@ class AdLauncherController {
     console.log('Ad Account Name: ', userAccountName);
 
     // STEP 0: Create a campaign
+    let newCampaign;
     try {
-      const newCampaign = await this.adLauncherService.createCampaign(
+      newCampaign = await this.adLauncherService.createCampaign(
         req.body.campaignData,
         adAccountId,
         token
@@ -52,7 +53,38 @@ class AdLauncherController {
       console.log('New Campaign Id', newCampaign);
     } catch (error) {
       console.error('Error creating campaign', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating campaign',
+        error: error.message
+      });
     }
+
+    // STEP 1: Create dynamic adset
+    const adsetData = req.body.adsetData;
+    const campaignId = newCampaign.id
+
+    let newAdset;
+    try {
+      newAdset = await this.adLauncherService.createAdset(
+        adsetData,
+        adAccountId,
+        token,
+        campaignId
+      );
+      console.log('New Adset Id', newAdset);
+    } catch (error) {
+      console.error('Error creating adset', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating adset',
+        error: error.message
+      });
+    }
+
+    // STEP 2: Create a Dynamic Creative Ad
+
+
     return res.json({
       success: true,
       message: 'Ad launched successfully in Facebook.'

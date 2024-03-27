@@ -15,7 +15,7 @@ class AdLauncherService extends BaseService {
   }
 
   /**
-   *
+   * Creates a campaign in Facebook's Marketing API
    * @param {*} params
    */
   async createCampaign (campaignData, adAccountId, token) {
@@ -29,6 +29,42 @@ class AdLauncherService extends BaseService {
     };
 
     const url = `${FB_API_URL}act_${adAccountId}/campaigns`;
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
+  }
+
+  async createAdset(adsetData, adAccountId, token, campaignId) {
+    const {
+      name,
+      daily_budget,
+      bid_amount,
+      billing_event,
+      optimization_goal,
+      targeting,
+      promoted_object,
+    } = adsetData;
+    const payload = {
+      "name": name,
+      "daily_budget": daily_budget,
+      "bid_amount": bid_amount,
+      "billing_event": billing_event,
+      "optimization_goal": optimization_goal,
+      "campaign_id": campaignId,
+      "targeting": targeting,
+      "promoted_object": promoted_object,
+      "status": "PAUSED",
+      "is_dynamic_creative": true
+    };
+
+    const url = `${FB_API_URL}act_${adAccountId}/adsets`;
     try {
       const response = await axios.post(url, payload, {
         headers: {
