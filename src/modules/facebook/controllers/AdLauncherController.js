@@ -116,7 +116,7 @@ class AdLauncherController {
       if (error.code === 100) {
         return res.status(200).json({
           success: true,
-          message: 'No Payment Method Fount. Ad will not be launched. Please add a payment method to your Facebook account.',
+          message: 'No Payment Method. Ad created but will not be launched.',
           error: error.error_user_msg,
         });
       }
