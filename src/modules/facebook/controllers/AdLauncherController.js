@@ -101,6 +101,26 @@ class AdLauncherController {
       });
     }
 
+    // STEP 3: Create an ad
+    let newAd;
+    try {
+      newAd = await this.adLauncherService.createNewAd(
+        req.body.adData.name,
+        newAdset.id,
+        adcreatives.id,
+        adAccountId,
+        token,
+      );
+    } catch (error) {
+      console.error('Error creating ad', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating ad',
+        error: error.message
+      });
+    }
+
+
     return res.json({
       success: true,
       message: 'Ad launched successfully in Facebook.'

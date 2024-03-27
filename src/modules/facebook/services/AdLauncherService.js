@@ -66,6 +66,8 @@ class AdLauncherService extends BaseService {
       "is_dynamic_creative": true
     };
 
+    console.log('Adset Payload -->', JSON.stringify(payload));
+
     const url = `${FB_API_URL}act_${adAccountId}/adsets`;
     try {
       const response = await axios.post(url, payload, {
@@ -104,6 +106,32 @@ class AdLauncherService extends BaseService {
       throw error?.response?.data?.error;
     }
   }
+
+  async createNewAd(name, adSetId, creativeId, adAccountId, token) {
+    const payload = {
+      "name": name,
+      "adset_id": adSetId,
+      "creative": {
+        "creative_id": creativeId
+      },
+      "status": "PAUSED"
+    }
+
+    const url = `${FB_API_URL}act_${adAccountId}/ads`;
+    console.log('New Ad Payload', JSON.stringify(payload));
+
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
+  }
+
 
   async createAd({ token, adAccountId, adData }) {
     const url = `${FB_API_URL}act_${adAccountId}/ads`;
