@@ -7,11 +7,13 @@ const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { FB_API_URL } = require("../constants");
 
 const BaseService = require("../../../shared/services/BaseService"); // Adjust the import path as necessary
+const DynamoRepository = require("../../../shared/lib/DynamoDBRepository");
 
 class AdLauncherService extends BaseService {
   constructor() {
     super(FacebookLogger);
     this.contentRepository = new ContentRepository();
+    this.ddbRepository = new DynamoRepository();
   }
 
   /**
@@ -77,25 +79,19 @@ class AdLauncherService extends BaseService {
     }
   }
 
-  // TODO: Fix this method
-  async createAdCreative(token, adAccountId, creativeData) {
-    const { uploadedMedia, pageId } = creativeData;
+  async createDynamicAdCreative(params, token, adAccountId) {
+    const mediaHashes = await this.getImageHashesFromDynamoDB(adAccountId);
     const payload = {
-      "name": "Sample Image Ad Creative",
-      "object_story_spec": {
-        "link_data": {
-          "image_hash": uploadedMedia[0].hash,
-          "link": "app.maximizer.io/176e5d5c/943286260346857/rrt/rtrt/",
-          "message": "Try our product now!"
-        },
-        "page_id": pageId,
-      },
+      ...params,
+      "dynamic_ad_voice": "DYNAMIC",
+      "asset_feed_spec": {
+        ...params.asset_feed_spec,
+        "images": mediaHashes,
+      }
     }
 
-    console.log('Ad-Creative Payload', payload);
-
+    console.log('Dynamic Ad Creative Payload', JSON.stringify(payload));
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
-    // Construct the request payload according to the Facebook API specifications
 
     try {
       const response = await axios.post(url, payload, {
@@ -138,6 +134,16 @@ class AdLauncherService extends BaseService {
       this.logger.error(`Error creating ad: ${error.response}`);
       throw error?.response?.data?.error;
     }
+  }
+
+  async getImageHashesFromDynamoDB(adAccountId) {
+    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
+    const uploadedMedia = images.map((image) => {
+      return {
+        hash: image.fbhash.S,
+      };
+    });
+    return uploadedMedia;
   }
 
 }

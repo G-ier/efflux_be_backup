@@ -82,8 +82,24 @@ class AdLauncherController {
       });
     }
 
-    // STEP 2: Create a Dynamic Creative Ad
+    // STEP 2: Create a Dynamic Ad Creatives
+    let adcreatives;
+    try {
+      adcreatives = await this.adLauncherService.createDynamicAdCreative(
+        req.body.adData.creative,
+        token,
+        adAccountId,
+      );
 
+      console.log('New Ad Creative Id', adcreatives);
+    } catch (error) {
+      console.error('Error creating ad', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating ad',
+        error: error.message
+      });
+    }
 
     return res.json({
       success: true,
