@@ -36,66 +36,27 @@ class AdLauncherController {
   }
 
   async launchAd(req, res) {
-    const pixelId = req.body.pixel_id?.toString();
-    const pageId = req.body.pageId?.toString();
-    const adAccountId = this.getAdAccountId(req);
+    const adAccountsDataMap = await this.getAdAccountsDataMap(req.body.adAccountId);
+    const adAccountId = Object.keys(adAccountsDataMap)[0];
+    const { token, userAccountName } = await this.getToken(adAccountsDataMap[adAccountId].id);
 
-    // Step 0: Get the Image info from DynamoDB
-    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
-    const uploadedMedia = images.map((image) => {
-      return {
-        type: 'image',
-        hash: image.fbhash.S,
-      };
-    });
+    console.log('Ad Account Name: ', userAccountName);
 
-    // Step 1: Get the Token
-    const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
-    const firstKey = Object.keys(adAccountsDataMap)[0];
-    const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
-
-    console.log('Token:', token);
-    console.log('User Account Name:', userAccountName);
-    console.log('firstKey', firstKey);
-
-    // Step 2: Create Campaign
-    // Documentation: https://developers.facebook.com/docs/marketing-api/reference/v19.0
-
-    const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
-    console.log('Campaign Created -->', campaignId);
-
-    // Step 3: Create Adset
-    const adSetId = await this.handleAdsetCreation(
-      req,
-      token,
-      firstKey,
-      campaignId,
-      adAccountsDataMap,
-    );
-    console.log('adSetId Created -->', adSetId);
-
-    // Step 4: Create Ad Creative:
+    // STEP 0: Create a campaign
     try {
-      const adCreative = await this.adLauncherService.createAdCreative(token, firstKey, { uploadedMedia, pageId });
-      console.log('Ad Creative Created -->', adCreative);
+      const newCampaign = await this.adLauncherService.createCampaign(
+        req.body.campaignData,
+        adAccountId,
+        token
+      );
+      console.log('New Campaign Id', newCampaign);
     } catch (error) {
-      console.log('Error in creating Ad Creative:', error);
+      console.error('Error creating campaign', error);
     }
-
-    // STEP 5: Create the Ad
-    /**
-     * Todo: Make the following API
-     * POST /act_{ad_account_id}/ads
-      {
-        "name": "Sample Ad Name",  // A user-friendly name for the ad
-        "adset_id": "{ad_set_id}",  // The ID of the ad set this ad belongs to
-        "creative": {"creative_id": "{creative_id}"},  // The ID of the ad creative to use
-        "status": "PAUSED",  // Optional: Set the initial status (e.g., ACTIVE, PAUSED)
-        "access_token": "{access_token}"  // Your access token for authentication
-      }
-     */
-
-    res.json({ success: true, campaignId, adSetId });
+    return res.json({
+      success: true,
+      message: 'Ad launched successfully in Facebook.'
+    })
   }
 
   async launchAdOld(req, res) {
@@ -276,6 +237,7 @@ class AdLauncherController {
 
     return campaignCreationResult.data.id;
   }
+
 
   async handleAdsetCreation(req, token, adAccountId, campaignId, adAccountsDataMap) {
     let adsetData = req.body.adsetData;

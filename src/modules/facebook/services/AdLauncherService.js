@@ -14,6 +14,33 @@ class AdLauncherService extends BaseService {
     this.contentRepository = new ContentRepository();
   }
 
+  /**
+   *
+   * @param {*} params
+   */
+  async createCampaign (campaignData, adAccountId, token) {
+    const { name, objective, special_ad_categories } = campaignData;
+    const status = "PAUSED";
+    const payload = {
+      name,
+      objective,
+      status,
+      special_ad_categories,
+    };
+
+    const url = `${FB_API_URL}act_${adAccountId}/campaigns`;
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
+  }
+
   // TODO: Fix this method
   async createAdCreative(token, adAccountId, creativeData) {
     const { uploadedMedia, pageId } = creativeData;
