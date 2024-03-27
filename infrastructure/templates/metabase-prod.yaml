@@ -67,8 +67,10 @@ Resources:
   MetabaseInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-      InstanceType: t3a.medium
+      # ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+      # InstanceType: t3a.medium
+      ImageId: ami-074e66fa89a4739e6 # Ubuntu Server 22.04 LTS ARM (HVM) SSD
+      InstanceType: t4g.medium
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -86,12 +88,32 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           # Update and install initial packages
-          sudo apt-get update && \
-          sudo apt-get upgrade -y && \
-          sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby
+          sudo apt update && \
+          sudo apt upgrade -y && \
+          sudo apt install -y python3 ca-certificates curl gnupg curl htop wget zip ruby
 
+          # Install Java
+          sudo apt install openjdk-19-jre-headless
+
+          # Install and configure Nginx
+          sudo apt install nginx -y
+          sudo tee /etc/nginx/sites-available/metabase <<EOF
+          server {
+            listen 80;
+            listen [::]:80;
+            server_name mb.efflux.com;
+
+            location / {
+              proxy_pass http://localhost:3000;
+            }
+          }
+          EOF
+          sudo ln -s /etc/nginx/sites-available/metabase /etc/nginx/sites-enabled/
+          sudo systemctl restart nginx
+
+          # Add aliases to the .bashrc file
           echo "alias htop='sudo htop'" >> ~/.bashrc
-          echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
+          echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y'" >> ~/.bashrc
           source ~/.bashrc
       Tags:
         - Key: Name
