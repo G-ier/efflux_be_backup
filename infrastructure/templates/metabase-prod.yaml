@@ -95,6 +95,23 @@ Resources:
           # Install Java
           sudo apt install openjdk-19-jre-headless
 
+          # Install and configure Nginx
+          sudo apt install nginx -y
+          sudo tee /etc/nginx/sites-available/metabase <<EOF
+          server {
+            listen 80;
+            listen [::]:80;
+            server_name mb.efflux.com;
+
+            location / {
+              proxy_pass http://localhost:3000;
+            }
+          }
+          EOF
+          sudo ln -s /etc/nginx/sites-available/metabase /etc/nginx/sites-enabled/
+          sudo systemctl restart nginx
+
+          # Add aliases to the .bashrc file
           echo "alias htop='sudo htop'" >> ~/.bashrc
           echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y'" >> ~/.bashrc
           source ~/.bashrc
