@@ -316,6 +316,14 @@ const EmailsLogger = new CustomLogger({
   logStreamName: 'emails',
 });
 
+// Sherlock Logger
+const SherlockLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'sherlock',
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -343,4 +351,5 @@ module.exports = {
   ServerLogger,
   NotificationsLogger,
   EmailsLogger,
+  SherlockLogger,
 };
