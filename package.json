@@ -24,6 +24,7 @@
     "@aws-sdk/client-secrets-manager": "^3.540",
     "@aws-sdk/client-sqs": "^3.540",
     "@aws-sdk/client-ssm": "^3.540",
+    "@aws-sdk/lib-dynamodb": "^3.540.0",
     "@aws-sdk/s3-request-presigner": "^3.540",
     "async": "^3.2.5",
     "axios": "^1.6",

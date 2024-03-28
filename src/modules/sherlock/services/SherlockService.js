@@ -9,17 +9,7 @@ class SherlockService {
   }
 
   async paramConvertWrapper(callback, params) {
-    const {
-      startDate,
-      endDate,
-      campaignId,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
-      orgId,
-    } = params;
+    const { startDate, endDate, orgId } = params;
     if (!startDate || !endDate) {
       throw new Error(
         'Missing date parameters, please provide startDate and endDate in url pattern',
@@ -31,25 +21,11 @@ class SherlockService {
       throw new Error('Invalid date format');
     }
 
-    if (network && !AVAILABLE_NETWORKS.includes(network)) {
-      throw new Error('Invalid network');
-    }
-
-    if (trafficSource && !AVAILABLE_TRAFFIC_SOURCES.includes(trafficSource)) {
-      throw new Error('Invalid traffic source');
-    }
-
     const convertedStartDate = yesterdayYMD(startDate);
     const convertedEndDate = dayYMD(endDate);
     const finalParams = {
       startDate: convertedStartDate,
       endDate: convertedEndDate,
-      campaignId,
-      network,
-      trafficSource,
-      mediaBuyer,
-      adAccountId,
-      q,
       orgId,
     };
     try {
@@ -60,10 +36,10 @@ class SherlockService {
     }
   }
 
-  async generateFindingsDaily(startDate, endDate, campaignId, orgId) {
+  async generateFindingsDaily(startDate, endDate, orgId) {
     return await this.paramConvertWrapper(
       (...args) => this.sherlockRepository.findingsDaily(...args),
-      { startDate, endDate, campaignId, orgId },
+      { startDate, endDate, orgId },
     );
   }
 }
