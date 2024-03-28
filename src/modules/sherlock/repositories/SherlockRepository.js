@@ -36,7 +36,7 @@ class SherlockRepository {
     try {
       const data = await docClient.send(command);
       console.log('returning data:', data);
-      // return cleanData(data.Items);
+      return cleanData(data.Items);
     } catch (error) {
       console.error('Error querying data:', error);
       throw error;

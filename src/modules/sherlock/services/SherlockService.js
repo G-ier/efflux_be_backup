@@ -1,8 +1,6 @@
 const SherlockRepository = require('../repositories/SherlockRepository');
 const { SherlockLogger } = require('../../../shared/lib/WinstonLogger');
 
-const { yesterdayYMD, dayYMD } = require('../../../shared/helpers/calendar');
-
 class SherlockService {
   constructor() {
     this.sherlockRepository = new SherlockRepository();
@@ -21,11 +19,9 @@ class SherlockService {
       throw new Error('Invalid date format');
     }
 
-    const convertedStartDate = yesterdayYMD(startDate);
-    const convertedEndDate = dayYMD(endDate);
     const finalParams = {
-      startDate: convertedStartDate,
-      endDate: convertedEndDate,
+      startDate: startDate,
+      endDate: endDate,
       orgId,
     };
     try {
