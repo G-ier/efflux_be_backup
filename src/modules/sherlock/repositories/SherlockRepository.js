@@ -31,8 +31,6 @@ class SherlockRepository {
       Parameters: [orgId.toString(), startDate, endDate],
     });
 
-    // console.debug('command:', command.input.Parameters);
-
     try {
       const data = await docClient.send(command);
       console.log('returning data:', data);
