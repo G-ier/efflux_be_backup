@@ -19,7 +19,6 @@ class SherlockRepository {
     const { startDate, endDate, orgId } = params;
 
     const result = await this.queryFindingsDaily(startDate, endDate, orgId);
-    return result;
     return _.groupBy(result, 'created_at');
   }
 

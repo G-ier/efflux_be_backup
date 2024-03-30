@@ -15,18 +15,10 @@ class SherlockController {
 
       const user = req.user;
       const orgId = user?.org_id || 1; // 1 is for default org
-      const data = await this.sherlockService.generateFindingsDaily(startDate, endDate, orgId);
-      // console.debug('DATA: ', data);
-      // return data in an iterable format
-      // const findings = Object.keys(data).map((key) => {
-      //   return {
-      //     date: key,
-      //     findings: data[key],
-      //   };
-      // });
 
-      // console.debug('findings: ', findings);
-      return res.status(200).json(data);
+      const findings = await this.sherlockService.generateFindingsDaily(startDate, endDate, orgId);
+
+      return res.status(200).json(findings);
     } catch (e) {
       console.log(e);
       return res.status(500).json({ error: e.message });
