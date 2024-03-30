@@ -1,4 +1,4 @@
-const { unmarshall } = require('@aws-sdk/util-dynamodb');
+const printDebug = true;
 function formatDateToISO(date) {
   // Ensure the input is a Date object
   if (!(date instanceof Date)) {
@@ -22,16 +22,21 @@ function formatDateToISO(date) {
   );
 }
 
-function cleanData(parsedData) {
-  // unmarshall it & delete org_id
-  parsedData = parsedData.map((item) => {
+function cleanData(rawData) {
+  // From dynamodb to json
+  if (printDebug) console.debug('RAW DATA: ', rawData);
+  const parsedData = rawData.map((item) => {
     delete item['org_id'];
-    item['bad_links_data'] = unmarshall(item['bad_links_data']);
-    item['badly_accessed_data'] = unmarshall(item['badly_accessed_data']);
+    if (printDebug) console.debug('ITEM: ', item);
+    // convert from object to array
+    item['bad_links_data'] = Object.values(item['bad_links_data']);
+    item['badly_accessed_data'] = Object.values(item['badly_accessed_data']);
     item['created_at'] = formatDateToISO(new Date(item['created_at']));
 
     return item;
   });
+
+  if (printDebug) console.debug('PARSED DATA: ', parsedData);
 
   return parsedData;
 }

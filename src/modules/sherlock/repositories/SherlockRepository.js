@@ -17,17 +17,15 @@ class SherlockRepository {
 
   async findingsDaily(params) {
     const { startDate, endDate, orgId } = params;
-    console.log('START DATE: ', startDate);
-    console.log('END DATE: ', endDate);
-    console.log('ORG ID: ', orgId);
 
     const result = await this.queryFindingsDaily(startDate, endDate, orgId);
+    return result;
     return _.groupBy(result, 'created_at');
   }
 
   async queryFindingsDaily(startDate, endDate, orgId) {
     const command = new ExecuteStatementCommand({
-      Statement: `SELECT * FROM "${this.tableName}" WHERE "org_id" = ? AND "created_at" BETWEEN ? AND ? LIMIT 50 ORDER BY "created_at" desc`,
+      Statement: `SELECT * FROM "${this.tableName}" WHERE "org_id" = ? AND "created_at" BETWEEN ? AND ?`,
       Parameters: [orgId.toString(), startDate, endDate],
     });
 
