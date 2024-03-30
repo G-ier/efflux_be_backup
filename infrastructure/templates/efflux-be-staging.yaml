@@ -137,7 +137,7 @@ Resources:
             source ~/.bashrc
 
             # Define environment
-            echo -e "DATABASE_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "DATABASE_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE\nNEWRELIC_ENVIRONMENT=staging" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check

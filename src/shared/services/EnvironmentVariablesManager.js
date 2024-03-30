@@ -196,7 +196,6 @@ class EnvironmentVariablesManager {
       }
     } else {
       const requiredEnvVariables = [
-        'CRON_ENVIRONMENT',
         'DATABASE_ENVIRONMENT',
         'REDIS_ENVIRONMENT',
         'NEWRELIC_ENVIRONMENT',
