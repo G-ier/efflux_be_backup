@@ -92,17 +92,18 @@ Resources:
             DeleteOnTermination: yes
             Groups:
               - !Ref InstanceSecurityGroup
-        ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+        # ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+        # InstanceType: t3a.micro
+        ImageId: ami-074e66fa89a4739e6 # Ubuntu Server 22.04 LTS ARM (HVM) SSD
+        InstanceType: t4g.micro
         KeyName: efflux-staging
-        # TODO: investigate the usage of t4g.small
-        InstanceType: t3a.micro
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
             # Update and install initial packages
-            sudo apt-get update && \
-            sudo apt-get upgrade -y && \
-            sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+            sudo apt update && \
+            sudo apt upgrade -y && \
+            sudo apt install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
 
@@ -113,8 +114,8 @@ Resources:
             NODE_MAJOR=20
             echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
-            sudo apt-get update
-            sudo apt-get install nodejs -y
+            sudo apt update
+            sudo apt install nodejs -y
 
             # Install PM2
             sudo npm install pm2@latest -g
@@ -134,7 +135,7 @@ Resources:
             echo "alias logs='cd /var/www/efflux-backend && pm2 logs'" >> ~/.bashrc
             # Add alias for quickly resetting the application
             echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env staging && pm2 save && pm2 logs'" >> ~/.bashrc
-            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
+            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y'" >> ~/.bashrc
             source ~/.bashrc
 
             # Define environment
