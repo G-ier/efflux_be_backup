@@ -6,6 +6,13 @@ class SherlockService {
     this.sherlockRepository = new SherlockRepository();
   }
 
+  async generateFindingsDaily(startDate, endDate, orgId) {
+    return await this.paramConvertWrapper(
+      (...args) => this.sherlockRepository.findingsDaily(...args),
+      { startDate, endDate, orgId },
+    );
+  }
+
   async paramConvertWrapper(callback, params) {
     const { startDate, endDate, orgId } = params;
     if (!startDate || !endDate) {
@@ -30,13 +37,6 @@ class SherlockService {
       console.log(e);
       throw new Error(e);
     }
-  }
-
-  async generateFindingsDaily(startDate, endDate, orgId) {
-    return await this.paramConvertWrapper(
-      (...args) => this.sherlockRepository.findingsDaily(...args),
-      { startDate, endDate, orgId },
-    );
   }
 }
 

@@ -16,6 +16,7 @@ class SherlockController {
       const user = req.user;
       const orgId = user?.org_id || 1; // 1 is for default org
       const data = await this.sherlockService.generateFindingsDaily(startDate, endDate, orgId);
+      console.debug('DATA: ', data);
       // return data in an iterable format
       const findings = Object.keys(data).map((key) => {
         return {
@@ -24,7 +25,7 @@ class SherlockController {
         };
       });
 
-      console.log('DATA: ', findings);
+      console.debug('findings: ', findings);
       return res.status(200).json(findings);
     } catch (e) {
       console.log(e);
