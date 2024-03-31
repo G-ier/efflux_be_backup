@@ -20,5 +20,11 @@ route.get('/domains', async (req, res) => {
   adLauncherController.getDomain(req, res);
 });
 
+// @route /api/add-launcher/tonic/campaigns
+// @desc  GET Get campaigns from tonic
+route.get('/tonic/campaigns', async (req, res) => {
+  adLauncherController.getTonicCampaigns(req, res);
+});
+
 
 module.exports = route;
