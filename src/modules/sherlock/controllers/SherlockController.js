@@ -1,6 +1,5 @@
 const SherlockService = require('../services/SherlockService');
 const { SherlockLogger } = require('../../../shared/lib/WinstonLogger');
-const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 const printDebug = true;
 
 class SherlockController {
