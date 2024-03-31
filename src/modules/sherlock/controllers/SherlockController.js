@@ -6,7 +6,6 @@ const printDebug = true;
 class SherlockController {
   constructor() {
     this.sherlockService = new SherlockService();
-    this.logger = new SherlockLogger();
   }
 
   async generateFindingsDaily(req, res) {
@@ -24,13 +23,13 @@ class SherlockController {
 
       if (printDebug) {
         console.debug('FINDINGS: ', findings);
-        this.logger.info('FINDINGS: ', findings);
+        SherlockLogger.info('FINDINGS: ', findings);
       }
 
       return res.status(200).json(findings);
     } catch (e) {
       console.error(e);
-      this.logger.error(e.message);
+      SherlockLogger.error(e.message);
       return res.status(500).json({ error: e.message });
     }
   }
