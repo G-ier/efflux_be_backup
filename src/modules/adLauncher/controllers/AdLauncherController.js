@@ -1,10 +1,12 @@
 const S3Service = require('../../../shared/lib/S3Service');
+const AdLauncherService = require('../service/AdLauncherService');
 const RedirectUrlsService = require('../service/RedirectUrlsService');
 
 class AdLauncherController {
   constructor() {
     this.s3Service = new S3Service();
     this.redirectUrlsService = new RedirectUrlsService();
+    this.adLauncherService = new AdLauncherService();
   }
 
   async generatePresignedUrl(req, res) {
@@ -58,6 +60,13 @@ class AdLauncherController {
     const domains = await this.redirectUrlsService.getSedoDomain();
     return res.json({
       domains,
+    });
+  }
+
+  async getTonicCampaigns(req, res) {
+    const campaigns = await this.adLauncherService.getTonicCampaigns();
+    return res.json({
+      campaigns,
     });
   }
 }
