@@ -31,11 +31,63 @@ class AdLauncherController {
     this.ddbRepository = new DynamoRepository();
   }
 
+  validateAllParameters(req, res) {
+    const payload = req.body;
+
+    const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url'];
+    const campaignDataKeys = ['name', 'objective', 'special_ad_categories', 'category', 'vertical'];
+    const adsetDataKeys = ['name', 'daily_budget', 'billing_event', 'optimization_goal', 'bid_strategy', 'attribution_spec', 'targeting', 'promoted_object', 'start_time'];
+    const adDataKeys = ['name', 'status', 'creative'];
+
+    for (const key of requiredKeys) {
+      if (!payload.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: ${key}`
+        })
+      }
+    }
+
+    for (const key of campaignDataKeys) {
+      if (!payload.campaignData.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: campaignData: ${key}`
+        })
+      }
+    }
+
+    for (const key of adsetDataKeys) {
+      if (!payload.adsetData.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: adsetDataKeys: ${key}`
+        })
+      }
+    }
+
+    for (const key of adDataKeys) {
+      if (!payload.adData.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: adDataKeys: ${key}`
+        })
+      }
+    }
+    // Additional deep checks can be added here if necessary for nested objects like targeting, creative, etc.
+
+    return true; // Payload is valid
+  }
+
   getAdAccountId(req) {
     return req.body.adAccountId;
   }
 
   async launchAd(req, res) {
+    // Validate the request body
+
+    this.validateAllParameters(req, res);
+
     const adAccountsDataMap = await this.getAdAccountsDataMap(req.body.adAccountId);
     const adAccountId = Object.keys(adAccountsDataMap)[0];
     const { token, userAccountName } = await this.getToken(adAccountsDataMap[adAccountId].id);
