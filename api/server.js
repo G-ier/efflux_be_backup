@@ -4,7 +4,6 @@ const express = require('express');
 
 // Local imports
 const EnvironmentVariablesManager = require('../src/shared/services/EnvironmentVariablesManager');
-const { initRedis } = require('../src/shared/lib/RedisConnection');
 
 // Initialize API
 const initializeAPI = async () => {
@@ -14,7 +13,16 @@ const initializeAPI = async () => {
   console.log('Environment variables retrieved.');
 
   console.log('Initializing Redis...');
+  const { initRedis } = require('../src/shared/lib/RedisConnection');
   await initRedis();
+
+  try {
+    const { pollSQSQueue } = require("../sqs/index");
+    pollSQSQueue();
+  } catch (error) {
+    console.log("Error initializing SQS Queue");
+    console.log(error);
+  }
 
   // Initialize server
   const server = express();

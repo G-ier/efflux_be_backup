@@ -548,6 +548,7 @@ Resources:
                   - elasticloadbalancing:*
                   - s3:*
                   - iam:PassRole
+                  - sqs:*
                   - sns:*
                   - logs:*
                   - cloudwatch:*
@@ -592,6 +593,7 @@ Resources:
                   - elasticloadbalancing:*
                   - iam:PassRole
                   - s3:Get*
+                  - sqs:*
                   - s3:List*
                   - sns:*
                   - logs:*
@@ -617,6 +619,7 @@ Resources:
               - elasticloadbalancing:*
               - iam:PassRole
               - s3:Get*
+              - sqs:*
               - s3:List*
               - sns:*
               - logs:*
