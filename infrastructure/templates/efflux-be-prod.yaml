@@ -668,6 +668,7 @@ Resources:
                   - s3:*
                   - iam:PassRole
                   - sns:*
+                  - sqs:*
                   - logs:*
                   - cloudwatch:*
                   - cloudformation:*
@@ -713,6 +714,7 @@ Resources:
                   - s3:Get*
                   - s3:List*
                   - sns:*
+                  - sqs:*
                   - logs:*
                   - cloudwatch:*
                   - cloudformation:*
@@ -738,6 +740,7 @@ Resources:
               - s3:Get*
               - s3:List*
               - sns:*
+              - sqs:*
               - logs:*
               - cloudwatch:*
               - cloudformation:*
