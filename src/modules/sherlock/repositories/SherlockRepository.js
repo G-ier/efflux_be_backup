@@ -26,6 +26,7 @@ class SherlockRepository {
     const command = new ExecuteStatementCommand({
       Statement: `SELECT * FROM "${this.tableName}" WHERE "org_id" = ? AND "created_at" BETWEEN ? AND ?`,
       Parameters: [orgId.toString(), startDate, endDate],
+      Limit: 20,
     });
 
     try {
