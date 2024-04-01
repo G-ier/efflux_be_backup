@@ -21,7 +21,7 @@
     "@aws-sdk/client-cloudwatch-logs": "^3.540",
     "@aws-sdk/client-dynamodb": "^3.540.0",
     "@aws-sdk/client-s3": "^3.540",
-    "@aws-sdk/client-secrets-manager": "^3.540",
+    "@aws-sdk/client-secrets-manager": "^3.543",
     "@aws-sdk/client-sqs": "^3.540",
     "@aws-sdk/client-ssm": "^3.540",
     "@aws-sdk/s3-request-presigner": "^3.540",
