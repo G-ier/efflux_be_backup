@@ -16,8 +16,13 @@ const initializeAPI = async () => {
   const { initRedis } = require('../src/shared/lib/RedisConnection');
   await initRedis();
 
-  const { pollSQSQueue } = require("../sqs/index");
-  pollSQSQueue();
+  try {
+    const { pollSQSQueue } = require("../sqs/index");
+    pollSQSQueue();
+  } catch (error) {
+    console.log("Error initializing SQS Queue");
+    console.log(error);
+  }
 
   // Initialize server
   const server = express();
