@@ -25,11 +25,12 @@ class AdLauncherService extends BaseService {
     const status = "PAUSED";
     const payload = {
       name,
-      objective,
+      objective: "OUTCOME_TRAFFIC",
       status,
       special_ad_categories,
     };
 
+    console.log('Campaign Payload -->', JSON.stringify(payload));
     const url = `${FB_API_URL}act_${adAccountId}/campaigns`;
     try {
       const response = await axios.post(url, payload, {
@@ -51,8 +52,12 @@ class AdLauncherService extends BaseService {
       billing_event,
       optimization_goal,
       targeting,
-      promoted_object,
+      promoted_object
     } = adsetData;
+
+    // TODO: Add device platform targeting logic here
+    delete targeting.os;
+
     const payload = {
       "name": name,
       "daily_budget": daily_budget,
@@ -63,7 +68,7 @@ class AdLauncherService extends BaseService {
       "targeting": targeting,
       "promoted_object": promoted_object,
       "status": "PAUSED",
-      "is_dynamic_creative": true
+      "is_dynamic_creative": true,
     };
 
     console.log('Adset Payload -->', JSON.stringify(payload));
