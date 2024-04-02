@@ -17,10 +17,10 @@ const initializeAPI = async () => {
   await initRedis();
 
   try {
-    const { pollSQSQueue } = require("../sqs/index");
+    const { pollSQSQueue } = require('../sqs/index');
     pollSQSQueue();
   } catch (error) {
-    console.log("Error initializing SQS Queue");
+    console.log('Error initializing SQS Queue');
     console.log(error);
   }
 
@@ -40,11 +40,16 @@ const initializeAPI = async () => {
 
   ServerLogger.info('Server initialized');
   ServerLogger.info('Database Url being used');
-  ServerLogger.info('DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'));
+  ServerLogger.info(
+    'DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'),
+  );
   ServerLogger.info('DATABASE_URL: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'));
-  ServerLogger.info('DATABASE_URL_BE_RO: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'));
-  ServerLogger.info('DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'));
-
+  ServerLogger.info(
+    'DATABASE_URL_BE_RO: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'),
+  );
+  ServerLogger.info(
+    'DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'),
+  );
 
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
