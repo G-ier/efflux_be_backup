@@ -711,8 +711,7 @@ Resources:
                   - ec2:*
                   - elasticloadbalancing:*
                   - iam:PassRole
-                  - s3:Get*
-                  - s3:List*
+                  - s3:*
                   - sns:*
                   - sqs:*
                   - logs:*
@@ -737,8 +736,7 @@ Resources:
               - ec2:*
               - elasticloadbalancing:*
               - iam:PassRole
-              - s3:Get*
-              - s3:List*
+              - s3:*
               - sns:*
               - sqs:*
               - logs:*

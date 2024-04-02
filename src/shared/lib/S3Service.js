@@ -11,15 +11,23 @@ class S3Service {
   }
 
   async generatePresignedUrl(fileName, fileType, expiresIn = 3600, tagging = null) {
+    console.info('File name:', fileName);
+    console.info('File type:', fileType);
+    console.info('Expires in:', expiresIn);
+    console.info('Tagging:', tagging);
+
     const command = new PutObjectCommand({
       Bucket: this.bucketName,
       Key: fileName,
       ContentType: fileType,
-      Tagging: tagging
+      Tagging: tagging,
     });
 
     try {
-      const result = await getSignedUrl(this.s3Client, command, { expiresIn });
+      const result = await getSignedUrl(this.s3Client, command, {
+        expiresIn,
+        unhoistableHeaders: new Set(['x-amz-tagging']),
+      });
       console.debug('Generated presigned url:', result);
       return result;
     } catch (error) {

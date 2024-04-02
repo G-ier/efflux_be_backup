@@ -19,7 +19,7 @@ class AdLauncherController {
     if (tags !== null) {
       // Convert tagging object to a URL-encoded string
       const tag = Object.entries(tags).map(([key, value]) => {
-          return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
+        return `${encodeURIComponent(key)}=${encodeURIComponent(value)}`;
       });
       taggingString = tag.join('&');
     }
