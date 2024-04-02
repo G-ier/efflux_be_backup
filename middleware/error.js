@@ -18,3 +18,4 @@ module.exports = function ErrorHandler(err, req, res, next) {
   }
   res.status(statusCode).json({ message });
 }
+
