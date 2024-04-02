@@ -124,6 +124,8 @@ Resources:
             sudo chmod +x ./install && \
             sudo ./install auto && \
             sudo service codedeploy-agent start
+            sudo service codedeploy-agent stop
+            sudo service codedeploy-agent start
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
