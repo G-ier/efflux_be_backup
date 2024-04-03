@@ -1,5 +1,7 @@
 {
   "adAccountId": "1239189443661209",
+  "internal_campaign_id": "as9d0asd90as",
+  "status": "draft",
   "campaignData": {
       "name": "this is just a test",
       "objective": "OUTCOME_SALES",

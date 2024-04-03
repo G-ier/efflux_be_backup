@@ -1,52 +1,51 @@
 'use strict';
-// Local Application Imports
-const cronJobService = require('./CronJobsService');
-const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
+
+// Third Party Imports
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
 
-const sqsClient = new SQSClient({ region: 'us-east-1' });
+// Local Application Imports
+const SQSService = require('./SQSService');
+const dynamo = require('./DynamoDBService');
 
+// Constants
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
   'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
+const sqsService = new SQSService(SqsQueueUrl);
+const dynamoService = dynamo;
 
-  /** fet */
 exports.handler = async (event) => {
   console.debug('Event: ', JSON.stringify(event, null, 2));
 
   // Process each record in the event
   for (let record of event.Records) {
+
     // Check if the record is an INSERT event
     if (record.eventName === 'INSERT') {
+
       // Use `unmarshall` to convert the DynamoDB format to a standard JavaScript object
-      const executionLogRow = unmarshall(record.dynamodb.NewImage);
+      const launchData = unmarshall(record.dynamodb.NewImage);
 
-      console.debug('Execution log row:', executionLogRow);
-
-      const fetchingKeyType = executionLogRow.type === 'spend' ? 'partitionKey' : 'rangeKey';
-
-
-
-          // Send message to SQS
-          await sendMessageToQueue(message);
+      // Check if there is existing media with the same internal_campaign_id
+      const existingCampaignMedia = await dynamoService.queryItems("efflux-media-library", {
+        KeyConditionExpression: "internal_campaign_id = :internal_campaign_id",
+        ExpressionAttributeValues: {
+          ":internal_campaign_id": jsonData.internal_campaign_id
         }
+      });
+
+      // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
+      if (existingCampaignMedia.length) {
+        launchData.image_hash = existingCampaignMedia[0].fbhash;
+        console.log('Send a launch signal to the Queue');
+        await sqsService.sendMessageToQueue(launchData);
+      }
+
+      // Otherwise, return without doing anything
+      else {
+        console.log('No existing media with the same internal_campaign_id');
+        return;
       }
     }
   }
-
-  return `Successfully processed ${event.Records.length} records.`;
 };
-
-async function sendMessageToQueue(event) {
-  const params = {
-    MessageBody: JSON.stringify(event),
-    QueueUrl: SqsQueueUrl,
-  };
-
-  try {
-    const data = await sqsClient.send(new SendMessageCommand(params));
-    console.debug(`Message sent to SQS queue: ${data.MessageId}`);
-  } catch (error) {
-    console.error(`❌ Error sending message to SQS queue: ${error}`);
-  }
-}
