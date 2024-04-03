@@ -1,6 +1,5 @@
 'use strict';
 // Local Application Imports
-const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
 
 // Local Application Imports
@@ -29,7 +28,7 @@ exports.handler = async (event) => {
       const existingCampaignMedia = await dynamoClient.queryItems('efflux-media-library', {
         KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
         ExpressionAttributeValues: {
-          ':internal_campaign_id': jsonData.internal_campaign_id,
+          ':internal_campaign_id': launchData.internal_campaign_id,
         },
       });
 
