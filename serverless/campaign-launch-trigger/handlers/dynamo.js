@@ -12,8 +12,8 @@ const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
   'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
 
-const sqsService = new SQSService(SqsQueueUrl);
-const dynamoService = dynamo;
+const sqsClient = new SQSService(SqsQueueUrl);
+const dynamoClient = dynamo;
 
 exports.handler = async (event) => {
   console.debug('Event: ', JSON.stringify(event, null, 2));
@@ -26,7 +26,7 @@ exports.handler = async (event) => {
       const launchData = unmarshall(record.dynamodb.NewImage);
 
       // Check if there is existing media with the same internal_campaign_id
-      const existingCampaignMedia = await dynamoService.queryItems('efflux-media-library', {
+      const existingCampaignMedia = await dynamoClient.queryItems('efflux-media-library', {
         KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
         ExpressionAttributeValues: {
           ':internal_campaign_id': jsonData.internal_campaign_id,
@@ -37,7 +37,7 @@ exports.handler = async (event) => {
       if (existingCampaignMedia.length) {
         launchData.image_hash = existingCampaignMedia[0].fbhash;
         console.log('Send a launch signal to the Queue');
-        await sqsService.sendMessageToQueue(launchData);
+        await sqsClient.sendMessageToQueue(launchData);
       }
 
       // Otherwise, return without doing anything
