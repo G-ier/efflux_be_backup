@@ -179,6 +179,14 @@ class AdLauncherService extends BaseService {
     return uploadedMedia;
   }
 
+  async saveTargetsToDynamoDB(payload) {
+    try {
+      return await this.ddbRepository.putTargetUrl(payload);
+    } catch (error) {
+      this.logger.error(`Error saving target URL: ${error}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = AdLauncherService;
