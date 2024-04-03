@@ -1,18 +1,24 @@
-const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require('@aws-sdk/client-sqs');
-const sqsClient = new SQSClient({ region: 'us-east-1' });
-const AdLauncherService = require('../src/modules/adLauncher/service/AdLauncherService');
+const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require("@aws-sdk/client-sqs");
+const sqsClient = new SQSClient({ region: "us-east-1" });
+const AdLauncherController = require("../src/modules/facebook/controllers/AdLauncherController");
 
 // TODO: Update these values to use AWS parameter store or environment variables
 const queueUrl = 'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
 
 async function processMessage(message) {
-  const adLauncherService = new AdLauncherService();
+  const adLauncherController = new AdLauncherController();
   try {
     console.debug('Raw message:', message);
     console.debug(`✅ Processing message: ${message.MessageId}`);
     // parse SQS message
     const messageBody = JSON.parse(message.Body);
-    console.debug('Message Body:', messageBody);
+    console.debug("Message Body:", messageBody);
+
+    console.log("Launch the campaign with everything")
+    const payload = {
+      body: messageBody,
+    }
+    await adLauncherController.launchAd(payload);
 
     console.log('Launch the campaign with everything');
   } catch (error) {

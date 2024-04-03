@@ -1,6 +1,5 @@
 'use strict';
 // Local Application Imports
-const { unmarshall } = require('@aws-sdk/util-dynamodb');
 
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
@@ -50,22 +49,26 @@ exports.handler = async (event) => {
   console.debug('Internal Campaign ID: ', message.internalCampaignId);
 
   // Step 2
-  const existingCampaignMedia = await dynamoClient.queryItems(DynamodbTableName, {
+  const launchingData = await dynamoClient.queryItems(DynamodbTableName, {
     KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
     ExpressionAttributeValues: {
       ':internal_campaign_id': message.internalCampaignId,
     },
   });
 
-  console.debug('Campaign: ', existingCampaignMedia);
+  console.debug('Campaign: ', launchingData);
 
   // Step 3
-  if (existingCampaignMedia.length) {
+  if (launchingData.length) {
+    const launchData = launchingData[0]
+    launchData.adData.creative.image_hashes = [{
+      hash: message.fbhash
+    }]
     await sqsClient.sendMessageToQueue(message);
     console.log('Sending a launch signal to the Queue');
-
     return `Successfully sent a launch signal to the Queue for campaign with internalCampaignId: ${message.internalCampaignId}`;
+  } else {
+    console.log('No campaign in progress found for internal campaign id: ', message.internalCampaignId);
+    return `No campaign in progress found for internal campaign id: ${message.internalCampaignId}`;
   }
-
-  return `Successfully processed ${event.Records.length} records.`;
 };

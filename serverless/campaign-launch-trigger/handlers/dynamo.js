@@ -34,8 +34,10 @@ exports.handler = async (event) => {
 
       // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
       if (existingCampaignMedia.length) {
-        launchData.image_hash = existingCampaignMedia[0].fbhash;
-        console.log('Sending a launch signal to the Queue');
+        launchData.adData.creative.image_hashes = [{
+          hash: existingCampaignMedia[0].fbhash
+        }]
+        console.log('Send a launch signal to the Queue');
         await sqsClient.sendMessageToQueue(launchData);
       }
 

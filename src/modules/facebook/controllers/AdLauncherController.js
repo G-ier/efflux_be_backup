@@ -208,17 +208,9 @@ class AdLauncherController {
           error: error.error_user_msg,
         });
       }
-      return res.status(500).json({
-        success: false,
-        message: 'Error creating ad',
-        error: error.message,
-      });
+      return 'Failure'
     }
-
-    return res.json({
-      success: true,
-      message: 'Ad launched successfully in Facebook.',
-    });
+    return 'Success'
   }
 
   async launchAdOld(req, res) {

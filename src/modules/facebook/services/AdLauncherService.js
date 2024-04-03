@@ -88,15 +88,16 @@ class AdLauncherService extends BaseService {
   }
 
   async createDynamicAdCreative(params, token, adAccountId) {
-    const mediaHashes = await this.getImageHashesFromDynamoDB(adAccountId);
     const payload = {
       ...params,
       "dynamic_ad_voice": "DYNAMIC",
       "asset_feed_spec": {
         ...params.asset_feed_spec,
-        "images": mediaHashes,
+        "images": params.image_hashes,
       }
     }
+
+    delete payload.image_hashes;
 
     console.log('Dynamic Ad Creative Payload', JSON.stringify(payload));
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
@@ -167,16 +168,6 @@ class AdLauncherService extends BaseService {
       this.logger.error(`Error creating ad: ${error.response}`);
       throw error?.response?.data?.error;
     }
-  }
-
-  async getImageHashesFromDynamoDB(adAccountId) {
-    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
-    const uploadedMedia = images.map((image) => {
-      return {
-        hash: image.fbhash.S,
-      };
-    });
-    return uploadedMedia;
   }
 
 }
