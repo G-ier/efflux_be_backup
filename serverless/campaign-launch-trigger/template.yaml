@@ -106,13 +106,13 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
     Properties:
-      QueueName: ready-to-launch-campaigns
+      QueueName: campaigns-ready-to-launch
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ReadyToLaunchCampaignsDLQ.Arn
         maxReceiveCount: 3
       Tags:
         - Key: Name
-          Value: ready-to-launch-campaigns
+          Value: campaigns-ready-to-launch
         - Key: project
           Value: efflux
   ReadyToLaunchCampaignsDLQ:
@@ -120,10 +120,10 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
     Properties:
-      QueueName: ready-to-launch-campaigns-dlq
+      QueueName: campaigns-ready-to-launch-dlq
       Tags:
         - Key: Name
-          Value: ready-to-launch-campaigns-dlq
+          Value: campaigns-ready-to-launch-dlq
         - Key: project
           Value: efflux
 

@@ -9,7 +9,7 @@ const dynamo = require('./services/DynamoDBService');
 // Constants
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
-  'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
+  'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
 
 const sqsClient = new SQSService(SqsQueueUrl);
 const dynamoClient = dynamo;
@@ -34,7 +34,9 @@ exports.handler = async (event) => {
 
       // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
       if (existingCampaignMedia.length) {
-        launchData.image_hash = existingCampaignMedia[0].fbhash;
+        launchData.adData.creative.image_hashes = [{
+          hash: existingCampaignMedia[0].fbhash
+        }]
         console.log('Send a launch signal to the Queue');
         await sqsClient.sendMessageToQueue(launchData);
       }
