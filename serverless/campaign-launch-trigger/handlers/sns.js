@@ -1,16 +1,18 @@
 'use strict';
 // Local Application Imports
-const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
-const { getItem } = require('./services/DynamoDBService');
-
-const sqsClient = new SQSClient({ region: 'us-east-1' });
 
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
   'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
 
 const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campaigns';
+
+const SqsService = require('./services/SQSService');
+const DynamoService = require('./services/DynamoDBService');
+
+const sqsClient = new SqsService(SqsQueueUrl);
+const dynamoClient = DynamoService;
 
 /**
  * Step 1: Receives message from SNS topic
@@ -47,7 +49,7 @@ exports.handler = async (event) => {
   console.debug('Message: ', message);
 
   // Step 2
-  const campaign = await getItem(
+  const campaign = await dynamoClient.getItem(
     DynamodbTableName,
     'internalCampaignId',
     message.internalCampaignId,
@@ -74,7 +76,7 @@ async function sendMessageToQueue(event) {
   };
 
   try {
-    const data = await sqsClient.send(new SendMessageCommand(params));
+    const data = await sqsClient.sendMessageToQueue(params);
     console.debug(`Message sent to SQS queue: ${data.MessageId}`);
   } catch (error) {
     console.error(`❌ Error sending message to SQS queue: ${error}`);

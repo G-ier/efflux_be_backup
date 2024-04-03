@@ -11,6 +11,7 @@ const dynamo = require('./services/DynamoDBService');
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
   'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
+
 const sqsService = new SQSService(SqsQueueUrl);
 const dynamoService = dynamo;
 
