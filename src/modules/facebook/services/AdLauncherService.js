@@ -182,7 +182,9 @@ class AdLauncherService extends BaseService {
 
   async saveTargetsToDynamoDB(payload) {
     try {
-      return await this.ddbRepository.putTargetUrl(payload);
+      const tenant = 'roi'; // This should be dynamic
+      const generatedDestinationUrl = `https://${payload.destinationUrl}?tenant=${tenant}&utm_campaign=${payload.campaignId}&ref_adnetwork=facebook&ref_pubsite=facebook&`;
+      return await this.ddbRepository.putTargetUrl(payload, generatedDestinationUrl);
     } catch (error) {
       this.logger.error(`Error saving target URL: ${error}`);
       throw error;

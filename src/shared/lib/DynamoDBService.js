@@ -37,8 +37,7 @@ class DynamoDBService {
     return response.Items;
   }
 
-  async putTargetUrl(payload) {
-    // Construct the command
+  async putTargetUrl(payload, destination_url) {
     const command = new PutCommand({
       TableName: "edge-rocket-targets",
       Item: {
@@ -47,7 +46,7 @@ class DynamoDBService {
         campaign_id: payload.campaignId,
         pixel_id: payload.pixelId,
         adset_id: payload.adSetId,
-        destination_url: `https://${payload.destinationUrl}`,
+        destination_url: destination_url,
       },
     });
 
