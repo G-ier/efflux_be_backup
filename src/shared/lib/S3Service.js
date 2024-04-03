@@ -26,7 +26,7 @@ class S3Service {
     try {
       const result = await getSignedUrl(this.s3Client, command, {
         expiresIn,
-        unhoistableHeaders: new Set(['x-amz-tagging']),
+        // unhoistableHeaders: new Set(['x-amz-tagging']),
       });
       console.debug('Generated presigned url:', result);
       return result;
