@@ -43,12 +43,12 @@ Resources:
         - Key: operation
           Value: analytics
 
-  CampaignLaunchTriggerFunction:
+  CampaignLaunchDynamoTriggerFunction:
     Type: AWS::Serverless::Function
     Properties:
-      CodeUri: ./src
-      Handler: app.handler
-      FunctionName: efflux-campaign-launch-trigger
+      CodeUri: ./handlers
+      Handler: dynamo.handler
+      FunctionName: campaign-launch-trigger-dynamo
       Description: A Lambda function to trigger the launch of campaigns -
         transition them from draft to published
       Role: !GetAtt LambdaFunctionRole.Arn
@@ -62,6 +62,34 @@ Resources:
             QueueName: !Ref ReadyToLaunchCampaignsQueue
         - SQSPollerPolicy:
             QueueName: !Ref ReadyToLaunchCampaignsDLQ
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
+          DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
+      Events:
+        DynamoDBStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt InternalCampaignsTable.StreamArn
+            BatchSize: 1
+            StartingPosition: LATEST
+
+  CampaignLaunchSNSTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./handlers
+      Handler: sns.handler
+      FunctionName: campaign-launch-trigger-sns
+      Description: A Lambda function to trigger the launch of campaigns -
+        transition them from draft to published
+      Role: !GetAtt LambdaFunctionRole.Arn
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !Ref ReadyToLaunchCampaignsQueue
+        - SQSPollerPolicy:
+            QueueName: !Ref ReadyToLaunchCampaignsDLQ
+        - SNSCrudPolicy:
+            TopicName: !ImportValue MediaMaster-SNSTopicArn
       Environment:
         Variables:
           SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
