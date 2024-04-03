@@ -466,7 +466,7 @@ Resources:
     Properties:
       AllocatedStorage: 70
       DeletionProtection: false
-      DBInstanceClass: db.t4g.2xlarge
+      DBInstanceClass: db.t4g.micro
       Engine: postgres
       EngineVersion: 16.1
       DBInstanceIdentifier: efflux-be
@@ -668,6 +668,8 @@ Resources:
                   - s3:*
                   - iam:PassRole
                   - sns:*
+                  - sqs:*
+                  - dynamodb:*
                   - logs:*
                   - cloudwatch:*
                   - cloudformation:*
@@ -710,9 +712,10 @@ Resources:
                   - ec2:*
                   - elasticloadbalancing:*
                   - iam:PassRole
-                  - s3:Get*
-                  - s3:List*
+                  - s3:*
                   - sns:*
+                  - sqs:*
+                  - dynamodb:*
                   - logs:*
                   - cloudwatch:*
                   - cloudformation:*
@@ -735,9 +738,10 @@ Resources:
               - ec2:*
               - elasticloadbalancing:*
               - iam:PassRole
-              - s3:Get*
-              - s3:List*
+              - s3:*
               - sns:*
+              - sqs:*
+              - dynamodb:*
               - logs:*
               - cloudwatch:*
               - cloudformation:*

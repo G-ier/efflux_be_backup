@@ -1,0 +1,152 @@
+AWSTemplateFormatVersion: 2010-09-09
+Transform: AWS::Serverless-2016-10-31
+Description: Campaign Launch Trigger
+Globals:
+  Function:
+    Timeout: 5
+    Architectures:
+      - arm64
+    MemorySize: 128
+    Runtime: nodejs20.x
+    AutoPublishAlias: live
+    DeploymentPreference:
+      Enabled: true
+      Type: AllAtOnce
+    Tags:
+      project: efflux
+
+Resources:
+  # Add a dynamodb table with key "internal_campaign_id" and sort field "status"
+  # Enable dynamodb streams
+  InternalCampaignsTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: in-progress-campaigns
+      AttributeDefinitions:
+        - AttributeName: internal_campaign_id
+          AttributeType: S
+        - AttributeName: status
+          AttributeType: S
+      KeySchema:
+        - AttributeName: internal_campaign_id
+          KeyType: HASH
+        - AttributeName: status
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+      StreamSpecification:
+        StreamViewType: NEW_AND_OLD_IMAGES
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: analytics
+
+  CampaignLaunchDynamoTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./handlers
+      Handler: dynamo.handler
+      FunctionName: campaign-launch-trigger-dynamo
+      Description: A Lambda function to trigger the launch of campaigns -
+        transition them from draft to published
+      Role: !GetAtt LambdaFunctionRole.Arn
+      Policies:
+        - DynamoDBStreamReadPolicy:
+            TableName: !Ref InternalCampaignsTable
+            StreamName: !GetAtt InternalCampaignsTable.StreamArn
+        - DynamoDBCrudPolicy:
+            TableName: !Ref InternalCampaignsTable
+        - SQSSendMessagePolicy:
+            QueueName: !Ref ReadyToLaunchCampaignsQueue
+        - SQSPollerPolicy:
+            QueueName: !Ref ReadyToLaunchCampaignsDLQ
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
+          DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
+      Events:
+        DynamoDBStream:
+          Type: DynamoDB
+          Properties:
+            Stream: !GetAtt InternalCampaignsTable.StreamArn
+            BatchSize: 1
+            StartingPosition: LATEST
+
+  CampaignLaunchSNSTriggerFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./handlers
+      Handler: sns.handler
+      FunctionName: campaign-launch-trigger-sns
+      Description: A Lambda function to trigger the launch of campaigns -
+        transition them from draft to published
+      Role: !GetAtt LambdaFunctionRole.Arn
+      Policies:
+        - SQSSendMessagePolicy:
+            QueueName: !Ref ReadyToLaunchCampaignsQueue
+        - DynamoDBCrudPolicy:
+            TableName: !Ref InternalCampaignsTable
+        - SNSCrudPolicy:
+            TopicName: !ImportValue MediaMaster-SNSTopicArn
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
+          SNS_TOPIC_ARN: !ImportValue MediaMaster-SNSTopicArn
+          DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
+      Events:
+        SNS:
+          Type: SNS
+          Properties:
+            Topic: !ImportValue MediaMaster-SNSTopicArn
+
+  ReadyToLaunchCampaignsQueue:
+    Type: AWS::SQS::Queue
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    Properties:
+      QueueName: ready-to-launch-campaigns
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt ReadyToLaunchCampaignsDLQ.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: Name
+          Value: ready-to-launch-campaigns
+        - Key: project
+          Value: efflux
+  ReadyToLaunchCampaignsDLQ:
+    Type: AWS::SQS::Queue
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+    Properties:
+      QueueName: ready-to-launch-campaigns-dlq
+      Tags:
+        - Key: Name
+          Value: ready-to-launch-campaigns-dlq
+        - Key: project
+          Value: efflux
+
+  LambdaFunctionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonS3FullAccess
+        - arn:aws:iam::aws:policy/CloudWatchLogsFullAccess
+        - arn:aws:iam::aws:policy/AmazonSQSFullAccess
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: AllowLambdaServiceToAssumeRole
+            Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+      Tags:
+        - Key: project
+          Value: efflux

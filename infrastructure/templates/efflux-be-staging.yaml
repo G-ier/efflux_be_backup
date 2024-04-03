@@ -93,16 +93,15 @@ Resources:
             Groups:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
-        KeyName: efflux-staging
-        # TODO: investigate the usage of t4g.small
         InstanceType: t3a.micro
+        KeyName: efflux-staging
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
             # Update and install initial packages
-            sudo apt-get update && \
-            sudo apt-get upgrade -y && \
-            sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+            sudo apt update && \
+            sudo apt upgrade -y && \
+            sudo apt install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
 
@@ -113,8 +112,8 @@ Resources:
             NODE_MAJOR=20
             echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$NODE_MAJOR.x nodistro main" | sudo tee /etc/apt/sources.list.d/nodesource.list
 
-            sudo apt-get update
-            sudo apt-get install nodejs -y
+            sudo apt update
+            sudo apt install nodejs -y
 
             # Install PM2
             sudo npm install pm2@latest -g
@@ -125,6 +124,8 @@ Resources:
             sudo chmod +x ./install && \
             sudo ./install auto && \
             sudo service codedeploy-agent start
+            sudo service codedeploy-agent stop
+            sudo service codedeploy-agent start
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
@@ -134,11 +135,11 @@ Resources:
             echo "alias logs='cd /var/www/efflux-backend && pm2 logs'" >> ~/.bashrc
             # Add alias for quickly resetting the application
             echo "alias reset='cd /var/www/efflux-backend && pm2 stop ecosystem.config.js && pm2 delete ecosystem.config.js &&  pm2 start ecosystem.config.js --env staging && pm2 save && pm2 logs'" >> ~/.bashrc
-            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt-get autoremove -y && sudo apt-get autoclean -y'" >> ~/.bashrc
+            echo "alias upup='sudo apt update && sudo apt upgrade -y && sudo apt autoremove -y && sudo apt autoclean -y'" >> ~/.bashrc
             source ~/.bashrc
 
             # Define environment
-            echo -e "DATABASE_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
@@ -549,6 +550,8 @@ Resources:
                   - elasticloadbalancing:*
                   - s3:*
                   - iam:PassRole
+                  - sqs:*
+                  - dynamodb:*
                   - sns:*
                   - logs:*
                   - cloudwatch:*
@@ -593,6 +596,8 @@ Resources:
                   - elasticloadbalancing:*
                   - iam:PassRole
                   - s3:Get*
+                  - sqs:*
+                  - dynamodb:*
                   - s3:List*
                   - sns:*
                   - logs:*
@@ -618,6 +623,8 @@ Resources:
               - elasticloadbalancing:*
               - iam:PassRole
               - s3:Get*
+              - sqs:*
+              - dynamodb:*
               - s3:List*
               - sns:*
               - logs:*
@@ -638,84 +645,6 @@ Resources:
       Roles:
         - !Ref CodeDeployRole
       InstanceProfileName: Efflux-Staging
-
-  FirewallProtection:
-    Type: AWS::WAFv2::WebACL
-    Properties:
-      Description: Firewall protection for Efflux BE Staging
-      Name: Efflux-BE-Staging-WebACL
-      Scope: REGIONAL
-      DefaultAction:
-        Allow: {}
-      VisibilityConfig:
-        SampledRequestsEnabled: true
-        CloudWatchMetricsEnabled: true
-        MetricName: Efflux-BE-Staging-WebACL
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: firewall
-      Rules:
-        - Name: BlockMaliciousPaths
-          Priority: 0
-          Action:
-            Block: {}
-          Statement:
-            OrStatement:
-              Statements:
-                - ByteMatchStatement:
-                    FieldToMatch:
-                      UriPath: {}
-                    PositionalConstraint: STARTS_WITH
-                    TextTransformations:
-                      - Priority: 0
-                        Type: NONE
-                    SearchString: "/.env"
-                - ByteMatchStatement:
-                    FieldToMatch:
-                      UriPath: {}
-                    PositionalConstraint: STARTS_WITH
-                    TextTransformations:
-                      - Priority: 0
-                        Type: NONE
-                    SearchString: "/php"
-                - ByteMatchStatement:
-                    FieldToMatch:
-                      UriPath: {}
-                    PositionalConstraint: STARTS_WITH
-                    TextTransformations:
-                      - Priority: 0
-                        Type: NONE
-                    SearchString: "/_profiler"
-          VisibilityConfig:
-            SampledRequestsEnabled: true
-            CloudWatchMetricsEnabled: false
-            MetricName: BlockMaliciousPaths
-
-  FirewallProtectionLogging:
-    Type: AWS::WAFv2::LoggingConfiguration
-    Properties:
-      LogDestinationConfigs:
-        - !GetAtt FirewallProtectionLogGroup.Arn
-      ResourceArn: !GetAtt FirewallProtection.Arn
-
-  FirewallProtectionLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: "aws-waf-logs-efflux-be-staging/firewall-protection"
-      RetentionInDays: !Ref LogsRetentionInDays
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: firewall
-
-  FirewallProtectionAssociation:
-    Type: AWS::WAFv2::WebACLAssociation
-    Properties:
-      ResourceArn: !Ref ApplicationLoadBalancer
-      WebACLArn: !GetAtt FirewallProtection.Arn
 
 ####################
 # Outputs

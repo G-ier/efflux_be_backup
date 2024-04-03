@@ -1,4 +1,5 @@
 const DatabaseConnection = require('./DatabaseConnection');
+const printDebug = false;
 
 class DatabaseRepository {
   constructor() {
@@ -18,7 +19,7 @@ class DatabaseRepository {
       return trx;
     }
 
-    console.debug(`Using ${type} connection`);
+    if (printDebug) console.debug(`Using ${type} connection`);
     // Use static methods to obtain connections
     return type === 'write'
       ? DatabaseConnection.getReadWriteConnection()

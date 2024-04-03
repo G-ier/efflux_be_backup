@@ -39,7 +39,7 @@ class VerticalRepository {
 
   async fetchVerticals(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
-    return results.map(this.toDomainEntity);
+    return results
   }
 
   toDatabaseDTO(vertical) {

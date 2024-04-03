@@ -300,6 +300,30 @@ const ServerLogger = new CustomLogger({
   logStreamName: 'server',
 });
 
+// Notifications Logger
+const NotificationsLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'notifications',
+});
+
+// Emails Logger
+const EmailsLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'emails',
+});
+
+// Sherlock Logger
+const SherlockLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'sherlock',
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -324,5 +348,8 @@ module.exports = {
   CampaignsLogger,
   UserAccountLogger,
   ClickhouseLogger,
-  ServerLogger
+  ServerLogger,
+  NotificationsLogger,
+  EmailsLogger,
+  SherlockLogger,
 };

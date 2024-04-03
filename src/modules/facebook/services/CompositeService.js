@@ -21,6 +21,8 @@ const { FacebookLogger, CapiLogger } = require("../../../shared/lib/WinstonLogge
 const { sendSlackNotification } = require("../../../shared/lib/SlackNotificationService");
 const { validateInput } = require("../helpers");
 const { FB_API_URL } = require("../constants");
+const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+
 
 class CompositeService {
 
@@ -33,6 +35,7 @@ class CompositeService {
     this.adInsightsService = new AdInsightsService();
     this.pageService = new PageService();
     this.capiService = new CapiService();
+    this.database = new DatabaseRepository();
   }
 
   async syncUserAccountsData(
@@ -133,7 +136,21 @@ class CompositeService {
     return true;
   }
 
-  
+  async fetchEntitiesOwnerByAdAccounts(entityId) {
+    const result = await this.database.raw(
+      `
+      select
+          ua.name,
+          ua.token
+      from "ad_accounts"
+      inner join ua_aa_map as map on ad_accounts.id = map.aa_id
+      inner join user_accounts as ua on map.ua_id = ua.id
+      where "ad_accounts"."id" = ${entityId};
+      `
+    )
+    return result.rows[0];
+  }
+
   async fetchEntitiesOwnerAccount(entityType, entityId) {
 
     const entityConfig = {

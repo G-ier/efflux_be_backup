@@ -22,6 +22,7 @@ const tiktok = require('../src/modules/tiktok/routes');
 const taboola = require('../src/modules/taboola/routes');
 const scrappedAds = require('../src/modules/scrappedAds/routes');
 const aggregations = require('../src/modules/aggregates/routes');
+const sherlock = require('../src/modules/sherlock/routes');
 const sedo = require('../src/modules/sedo/routes');
 const crossroadsRoutes = require('../src/modules/crossroads/routes');
 const auth = require('../src/modules/auth/routes');
@@ -83,6 +84,7 @@ function configureMiddleware(server) {
   server.use('/api/taboola', taboola);
   server.use('/api/composite-ad', scrappedAds);
   server.use('/api/aggregations', aggregations);
+  server.use('/api/sherlock', sherlock);
   server.use('/api/crossroads', crossroadRouter);
   server.use('/api/sedo', sedo);
   server.use('/api/management', management);

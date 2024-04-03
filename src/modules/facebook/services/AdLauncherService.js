@@ -7,11 +7,135 @@ const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { FB_API_URL } = require("../constants");
 
 const BaseService = require("../../../shared/services/BaseService"); // Adjust the import path as necessary
+const dynamoDbService = require("../../../shared/lib/DynamoDBService");
 
 class AdLauncherService extends BaseService {
+
   constructor() {
     super(FacebookLogger);
     this.contentRepository = new ContentRepository();
+    this.ddbRepository = dynamoDbService;
+  }
+
+  /**
+   * Creates a campaign in Facebook's Marketing API
+   * @param {*} params
+   */
+  async createCampaign (campaignData, adAccountId, token) {
+    const { name, objective, special_ad_categories } = campaignData;
+    const status = "PAUSED";
+    const payload = {
+      name,
+      objective: "OUTCOME_TRAFFIC",
+      status,
+      special_ad_categories,
+    };
+
+    console.log('Campaign Payload -->', JSON.stringify(payload));
+    const url = `${FB_API_URL}act_${adAccountId}/campaigns`;
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
+  }
+
+  async createAdset(adsetData, adAccountId, token, campaignId) {
+    const {
+      name,
+      daily_budget,
+      bid_amount,
+      billing_event,
+      optimization_goal,
+      targeting,
+      promoted_object
+    } = adsetData;
+
+    // TODO: Add device platform targeting logic here
+    delete targeting.os;
+
+    const payload = {
+      "name": name,
+      "daily_budget": daily_budget,
+      "bid_amount": bid_amount,
+      "billing_event": billing_event,
+      "optimization_goal": optimization_goal,
+      "campaign_id": campaignId,
+      "targeting": targeting,
+      "promoted_object": promoted_object,
+      "status": "PAUSED",
+      "is_dynamic_creative": true,
+    };
+
+    console.log('Adset Payload -->', JSON.stringify(payload));
+
+    const url = `${FB_API_URL}act_${adAccountId}/adsets`;
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
+  }
+
+  async createDynamicAdCreative(params, token, adAccountId) {
+    const mediaHashes = await this.getImageHashesFromDynamoDB(adAccountId);
+    const payload = {
+      ...params,
+      "dynamic_ad_voice": "DYNAMIC",
+      "asset_feed_spec": {
+        ...params.asset_feed_spec,
+        "images": mediaHashes,
+      }
+    }
+
+    console.log('Dynamic Ad Creative Payload', JSON.stringify(payload));
+    const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
+
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
+  }
+
+  async createNewAd(name, adSetId, creativeId, adAccountId, token) {
+    const payload = {
+      "name": name,
+      "adset_id": adSetId,
+      "creative": {
+        "creative_id": creativeId
+      },
+      "status": "PAUSED"
+    }
+
+    const url = `${FB_API_URL}act_${adAccountId}/ads`;
+    console.log('New Ad Payload', JSON.stringify(payload));
+
+    try {
+      const response = await axios.post(url, payload, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      return response.data;
+    } catch (error) {
+      throw error?.response?.data?.error;
+    }
   }
 
   async createAd({ token, adAccountId, adData }) {
@@ -43,6 +167,16 @@ class AdLauncherService extends BaseService {
       this.logger.error(`Error creating ad: ${error.response}`);
       throw error?.response?.data?.error;
     }
+  }
+
+  async getImageHashesFromDynamoDB(adAccountId) {
+    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
+    const uploadedMedia = images.map((image) => {
+      return {
+        hash: image.fbhash.S,
+      };
+    });
+    return uploadedMedia;
   }
 
 }

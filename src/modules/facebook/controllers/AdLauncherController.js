@@ -5,16 +5,19 @@ const AdsetsService = require('../services/AdsetsService');
 const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
+const dynamoDbService = require('../../../shared/lib/DynamoDBService');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const CompositeService = require('../services/CompositeService');
 const AdQueueService = require('../services/AdQueueService');
 const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
+const { notifyUser } = require('../../../shared/lib/NotificationsService');
 const _ = require('lodash');
 const axios = require('axios');
 const PixelsService = require('../services/PixelsService');
 const PageService = require('../services/PageService');
 
 class AdLauncherController {
+
   constructor() {
     this.adLauncherService = new AdLauncherService();
     this.adsetsService = new AdsetsService();
@@ -26,13 +29,187 @@ class AdLauncherController {
     this.compositeService = new CompositeService();
     this.pixelService = new PixelsService();
     this.pageService = new PageService();
+    this.ddbRepository = dynamoDbService;
+  }
+
+  validateAllParameters(req, res) {
+    const payload = req.body;
+
+    const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url'];
+    const campaignDataKeys = ['name', 'objective', 'special_ad_categories', 'category', 'vertical'];
+    const adsetDataKeys = ['name', 'daily_budget', 'billing_event', 'optimization_goal', 'bid_strategy', 'attribution_spec', 'targeting', 'promoted_object', 'start_time'];
+    const adDataKeys = ['name', 'status', 'creative'];
+
+    for (const key of requiredKeys) {
+      if (!payload.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: ${key}`
+        })
+      }
+    }
+
+    for (const key of campaignDataKeys) {
+      if (!payload.campaignData.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: campaignData: ${key}`
+        })
+      }
+    }
+
+    for (const key of adsetDataKeys) {
+      if (!payload.adsetData.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: adsetDataKeys: ${key}`
+        })
+      }
+    }
+
+    for (const key of adDataKeys) {
+      if (!payload.adData.hasOwnProperty(key)) {
+        return res.status(403).json({
+          success: false,
+          message: `Missing required parameter: adDataKeys: ${key}`
+        })
+      }
+    }
+    // Additional deep checks can be added here if necessary for nested objects like targeting, creative, etc.
+
+    return true; // Payload is valid
   }
 
   getAdAccountId(req) {
     return req.body.adAccountId;
   }
 
+  async pushDraftToDynamo(req, res) {
+
+    console.log("Pushing in progress data to dynamo db table.")
+
+    // Validate the request body
+    this.validateAllParameters(req, res);
+
+    try {
+      await this.ddbRepository.putItem('in-progress-campaigns', req.body);
+      return res.json({
+        success: true,
+        message: 'Data pushed to dynamo db successfully'
+      });
+    } catch (error) {
+      console.error('Error pushing data to dynamo db', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error pushing data to dynamo db',
+        error: error.message
+      });
+    }
+  }
+
   async launchAd(req, res) {
+
+    // Validate the request body
+    this.validateAllParameters(req, res);
+
+    const adAccountsDataMap = await this.getAdAccountsDataMap(req.body.adAccountId);
+    const adAccountId = Object.keys(adAccountsDataMap)[0];
+    const { token, userAccountName } = await this.getToken(adAccountsDataMap[adAccountId].id);
+
+    console.log('Ad Account Name: ', userAccountName);
+
+    // STEP 0: Create a campaign
+    let newCampaign;
+    try {
+      newCampaign = await this.adLauncherService.createCampaign(
+        req.body.campaignData,
+        adAccountId,
+        token
+      );
+      console.log('New Campaign Id', newCampaign);
+    } catch (error) {
+      console.error('Error creating campaign', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating campaign',
+        error: error.message
+      });
+    }
+
+    // STEP 1: Create dynamic adset
+    const adsetData = req.body.adsetData;
+    const campaignId = newCampaign.id
+
+    let newAdset;
+    try {
+      newAdset = await this.adLauncherService.createAdset(
+        adsetData,
+        adAccountId,
+        token,
+        campaignId
+      );
+      console.log('New Adset Id', newAdset);
+    } catch (error) {
+      console.error('Error creating adset', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating adset',
+        error: error.message
+      });
+    }
+
+    // STEP 2: Create a Dynamic Ad Creatives
+    let adcreatives;
+    try {
+      adcreatives = await this.adLauncherService.createDynamicAdCreative(
+        req.body.adData.creative,
+        token,
+        adAccountId,
+      );
+
+      console.log('New Ad Creative Id', adcreatives);
+    } catch (error) {
+      console.error('Error creating ad creative', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating ad',
+        error: error.message
+      });
+    }
+
+    // STEP 3: Create an ad
+    let newAd;
+    try {
+      newAd = await this.adLauncherService.createNewAd(
+        req.body.adData.name,
+        newAdset.id,
+        adcreatives.id,
+        adAccountId,
+        token,
+      );
+    } catch (error) {
+      console.error('Error creating ad', error);
+      if (error.code === 100) {
+        return res.status(200).json({
+          success: true,
+          message: 'No Payment Method. Ad created but will not be launched.',
+          error: error.error_user_msg,
+        });
+      }
+      return res.status(500).json({
+        success: false,
+        message: 'Error creating ad',
+        error: error.message
+      });
+    }
+
+    return res.json({
+      success: true,
+      message: 'Ad launched successfully in Facebook.'
+    })
+  }
+
+  async launchAdOld(req, res) {
     let accountName, pixel, page, adAccountName;
     try {
       const pixelId = req.body.pixel_id?.toString();
@@ -58,11 +235,8 @@ class AdLauncherController {
       const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
       accountName = userAccountName;
 
-      // Fetch pixel and page details early if they're needed regardless of success or failure
-      pixel = (
-        await this.pixelService.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId }, 1)
-      )?.[0];
-      page = (await this.pageService.fetchPagesFromDB(['*'], { id: pageId }, 1))?.[0];
+      pixel = (await this.pixelService.fetchPixelsByPixelId(['*'], { pixel_id: pixelId }, 1))[0];
+      page = (await this.pageService.fetchPageById(['*'], { id: pageId }, 1))[0];
 
       // Log the start of campaign creation
       FacebookLogger.info('Starting campaign creation.');
@@ -124,38 +298,14 @@ class AdLauncherController {
       console.timeEnd(timerLabel); // Stop the timer after function execution
       this.respondWithResult(res, adCreationResult);
       FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
-      this.notifyUser(
-        'Ad Launch Succesful',
+      notifyUser(
+        'Ad Launch Successful',
         `Ad ${adData.name} created with ID: ${adCreationResult.id}`,
         req.user.id,
       );
     } catch (error) {
       console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
       this.respondWithError(res, { error, pixel, page, accountName, adAccountName });
-    }
-  }
-  // Use Axios to call the notifications service
-  async notifyUser(title, message, userId) {
-    const data = {
-      user_id: userId,
-      title: title,
-      message: message,
-    };
-
-    const url = 'https://7yhdw8l2hf.execute-api.us-east-1.amazonaws.com/create';
-
-    try {
-      const response = await axios.post(url, data, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      console.log(response.data);
-      return response.data;
-    } catch (error) {
-      console.error('Error sending notification:', error.response.data);
-      throw error;
     }
   }
 
@@ -189,8 +339,9 @@ class AdLauncherController {
       throw new Error(`Missing required parameters: ${missingParameters.join(', ')}`);
     }
   }
+
   async getToken(entityId) {
-    const details = await this.compositeService.fetchEntitiesOwnerAccount('ad_account', entityId);
+    const details = await this.compositeService.fetchEntitiesOwnerByAdAccounts(entityId);
     return { token: details?.token, userAccountName: details?.name };
   }
 

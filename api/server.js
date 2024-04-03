@@ -4,7 +4,6 @@ const express = require('express');
 
 // Local imports
 const EnvironmentVariablesManager = require('../src/shared/services/EnvironmentVariablesManager');
-const { initRedis } = require('../src/shared/lib/RedisConnection');
 
 // Initialize API
 const initializeAPI = async () => {
@@ -14,7 +13,22 @@ const initializeAPI = async () => {
   console.log('Environment variables retrieved.');
 
   console.log('Initializing Redis...');
+  const { initRedis } = require('../src/shared/lib/RedisConnection');
   await initRedis();
+
+  try {
+    const DISABLE_MEDIAMASTER_QUEUE = EnvironmentVariablesManager.getEnvVariable('DISABLE_MEDIAMASTER_QUEUE');
+    if (DISABLE_MEDIAMASTER_QUEUE === 'true') {
+      console.log('MediaMaster Queue is disabled');
+    } else {
+      const { pollSQSQueue } = require('../sqs/index');
+      pollSQSQueue();
+      console.log('MediaMaster Queue initialized');
+    }
+  } catch (error) {
+    console.log('Error initializing SQS Queue');
+    console.log(error);
+  }
 
   // Initialize server
   const server = express();
@@ -32,10 +46,16 @@ const initializeAPI = async () => {
 
   ServerLogger.info('Server initialized');
   ServerLogger.info('Database Url being used');
-  ServerLogger.info('DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'));
+  ServerLogger.info(
+    'DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'),
+  );
   ServerLogger.info('DATABASE_URL: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'));
-  ServerLogger.info('DATABASE_URL_BE_RO: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'));
-  ServerLogger.info('DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'));
+  ServerLogger.info(
+    'DATABASE_URL_BE_RO: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'),
+  );
+  ServerLogger.info(
+    'DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'),
+  );
 
 
   // Start server
@@ -60,7 +80,7 @@ const initializeAPI = async () => {
     const productionDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
     const productionReadOnlyDatabaseUrl =
       EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO');
-    const stagingDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING');
+    const stagingDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
 
     const databaseUrl =
       databaseEnvironment === 'production'

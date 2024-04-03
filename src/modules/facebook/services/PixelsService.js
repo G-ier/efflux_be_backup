@@ -74,6 +74,11 @@ class PixelsService extends BaseService {
     return pixels.map((pixel) => pixel.id);
   }
 
+  async fetchPixelsByPixelId(pixelId) {
+    const pixels = await this.fetchPixelsFromDatabase(['*'], { pixel_id: pixelId });
+    return pixels;
+  }
+
   async fetchPixelsFromDatabase(fields = ['*'], filters = {}, limit, joins = []) {
     const results = await this.pixelRepository.fetchPixels(fields, filters, limit, joins);
     return results;
