@@ -1007,30 +1007,6 @@ Resources:
         - Key: operation
           Value: analytics
 
-  # Add a dynamodb table with key "internal_campaign_id" and sort field "status"
-  InternalCampaignsTable:
-    Type: AWS::DynamoDB::Table
-    Properties:
-      TableName: in-progress-campaigns
-      AttributeDefinitions:
-        - AttributeName: internal_campaign_id
-          AttributeType: S
-        - AttributeName: status
-          AttributeType: S
-      KeySchema:
-        - AttributeName: internal_campaign_id
-          KeyType: HASH
-        - AttributeName: status
-          KeyType: RANGE
-      ProvisionedThroughput:
-        ReadCapacityUnits: 5
-        WriteCapacityUnits: 5
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: analytics
-
 ####################
 # Outputs
 ####################
