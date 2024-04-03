@@ -39,8 +39,8 @@ const dynamoClient = DynamoService;
  * "SigningCertUrl": "EXAMPLE",
  * "UnsubscribeUrl": "EXAMPLE",
  * "MessageAttributes": {}
- *
  */
+
 exports.handler = async (event) => {
   console.debug('Event: ', JSON.stringify(event, null, 2));
 
