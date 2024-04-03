@@ -17,7 +17,7 @@ const dynamoClient = DynamoService;
 /**
  * Step 1: Receives message from SNS topic
  * Step 2: queries dynamoDB table for the campaign details using the key "internalCampaignId" from the message payload
- * Step 3: if the "status" field from Dynamodb result is "published" then send a message to SQS queue
+ * Step 3: If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
  * @param {Object} event - SNS message
  * @returns {Promise<string>}
  * @example
@@ -47,38 +47,25 @@ exports.handler = async (event) => {
   // Step 1
   const message = JSON.parse(event.Records[0].Sns.Message);
   console.debug('Message: ', message);
+  console.debug('Internal Campaign ID: ', message.internalCampaignId);
 
   // Step 2
-  const campaign = await dynamoClient.getItem(
-    DynamodbTableName,
-    'internalCampaignId',
-    message.internalCampaignId,
-  );
+  const existingCampaignMedia = await dynamoClient.getItem(DynamodbTableName, {
+    KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
+    ExpressionAttributeValues: {
+      ':internal_campaign_id': message.internalCampaignId,
+    },
+  });
 
-  console.debug('Campaign: ', campaign);
+  console.debug('Campaign: ', existingCampaignMedia);
 
   // Step 3
-  if (campaign.status === 'published') {
-    // Send message to SQS
-    await sendMessageToQueue(campaign);
-    console.debug('Campaign is published. Message sent to SQS queue');
-  } else {
-    console.debug('Campaign is not published yet');
+  if (existingCampaignMedia.length) {
+    await sqsClient.sendMessageToQueue(message);
+    console.log('Sending a launch signal to the Queue');
+
+    return `Successfully sent a launch signal to the Queue for campaign with internalCampaignId: ${message.internalCampaignId}`;
   }
 
   return `Successfully processed ${event.Records.length} records.`;
 };
-
-async function sendMessageToQueue(event) {
-  const params = {
-    MessageBody: JSON.stringify(event),
-    QueueUrl: SqsQueueUrl,
-  };
-
-  try {
-    const data = await sqsClient.sendMessageToQueue(params);
-    console.debug(`Message sent to SQS queue: ${data.MessageId}`);
-  } catch (error) {
-    console.error(`❌ Error sending message to SQS queue: ${error}`);
-  }
-}
