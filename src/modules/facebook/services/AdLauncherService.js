@@ -7,13 +7,14 @@ const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
 const { FB_API_URL } = require("../constants");
 
 const BaseService = require("../../../shared/services/BaseService"); // Adjust the import path as necessary
-const DynamoRepository = require("../../../shared/lib/DynamoDBRepository");
+const dynamoDbService = require("../../../shared/lib/DynamoDBService");
 
 class AdLauncherService extends BaseService {
+
   constructor() {
     super(FacebookLogger);
     this.contentRepository = new ContentRepository();
-    this.ddbRepository = new DynamoRepository();
+    this.ddbRepository = dynamoDbService;
   }
 
   /**
@@ -136,7 +137,6 @@ class AdLauncherService extends BaseService {
       throw error?.response?.data?.error;
     }
   }
-
 
   async createAd({ token, adAccountId, adData }) {
     const url = `${FB_API_URL}act_${adAccountId}/ads`;

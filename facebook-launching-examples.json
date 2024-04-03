@@ -1,0 +1,100 @@
+{
+  "adAccountId": "1239189443661209",
+  "campaignData": {
+      "name": "this is just a test",
+      "objective": "OUTCOME_SALES",
+      "special_ad_categories": "NONE",
+      "category": "Jobs",
+      "vertical": "Annuities"
+  },
+  "adsetData": {
+      "name": "this is just a test",
+      "daily_budget": 2000,
+      "bid_amount": 100,
+      "billing_event": "IMPRESSIONS",
+      "optimization_goal": "REACH",
+      "bid_strategy": "LOWEST_COST_WITHOUT_CAP",
+      "is_dynamic_creative": true,
+      "attribution_spec": [
+          {
+              "event_type": "CLICK_THROUGH",
+              "window_days": "1"
+          },
+          {
+              "event_type": "VIEW_THROUGH",
+              "window_days": "1"
+          }
+      ],
+      "targeting": {
+          "geo_locations": {
+              "countries": [
+                  "us"
+              ]
+          },
+          "age_min": 18,
+          "age_max": 65,
+          "device_platforms": [
+              "desktop",
+              "mobile"
+          ],
+          "publisher_platforms": [
+              "facebook",
+              "instagram"
+          ],
+          "audience_network_positions": [],
+          "instagram_positions": [
+              "explore",
+              "story",
+              "stream"
+          ],
+          "messenger_positions": [],
+          "os": [
+              "any"
+          ]
+      },
+      "promoted_object": {
+          "pixel_id": "1004920287128105",
+          "custom_event_type": "PURCHASE"
+      },
+      "start_time": "2024-04-03T08:12:47.099Z"
+  },
+  "adData": {
+      "name": "this is just a test",
+      "status": "PAUSED",
+      "creative": {
+          "name": "this is just a test",
+          "object_story_spec": {
+              "page_id": "206905615844512"
+          },
+          "asset_feed_spec": {
+              "bodies": [
+                  {
+                      "text": "this is just a test"
+                  }
+              ],
+              "titles": [
+                  {
+                      "text": "this is just a test"
+                  }
+              ],
+              "descriptions": [
+                  {
+                      "text": "this is just a test"
+                  }
+              ],
+              "link_urls": [
+                  {
+                      "website_url": "go7o.link/550f7a04/1004920287128105/this is just a test/this is just a test/this is just a test"
+                  }
+              ],
+              "call_to_action_types": [
+                  "LEARN_MORE"
+              ],
+              "ad_formats": [
+                  "SINGLE_IMAGE"
+              ]
+          }
+      }
+  },
+  "url": "go7o.link/550f7a04/1004920287128105/this is just a test/this is just a test/this is just a test"
+}

@@ -5,7 +5,7 @@ const AdsetsService = require('../services/AdsetsService');
 const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
-const DynamoRepository = require('../../../shared/lib/DynamoDBRepository');
+const dynamoDbService = require('../../../shared/lib/DynamoDBService');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const CompositeService = require('../services/CompositeService');
 const AdQueueService = require('../services/AdQueueService');
@@ -17,6 +17,7 @@ const PixelsService = require('../services/PixelsService');
 const PageService = require('../services/PageService');
 
 class AdLauncherController {
+
   constructor() {
     this.adLauncherService = new AdLauncherService();
     this.adsetsService = new AdsetsService();
@@ -28,7 +29,7 @@ class AdLauncherController {
     this.compositeService = new CompositeService();
     this.pixelService = new PixelsService();
     this.pageService = new PageService();
-    this.ddbRepository = new DynamoRepository();
+    this.ddbRepository = dynamoDbService;
   }
 
   validateAllParameters(req, res) {
@@ -83,9 +84,32 @@ class AdLauncherController {
     return req.body.adAccountId;
   }
 
-  async launchAd(req, res) {
-    // Validate the request body
+  async pushDraftToDynamo(req, res) {
 
+    console.log("Pushing in progress data to dynamo db table.")
+
+    // Validate the request body
+    this.validateAllParameters(req, res);
+
+    try {
+      await this.ddbRepository.putItem('in-progress-campaigns', req.body);
+      return res.json({
+        success: true,
+        message: 'Data pushed to dynamo db successfully'
+      });
+    } catch (error) {
+      console.error('Error pushing data to dynamo db', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Error pushing data to dynamo db',
+        error: error.message
+      });
+    }
+  }
+
+  async launchAd(req, res) {
+
+    // Validate the request body
     this.validateAllParameters(req, res);
 
     const adAccountsDataMap = await this.getAdAccountsDataMap(req.body.adAccountId);
@@ -145,7 +169,7 @@ class AdLauncherController {
 
       console.log('New Ad Creative Id', adcreatives);
     } catch (error) {
-      console.error('Error creating ad', error);
+      console.error('Error creating ad creative', error);
       return res.status(500).json({
         success: false,
         message: 'Error creating ad',
@@ -178,7 +202,6 @@ class AdLauncherController {
         error: error.message
       });
     }
-
 
     return res.json({
       success: true,
@@ -316,6 +339,7 @@ class AdLauncherController {
       throw new Error(`Missing required parameters: ${missingParameters.join(', ')}`);
     }
   }
+
   async getToken(entityId) {
     const details = await this.compositeService.fetchEntitiesOwnerByAdAccounts(entityId);
     return { token: details?.token, userAccountName: details?.name };
@@ -364,7 +388,6 @@ class AdLauncherController {
 
     return campaignCreationResult.data.id;
   }
-
 
   async handleAdsetCreation(req, token, adAccountId, campaignId, adAccountsDataMap) {
     let adsetData = req.body.adsetData;

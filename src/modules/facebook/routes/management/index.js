@@ -101,6 +101,11 @@ route.post('/upload-image', upload.single('file'), (req, res) =>
 );
 
 route.post(
+  `/draft-ad`,
+  (req, res) => adLauncherController.pushDraftToDynamo(req, res),
+)
+
+route.post(
   '/launch-ad',
   upload.fields([
     { name: 'video', maxCount: 5 },
