@@ -17,8 +17,13 @@ const initializeAPI = async () => {
   await initRedis();
 
   try {
-    const { pollSQSQueue } = require('../sqs/index');
-    pollSQSQueue();
+    const DISABLE_MEDIAMASTER_QUEUE = EnvironmentVariablesManager.getEnvVariable('DISABLE_MEDIAMASTER_QUEUE');
+    if (DISABLE_MEDIAMASTER_QUEUE === 'true') {
+      console.log('MediaMaster Queue is disabled');
+    } else {
+      const { pollSQSQueue } = require('../sqs/index');
+      pollSQSQueue();
+    }
   } catch (error) {
     console.log('Error initializing SQS Queue');
     console.log(error);

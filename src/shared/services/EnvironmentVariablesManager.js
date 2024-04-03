@@ -59,6 +59,7 @@ class EnvironmentVariablesManager {
   ];
 
   static parameters = [
+    'DISABLE_MEDIAMASTER_QUEUE',
     'DATABASE_URL_BE_RO',
     'DATABASE_URL_BE_RW',
     'WRITE_POSTBACKS_TO_CLICKHOUSE',

@@ -551,6 +551,7 @@ Resources:
                   - s3:*
                   - iam:PassRole
                   - sqs:*
+                  - dynamodb:*
                   - sns:*
                   - logs:*
                   - cloudwatch:*
@@ -596,6 +597,7 @@ Resources:
                   - iam:PassRole
                   - s3:Get*
                   - sqs:*
+                  - dynamodb:*
                   - s3:List*
                   - sns:*
                   - logs:*
@@ -622,6 +624,7 @@ Resources:
               - iam:PassRole
               - s3:Get*
               - sqs:*
+              - dynamodb:*
               - s3:List*
               - sns:*
               - logs:*
