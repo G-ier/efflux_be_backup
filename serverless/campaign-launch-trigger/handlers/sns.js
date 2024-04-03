@@ -50,7 +50,7 @@ exports.handler = async (event) => {
   console.debug('Internal Campaign ID: ', message.internalCampaignId);
 
   // Step 2
-  const existingCampaignMedia = await dyanmo.queryItems(DynamodbTableName, {
+  const existingCampaignMedia = await dynamoClient.queryItems(DynamodbTableName, {
     KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
     ExpressionAttributeValues: {
       ':internal_campaign_id': '36b34e65e2fd74baa7a2a22ad3fe33824fe2dda2bf12d37cb4988804c1ec04cf',
