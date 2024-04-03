@@ -3,6 +3,7 @@ const AdLauncherService = require('../service/AdLauncherService');
 const RedirectUrlsService = require('../service/RedirectUrlsService');
 
 class AdLauncherController {
+
   constructor() {
     this.s3Service = new S3Service();
     this.redirectUrlsService = new RedirectUrlsService();
@@ -13,7 +14,8 @@ class AdLauncherController {
     console.debug('Generating presigned url...');
     const { filename, type, ad_account, tags } = req.body;
     const org_id = req.user.org_id || 1;
-    const filepath = this.generatePath(org_id, ad_account, filename, type);
+    const internal_campaign_id = tags.internal_campaign_id || null;
+    const filepath = this.generatePath(org_id, ad_account, filename, type, internal_campaign_id);
 
     let taggingString = null;
     if (tags !== null) {
@@ -32,7 +34,7 @@ class AdLauncherController {
     }
   }
 
-  generatePath(org_id, ad_account, filename, type) {
+  generatePath(org_id, ad_account, filename, type, internal_campaign_id) {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -45,7 +47,7 @@ class AdLauncherController {
     if (type.includes('image')) {
       mediType = 'images';
     }
-    return `raw/${org_id}/${ad_account}/${mediType}/${formattedDate}/${day}/${filename}`;
+    return `raw/${org_id}/${ad_account}/${mediType}/${formattedDate}/${filename}-${internal_campaign_id}`;
   }
 
   async getRedirectUrls(req, res) {
