@@ -55,7 +55,7 @@ const initializeAPI = async () => {
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
 
-  server.listen(port, async () => {
+  server.listen(4999, async () => {
     console.log(`🔥 ---------- Server started ------------ 🔥`);
 
     const DISABLE_SLACK_NOTIFICATION = EnvironmentVariablesManager.getEnvVariable(
@@ -74,7 +74,7 @@ const initializeAPI = async () => {
     const productionDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
     const productionReadOnlyDatabaseUrl =
       EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO');
-    const stagingDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING');
+    const stagingDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
 
     const databaseUrl =
       databaseEnvironment === 'production'
