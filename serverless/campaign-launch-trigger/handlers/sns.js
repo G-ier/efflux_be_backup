@@ -64,7 +64,7 @@ exports.handler = async (event) => {
   // Step 3
   if (campaign.status === 'published') {
     // Send message to SQS
-    await sendMessageToQueue(message);
+    await sendMessageToQueue(campaign);
     console.debug('Campaign is published. Message sent to SQS queue');
   } else {
     console.debug('Campaign is not published yet');
