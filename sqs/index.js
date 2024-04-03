@@ -1,21 +1,20 @@
-const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require("@aws-sdk/client-sqs");
-const sqsClient = new SQSClient({ region: "us-east-1" });
-const AdLauncherService = require("../src/modules/adLauncher/service/AdLauncherService");
+const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require('@aws-sdk/client-sqs');
+const sqsClient = new SQSClient({ region: 'us-east-1' });
+const AdLauncherService = require('../src/modules/adLauncher/service/AdLauncherService');
 
 // TODO: Update these values to use AWS parameter store or environment variables
-const queueUrl = "https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns";
+const queueUrl = 'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
 
 async function processMessage(message) {
   const adLauncherService = new AdLauncherService();
   try {
-    console.debug("Raw message:", message);
+    console.debug('Raw message:', message);
     console.debug(`✅ Processing message: ${message.MessageId}`);
     // parse SQS message
     const messageBody = JSON.parse(message.Body);
-    console.debug("Message Body:", messageBody);
+    console.debug('Message Body:', messageBody);
 
-    console.log("Launch the campaign with everything")
-
+    console.log('Launch the campaign with everything');
   } catch (error) {
     console.log(`Error processing message: ${error}`);
   }
@@ -46,7 +45,7 @@ async function pollSQSQueue() {
       }
     }
   } catch (error) {
-    console.error("An error occurred while polling the queue:", error);
+    console.error('An error occurred while polling the queue:', error);
   }
 }
 

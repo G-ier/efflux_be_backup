@@ -4,7 +4,7 @@ const { unmarshall } = require('@aws-sdk/util-dynamodb');
 
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
-  'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
+  'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
 
 const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campaigns';
 
