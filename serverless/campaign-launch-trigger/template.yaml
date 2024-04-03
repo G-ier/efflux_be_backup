@@ -86,21 +86,20 @@ Resources:
       Policies:
         - SQSSendMessagePolicy:
             QueueName: !Ref ReadyToLaunchCampaignsQueue
-        - SQSPollerPolicy:
-            QueueName: !Ref ReadyToLaunchCampaignsDLQ
+        - DynamoDBCrudPolicy:
+            TableName: !Ref InternalCampaignsTable
         - SNSCrudPolicy:
             TopicName: !ImportValue MediaMaster-SNSTopicArn
       Environment:
         Variables:
           SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
+          SNS_TOPIC_ARN: !ImportValue MediaMaster-SNSTopicArn
           DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
       Events:
-        DynamoDBStream:
-          Type: DynamoDB
+        SNS:
+          Type: SNS
           Properties:
-            Stream: !GetAtt InternalCampaignsTable.StreamArn
-            BatchSize: 1
-            StartingPosition: LATEST
+            Topic: !ImportValue MediaMaster-SNSTopicArn
 
   ReadyToLaunchCampaignsQueue:
     Type: AWS::SQS::Queue
