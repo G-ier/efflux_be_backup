@@ -1,15 +1,10 @@
 'use strict';
 // Local Application Imports
-const cronJobService = require('./CronJobsService');
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
-const DynamoDBService = require('./DynamoDBService');
+const { getItem } = require('./services/DynamoDBService');
 
 const sqsClient = new SQSClient({ region: 'us-east-1' });
-
-const SnsTopicArn =
-  process.env.SNS_TOPIC_ARN ||
-  'arn:aws:sns:us-east-1:524744845066:Mediamaster-Downstream-Notifications';
 
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
@@ -52,8 +47,7 @@ exports.handler = async (event) => {
   console.debug('Message: ', message);
 
   // Step 2
-  const dynamoDBService = DynamoDBService.getInstance();
-  const campaign = await dynamoDBService.getItem(
+  const campaign = await getItem(
     DynamodbTableName,
     'internalCampaignId',
     message.internalCampaignId,

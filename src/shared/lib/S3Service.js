@@ -20,13 +20,14 @@ class S3Service {
       Bucket: this.bucketName,
       Key: fileName,
       ContentType: fileType,
+      // ACL: 'public-read',
       Tagging: tagging,
     });
 
     try {
       const result = await getSignedUrl(this.s3Client, command, {
         expiresIn,
-        unhoistableHeaders: new Set(['x-amz-tagging']),
+        // unhoistableHeaders: new Set(['x-amz-tagging']),
       });
       console.debug('Generated presigned url:', result);
       return result;

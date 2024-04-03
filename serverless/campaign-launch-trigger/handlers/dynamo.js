@@ -1,14 +1,16 @@
 'use strict';
 // Local Application Imports
-const cronJobService = require('./CronJobsService');
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
+const DynamoDBService = require('./services/DynamoDBService');
 
 const sqsClient = new SQSClient({ region: 'us-east-1' });
 
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
   'https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns';
+
+const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campaigns';
 
   /** fet */
 exports.handler = async (event) => {
