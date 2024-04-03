@@ -55,7 +55,7 @@ const initializeAPI = async () => {
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
 
-  server.listen(4999, async () => {
+  server.listen(port, async () => {
     console.log(`🔥 ---------- Server started ------------ 🔥`);
 
     const DISABLE_SLACK_NOTIFICATION = EnvironmentVariablesManager.getEnvVariable(
