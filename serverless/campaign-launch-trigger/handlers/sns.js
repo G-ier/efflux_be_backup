@@ -3,6 +3,7 @@
 const cronJobService = require('./CronJobsService');
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
+const DynamoDBService = require('./DynamoDBService');
 
 const sqsClient = new SQSClient({ region: 'us-east-1' });
 
@@ -18,8 +19,8 @@ const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campai
 
 /**
  * Step 1: Receives message from SNS topic
- * Step 2: queries dynamoDB table for the campaign details using the key "internal_campaign_id" from the message payload
- * Step 3: if the status field is "published" then sends a message to SQS queue
+ * Step 2: queries dynamoDB table for the campaign details using the key "internalCampaignId" from the message payload
+ * Step 3: if the "status" field from Dynamodb result is "published" then send a message to SQS queue
  * @param {Object} event - SNS message
  * @returns {Promise<string>}
  * @example
@@ -34,7 +35,7 @@ const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campai
  * "MessageId": "e1b5c2d4-5b6c-4d5e-8b5c-2d4e5b6c7d8e",
  * "TopicArn": "arn:aws:sns:us-east-1:524744845066:Mediamaster-Downstream-Notifications",
  * "Subject": "Campaign Published",
- * "Message": "{\"internal_campaign_id\":\"1234\"}",
+ * "Message": "{\"internalCampaignId\":\"1234\", \"adAccountId\":\"1245654\" , \"createdAt\": \"2021-10-14T20:45:19.000Z\"}",
  * "Timestamp": "2021-10-14T20:45:19.000Z",
  * "SignatureVersion": "1",
  * "Signature": "EXAMPLE",
@@ -46,8 +47,25 @@ const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campai
 exports.handler = async (event) => {
   console.debug('Event: ', JSON.stringify(event, null, 2));
 
-  // Send message to SQS
-  await sendMessageToQueue(message);
+  // Step 1
+  const message = JSON.parse(event.Records[0].Sns.Message);
+  console.debug('Message: ', message);
+
+  // Step 2
+  const dynamoDBService = DynamoDBService.getInstance();
+  const campaign = await dynamoDBService.getItem(
+    DynamodbTableName,
+    'internalCampaignId',
+    message.internalCampaignId,
+  );
+
+  console.debug('Campaign: ', campaign);
+
+  // Step 3
+  if (campaign.status === 'published') {
+    // Send message to SQS
+    await sendMessageToQueue(message);
+  }
 
   return `Successfully processed ${event.Records.length} records.`;
 };

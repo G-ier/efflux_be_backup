@@ -1,0 +1,12 @@
+{
+  "name": "handlers",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sqs": "^3.547.0",
+    "@aws-sdk/util-dynamodb": "^3.540.0"
+  }
+}
