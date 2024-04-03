@@ -37,6 +37,23 @@ class DynamoDBService {
     return response.Items;
   }
 
+  async putTargetUrl(payload, destination_url) {
+    const command = new PutCommand({
+      TableName: "edge-rocket-targets",
+      Item: {
+        key: payload.key,
+        ad_id: payload.adId,
+        campaign_id: payload.campaignId,
+        pixel_id: payload.pixelId,
+        adset_id: payload.adSetId,
+        destination_url: destination_url,
+      },
+    });
+
+    // Execute the command
+    return await this.dbClient.send(command);
+  }
+
   async putItem(tableName, item) {
       const data = await this.docClient.send(new PutCommand({
         TableName: tableName,
