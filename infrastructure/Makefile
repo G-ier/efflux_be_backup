@@ -20,6 +20,12 @@ deploy-prod:
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
 
+destroy-prod-stack:
+	@echo "Destroying stack using SAM"
+	@sam delete \
+		--stack-name $(EFFLUX_PROD) \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
 
 deploy-staging:
 	@aws cloudformation deploy \
@@ -34,6 +40,13 @@ deploy-staging:
 			project=efflux-staging \
 		--profile $(AWS_PROFILE) \
 		--region $(AWS_REGION)
+
+destroy-staging-stack:
+	@echo "Destroying stack using SAM"
+	@sam delete \
+		--stack-name $(EFFLUX_STAGING) \
+		--region $(AWS_REGION) \
+		--profile $(AWS_PROFILE)
 
 deploy-metabase:
 	@aws cloudformation deploy \
