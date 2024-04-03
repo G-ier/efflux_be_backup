@@ -2,11 +2,10 @@
 // Local Application Imports
 const { SQSClient, SendMessageCommand } = require('@aws-sdk/client-sqs');
 const { unmarshall } = require('@aws-sdk/util-dynamodb');
-const DynamoDBService = require('./services/DynamoDBService');
 
 // Local Application Imports
-const SQSService = require('./SQSService');
-const dynamo = require('./DynamoDBService');
+const SQSService = require('./services/SQSService');
+const dynamo = require('./services/DynamoDBService');
 
 // Constants
 const SqsQueueUrl =

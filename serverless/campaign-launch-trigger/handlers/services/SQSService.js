@@ -3,14 +3,13 @@ const {
   SQSClient,
   ReceiveMessageCommand,
   DeleteMessageCommand,
-  SendMessageCommand
-}                               = require("@aws-sdk/client-sqs");
+  SendMessageCommand,
+} = require('@aws-sdk/client-sqs');
 
 class SqsService {
-
   constructor(queueUrl) {
     this.queueUrl = queueUrl;
-    this.sqsClient = new SQSClient({ region: "us-east-1" });
+    this.sqsClient = new SQSClient({ region: 'us-east-1' });
   }
 
   async sendMessageToQueue(event) {
@@ -43,7 +42,6 @@ class SqsService {
     };
     return this.sqsClient.send(new DeleteMessageCommand(deleteParams));
   }
-
 }
 
 module.exports = SqsService;
