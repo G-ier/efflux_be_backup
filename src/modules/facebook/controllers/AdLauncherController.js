@@ -91,6 +91,8 @@ class AdLauncherController {
     // Validate the request body
     this.validateAllParameters(req, res);
 
+    console.log("Request body: ", req.body)
+
     try {
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
       return res.json({
