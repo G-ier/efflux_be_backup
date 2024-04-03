@@ -23,6 +23,7 @@ const initializeAPI = async () => {
     } else {
       const { pollSQSQueue } = require('../sqs/index');
       pollSQSQueue();
+      console.log('MediaMaster Queue initialized');
     }
   } catch (error) {
     console.log('Error initializing SQS Queue');
