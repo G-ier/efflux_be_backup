@@ -51,6 +51,7 @@ const initializeAPI = async () => {
     'DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'),
   );
 
+
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
 
