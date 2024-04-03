@@ -3,7 +3,7 @@ const sqsClient = new SQSClient({ region: "us-east-1" });
 const AdLauncherService = require("../src/modules/adLauncher/service/AdLauncherService");
 
 // TODO: Update these values to use AWS parameter store or environment variables
-const queueUrl = "https://sqs.us-east-1.amazonaws.com/524744845066/event-from-media-master";
+const queueUrl = "https://sqs.us-east-1.amazonaws.com/524744845066/ready-to-launch-campaigns";
 
 async function processMessage(message) {
   const adLauncherService = new AdLauncherService();
@@ -13,19 +13,13 @@ async function processMessage(message) {
     // parse SQS message
     const messageBody = JSON.parse(message.Body);
     console.debug("Message Body:", messageBody);
-    const parsedBody = JSON.parse(messageBody.Message);
-    console.debug("parsedBody Message Body:", parsedBody);
 
-    // Final step submit app to facebook
-    const { type, adAccountId, s3Key } = parsedBody;
-
-    adLauncherService.submitAdToFacebook(parsedBody);
+    console.log("Launch the campaign with everything")
 
   } catch (error) {
     console.log(`Error processing message: ${error}`);
   }
 }
-
 
 async function pollSQSQueue() {
   try {
