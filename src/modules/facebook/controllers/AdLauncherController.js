@@ -93,6 +93,14 @@ class AdLauncherController {
     return req.body.adAccountId;
   }
 
+  constructTargetUrl(data) {
+    const url = data.url;
+    const adtitle = data.adTxt;
+    const pixel_id = data.adsetData.promoted_object.pixel_id;
+    const queryParams = `?subid1={*user-agent*}&subid2=${pixel_id}_|_{{campaign.id}}_|_{{adset.id}}_|_{{ad.id}}_|_facebook_|_{external}&subid3={*session-id*}&subid4={*user-ip*}_|_{*country-code*}_|_{*region*}_|_{*city*}_|_{*timestamp*}_|_{{campaign.name}}&adtitle=${adtitle}`;
+    return `${url}${queryParams}`;
+  }
+
   async pushDraftToDynamo(req, res) {
     console.log('Pushing in progress data to dynamo db table.');
 
@@ -101,11 +109,23 @@ class AdLauncherController {
 
     console.log('Request body: ', req.body);
 
+    const finalTargetUrl = this.constructTargetUrl(req.body)
+    req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
+
+    console.log('Final Request Body', JSON.stringify(req.body));
+
     try {
       // add createdAt timestamp to the request body
       req.body.createdAt = new Date().toISOString();
 
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
+      // Save target to dynamo db
+      await this.ddbRepository.putItem('edge-rocket-targets', {
+        key: req.body.adTxt,
+        internal_campaign_id: req.body.internal_campaign_id,
+        destination_url: `https://${req.body.destinationDomain}`
+      })
+
       return res.json({
         success: true,
         message: 'Data pushed to dynamo db successfully',
@@ -228,26 +248,6 @@ class AdLauncherController {
       return {
         success: false,
         message: 'Error creating ad',
-        error: error.message,
-      }
-    }
-
-    // STEP 4: Save url into dynamo db
-    const targetPayload = {
-      key: req.body.adData.name,
-      adId: newAd.id,
-      campaignId,
-      pixelId: adsetData.promoted_object.pixel_id,
-      adSetId: newAdset.id,
-      destinationUrl: req.body.url,
-    }
-    try {
-      await this.adLauncherService.saveTargetsToDynamoDB(targetPayload);
-    } catch (error) {
-      console.error('Error saving target url to dynamo db', error);
-      return {
-        success: false,
-        message: 'Error saving target url to dynamo db',
         error: error.message,
       }
     }
