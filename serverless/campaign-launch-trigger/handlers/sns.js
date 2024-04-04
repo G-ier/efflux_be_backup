@@ -19,25 +19,6 @@ const dynamoClient = DynamoService;
  * Step 3: If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
  * @param {Object} event - SNS message
  * @returns {Promise<string>}
- * @example
- * {
- *  "Records": [
- *   {
- *    "EventSource": "aws:sns",
- *   "EventVersion": "1.0",
- *  "EventSubscriptionArn": "arn:aws:sns:us-east-1:524744845066:Mediamaster-Downstream-Notifications:4b5d6b9c-4e3b-4c4b-8c5b-3c4b5d6e7b8c",
- * "Sns": {
- * "Type": "Notification",
- * "MessageId": "e1b5c2d4-5b6c-4d5e-8b5c-2d4e5b6c7d8e",
- * "TopicArn": "arn:aws:sns:us-east-1:524744845066:Mediamaster-Downstream-Notifications",
- * "Subject": "Campaign Published",
- * "Message": "{\"internalCampaignId\":\"1234\", \"adAccountId\":\"1245654\" , \"createdAt\": \"2021-10-14T20:45:19.000Z\"}",
- * "Timestamp": "2021-10-14T20:45:19.000Z",
- * "SignatureVersion": "1",
- * "Signature": "EXAMPLE",
- * "SigningCertUrl": "EXAMPLE",
- * "UnsubscribeUrl": "EXAMPLE",
- * "MessageAttributes": {}
  */
 
 exports.handler = async (event) => {
@@ -68,7 +49,10 @@ exports.handler = async (event) => {
     console.log('Sending a launch signal to the Queue');
     return `Successfully sent a launch signal to the Queue for campaign with internalCampaignId: ${message.internalCampaignId}`;
   } else {
-    console.log('No campaign in progress found for internal campaign id: ', message.internalCampaignId);
+    console.log(
+      'No campaign in progress found for internal campaign id: ',
+      message.internalCampaignId,
+    );
     return `No campaign in progress found for internal campaign id: ${message.internalCampaignId}`;
   }
 };

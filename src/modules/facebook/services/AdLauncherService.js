@@ -170,6 +170,26 @@ class AdLauncherService extends BaseService {
     }
   }
 
+  async getImageHashesFromDynamoDB(adAccountId) {
+    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
+    const uploadedMedia = images.map((image) => {
+      return {
+        hash: image.fbhash.S,
+      };
+    });
+    return uploadedMedia;
+  }
+
+  async saveTargetsToDynamoDB(payload) {
+    try {
+      const tenant = 'roi'; // This should be dynamic
+      const generatedDestinationUrl = `https://${payload.destinationUrl}?tenant=${tenant}&utm_campaign=${payload.campaignId}&ref_adnetwork=facebook&ref_pubsite=facebook&`;
+      return await this.ddbRepository.putTargetUrl(payload, generatedDestinationUrl);
+    } catch (error) {
+      this.logger.error(`Error saving target URL: ${error}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = AdLauncherService;

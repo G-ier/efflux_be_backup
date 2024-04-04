@@ -231,6 +231,27 @@ class AdLauncherController {
         error: error.message,
       }
     }
+
+    // STEP 4: Save url into dynamo db
+    const targetPayload = {
+      key: req.body.adData.name,
+      adId: newAd.id,
+      campaignId,
+      pixelId: adsetData.promoted_object.pixel_id,
+      adSetId: newAdset.id,
+      destinationUrl: req.body.url,
+    }
+    try {
+      await this.adLauncherService.saveTargetsToDynamoDB(targetPayload);
+    } catch (error) {
+      console.error('Error saving target url to dynamo db', error);
+      return {
+        success: false,
+        message: 'Error saving target url to dynamo db',
+        error: error.message,
+      }
+    }
+
     return {
       success: true,
       message: 'Ad created successfully',
@@ -310,17 +331,6 @@ class AdLauncherController {
         adData,
       });
 
-      // await this.adQueueService.saveToQueueFromLaunch({
-      //   existingLaunchId,
-      //   adAccountId: firstKey,
-      //   existingMedia: createdMediaObjects,
-      //   existingContentIds: contentIds,
-      //   data: req.body,
-      //   campaignId: campaignId,
-      //   adsetId: adSetId,
-      //   adId: adCreationResult.id,
-      //   status: 'launched',
-      // });
 
       // Log the successful creation of an ad
       console.timeEnd(timerLabel); // Stop the timer after function execution
