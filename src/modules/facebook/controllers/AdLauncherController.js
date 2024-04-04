@@ -17,7 +17,6 @@ const PixelsService = require('../services/PixelsService');
 const PageService = require('../services/PageService');
 
 class AdLauncherController {
-
   constructor() {
     this.adLauncherService = new AdLauncherService();
     this.adsetsService = new AdsetsService();
@@ -37,15 +36,25 @@ class AdLauncherController {
 
     const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url'];
     const campaignDataKeys = ['name', 'objective', 'special_ad_categories', 'category', 'vertical'];
-    const adsetDataKeys = ['name', 'daily_budget', 'billing_event', 'optimization_goal', 'bid_strategy', 'attribution_spec', 'targeting', 'promoted_object', 'start_time'];
+    const adsetDataKeys = [
+      'name',
+      'daily_budget',
+      'billing_event',
+      'optimization_goal',
+      'bid_strategy',
+      'attribution_spec',
+      'targeting',
+      'promoted_object',
+      'start_time',
+    ];
     const adDataKeys = ['name', 'status', 'creative'];
 
     for (const key of requiredKeys) {
       if (!payload.hasOwnProperty(key)) {
         return res.status(403).json({
           success: false,
-          message: `Missing required parameter: ${key}`
-        })
+          message: `Missing required parameter: ${key}`,
+        });
       }
     }
 
@@ -53,8 +62,8 @@ class AdLauncherController {
       if (!payload.campaignData.hasOwnProperty(key)) {
         return res.status(403).json({
           success: false,
-          message: `Missing required parameter: campaignData: ${key}`
-        })
+          message: `Missing required parameter: campaignData: ${key}`,
+        });
       }
     }
 
@@ -62,8 +71,8 @@ class AdLauncherController {
       if (!payload.adsetData.hasOwnProperty(key)) {
         return res.status(403).json({
           success: false,
-          message: `Missing required parameter: adsetDataKeys: ${key}`
-        })
+          message: `Missing required parameter: adsetDataKeys: ${key}`,
+        });
       }
     }
 
@@ -71,8 +80,8 @@ class AdLauncherController {
       if (!payload.adData.hasOwnProperty(key)) {
         return res.status(403).json({
           success: false,
-          message: `Missing required parameter: adDataKeys: ${key}`
-        })
+          message: `Missing required parameter: adDataKeys: ${key}`,
+        });
       }
     }
     // Additional deep checks can be added here if necessary for nested objects like targeting, creative, etc.
@@ -85,30 +94,33 @@ class AdLauncherController {
   }
 
   async pushDraftToDynamo(req, res) {
-
-    console.log("Pushing in progress data to dynamo db table.")
+    console.log('Pushing in progress data to dynamo db table.');
 
     // Validate the request body
     this.validateAllParameters(req, res);
 
+    console.log('Request body: ', req.body);
+
     try {
+      // add createdAt timestamp to the request body
+      req.body.createdAt = new Date().toISOString();
+
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
       return res.json({
         success: true,
-        message: 'Data pushed to dynamo db successfully'
+        message: 'Data pushed to dynamo db successfully',
       });
     } catch (error) {
       console.error('Error pushing data to dynamo db', error);
       return res.status(500).json({
         success: false,
         message: 'Error pushing data to dynamo db',
-        error: error.message
+        error: error.message,
       });
     }
   }
 
   async launchAd(req, res) {
-
     // Validate the request body
     this.validateAllParameters(req, res);
 
@@ -124,7 +136,7 @@ class AdLauncherController {
       newCampaign = await this.adLauncherService.createCampaign(
         req.body.campaignData,
         adAccountId,
-        token
+        token,
       );
       console.log('New Campaign Id', newCampaign);
     } catch (error) {
@@ -132,13 +144,13 @@ class AdLauncherController {
       return res.status(500).json({
         success: false,
         message: 'Error creating campaign',
-        error: error.message
+        error: error.message,
       });
     }
 
     // STEP 1: Create dynamic adset
     const adsetData = req.body.adsetData;
-    const campaignId = newCampaign.id
+    const campaignId = newCampaign.id;
 
     let newAdset;
     try {
@@ -146,7 +158,7 @@ class AdLauncherController {
         adsetData,
         adAccountId,
         token,
-        campaignId
+        campaignId,
       );
       console.log('New Adset Id', newAdset);
     } catch (error) {
@@ -154,7 +166,7 @@ class AdLauncherController {
       return res.status(500).json({
         success: false,
         message: 'Error creating adset',
-        error: error.message
+        error: error.message,
       });
     }
 
@@ -173,7 +185,7 @@ class AdLauncherController {
       return res.status(500).json({
         success: false,
         message: 'Error creating ad',
-        error: error.message
+        error: error.message,
       });
     }
 
@@ -196,17 +208,30 @@ class AdLauncherController {
           error: error.error_user_msg,
         });
       }
-      return res.status(500).json({
+      return 'Failure'
+    }
+
+    // STEP 4: Save url into dynamo db
+    const targetPayload = {
+      key: req.body.adData.name,
+      adId: newAd.id,
+      campaignId,
+      pixelId: adsetData.promoted_object.pixel_id,
+      adSetId: newAdset.id,
+      destinationUrl: req.body.url,
+    }
+    try {
+      await this.adLauncherService.saveTargetsToDynamoDB(targetPayload);
+    } catch (error) {
+      console.error('Error saving target url to dynamo db', error);
+      return res.status(403).json({
         success: false,
-        message: 'Error creating ad',
-        error: error.message
+        message: 'Error saving target url to dynamo db',
+        error: error.message,
       });
     }
 
-    return res.json({
-      success: true,
-      message: 'Ad launched successfully in Facebook.'
-    })
+    return 'Success'
   }
 
   async launchAdOld(req, res) {
@@ -282,17 +307,6 @@ class AdLauncherController {
         adData,
       });
 
-      // await this.adQueueService.saveToQueueFromLaunch({
-      //   existingLaunchId,
-      //   adAccountId: firstKey,
-      //   existingMedia: createdMediaObjects,
-      //   existingContentIds: contentIds,
-      //   data: req.body,
-      //   campaignId: campaignId,
-      //   adsetId: adSetId,
-      //   adId: adCreationResult.id,
-      //   status: 'launched',
-      // });
 
       // Log the successful creation of an ad
       console.timeEnd(timerLabel); // Stop the timer after function execution

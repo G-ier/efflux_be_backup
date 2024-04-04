@@ -88,15 +88,16 @@ class AdLauncherService extends BaseService {
   }
 
   async createDynamicAdCreative(params, token, adAccountId) {
-    const mediaHashes = await this.getImageHashesFromDynamoDB(adAccountId);
     const payload = {
       ...params,
       "dynamic_ad_voice": "DYNAMIC",
       "asset_feed_spec": {
         ...params.asset_feed_spec,
-        "images": mediaHashes,
+        "images": params.image_hashes,
       }
     }
+
+    delete payload.image_hashes;
 
     console.log('Dynamic Ad Creative Payload', JSON.stringify(payload));
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
@@ -179,6 +180,16 @@ class AdLauncherService extends BaseService {
     return uploadedMedia;
   }
 
+  async saveTargetsToDynamoDB(payload) {
+    try {
+      const tenant = 'roi'; // This should be dynamic
+      const generatedDestinationUrl = `https://${payload.destinationUrl}?tenant=${tenant}&utm_campaign=${payload.campaignId}&ref_adnetwork=facebook&ref_pubsite=facebook&`;
+      return await this.ddbRepository.putTargetUrl(payload, generatedDestinationUrl);
+    } catch (error) {
+      this.logger.error(`Error saving target URL: ${error}`);
+      throw error;
+    }
+  }
 }
 
 module.exports = AdLauncherService;

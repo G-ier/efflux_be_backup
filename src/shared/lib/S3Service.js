@@ -20,6 +20,7 @@ class S3Service {
       Bucket: this.bucketName,
       Key: fileName,
       ContentType: fileType,
+      // ACL: 'public-read',
       Tagging: tagging,
     });
 
