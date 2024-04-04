@@ -119,9 +119,12 @@ class AdLauncherController {
       req.body.createdAt = new Date().toISOString();
 
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
+
+
+      const rocketKey = req.body.url.split('/')[2];
       // Save target to dynamo db
       await this.ddbRepository.putItem('edge-rocket-targets', {
-        key: req.body.adTxt,
+        key: rocketKey,
         internal_campaign_id: req.body.internal_campaign_id,
         destination_url: `https://${req.body.destinationDomain}`
       })
