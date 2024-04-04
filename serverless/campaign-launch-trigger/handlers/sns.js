@@ -64,7 +64,7 @@ exports.handler = async (event) => {
     launchData.adData.creative.image_hashes = [{
       hash: message.fbhash
     }]
-    await sqsClient.sendMessageToQueue(message);
+    await sqsClient.sendMessageToQueue(launchData);
     console.log('Sending a launch signal to the Queue');
     return `Successfully sent a launch signal to the Queue for campaign with internalCampaignId: ${message.internalCampaignId}`;
   } else {
