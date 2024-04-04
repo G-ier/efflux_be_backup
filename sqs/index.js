@@ -2,6 +2,8 @@ const { SQSClient, ReceiveMessageCommand, DeleteMessageCommand } = require("@aws
 const sqsClient = new SQSClient({ region: "us-east-1" });
 const AdLauncherController = require("../src/modules/facebook/controllers/AdLauncherController");
 const notificationsServiceInstance = require("../src/shared/lib/NotificationsService");
+const { FacebookLogger } = require("../src/shared/lib/WinstonLogger");
+
 
 // TODO: Update these values to use AWS parameter store or environment variables
 const queueUrl = 'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
@@ -9,13 +11,10 @@ const queueUrl = 'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-rea
 async function processMessage(message) {
   const adLauncherController = new AdLauncherController();
   try {
-    console.debug('Raw message:', message);
-    console.debug(`✅ Processing message: ${message.MessageId}`);
     // parse SQS message
     const messageBody = JSON.parse(message.Body);
-    console.debug("Message Body:", messageBody);
+    FacebookLogger.info("Message Body:", messageBody);
 
-    console.log("Launch the campaign with everything")
     const payload = {
       body: messageBody,
     }
@@ -26,9 +25,10 @@ async function processMessage(message) {
       response.success ? response.message : response.error,
       userId
     );
+    FacebookLogger.info("Campaign Launched Successfully")
   } catch (error) {
-    console.log(error);
-    console.log(`Error processing message: ${error}`);
+    FacebookLogger.error(error);
+    FacebookLogger.error(`Error processing message: ${error}`);
   }
 }
 
