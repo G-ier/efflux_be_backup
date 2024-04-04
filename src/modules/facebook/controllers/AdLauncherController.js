@@ -126,6 +126,7 @@ class AdLauncherController {
 
     const adAccountsDataMap = await this.getAdAccountsDataMap(req.body.adAccountId);
     const adAccountId = Object.keys(adAccountsDataMap)[0];
+    const adAccountName = adAccountsDataMap[adAccountId].name;
     const { token, userAccountName } = await this.getToken(adAccountsDataMap[adAccountId].id);
 
     console.log('Ad Account Name: ', userAccountName);
@@ -141,11 +142,15 @@ class AdLauncherController {
       console.log('New Campaign Id', newCampaign);
     } catch (error) {
       console.error('Error creating campaign', error);
-      return res.status(500).json({
+      return {
         success: false,
         message: 'Error creating campaign',
-        error: error.message,
-      });
+        error: error.error_user_title ? `
+          Launching with ${adAccountName}
+          ${error.error_user_title}
+          ${error.error_user_msg}
+        ` : error.message,
+      }
     }
 
     // STEP 1: Create dynamic adset
@@ -163,11 +168,15 @@ class AdLauncherController {
       console.log('New Adset Id', newAdset);
     } catch (error) {
       console.error('Error creating adset', error);
-      return res.status(500).json({
+      return {
         success: false,
         message: 'Error creating adset',
-        error: error.message,
-      });
+        error: error.error_user_title ? `
+          Launching with ${adAccountName}
+          ${error.error_user_title}
+          ${error.error_user_msg}
+        ` : error.message,
+      }
     }
 
     // STEP 2: Create a Dynamic Ad Creatives
@@ -182,11 +191,15 @@ class AdLauncherController {
       console.log('New Ad Creative Id', adcreatives);
     } catch (error) {
       console.error('Error creating ad creative', error);
-      return res.status(500).json({
+      return {
         success: false,
         message: 'Error creating ad',
-        error: error.message,
-      });
+        error: error.error_user_title ? `
+          Launching with ${adAccountName}
+          ${error.error_user_title}
+          ${error.error_user_msg}
+        ` : error.message,
+      }
     }
 
     // STEP 3: Create an ad
@@ -202,13 +215,21 @@ class AdLauncherController {
     } catch (error) {
       console.error('Error creating ad', error);
       if (error.code === 100) {
-        return res.status(200).json({
+        return {
           success: true,
           message: 'No Payment Method. Ad created but will not be launched.',
-          error: error.error_user_msg,
-        });
+          error: error.error_user_title ? `
+            Launching with ${adAccountName}
+            ${error.error_user_title}
+            ${error.error_user_msg}
+          ` : error.message,
+        }
       }
-      return 'Failure'
+      return {
+        success: false,
+        message: 'Error creating ad',
+        error: error.message,
+      }
     }
 
     // STEP 4: Save url into dynamo db
@@ -224,14 +245,17 @@ class AdLauncherController {
       await this.adLauncherService.saveTargetsToDynamoDB(targetPayload);
     } catch (error) {
       console.error('Error saving target url to dynamo db', error);
-      return res.status(403).json({
+      return {
         success: false,
         message: 'Error saving target url to dynamo db',
         error: error.message,
-      });
+      }
     }
 
-    return 'Success'
+    return {
+      success: true,
+      message: 'Ad created successfully',
+    }
   }
 
   async launchAdOld(req, res) {

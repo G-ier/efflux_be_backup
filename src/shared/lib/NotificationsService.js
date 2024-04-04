@@ -14,6 +14,8 @@ class NotificationsService {
       message: message,
     };
 
+    console.log("Notifications Data", data)
+
     try {
       const response = await axios.post(serviceURL + '/create', data, {
         headers: {
@@ -31,4 +33,8 @@ class NotificationsService {
   }
 }
 
-module.exports = NotificationsService;
+// Creating a singleton instance of NotificationsService
+const notificationsServiceInstance = new NotificationsService();
+
+// Exporting the singleton instance
+module.exports = notificationsServiceInstance;
