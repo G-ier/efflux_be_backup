@@ -107,12 +107,12 @@ class AdLauncherController {
     // Validate the request body
     this.validateAllParameters(req, res);
 
-    FacebookLogger.info('Request body: ', req.body);
+    FacebookLogger.info(`Request body: ${req.body}`);
 
     const finalTargetUrl = this.constructTargetUrl(req.body)
     req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
 
-    FacebookLogger.info('Final Request Body', JSON.stringify(req.body));
+    FacebookLogger.info(`Final Request Body ${JSON.stringify(req.body)}`);
 
     try {
       // add createdAt timestamp to the request body
@@ -131,7 +131,7 @@ class AdLauncherController {
         message: 'Data pushed to dynamo db successfully',
       });
     } catch (error) {
-      FacebookLogger.error('Error pushing data to dynamo db', error);
+      FacebookLogger.error(`Error pushing data to dynamo db ${error}`);
       return res.status(500).json({
         success: false,
         message: 'Error pushing data to dynamo db',
@@ -149,7 +149,7 @@ class AdLauncherController {
     const adAccountName = adAccountsDataMap[adAccountId].name;
     const { token, userAccountName } = await this.getToken(adAccountsDataMap[adAccountId].id);
 
-    FacebookLogger.info('Facebook User Account Being Used To Launch: ', userAccountName);
+    FacebookLogger.info(`Facebook User Account Being Used To Launch: ${userAccountName}`);
 
     // STEP 0: Create a campaign
     let newCampaign;
@@ -159,9 +159,9 @@ class AdLauncherController {
         adAccountId,
         token,
       );
-      FacebookLogger.info('New Campaign Id', newCampaign);
+      FacebookLogger.info(`New Campaign Id ${newCampaign}`);
     } catch (error) {
-      FacebookLogger.error('Error creating campaign', error);
+      FacebookLogger.error(`Error creating campaign ${error}`);
       return {
         success: false,
         message: 'Error creating campaign',
@@ -185,9 +185,9 @@ class AdLauncherController {
         token,
         campaignId,
       );
-      FacebookLogger.info('New Adset Id', newAdset);
+      FacebookLogger.info(`New Adset Id ${newAdset}`);
     } catch (error) {
-      FacebookLogger.error('Error creating adset', error);
+      FacebookLogger.error(`Error creating adset ${error}`);
       return {
         success: false,
         message: 'Error creating adset',
@@ -208,9 +208,9 @@ class AdLauncherController {
         adAccountId,
       );
 
-      FacebookLogger.info('New Ad Creative Id', adcreatives);
+      FacebookLogger.info(`New Ad Creative Id ${adcreatives}`);
     } catch (error) {
-      FacebookLogger.error('Error creating ad creative', error);
+      FacebookLogger.error(`Error creating ad creative ${error}`);
       return {
         success: false,
         message: 'Error creating ad creative',
@@ -233,7 +233,7 @@ class AdLauncherController {
         token,
       );
     } catch (error) {
-      FacebookLogger.error('Error creating ad', error);
+      FacebookLogger.error(`Error creating ad ${error}`);
       if (error.code === 100) {
         return {
           success: true,

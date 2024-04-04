@@ -13,7 +13,7 @@ async function processMessage(message) {
   try {
     // parse SQS message
     const messageBody = JSON.parse(message.Body);
-    FacebookLogger.info("Message Body:", messageBody);
+    FacebookLogger.info(`Message Body: ${messageBody}`);
 
     const payload = {
       body: messageBody,
