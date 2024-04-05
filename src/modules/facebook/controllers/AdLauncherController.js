@@ -93,25 +93,48 @@ class AdLauncherController {
     return req.body.adAccountId;
   }
 
+  constructTargetUrl(data) {
+    const url = data.url;
+    const adtitle = data.adTxt;
+    const pixel_id = data.adsetData.promoted_object.pixel_id;
+    const queryParams = `?subid1={*user-agent*}&subid2=${pixel_id}_|_{{campaign.id}}_|_{{adset.id}}_|_{{ad.id}}_|_facebook_|_{external}&subid3={*session-id*}&subid4={*user-ip*}_|_{*country-code*}_|_{*region*}_|_{*city*}_|_{*timestamp*}_|_{{campaign.name}}&adtitle=${adtitle}`;
+    return `${url}${queryParams}`;
+  }
+
   async pushDraftToDynamo(req, res) {
-    console.log('Pushing in progress data to dynamo db table.');
+    FacebookLogger.info('Pushing in progress data to dynamo db table.');
 
     // Validate the request body
     this.validateAllParameters(req, res);
 
-    console.log('Request body: ', req.body);
+    FacebookLogger.info(`Request body: ${req.body}`);
+
+    const finalTargetUrl = this.constructTargetUrl(req.body)
+    req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
+
+    FacebookLogger.info(`Final Request Body ${JSON.stringify(req.body)}`);
 
     try {
       // add createdAt timestamp to the request body
       req.body.createdAt = new Date().toISOString();
 
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
+
+
+      const rocketKey = req.body.url.split('/')[1];
+      // Save target to dynamo db
+      await this.ddbRepository.putItem('edge-rocket-targets', {
+        key: rocketKey,
+        internal_campaign_id: req.body.internal_campaign_id,
+        destination_url: `https://${req.body.destinationDomain}`
+      })
+
       return res.json({
         success: true,
         message: 'Data pushed to dynamo db successfully',
       });
     } catch (error) {
-      console.error('Error pushing data to dynamo db', error);
+      FacebookLogger.error(`Error pushing data to dynamo db ${error}`);
       return res.status(500).json({
         success: false,
         message: 'Error pushing data to dynamo db',
@@ -129,7 +152,7 @@ class AdLauncherController {
     const adAccountName = adAccountsDataMap[adAccountId].name;
     const { token, userAccountName } = await this.getToken(adAccountsDataMap[adAccountId].id);
 
-    console.log('Ad Account Name: ', userAccountName);
+    FacebookLogger.info(`Facebook User Account Being Used To Launch: ${userAccountName}`);
 
     // STEP 0: Create a campaign
     let newCampaign;
@@ -139,9 +162,9 @@ class AdLauncherController {
         adAccountId,
         token,
       );
-      console.log('New Campaign Id', newCampaign);
+      FacebookLogger.info(`New Campaign Id ${newCampaign}`);
     } catch (error) {
-      console.error('Error creating campaign', error);
+      FacebookLogger.error(`Error creating campaign ${error}`);
       return {
         success: false,
         message: 'Error creating campaign',
@@ -165,9 +188,9 @@ class AdLauncherController {
         token,
         campaignId,
       );
-      console.log('New Adset Id', newAdset);
+      FacebookLogger.info(`New Adset Id ${newAdset}`);
     } catch (error) {
-      console.error('Error creating adset', error);
+      FacebookLogger.error(`Error creating adset ${error}`);
       return {
         success: false,
         message: 'Error creating adset',
@@ -188,12 +211,12 @@ class AdLauncherController {
         adAccountId,
       );
 
-      console.log('New Ad Creative Id', adcreatives);
+      FacebookLogger.info(`New Ad Creative Id ${adcreatives}`);
     } catch (error) {
-      console.error('Error creating ad creative', error);
+      FacebookLogger.error(`Error creating ad creative ${error}`);
       return {
         success: false,
-        message: 'Error creating ad',
+        message: 'Error creating ad creative',
         error: error.error_user_title ? `
           Launching with ${adAccountName}
           ${error.error_user_title}
@@ -213,7 +236,7 @@ class AdLauncherController {
         token,
       );
     } catch (error) {
-      console.error('Error creating ad', error);
+      FacebookLogger.error(`Error creating ad ${error}`);
       if (error.code === 100) {
         return {
           success: true,
@@ -228,26 +251,6 @@ class AdLauncherController {
       return {
         success: false,
         message: 'Error creating ad',
-        error: error.message,
-      }
-    }
-
-    // STEP 4: Save url into dynamo db
-    const targetPayload = {
-      key: req.body.adData.name,
-      adId: newAd.id,
-      campaignId,
-      pixelId: adsetData.promoted_object.pixel_id,
-      adSetId: newAdset.id,
-      destinationUrl: req.body.url,
-    }
-    try {
-      await this.adLauncherService.saveTargetsToDynamoDB(targetPayload);
-    } catch (error) {
-      console.error('Error saving target url to dynamo db', error);
-      return {
-        success: false,
-        message: 'Error saving target url to dynamo db',
         error: error.message,
       }
     }
