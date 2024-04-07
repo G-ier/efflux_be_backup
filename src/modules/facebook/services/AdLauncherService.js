@@ -87,13 +87,35 @@ class AdLauncherService extends BaseService {
     }
   }
 
-  async createDynamicAdCreative(params, token, adAccountId) {
+  async createDynamicAdCreative(params, token, adAccountId, internalCampaignId, media_files) {
+    const mappedImages = [];
+    if (media_files && media_files.length > 0) {
+      const result = await this.ddbRepository.getItem(
+        'efflux-media-library-2',
+        'internal_campaign_id',
+        internalCampaignId,
+        'adAccountId',
+        adAccountId
+      )
+
+      const regex = /filename-\d+/;
+
+      result.mediaObjects.forEach((item) => {
+        const match = item.originalObjectKey.match(regex);
+        if (match) {
+          mappedImages.push({
+            hash: item.fbhash,
+          });
+        }
+      });
+    }
+
     const payload = {
       ...params,
       "dynamic_ad_voice": "DYNAMIC",
       "asset_feed_spec": {
         ...params.asset_feed_spec,
-        "images": params.image_hashes,
+        "images": mappedImages,
       }
     }
 
