@@ -104,7 +104,7 @@ route.post(`/draft-ad`, (req, res) => adLauncherController.pushDraftToDynamo(req
 
 route.post(`/save-template`, (req, res) => adLauncherController.saveCampaignTemplate(req, res));
 
-route.get`/templates`, (req, res) => adLauncherController.fetchCampaignTemplate(req, res);
+route.get`/templates`, (req, res) => adLauncherController.fetchCampaignTemplates(req, res);
 
 route.get('template/:templateId', (req, res) =>
   adLauncherController.fetchCampaignTemplateById(req, res),
