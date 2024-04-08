@@ -1007,6 +1007,22 @@ Resources:
         - Key: operation
           Value: analytics
 
+  # A DynamoDB table "campaign-templates" for storing campaign templates. On-demand capacity mode is used.
+  CampaignTemplatesTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: campaign-templates
+      AttributeDefinitions:
+        - AttributeName: id
+          AttributeType: S
+      KeySchema:
+        - AttributeName: id
+          KeyType: HASH
+      BillingMode: PAY_PER_REQUEST
+      Tags:
+        - Key: project
+          Value: efflux
+
 ####################
 # Outputs
 ####################
