@@ -36,8 +36,8 @@ class PageRepository{
         }
     }
 
-    async fetchPages(fields = ["*"], filters = {}, limit) {
-        const results = await this.database.query(this.tableName, fields, filters, limit);
+    async fetchPages(fields = ["*"], filters = {}, limit, joins = []) {
+        const results = await this.database.query(this.tableName, fields, filters, limit, joins);
         return results;
     }
 
