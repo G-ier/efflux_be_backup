@@ -13,7 +13,7 @@ async function processMessage(message) {
   try {
     // parse SQS message
     const messageBody = JSON.parse(message.Body);
-    FacebookLogger.info(`Message Body: ${messageBody}`);
+    FacebookLogger.info(`Message Body: ${JSON.stringify(messageBody)}`);
 
     const payload = {
       body: messageBody,
@@ -27,8 +27,8 @@ async function processMessage(message) {
     );
     FacebookLogger.info("Campaign Launched Successfully")
   } catch (error) {
-    FacebookLogger.error(error);
-    FacebookLogger.error(`Error processing message: ${error}`);
+    FacebookLogger.error(JSON.stringify(error));
+    FacebookLogger.error(`Error processing message: ${JSON.stringify(error)}`);
   }
 }
 

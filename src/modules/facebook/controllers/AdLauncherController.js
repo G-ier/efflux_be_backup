@@ -134,7 +134,7 @@ class AdLauncherController {
         message: 'Data pushed to dynamo db successfully',
       });
     } catch (error) {
-      FacebookLogger.error(`Error pushing data to dynamo db ${error}`);
+      FacebookLogger.error(`Error pushing data to dynamo db ${JSON.stringify(error)}`);
       return res.status(500).json({
         success: false,
         message: 'Error pushing data to dynamo db',
@@ -164,7 +164,7 @@ class AdLauncherController {
       );
       FacebookLogger.info(`New Campaign Id ${newCampaign}`);
     } catch (error) {
-      FacebookLogger.error(`Error creating campaign ${error}`);
+      FacebookLogger.error(`Error creating campaign ${JSON.stringify(error)}`);
       return {
         success: false,
         message: 'Error creating campaign',
@@ -190,7 +190,7 @@ class AdLauncherController {
       );
       FacebookLogger.info(`New Adset Id ${newAdset}`);
     } catch (error) {
-      FacebookLogger.error(`Error creating adset ${error}`);
+      FacebookLogger.error(`Error creating adset ${JSON.stringify(error)}`);
       return {
         success: false,
         message: 'Error creating adset',
@@ -213,7 +213,7 @@ class AdLauncherController {
 
       FacebookLogger.info(`New Ad Creative Id ${adcreatives}`);
     } catch (error) {
-      FacebookLogger.error(`Error creating ad creative ${error}`);
+      FacebookLogger.error(`Error creating ad creative ${JSON.stringify(error)}`);
       return {
         success: false,
         message: 'Error creating ad creative',
@@ -236,7 +236,7 @@ class AdLauncherController {
         token,
       );
     } catch (error) {
-      FacebookLogger.error(`Error creating ad ${error}`);
+      FacebookLogger.error(`Error creating ad ${JSON.stringify(error)}`);
       if (error.code === 100) {
         return {
           success: true,
