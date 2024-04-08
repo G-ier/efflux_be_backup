@@ -11,6 +11,8 @@ const pageController = new PageController();
 route.get('/', async (req, res) => await pageController.fetchPages(req, res));
 
 
+route.get('/:adAccountId', async (req, res) => await pageController.fetchPagesByAdAccount(req, res));
+
 // @route    /api/facebook/pageTest/refreshPages
 // @desc     Get pages refresh data
 // @Access   Private
