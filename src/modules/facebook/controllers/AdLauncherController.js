@@ -209,8 +209,6 @@ class AdLauncherController {
         req.body.adData.creative,
         token,
         adAccountId,
-        req.body.internal_campaign_id,
-        req.body.media_files
       );
 
       FacebookLogger.info(`New Ad Creative Id ${adcreatives}`);
@@ -260,6 +258,95 @@ class AdLauncherController {
     return {
       success: true,
       message: 'Ad created successfully',
+    }
+  }
+
+  async launchAdOld(req, res) {
+    let accountName, pixel, page, adAccountName;
+    try {
+      const pixelId = req.body.pixel_id?.toString();
+      const pageId = req.body.page_id?.toString();
+
+      const timerLabel = 'launchAdExecutionTime';
+      console.time(timerLabel); // Start the timer
+      const existingLaunchId = req?.body?.existingLaunchId;
+
+      //Extracting the url of the ad
+      const existingContentIds = req.body.existingContentIds;
+      const contentIds = Array.isArray(existingContentIds)
+        ? existingContentIds
+        : [existingContentIds];
+
+      FacebookLogger.info('Ad launch process initiated.');
+      this.validateRequiredParameters(req);
+      const adAccountId = this.getAdAccountId(req);
+      const adAccountsDataMap = await this.getAdAccountsDataMap(adAccountId);
+      const firstKey = Object.keys(adAccountsDataMap)[0];
+      adAccountName = adAccountsDataMap[firstKey]?.name;
+
+      const { token, userAccountName } = await this.getToken(adAccountsDataMap[firstKey].id);
+      accountName = userAccountName;
+
+      pixel = (await this.pixelService.fetchPixelsByPixelId(['*'], { pixel_id: pixelId }, 1))[0];
+      page = (await this.pageService.fetchPageById(['*'], { id: pageId }, 1))[0];
+
+      // Log the start of campaign creation
+      FacebookLogger.info('Starting campaign creation.');
+      const campaignId = await this.handleCampaignCreation(req, token, firstKey, adAccountsDataMap);
+      FacebookLogger.info(`Campaign created with ID: ${campaignId}`);
+
+      // Log the start of ad set creation
+      FacebookLogger.info('Starting ad set creation.');
+      const adSetId = await this.handleAdsetCreation(
+        req,
+        token,
+        firstKey,
+        campaignId,
+        adAccountsDataMap,
+      );
+      FacebookLogger.info(`Ad Set created with ID: ${adSetId}`);
+
+      // Utilize handleMediaUploads from ContentService
+      FacebookLogger.info('Starting media uploads.');
+      const { uploadedMedia, createdMediaObjects } = await this.adLauncherMedia.handleMediaUploads(
+        req,
+        firstKey,
+        token,
+        contentIds,
+      );
+
+      FacebookLogger.info(`Media uploaded: ${JSON.stringify(uploadedMedia)}`);
+
+      // Retrieve the initial URL
+      let url = req.body.url;
+
+      // Replace the placeholders with actual values
+      url = url?.replace('{CAMPAIGN_ID}', campaignId).replace('{ADSET_ID}', adSetId);
+      // Log the start of ad data preparation
+      FacebookLogger.info('Preparing ad data.');
+      const adData = this.prepareAdData(req, uploadedMedia, adSetId, url);
+
+      // Log the start of ad creation
+      FacebookLogger.info('Starting ad creation.');
+      const adCreationResult = await this.adLauncherService.createAd({
+        token,
+        adAccountId: firstKey,
+        adData,
+      });
+
+
+      // Log the successful creation of an ad
+      console.timeEnd(timerLabel); // Stop the timer after function execution
+      this.respondWithResult(res, adCreationResult);
+      FacebookLogger.info(`Ad successfully created with ID: ${adCreationResult.id}`);
+      notifyUser(
+        'Ad Launch Successful',
+        `Ad ${adData.name} created with ID: ${adCreationResult.id}`,
+        req.user.id,
+      );
+    } catch (error) {
+      console.timeEnd('launchAdExecutionTime'); // Stop the timer after function execution
+      this.respondWithError(res, { error, pixel, page, accountName, adAccountName });
     }
   }
 
