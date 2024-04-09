@@ -27,5 +27,5 @@ exports.up = function(knex) {
  * @returns { Promise<void> }
  */
 exports.down = function(knex) {
-  return knex.schema.dropTable('raw_events');
+  return knex.schema.dropTable('sedo_raw_events');
 };
