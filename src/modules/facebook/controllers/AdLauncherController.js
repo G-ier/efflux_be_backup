@@ -123,10 +123,13 @@ class AdLauncherController {
       req.body.createdAt = new Date().toISOString();
 
       // add random id to the request body using uuid
-      req.body.id = uuidv4();
+      req.body.id = uuidv4().toString();
 
       // add templateName to the request body
       req.body.templateName = req.body.campaignData.name;
+
+      // make sure userId is a string
+      req.body.userId = req.user.id.toString();
 
       // delete internal_campaign_id, status, url from the request body
       delete req.body.internal_campaign_id;
@@ -159,11 +162,21 @@ class AdLauncherController {
     console.log('Fetching campaign templates from dynamo db table.');
     FacebookLogger.info('Fetching campaign templates from dynamo db table.');
 
+    const userId = req.user.id.toString();
+    console.log('Request user ID:', userId);
+    if (!userId) {
+      return res.status(403).json({
+        success: false,
+        message: 'User ID not found in request',
+      });
+    }
+
     try {
       const templates = await this.ddbRepository.queryItems('campaign-templates', {
+        IndexName: 'userId-index',
         KeyConditionExpression: 'userId = :userId',
         ExpressionAttributeValues: {
-          ':userId': req.user.id,
+          ':userId': userId,
         },
       });
 
@@ -190,12 +203,11 @@ class AdLauncherController {
   async fetchCampaignTemplateById(req, res) {
     FacebookLogger.info('Fetching campaign template by id from dynamo db table.');
 
+    const templateId = req.params.templateId.toString();
+    console.log('Request template ID:', templateId);
+
     try {
-      const template = await this.ddbRepository.getItem(
-        'campaign-templates',
-        'id',
-        req.params.templateId,
-      );
+      const template = await this.ddbRepository.getItem('campaign-templates', 'id', templateId);
 
       return res.json({
         success: true,

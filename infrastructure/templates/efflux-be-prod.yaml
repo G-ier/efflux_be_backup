@@ -1015,10 +1015,22 @@ Resources:
       AttributeDefinitions:
         - AttributeName: id
           AttributeType: S
+        - AttributeName: userId
+          AttributeType: S
       KeySchema:
         - AttributeName: id
           KeyType: HASH
+        - AttributeName: userId
+          KeyType: RANGE
       BillingMode: PAY_PER_REQUEST
+      # Add secondary index on the "userId" attribute
+      GlobalSecondaryIndexes:
+        - IndexName: userId-index
+          KeySchema:
+            - AttributeName: userId
+              KeyType: HASH
+          Projection:
+            ProjectionType: ALL
       Tags:
         - Key: project
           Value: efflux
