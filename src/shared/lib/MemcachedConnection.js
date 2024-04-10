@@ -86,8 +86,6 @@ class MemcachedConnection {
       throw err;
     }
   }
-
-  // Note: Memcached does not support scanning keys like Redis, so we cannot replicate deleteKeysByTableName functionality directly
 }
 
 const instance = new MemcachedConnection();
