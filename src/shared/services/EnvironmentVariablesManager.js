@@ -41,10 +41,9 @@ class EnvironmentVariablesManager {
     'AUTH0_CLIENT_ID',
     'AUTH0_CLIENT_SECRET',
 
-    // REDIS
-    'REDIS_CLUSTER_URL_STAGING',
-    'REDIS_CLUSTER_URL_PRODUCTION',
-    'REDIS_CLUSTER_URL_LOCAL',
+    'MEMCACHED_SERVERS_STAGING',
+    'MEMCACHED_SERVERS_PRODUCTION',
+    'MEMCACHED_SERVERS_LOCAL',
 
     // MediaNet
     'MEDIANET_EMAIL',
@@ -76,8 +75,8 @@ class EnvironmentVariablesManager {
     'SEDO_QUEUE_URL',
     'INSIGHTS_QUEUE_URL',
 
-    // Redis
-    'REDIS_ENVIRONMENT',
+    // Memcached
+    'MEMCACHED_SERVERS_PRODUCTION',
     'ENABLE_CACHE',
 
     // Logging
@@ -198,7 +197,7 @@ class EnvironmentVariablesManager {
     } else {
       const requiredEnvVariables = [
         'DATABASE_ENVIRONMENT',
-        'REDIS_ENVIRONMENT',
+        'CACHE_ENVIRONMENT',
         'NEWRELIC_ENVIRONMENT',
         'STACK',
       ];
@@ -221,7 +220,7 @@ class EnvironmentVariablesManager {
 
           Example:
           DATABASE_ENVIRONMENT=staging
-          REDIS_ENVIRONMENT=staging
+          CACHE_ENVIRONMENT=staging
           NEWRELIC_ENVIRONMENT=staging
           STACK=BE
         `);

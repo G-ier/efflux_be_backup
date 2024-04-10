@@ -1,5 +1,5 @@
 // Third party imports
-require("dotenv").config();
+require('dotenv').config();
 const redis = require('redis');
 // Local imports
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
@@ -13,29 +13,29 @@ class RedisConnection {
     return RedisConnection.instance;
   }
 
-   async initialize() {
-    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true') {
-      return null
+  async initialize() {
+    if (EnvironmentVariablesManager.getEnvVariable('ENABLE_CACHE') !== 'true') {
+      return null;
     }
     const instance = new RedisConnection();
     const client = await instance.createClient();
-    this.client=client
-    instance.client= client
+    this.client = client;
+    instance.client = client;
     instance.setupEventListeners();
     Object.freeze(instance); // Freeze the instance after setup
     return instance;
   }
 
   async createClient() {
-    const REDIS_ENVIRONMENT = EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT');
+    const CACHE_ENVIRONMENT = EnvironmentVariablesManager.getEnvVariable('CACHE_ENVIRONMENT');
     let redisUrl = '';
 
-    if (REDIS_ENVIRONMENT === 'production') {
-      redisUrl = EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_PRODUCTION');
-    } else if (REDIS_ENVIRONMENT === 'staging') {
-      redisUrl = EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_STAGING');
+    if (CACHE_ENVIRONMENT === 'production') {
+      redisUrl = EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_PRODUCTION');
+    } else if (CACHE_ENVIRONMENT === 'staging') {
+      redisUrl = EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_STAGING');
     } else {
-      redisUrl = EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_LOCAL');
+      redisUrl = EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_LOCAL');
     }
     const client = redis.createClient({
       url: redisUrl,
@@ -52,7 +52,7 @@ class RedisConnection {
 
     this.client.on('error', (err) => {
       console.log(`Class Redis went wrong ${err}`);
-      console.log('Environment: ', EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT'));
+      console.log('Environment: ', EnvironmentVariablesManager.getEnvVariable('CACHE_ENVIRONMENT'));
     });
   }
 
@@ -65,8 +65,8 @@ class RedisConnection {
   }
 
   async getAsync(key) {
-    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true') {
-      return null
+    if (EnvironmentVariablesManager.getEnvVariable('ENABLE_CACHE') !== 'true') {
+      return null;
     }
     try {
       const reply = await this.client.get(key);
@@ -76,11 +76,9 @@ class RedisConnection {
     }
   }
 
-
-
   async setAsync(key, value) {
-    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true') {
-      return () =>{}
+    if (EnvironmentVariablesManager.getEnvVariable('ENABLE_CACHE') !== 'true') {
+      return () => {};
     }
     try {
       const reply = await this.client.set(key, value);
@@ -90,10 +88,9 @@ class RedisConnection {
     }
   }
 
-
   async delAsync(key) {
-    if(EnvironmentVariablesManager.getEnvVariable("ENABLE_CACHE") !== 'true'){
-      return
+    if (EnvironmentVariablesManager.getEnvVariable('ENABLE_CACHE') !== 'true') {
+      return;
     }
     try {
       const reply = await this.client.del(key);
@@ -128,10 +125,10 @@ const instance = new RedisConnection();
 async function initRedis() {
   try {
     const init = await instance.initialize();
-    if (init) console.log("Redis Client Initialized");
-    else  console.log("Redis Client Not Initialized");
+    if (init) console.log('Redis Client Initialized');
+    else console.log('Redis Client Not Initialized');
   } catch (error) {
-    console.error("Failed to initialize Redis Client:", error);
+    console.error('Failed to initialize Redis Client:', error);
     throw error;
   }
 }

@@ -1,24 +1,24 @@
-version: "3"
+version: '3'
 
 services:
   postgres:
     image: postgres:12
-    container_name: "efflux_postgres"
+    container_name: 'efflux_postgres'
     environment:
       POSTGRES_USER: developer
       POSTGRES_PASSWORD: developer123
       POSTGRES_DB: efflux_local
     ports:
-      - "5432:5432"
+      - '5432:5432'
     volumes:
       - pgdata:/var/lib/postgresql/data
-  redis:
-    image: redis
-    container_name: "efflux_redis"
-    command: redis-server
-    env_file: ".env"
+  memcached:
+    image: memcached:1.5
+    container_name: 'efflux_memcached'
+    command: memcached -m 64
+    env_file: '.env'
     ports:
-      - "6379:6379"
+      - '11211:11211'
 
 volumes:
   pgdata:
