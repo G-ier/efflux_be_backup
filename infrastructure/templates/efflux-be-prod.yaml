@@ -550,7 +550,7 @@ Resources:
   MemcachedCluster:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
-      ClusterName: Efflux-BE-Memcached
+      ClusterName: Efflux-BE
       CacheNodeType: cache.t4g.small
       Engine: memcached
       EngineVersion: 1.6.22
