@@ -49,15 +49,19 @@ class CampaignRepository {
 
   async fetchAccountsEarliestCampaign(userAccountId) {
     const results = await this.database.raw(`
-      SELECT
-          TO_CHAR((created_time::timestamptz AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS date_in_utc
-      FROM
-          campaigns
-      WHERE
-          account_id = ${userAccountId}
-      ORDER BY
-          created_time::timestamptz
-      LIMIT 1;
+    SELECT
+        TO_CHAR((c.created_time::timestamptz AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD') AS date_in_utc
+    FROM
+        campaigns c
+    INNER JOIN
+      ad_accounts aa ON aa.id = c.ad_account_id
+    INNER JOIN
+      ua_aa_map map ON map.aa_id = aa.id
+    WHERE
+        map.ua_id = ${userAccountId}
+    ORDER BY
+        c.created_time::timestamptz
+    LIMIT 1;
     `)
     return results.rows;
   }
