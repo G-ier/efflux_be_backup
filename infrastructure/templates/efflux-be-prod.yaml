@@ -797,11 +797,11 @@ Resources:
                 - ByteMatchStatement:
                     FieldToMatch:
                       UriPath: {}
-                    PositionalConstraint: STARTS_WITH
+                    PositionalConstraint: CONTAINS
                     TextTransformations:
                       - Priority: 0
                         Type: NONE
-                    SearchString: "/.env"
+                    SearchString: ".env"
                 - ByteMatchStatement:
                     FieldToMatch:
                       UriPath: {}
