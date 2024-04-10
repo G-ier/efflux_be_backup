@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Campaign Templates",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

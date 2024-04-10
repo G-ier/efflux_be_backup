@@ -13,6 +13,7 @@ const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
 const { notifyUser } = require('../../../shared/lib/NotificationsService');
 const _ = require('lodash');
 const axios = require('axios');
+const { v4: uuidv4 } = require('uuid');
 const PixelsService = require('../services/PixelsService');
 const PageService = require('../services/PageService');
 
@@ -101,6 +102,121 @@ class AdLauncherController {
     return `${url}${queryParams}`;
   }
 
+  /**
+   * Saves the campaign data to DynamoDB table as a template for future use
+   * @param {Object} req - Request object
+   * @param {Object} res - Response object
+   * @returns {Promise<Object>} - Response object
+   * @async
+   **/
+  async saveCampaignTemplate(req, res) {
+    FacebookLogger.info('Saving campaign template to dynamo db table.');
+
+    // Validate the request body
+    this.validateAllParameters(req, res);
+
+    console.log('Request body:', req.body);
+    FacebookLogger.info(`Request body: ${req.body}`);
+
+    try {
+      // add createdAt timestamp to the request body
+      req.body.createdAt = new Date().toISOString();
+
+      // add random id to the request body using uuid
+      req.body.id = uuidv4();
+
+      // add templateName to the request body
+      req.body.templateName = req.body.campaignData.name;
+
+      // delete internal_campaign_id, status, url from the request body
+      delete req.body.internal_campaign_id;
+      delete req.body.status;
+      delete req.body.url;
+
+      await this.ddbRepository.putItem('campaign-templates', req.body);
+
+      return res.json({
+        success: true,
+        message: 'Campaign template successfully saved',
+      });
+    } catch (error) {
+      FacebookLogger.error(`Error saving campaign template to dynamo db ${JSON.stringify(error)}`);
+      return res.status(500).json({
+        success: false,
+        message: 'Error saving campaign template to dynamo db',
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * Fetches all campaign templates for the current user from DynamoDB table
+   * @param {Object} req - Request object
+   * @param {Object} res - Response object
+   * @returns {Promise<Object>} - Response object
+   **/
+  async fetchCampaignTemplates(req, res) {
+    console.log('Fetching campaign templates from dynamo db table.');
+    FacebookLogger.info('Fetching campaign templates from dynamo db table.');
+
+    try {
+      const templates = await this.ddbRepository.queryItems('campaign-templates', {
+        KeyConditionExpression: 'userId = :userId',
+        ExpressionAttributeValues: {
+          ':userId': req.user.id,
+        },
+      });
+
+      return res.json({
+        success: true,
+        data: templates,
+      });
+    } catch (error) {
+      FacebookLogger.error(`Error fetching campaign templates ${JSON.stringify(error)}`);
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching campaign templates',
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * Fetches a campaign template by id from DynamoDB table
+   * @param {Object} req - Request object
+   * @param {Object} res - Response object
+   * @returns {Promise<Object>} - Response object
+   **/
+  async fetchCampaignTemplateById(req, res) {
+    FacebookLogger.info('Fetching campaign template by id from dynamo db table.');
+
+    try {
+      const template = await this.ddbRepository.getItem(
+        'campaign-templates',
+        'id',
+        req.params.templateId,
+      );
+
+      return res.json({
+        success: true,
+        data: template,
+      });
+    } catch (error) {
+      FacebookLogger.error(`Error fetching campaign template by id ${JSON.stringify(error)}`);
+      return res.status(500).json({
+        success: false,
+        message: 'Error fetching campaign template by id',
+        error: error.message,
+      });
+    }
+  }
+
+  /**
+   * Pushes the draft campaign data to DynamoDB table
+   * @param {Object} req - Request object
+   * @param {Object} res - Response object
+   * @returns {Promise<Object>} - Response object
+   **/
   async pushDraftToDynamo(req, res) {
     FacebookLogger.info('Pushing in progress data to dynamo db table.');
 
@@ -109,7 +225,7 @@ class AdLauncherController {
 
     FacebookLogger.info(`Request body: ${req.body}`);
 
-    const finalTargetUrl = this.constructTargetUrl(req.body)
+    const finalTargetUrl = this.constructTargetUrl(req.body);
     req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
 
     FacebookLogger.info(`Final Request Body ${JSON.stringify(req.body)}`);
@@ -120,14 +236,13 @@ class AdLauncherController {
 
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
 
-
       const rocketKey = req.body.url.split('/')[1];
       // Save target to dynamo db
       await this.ddbRepository.putItem('edge-rocket-targets', {
         key: rocketKey,
         internal_campaign_id: req.body.internal_campaign_id,
-        destination_url: `https://${req.body.destinationDomain}`
-      })
+        destination_url: `https://${req.body.destinationDomain}`,
+      });
 
       return res.json({
         success: true,
@@ -168,12 +283,14 @@ class AdLauncherController {
       return {
         success: false,
         message: 'Error creating campaign',
-        error: error.error_user_title ? `
+        error: error.error_user_title
+          ? `
           Launching with ${adAccountName}
           ${error.error_user_title}
           ${error.error_user_msg}
-        ` : error.message,
-      }
+        `
+          : error.message,
+      };
     }
 
     // STEP 1: Create dynamic adset
@@ -194,12 +311,14 @@ class AdLauncherController {
       return {
         success: false,
         message: 'Error creating adset',
-        error: error.error_user_title ? `
+        error: error.error_user_title
+          ? `
           Launching with ${adAccountName}
           ${error.error_user_title}
           ${error.error_user_msg}
-        ` : error.message,
-      }
+        `
+          : error.message,
+      };
     }
 
     // STEP 2: Create a Dynamic Ad Creatives
@@ -217,12 +336,14 @@ class AdLauncherController {
       return {
         success: false,
         message: 'Error creating ad creative',
-        error: error.error_user_title ? `
+        error: error.error_user_title
+          ? `
           Launching with ${adAccountName}
           ${error.error_user_title}
           ${error.error_user_msg}
-        ` : error.message,
-      }
+        `
+          : error.message,
+      };
     }
 
     // STEP 3: Create an ad
@@ -241,24 +362,26 @@ class AdLauncherController {
         return {
           success: true,
           message: 'No Payment Method. Ad created but will not be launched.',
-          error: error.error_user_title ? `
+          error: error.error_user_title
+            ? `
             Launching with ${adAccountName}
             ${error.error_user_title}
             ${error.error_user_msg}
-          ` : error.message,
-        }
+          `
+            : error.message,
+        };
       }
       return {
         success: false,
         message: 'Error creating ad',
         error: error.message,
-      }
+      };
     }
 
     return {
       success: true,
       message: 'Ad created successfully',
-    }
+    };
   }
 
   async launchAdOld(req, res) {
@@ -333,7 +456,6 @@ class AdLauncherController {
         adAccountId: firstKey,
         adData,
       });
-
 
       // Log the successful creation of an ad
       console.timeEnd(timerLabel); // Stop the timer after function execution

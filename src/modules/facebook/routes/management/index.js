@@ -100,10 +100,15 @@ route.post('/upload-image', upload.single('file'), (req, res) =>
   adLauncherController.uploadImageToFacebook(req, res),
 );
 
-route.post(
-  `/draft-ad`,
-  (req, res) => adLauncherController.pushDraftToDynamo(req, res),
-)
+route.post(`/draft-ad`, (req, res) => adLauncherController.pushDraftToDynamo(req, res));
+
+route.post(`/save-template`, (req, res) => adLauncherController.saveCampaignTemplate(req, res));
+
+route.get(`/templates`, (req, res) => adLauncherController.fetchCampaignTemplates(req, res));
+
+route.get('template/:templateId', (req, res) =>
+  adLauncherController.fetchCampaignTemplateById(req, res),
+);
 
 route.post(
   '/launch-ad',
