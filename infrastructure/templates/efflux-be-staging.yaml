@@ -62,8 +62,8 @@ Resources:
           ToPort: 5432
           CidrIp: 0.0.0.0/0
         - IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
+          FromPort: 11211
+          ToPort: 11211
           CidrIp: 0.0.0.0/0
       Tags:
         - Key: Name
