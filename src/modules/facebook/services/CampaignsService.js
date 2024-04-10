@@ -152,16 +152,16 @@ class CampaignsService extends BaseService {
     try {
       // Extract vertical and category from campaignData
       const { vertical, category, ...facebookCampaignData } = campaignData;
-      
+
       // Create campaign in Facebook without vertical and category
       const facebookResponse = await this.createCampaignInFacebook(access_token, adAccountId, facebookCampaignData);
-      
+
       // Prepare the database object including vertical and category
       const dbObject = { ...facebookResponse, vertical, category, account_id: adAccountId, ...facebookCampaignData };
-      
+
       // Save the campaign data to the local database
       await this.campaignRepository.saveOne(dbObject, adAccountsDataMap);
-  
+
       return {
         success: true,
         message: "Campaign successfully created in Facebook and saved to the database.",
@@ -172,7 +172,7 @@ class CampaignsService extends BaseService {
       throw err; // Rethrow the error to maintain the stack trace
     }
   }
-  
+
 
 }
 

@@ -67,9 +67,28 @@ class CompositeController {
     if (!syncInsightsResult) res.status(500).send("The server failed to sync facebook data");
 
     // 5. Fetch all campaign ids of the user account
-    const campaignIds = await this.compositeService.campaignsService.fetchCampaignsFromDatabase(["id"], {
-      account_id: userAccountId,
-    });
+    const fields = ['campaigns.id']
+    const filters = {
+      "map.ua_id": userAccountId
+    };
+    const joins = [
+      {
+        type: "inner",
+        table: "ad_accounts AS aa",
+        first: "aa.id",
+        operator: "=",
+        second: "campaigns.ad_account_id",
+      },
+      {
+        type: "inner",
+        table: "ua_aa_map AS map",
+        first: "map.aa_id",
+        operator: "=",
+        second: "aa.id",
+      },
+    ];
+    const campaignIds = await this.compositeService.campaignsService.fetchCampaignsFromDatabase(fields, filters, null, joins);
+
     const ids = campaignIds.map(({ id }) => id);
     const campaignIdsRestriction = `(${ids.map((id) => `'${id}'`).join(",")})`;
 
