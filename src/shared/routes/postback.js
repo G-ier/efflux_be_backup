@@ -66,6 +66,31 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 // @route     /trk
 // @desc     GET track
 // @Access   Public
+route.get('/efdav1', async (req, res) => {
+  await callServerlessHandler(req, 'crossroads');
+  res
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
+});
+route.get('/efdav2', async (req, res) => {
+  await callServerlessHandler(req, 'crossroads');
+  res
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
+});
+route.get('/efdav3', async (req, res) => {
+  await callServerlessHandler(req, 'crossroads');
+  res
+    .status(200)
+    .contentType('application/javascript')
+    .send('console.log("Operation successful");');
+});
+
+// @route     /trk
+// @desc     GET track
+// @Access   Public
 route.get('/', async (req, res) => {
   await callServerlessHandler(req, 'crossroads');
   res

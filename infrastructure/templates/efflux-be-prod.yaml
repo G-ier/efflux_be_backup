@@ -805,19 +805,11 @@ Resources:
                 - ByteMatchStatement:
                     FieldToMatch:
                       UriPath: {}
-                    PositionalConstraint: STARTS_WITH
+                    PositionalConstraint: CONTAINS
                     TextTransformations:
                       - Priority: 0
                         Type: NONE
-                    SearchString: "/php"
-                - ByteMatchStatement:
-                    FieldToMatch:
-                      UriPath: {}
-                    PositionalConstraint: STARTS_WITH
-                    TextTransformations:
-                      - Priority: 0
-                        Type: NONE
-                    SearchString: "/_profiler"
+                    SearchString: ".php"
           VisibilityConfig:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: false
