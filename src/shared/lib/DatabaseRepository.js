@@ -7,10 +7,10 @@ class DatabaseRepository {
     // through inheritance. We can parametrize the function to conditionally use cache or not.
     this.enableCache = process.env.ENABLE_CACHE === 'true';
 
-    if (this.enableCache) {
-      const MemcachedConnection = require('./MemcachedConnection');
-      this.cache = MemcachedConnection.getClient();
-    }
+    // if (this.enableCache) {
+    //   const MemcachedConnection = require('./MemcachedConnection');
+    //   this.cache = MemcachedConnection.getClient();
+    // }
   }
 
   getConnection(type = 'read', trx = null) {
