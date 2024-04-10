@@ -101,7 +101,7 @@ Resources:
             # Update and install initial packages
             sudo apt update && \
             sudo apt upgrade -y && \
-            sudo apt install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+            sudo apt install -y python3 ca-certificates curl gnupg curl htop wget zip ruby memcached && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
 
@@ -139,7 +139,7 @@ Resources:
             source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=staging\nREDIS_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=staging\nDATABASE_ENVIRONMENT=staging\nNEWRELIC_ENVIRONMENT=staging\nCACHE_ENVIRONMENT=staging\nLOGGING_ENVIRONMENT=staging\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
@@ -429,27 +429,35 @@ Resources:
         - Key: project
           Value: efflux
 
-  # Create an ElastiCache Redis Cluster
-  RedisCluster:
+  # Create an ElastiCache Memcached Cluster
+  MemcachedCluster:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
-      ClusterName: Efflux-Staging
-      CacheNodeType: cache.t3.small
-      Engine: redis
-      EngineVersion: 7.1
+      ClusterName: Efflux-BE-Staging
+      CacheNodeType: cache.t4g.micro
+      Engine: memcached
+      EngineVersion: 1.6.22
       NumCacheNodes: 1
-      Port: 6379
+      Port: 11211
       VpcSecurityGroupIds:
         - !Ref InstanceSecurityGroup
       CacheSubnetGroupName: !Ref CacheSubnetGroup
       AutoMinorVersionUpgrade: true
       Tags:
         - Key: Name
-          Value: Efflux-Staging
+          Value: Efflux-BE
         - Key: project
-          Value: efflux-staging
-        - Key: operation
+          Value: efflux
+        - Key: component
           Value: cache
+
+  # Add memcached servers to parameter store
+  MemcachedServersParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: MEMCACHED_SERVERS_STAGING
+      Type: String
+      Value: !GetAtt MemcachedCluster.ConfigurationEndpoint.Address
 
   # Create a Cache Subnet Group
   CacheSubnetGroup:

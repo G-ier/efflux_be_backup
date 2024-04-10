@@ -214,7 +214,7 @@ Resources:
             # Update and install initial packages
             sudo apt-get update && \
             sudo apt-get upgrade -y && \
-            sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip ruby && \
+            sudo apt-get install -y python3 ca-certificates curl gnupg curl htop wget zip memcached ruby && \
             sudo mkdir -p /var/www/efflux-backend && \
             sudo chown -R ubuntu:ubuntu /var/www/efflux-backend
 
@@ -253,7 +253,7 @@ Resources:
             source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nNEWRELIC_ENVIRONMENT=production\nREDIS_ENVIRONMENT=production\nLOGGING_ENVIRONMENT=production\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nNEWRELIC_ENVIRONMENT=production\nCACHE_ENVIRONMENT=production\nLOGGING_ENVIRONMENT=production\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
@@ -546,16 +546,16 @@ Resources:
         - Key: project
           Value: efflux
 
-  # Create an ElastiCache Redis Cluster
-  RedisCluster:
+  # Create an ElastiCache Memcached Cluster
+  MemcachedCluster:
     Type: AWS::ElastiCache::CacheCluster
     Properties:
       ClusterName: Efflux-BE
-      CacheNodeType: cache.t3.small
-      Engine: redis
-      EngineVersion: 7.1
+      CacheNodeType: cache.t4g.small
+      Engine: memcached
+      EngineVersion: 1.6.22
       NumCacheNodes: 1
-      Port: 6379
+      Port: 11211
       VpcSecurityGroupIds:
         - !Ref InstanceSecurityGroup
       CacheSubnetGroupName: !Ref CacheSubnetGroup
@@ -565,8 +565,16 @@ Resources:
           Value: Efflux-BE
         - Key: project
           Value: efflux
-        - Key: operation
+        - Key: component
           Value: cache
+
+  # Add memcached servers to parameter store
+  MemcachedServersParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: MEMCACHED_SERVERS_PRODUCTION
+      Type: String
+      Value: !GetAtt MemcachedCluster.ConfigurationEndpoint.Address
 
   # Create a Cache Subnet Group
   CacheSubnetGroup:
@@ -582,7 +590,7 @@ Resources:
           Value: Efflux-BE-SubnetGroup
         - Key: project
           Value: efflux
-        - Key: operation
+        - Key: component
           Value: cache
 
   # Create CodeDeploy Application
