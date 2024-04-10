@@ -24,7 +24,7 @@ services:
     ports:
       - '5000:5000'
     environment:
-      - REDIS_HOST=redis
+      - MEMCACHED_HOST=memcached
       - DATABASE_HOST=postgres
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
@@ -32,5 +32,5 @@ services:
     volumes:
       - ./logs:/logs
     depends_on:
-      - redis
+      - memcached
       - postgres

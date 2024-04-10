@@ -1,5 +1,5 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
-const RedisConnection = require('../../../shared/lib/RedisConnection');
+const MemcachedConnection = require('../../../shared/lib/MemcachedConnection');
 const User = require('../entities/User');
 
 class UserRepository {
@@ -27,7 +27,7 @@ class UserRepository {
       const updated = await this.database.update(this.tableName, data, criteria);
       if (Array.isArray(updated)) {
         for (const update of updated) {
-          const x = await RedisConnection.delAsync(`user:${update.providerId}`);
+          const x = await MemcachedConnection.delAsync(`user:${update.providerId}`);
         }
       }
       return updated;
@@ -97,7 +97,7 @@ class UserRepository {
 
       if (providerId) {
         // Retrieve from cache if providerId is valid
-        cachedObject = await RedisConnection.getAsync(`user:${providerId}`);
+        cachedObject = await MemcachedConnection.getAsync(`user:${providerId}`);
         if (cachedObject) {
           // Return cached object if available
           return JSON.parse(cachedObject);
@@ -112,7 +112,7 @@ class UserRepository {
 
       if (object && object.providerId) {
         // Cache the result if object is valid and has a providerId
-        await RedisConnection.setAsync(`user:${object.providerId}`, JSON.stringify(object));
+        await MemcachedConnection.setAsync(`user:${object.providerId}`, JSON.stringify(object));
       }
 
       return object;

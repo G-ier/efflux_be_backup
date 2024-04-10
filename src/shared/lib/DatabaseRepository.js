@@ -8,8 +8,8 @@ class DatabaseRepository {
     this.enableCache = process.env.ENABLE_CACHE === 'true';
 
     if (this.enableCache) {
-      const RedisConnection = require('./RedisConnection');
-      this.redis = RedisConnection.getClient();
+      const MemcachedConnection = require('./MemcachedConnection');
+      this.cache = MemcachedConnection.getClient();
     }
   }
 
@@ -36,7 +36,7 @@ class DatabaseRepository {
 
       // Delete cache for the table
       if (this.enableCache) {
-        await this.redis.deleteKeysByTableName(table);
+        await this.cache.deleteKeysByTableName(table);
       }
 
       return insertResult;
@@ -89,7 +89,7 @@ class DatabaseRepository {
         // Check if users are in cache
         console.log(`Fetching from cache: ${tableName}`);
         const cacheKey = `${tableName}:${JSON.stringify({ fields, filters, limit })}`;
-        const cachedUsers = await this.redis.getAsync(cacheKey);
+        const cachedUsers = await this.cache.getAsync(cacheKey);
         return JSON.parse(cachedUsers);
       }
       const connection = this.getConnection();
@@ -136,7 +136,7 @@ class DatabaseRepository {
       if (cache && this.enableCache) {
         // Set cache
         console.log(`Setting cache: ${tableName}`);
-        await this.redis.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
+        await this.cache.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
       }
 
       return results;
@@ -167,7 +167,7 @@ class DatabaseRepository {
 
       // Delete cache for the table
       if (this.enableCache) {
-        await this.redis.deleteKeysByTableName(tableName);
+        await this.cache.deleteKeysByTableName(tableName);
       }
 
       return deletedRowCount; // Return number of deleted rows
@@ -208,7 +208,7 @@ class DatabaseRepository {
         // Check if users are in cache
         console.log(`Fetching from cache: ${tableName}`);
         const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
-        const cachedUsers = await this.redis.getAsync(cacheKey);
+        const cachedUsers = await this.cache.getAsync(cacheKey);
         return JSON.parse(cachedUsers);
       }
 
@@ -232,7 +232,7 @@ class DatabaseRepository {
       if (cache && this.enableCache) {
         // Set cache
         console.log(`Setting cache: ${tableName}`);
-        await this.redis.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+        await this.cache.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
       }
       return result;
     } catch (error) {
