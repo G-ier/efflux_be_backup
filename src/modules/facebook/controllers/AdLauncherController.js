@@ -308,6 +308,7 @@ class AdLauncherController {
     // STEP 1: Create dynamic adset
     const adsetData = req.body.adsetData;
     const campaignId = newCampaign.id;
+    const adData = req.body.adData;
 
     let newAdset;
     try {
@@ -316,6 +317,7 @@ class AdLauncherController {
         adAccountId,
         token,
         campaignId,
+        adData
       );
       FacebookLogger.info(`New Adset Id ${newAdset}`);
     } catch (error) {
