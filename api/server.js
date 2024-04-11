@@ -12,12 +12,14 @@ const initializeAPI = async () => {
   await EnvironmentVariablesManager.init();
   console.log('Environment variables retrieved.');
 
-  console.log('Initializing Redis...');
-  const { initRedis } = require('../src/shared/lib/RedisConnection');
-  await initRedis();
+  console.log('Initializing Cache...');
+  const { initMemcached } = require('../src/shared/lib/MemcachedConnection');
+  await initMemcached();
 
   try {
-    const DISABLE_MEDIAMASTER_QUEUE = EnvironmentVariablesManager.getEnvVariable('DISABLE_MEDIAMASTER_QUEUE');
+    const DISABLE_MEDIAMASTER_QUEUE = EnvironmentVariablesManager.getEnvVariable(
+      'DISABLE_MEDIAMASTER_QUEUE',
+    );
     if (DISABLE_MEDIAMASTER_QUEUE === 'true') {
       console.log('MediaMaster Queue is disabled');
     } else {
@@ -57,7 +59,6 @@ const initializeAPI = async () => {
     'DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'),
   );
 
-
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
 
@@ -96,13 +97,13 @@ const initializeAPI = async () => {
         ? 'N/A'
         : process.env.DATABASE_URL_LOCAL;
 
-    const redisEnvironment = EnvironmentVariablesManager.getEnvVariable('REDIS_ENVIRONMENT');
-    const redisUrl =
-      redisEnvironment === 'production'
-        ? EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_PRODUCTION')
-        : redisEnvironment === 'staging'
-        ? EnvironmentVariablesManager.getEnvVariable('REDIS_CLUSTER_URL_STAGING')
-        : process.env.REDIS_CLUSTER_URL_LOCAL;
+    const cacheEnvironment = EnvironmentVariablesManager.getEnvVariable('CACHE_ENVIRONMENT');
+    const memcachedUrl =
+      cacheEnvironment === 'production'
+        ? EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_PRODUCTION')
+        : cacheEnvironment === 'staging'
+        ? EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_STAGING')
+        : process.env.MEMCACHED_SERVERS_LOCAL;
 
     console.log(`
       Server Info:
@@ -124,9 +125,9 @@ const initializeAPI = async () => {
         Environment: ${databaseEnvironment || 'development'}
         URL: ${roDatabaseUrl}
 
-      Redis:
-        Environment: ${redisEnvironment || 'development'}
-        URL: ${redisUrl}
+      Memcached:
+        Environment: ${cacheEnvironment || 'development'}
+        URL: ${memcachedUrl}
     `);
   });
 };

@@ -1,30 +1,30 @@
-version: "3"
+version: '3'
 
 services:
   postgres:
     image: postgres:12
-    container_name: "digittopia_postgres"
-    env_file: ".env"
+    container_name: 'digittopia_postgres'
+    env_file: '.env'
     ports:
-      - "5433:5432"
+      - '5433:5432'
 
-  redis:
-    image: redis
-    container_name: "digittopia_redis"
-    command: redis-server
-    env_file: ".env"
+  memcached:
+    image: memcached:1.5
+    container_name: 'efflux_memcached'
+    command: memcached -m 64
+    env_file: '.env'
     ports:
-      - "6379:6379"
+      - '11211:11211'
 
   express_app:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: "digittopia_express"
+    container_name: 'digittopia_express'
     ports:
-      - "5000:5000"
+      - '5000:5000'
     environment:
-      - REDIS_HOST=redis
+      - MEMCACHED_HOST=memcached
       - DATABASE_HOST=postgres
       - AWS_ACCESS_KEY_ID
       - AWS_SECRET_ACCESS_KEY
@@ -32,5 +32,5 @@ services:
     volumes:
       - ./logs:/logs
     depends_on:
-      - redis
+      - memcached
       - postgres
