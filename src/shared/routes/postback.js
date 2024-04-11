@@ -60,6 +60,10 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 // @desc     GET track
 // @Access   Public
 route.get('/efdav1', async (req, res) => {
+  console.debug('DA efdav1');
+  console.debug(req.query);
+  PostbackLogger.info(`DA efdav1: ${JSON.stringify(req.query)}`);
+
   await callServerlessHandler(req, 'crossroads');
   res
     .status(200)
@@ -67,6 +71,9 @@ route.get('/efdav1', async (req, res) => {
     .send('console.log("Operation successful");');
 });
 route.get('/efdav2', async (req, res) => {
+  console.debug('DA efdav2');
+  console.debug(req.query);
+  PostbackLogger.info(`DA efdav2: ${JSON.stringify(req.query)}`);
   await callServerlessHandler(req, 'crossroads');
   res
     .status(200)
@@ -74,6 +81,9 @@ route.get('/efdav2', async (req, res) => {
     .send('console.log("Operation successful");');
 });
 route.get('/efdav3', async (req, res) => {
+  console.debug('DA efdav3');
+  console.debug(req.query);
+  PostbackLogger.info(`DA efdav3: ${JSON.stringify(req.query)}`);
   await callServerlessHandler(req, 'crossroads');
   res
     .status(200)
@@ -86,6 +96,8 @@ route.get('/efdav3', async (req, res) => {
 // @Access   Public
 route.get('/', async (req, res) => {
   console.debug('DA GET');
+  console.debug(req.query);
+  PostbackLogger.info(`DA GET: ${JSON.stringify(req.query)}`);
   await callServerlessHandler(req, 'crossroads');
   res
     .status(200)
