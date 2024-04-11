@@ -58,6 +58,7 @@ class AdLauncherService extends BaseService {
       targeting,
       promoted_object,
       bid_strategy,
+      bid_constraints,
       is_dynamic_creative
     } = adsetData;
 
@@ -71,6 +72,7 @@ class AdLauncherService extends BaseService {
       "billing_event": billing_event,
       "optimization_goal": optimization_goal,
       "bid_strategy": bid_strategy,
+      "bid_constraints": bid_constraints,
       "campaign_id": campaignId,
       "targeting": targeting,
       "promoted_object": promoted_object,
