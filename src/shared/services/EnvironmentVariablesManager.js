@@ -66,7 +66,6 @@ class EnvironmentVariablesManager {
     'DATABASE_ENVIRONMENT',
     'PORT',
     'DISABLE_SLACK_NOTIFICATION',
-    'NEWRELIC_ENVIRONMENT',
     'DISABLE_AUTH_DEADLOCK',
 
     // SQS Queues
@@ -195,12 +194,7 @@ class EnvironmentVariablesManager {
         this.cachedValues[secretName] = process.env[secretName];
       }
     } else {
-      const requiredEnvVariables = [
-        'DATABASE_ENVIRONMENT',
-        'CACHE_ENVIRONMENT',
-        'NEWRELIC_ENVIRONMENT',
-        'STACK',
-      ];
+      const requiredEnvVariables = ['DATABASE_ENVIRONMENT', 'CACHE_ENVIRONMENT', 'STACK'];
 
       // Overwriting the env variables with the ones from the file
       const dotenv = require('dotenv');
@@ -221,7 +215,6 @@ class EnvironmentVariablesManager {
           Example:
           DATABASE_ENVIRONMENT=staging
           CACHE_ENVIRONMENT=staging
-          NEWRELIC_ENVIRONMENT=staging
           STACK=BE
         `);
       }

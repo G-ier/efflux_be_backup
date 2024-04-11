@@ -2,8 +2,8 @@ module.exports = {
   apps: [
     {
       name: 'efflux-be',
-      script: 'node -r newrelic index.js',
-      ignore_watch: ['./node_modules', './logs', './storage', 'newrelic_agent.log'],
+      script: 'node index.js',
+      ignore_watch: ['./node_modules', './logs', './storage'],
       watch: false,
       instances: '1',
       exec_mode: 'fork',
@@ -14,14 +14,10 @@ module.exports = {
       },
       env_production: {
         NODE_ENV: 'production',
-        NEW_RELIC_APP_NAME: 'Efflux BE Production',
-        NEW_RELIC_LICENSE_KEY: '05deb215fbdea6d15e080ae888415b2dFFFFNRAL',
         PORT: 80,
       },
       env_staging: {
         NODE_ENV: 'staging',
-        NEW_RELIC_APP_NAME: 'Efflux BE Staging',
-        NEW_RELIC_LICENSE_KEY: '05deb215fbdea6d15e080ae888415b2dFFFFNRAL',
         PORT: 80,
       },
     },

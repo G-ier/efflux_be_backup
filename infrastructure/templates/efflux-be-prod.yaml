@@ -238,9 +238,6 @@ Resources:
             sudo ./install auto && \
             sudo service codedeploy-agent start
 
-            # Install New Relic Agent
-            curl -Ls https://download.newrelic.com/install/newrelic-cli/scripts/install.sh | bash && sudo NEW_RELIC_API_KEY=NRAK-HK5ODU5XY1IV1B9CQ9WRL8VPIAX NEW_RELIC_ACCOUNT_ID=4261318 /usr/local/bin/newrelic install -y --tag project:efflux-be
-
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
             echo "alias htop='sudo htop'" >> ~/.bashrc
@@ -253,7 +250,7 @@ Resources:
             source ~/.bashrc
 
             # Define environment
-            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nNEWRELIC_ENVIRONMENT=production\nCACHE_ENVIRONMENT=production\nLOGGING_ENVIRONMENT=production\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
+            echo -e "CRON_ENVIRONMENT=production\nDATABASE_ENVIRONMENT=production\nCACHE_ENVIRONMENT=production\nLOGGING_ENVIRONMENT=production\nSTACK=BE" | sudo tee /etc/profile.d/efflux-backend.env > /dev/null
 
             # Create a dummy Express Js app on port 3500 for the health check
             sudo mkdir -p /var/www/health-check
@@ -847,6 +844,14 @@ Resources:
     Properties:
       BucketName: events-raw
       AccessControl: AwsExecRead
+      # transition all files to One Zone-IA after 5 days
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionToOneZoneIA
+            Status: Enabled
+            Transitions:
+              - StorageClass: ONEZONE_IA
+                TransitionInDays: 30
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
@@ -957,6 +962,14 @@ Resources:
     Properties:
       BucketName: events-for-analytics
       AccessControl: AwsExecRead
+      # transition all files to One Zone-IA after 5 days
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionToOneZoneIA
+            Status: Enabled
+            Transitions:
+              - StorageClass: ONEZONE_IA
+                TransitionInDays: 30
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
@@ -1008,6 +1021,14 @@ Resources:
     Properties:
       BucketName: events-malicious-clicks
       AccessControl: AwsExecRead
+      # transition all files to One Zone-IA after 5 days
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionToOneZoneIA
+            Status: Enabled
+            Transitions:
+              - StorageClass: ONEZONE_IA
+                TransitionInDays: 30
       OwnershipControls:
         Rules:
           - ObjectOwnership: BucketOwnerPreferred
