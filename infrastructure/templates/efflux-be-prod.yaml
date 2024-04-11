@@ -266,6 +266,9 @@ Resources:
             cd /var/www/health-check
             sudo pm2 start app.js --name health-check
 
+            # Link the app to the pm2
+            pm2 link eya39ta853ov4kb kekfkhvd28x0r37
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
