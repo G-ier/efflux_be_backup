@@ -266,6 +266,9 @@ Resources:
             cd /var/www/health-check
             sudo pm2 start app.js --name health-check
 
+            # Link the app to the pm2
+            pm2 link eya39ta853ov4kb kekfkhvd28x0r37
+
         TagSpecifications:
           - ResourceType: volume
             Tags:
@@ -884,11 +887,18 @@ Resources:
                 Rules:
                   - Name: prefix
                     Value: crossroads/
+          - Event: s3:ObjectCreated:Put
+            Queue: !ImportValue PostbacksWranglerQueueArn
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: prefix
+                    Value: epcvip/
       Tags:
         - Key: project
-          Value: efflux-on-edge
+          Value: efflux
         - Key: operation
-          Value: analytics
+          Value: postbacks
 
   # Allow DataLakeBucket To send notifications to RedirectionsWranglerQueue
   SQSQueuePolicy:

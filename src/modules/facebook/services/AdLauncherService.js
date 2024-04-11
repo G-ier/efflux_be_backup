@@ -59,7 +59,9 @@ class AdLauncherService extends BaseService {
       promoted_object,
       bid_strategy,
       bid_constraints,
-      is_dynamic_creative
+      is_dynamic_creative,
+      start_time,
+      end_time
     } = adsetData;
 
     // TODO: Add device platform targeting logic here
@@ -77,8 +79,15 @@ class AdLauncherService extends BaseService {
       "targeting": targeting,
       "promoted_object": promoted_object,
       "status": status,
-      "is_dynamic_creative": is_dynamic_creative,
+      "is_dynamic_creative": is_dynamic_creative
     };
+
+    if (start_time) {
+      payload["start_time"] = start_time.slice(0, -1);
+    }
+    if (end_time) {
+      payload["end_time"] = end_time.slice(0, -1);
+    }
 
     console.log('Adset Payload -->', JSON.stringify(payload));
 

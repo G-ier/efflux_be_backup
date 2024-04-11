@@ -85,6 +85,7 @@ route.get('/efdav3', async (req, res) => {
 // @desc     GET track
 // @Access   Public
 route.get('/', async (req, res) => {
+  console.debug('DA GET');
   await callServerlessHandler(req, 'crossroads');
   res
     .status(200)
@@ -97,6 +98,7 @@ route.get('/', async (req, res) => {
 // @Access   Public
 // Conversion Event
 route.post('/', async (req, res) => {
+  console.debug('DA POST');
   await callServerlessHandler(req, 'crossroads', true);
   res
     .status(200)
@@ -105,11 +107,13 @@ route.post('/', async (req, res) => {
 });
 
 route.get('/sedo', async (req, res) => {
+  console.debug('SEDO GET');
   await callServerlessHandler(req, 'sedo');
   res.status(200).json({ message: 'success' });
 });
 
 route.get('/tonic', async (req, res) => {
+  console.debug('TONIC GET');
   await callServerlessHandler(req, 'tonic');
   res.status(200).json({ message: 'success' });
 });
