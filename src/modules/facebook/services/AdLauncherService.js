@@ -26,7 +26,7 @@ class AdLauncherService extends BaseService {
     const status = "PAUSED";
     const payload = {
       name,
-      objective: "OUTCOME_TRAFFIC",
+      objective: objective,
       status,
       special_ad_categories,
     };
@@ -45,7 +45,10 @@ class AdLauncherService extends BaseService {
     }
   }
 
-  async createAdset(adsetData, adAccountId, token, campaignId) {
+  async createAdset(adsetData, adAccountId, token, campaignId, adData) {
+    const {
+      status
+    } = adData;
     const {
       name,
       daily_budget,
@@ -53,7 +56,10 @@ class AdLauncherService extends BaseService {
       billing_event,
       optimization_goal,
       targeting,
-      promoted_object
+      promoted_object,
+      bid_strategy,
+      bid_constraints,
+      is_dynamic_creative
     } = adsetData;
 
     // TODO: Add device platform targeting logic here
@@ -65,11 +71,13 @@ class AdLauncherService extends BaseService {
       "bid_amount": bid_amount,
       "billing_event": billing_event,
       "optimization_goal": optimization_goal,
+      "bid_strategy": bid_strategy,
+      "bid_constraints": bid_constraints,
       "campaign_id": campaignId,
       "targeting": targeting,
       "promoted_object": promoted_object,
-      "status": "PAUSED",
-      "is_dynamic_creative": true,
+      "status": status,
+      "is_dynamic_creative": is_dynamic_creative,
     };
 
     console.log('Adset Payload -->', JSON.stringify(payload));
