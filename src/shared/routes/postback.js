@@ -29,7 +29,6 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
 
   API_GATEWAY_URL += networkPaths[network] || '/';
   console.log('Calling: ', API_GATEWAY_URL);
-  // PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
   try {
     // ?: I wanted to use Axios but it was not working with the serverless function
@@ -65,30 +64,21 @@ route.get('/efdav1', async (req, res) => {
   PostbackLogger.info(`DA efdav1: ${JSON.stringify(req.query)}`);
 
   await callServerlessHandler(req, 'crossroads');
-  res
-    .status(200)
-    .contentType('application/javascript')
-    .send('console.log("Operation successful");');
+  res.status(200).json({ message: 'success' });
 });
 route.get('/efdav2', async (req, res) => {
   console.debug('DA efdav2');
   console.debug(req.query);
   PostbackLogger.info(`DA efdav2: ${JSON.stringify(req.query)}`);
   await callServerlessHandler(req, 'crossroads');
-  res
-    .status(200)
-    .contentType('application/javascript')
-    .send('console.log("Operation successful");');
+  res.status(200).json({ message: 'success' });
 });
 route.get('/efdav3', async (req, res) => {
   console.debug('DA efdav3');
   console.debug(req.query);
   PostbackLogger.info(`DA efdav3: ${JSON.stringify(req.query)}`);
   await callServerlessHandler(req, 'crossroads');
-  res
-    .status(200)
-    .contentType('application/javascript')
-    .send('console.log("Operation successful");');
+  res.status(200).json({ message: 'success' });
 });
 
 // @route     /trk
@@ -99,10 +89,7 @@ route.get('/', async (req, res) => {
   console.debug(req.query);
   PostbackLogger.info(`DA GET: ${JSON.stringify(req.query)}`);
   await callServerlessHandler(req, 'crossroads');
-  res
-    .status(200)
-    .contentType('application/javascript')
-    .send('console.log("Operation successful");');
+  res.status(200).json({ message: 'success' });
 });
 
 // @route     /trk
@@ -112,10 +99,7 @@ route.get('/', async (req, res) => {
 route.post('/', async (req, res) => {
   console.debug('DA POST');
   await callServerlessHandler(req, 'crossroads', true);
-  res
-    .status(200)
-    .contentType('application/javascript')
-    .send('console.log("Operation successful");');
+  res.status(200).json({ message: 'success' });
 });
 
 route.get('/sedo', async (req, res) => {
