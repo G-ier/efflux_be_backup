@@ -68,6 +68,11 @@ class AdLauncherService extends BaseService {
     // TODO: Add device platform targeting logic here
     delete targeting.os;
 
+    attribution_spec.map((spec) => ({
+      event_type: spec.event_type,
+      window_days: spec.window_days || 1,
+    }));
+
     const payload = {
       "name": name,
       "daily_budget": daily_budget,
