@@ -70,7 +70,7 @@ class AdLauncherService extends BaseService {
 
     attribution_spec.map((spec) => ({
       event_type: spec.event_type,
-      window_days: spec.window_days || 1,
+      window_days: spec.window_days || 0,
     }));
 
     const payload = {
