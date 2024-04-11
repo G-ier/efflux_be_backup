@@ -51,6 +51,7 @@ class AdLauncherService extends BaseService {
     } = adData;
     const {
       name,
+      attribution_spec,
       daily_budget,
       bid_amount,
       billing_event,
@@ -79,7 +80,8 @@ class AdLauncherService extends BaseService {
       "targeting": targeting,
       "promoted_object": promoted_object,
       "status": status,
-      "is_dynamic_creative": is_dynamic_creative
+      "is_dynamic_creative": is_dynamic_creative,
+      "attribution_spec": attribution_spec
     };
 
     if (start_time) {
