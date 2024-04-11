@@ -26,7 +26,7 @@ class AdLauncherService extends BaseService {
     const status = "PAUSED";
     const payload = {
       name,
-      objective: "OUTCOME_TRAFFIC",
+      objective: objective,
       status,
       special_ad_categories,
     };
