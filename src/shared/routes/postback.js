@@ -1,17 +1,11 @@
 // Third party imports
 const route = require('express').Router();
-const parser = require('ua-parser-js');
-const md5 = require('md5');
 const fetch = require('node-fetch-commonjs');
 
 // Local imports
-const { todayHH, todayYMD } = require('../../shared/helpers/calendar');
-const PROVIDERS = require('../constants/providers');
 const DatabaseRepository = require('../lib/DatabaseRepository');
 const { sendSlackNotification } = require('../lib/SlackNotificationService');
-const { PostbackLogger, PostbackTestLogger } = require('../../shared/lib/WinstonLogger');
-const { PostbackQueue } = require('../helpers/Queue');
-const { isNotNumeric } = require('../helpers/Utils');
+const { PostbackLogger } = require('../../shared/lib/WinstonLogger');
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
 const writePostbacksToClickhouse = EnvironmentVariablesManager.getEnvVariable(
@@ -20,7 +14,6 @@ const writePostbacksToClickhouse = EnvironmentVariablesManager.getEnvVariable(
 const reporting = require('./reporting');
 
 const db = new DatabaseRepository();
-const postbackQueue = new PostbackQueue();
 
 const callServerlessHandler = async (request, network, isConversion = 'false') => {
   if (writePostbacksToClickhouse == 'false') return;
@@ -35,7 +28,7 @@ const callServerlessHandler = async (request, network, isConversion = 'false') =
   };
 
   API_GATEWAY_URL += networkPaths[network] || '/';
-  // console.log('Calling: ', API_GATEWAY_URL);
+  console.log('Calling: ', API_GATEWAY_URL);
   // PostbackLogger.info(`Calling: ${API_GATEWAY_URL}`);
 
   try {
