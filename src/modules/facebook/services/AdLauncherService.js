@@ -68,7 +68,13 @@ class AdLauncherService extends BaseService {
     // TODO: Add device platform targeting logic here
     delete targeting.os;
 
-    attribution_spec.map((spec) => ({
+    // TODO: Review the attribution spec logic with business. 
+    // This logic can live in the backend or frontend depending on the business requirements
+    // https://developers.facebook.com/docs/marketing-api/reference/ad-campaign-group/
+    
+    attribution_spec = attribution_spec?.filter(j => j.event_type !== "VIEW_THROUGH")
+    
+    attribution_spec?.map((spec) => ({
       event_type: spec.event_type,
       window_days: spec.window_days || 0,
     }));
@@ -86,8 +92,11 @@ class AdLauncherService extends BaseService {
       "promoted_object": promoted_object,
       "status": status,
       "is_dynamic_creative": is_dynamic_creative,
-      "attribution_spec": attribution_spec
     };
+
+    if (attribution_spec) {
+      payload["attribution_spec"] = attribution_spec;
+    }
 
     if (start_time) {
       payload["start_time"] = start_time.slice(0, -1);
