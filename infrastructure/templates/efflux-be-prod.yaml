@@ -809,7 +809,15 @@ Resources:
                     TextTransformations:
                       - Priority: 0
                         Type: NONE
-                    SearchString: ".php"
+                    SearchString: "php"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: CONTAINS
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "aws"
           VisibilityConfig:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: false
