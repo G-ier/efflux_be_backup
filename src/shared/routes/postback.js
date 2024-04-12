@@ -85,6 +85,7 @@ route.get('/sedo', async (req, res) => {
 
 route.get('/tonic', async (req, res) => {
   console.debug('TONIC GET');
+  console.debug(req.query);
   await callServerlessHandler(req, 'tonic');
   res.status(200).json({ message: 'success' });
 });
