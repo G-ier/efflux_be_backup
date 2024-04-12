@@ -207,7 +207,7 @@ Resources:
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
         # TODO: investigate the usage of t4g.small
-        InstanceType: t3a.micro
+        InstanceType: t3a.small
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
@@ -264,7 +264,7 @@ Resources:
             sudo pm2 start app.js --name health-check
 
             # Link the app to the pm2
-            pm2 link eya39ta853ov4kb kekfkhvd28x0r37
+            pm2 link eya39ta853ov4kb kekfkhvd28x0r37 BACKEND
 
         TagSpecifications:
           - ResourceType: volume
@@ -301,8 +301,8 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MaxSize: "4"
-      MinSize: "2"
+      MaxSize: "3"
+      MinSize: "1"
       DesiredCapacity: "2"
       NotificationConfigurations:
         - TopicARN: !Ref NotificationTopic

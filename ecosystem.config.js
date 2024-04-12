@@ -2,11 +2,11 @@ module.exports = {
   apps: [
     {
       name: 'efflux-be',
-      script: 'node index.js',
+      script: 'index.js',
       ignore_watch: ['./node_modules', './logs', './storage'],
       watch: false,
-      instances: '1',
-      exec_mode: 'fork',
+      instances: 'max',
+      exec_mode: 'cluster',
       max_memory_restart: '512M',
       env: {
         NODE_ENV: 'development',
