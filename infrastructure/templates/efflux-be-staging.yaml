@@ -329,50 +329,6 @@ Resources:
       ComparisonOperator: GreaterThanThreshold
       MetricName: CPUUtilization
 
-  # ElasticFileSystem
-  ElasticFileSystem:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      BackupPolicy: { "Status": "ENABLED" }
-      Encrypted: true
-      PerformanceMode: generalPurpose
-      ThroughputMode: bursting
-      LifecyclePolicies:
-        - TransitionToIA: AFTER_60_DAYS
-        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
-      FileSystemTags:
-        - Key: Name
-          Value: Efflux-Staging-EFS
-        - Key: project
-          Value: efflux-staging
-
-  # Mount Target 1
-  MountTarget1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet1
-
-  # Mount Target 2
-  MountTarget2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet2
-
-  # Mount Target 3
-  MountTarget3:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !ImportValue Efflux-PublicSubnet3
-
   RDSPostgresDB:
     Type: AWS::RDS::DBInstance
     Properties:
@@ -665,9 +621,6 @@ Outputs:
   CloudWatchAlarm:
     Description: CloudWatch Alarm ID
     Value: !Ref CloudWatchAlarm
-  ElasticFileSystem:
-    Description: Elastic File System ID
-    Value: !Ref ElasticFileSystem
   RDSPostgresDB:
     Description: RDS Postgres Database ID
     Value: !Ref RDSPostgresDB
