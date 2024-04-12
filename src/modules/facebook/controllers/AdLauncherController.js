@@ -372,19 +372,7 @@ class AdLauncherController {
       );
     } catch (error) {
       FacebookLogger.error(`Error creating ad ${JSON.stringify(error)}`);
-      if (error.code === 100) {
-        return {
-          success: true,
-          message: 'No Payment Method. Ad created but will not be launched.',
-          error: error.error_user_title
-            ? `
-            Launching with ${adAccountName}
-            ${error.error_user_title}
-            ${error.error_user_msg}
-          `
-            : error.message,
-        };
-      }
+      console.log('Error creating ad ---?>', error);
       return {
         success: false,
         message: 'Error creating ad',
