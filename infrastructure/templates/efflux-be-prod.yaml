@@ -207,7 +207,7 @@ Resources:
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
         # TODO: investigate the usage of t4g.small
-        InstanceType: t3a.small
+        InstanceType: t3a.micro
         UserData:
           Fn::Base64: !Sub |
             #!/bin/bash
