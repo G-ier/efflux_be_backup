@@ -109,6 +109,13 @@ class EnvironmentVariablesManager {
     // NOTIFICATIONS
     'NOTIFICATIONS_SERVICE_URL',
     'EMAILS_SERVICE_URL',
+
+    // AUTH0
+    'AUTH0_AUDIENCE',
+    'AUTH0_DOMAIN',
+    'AUTH0_API',
+    'AUTH0_CLIENT_ID',
+    'AUTH0_CLIENT_SECRET'
   ];
 
   get isInitialized() {
