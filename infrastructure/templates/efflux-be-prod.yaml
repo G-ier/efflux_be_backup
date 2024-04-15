@@ -206,7 +206,6 @@ Resources:
               - !Ref InstanceSecurityGroup
         ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
-        # TODO: investigate the usage of t4g.small
         InstanceType: t3a.small
         UserData:
           Fn::Base64: !Sub |
@@ -237,6 +236,8 @@ Resources:
             sudo chmod +x ./install && \
             sudo ./install auto && \
             sudo service codedeploy-agent start
+            sudo service codedeploy-agent stop
+            sudo service codedeploy-agent start
 
             # Add alias for pm2
             echo "alias pm2='sudo pm2'" >> ~/.bashrc
@@ -262,9 +263,6 @@ Resources:
             # Start the app
             cd /var/www/health-check
             sudo pm2 start app.js --name health-check
-
-            # Link the app to the pm2
-            pm2 link eya39ta853ov4kb kekfkhvd28x0r37
 
         TagSpecifications:
           - ResourceType: volume
@@ -301,8 +299,8 @@ Resources:
       LaunchTemplate:
         LaunchTemplateId: !Ref LaunchTemplate
         Version: !GetAtt LaunchTemplate.LatestVersionNumber
-      MaxSize: "4"
-      MinSize: "2"
+      MaxSize: "3"
+      MinSize: "1"
       DesiredCapacity: "2"
       NotificationConfigurations:
         - TopicARN: !Ref NotificationTopic
@@ -416,50 +414,6 @@ Resources:
             Ref: AutoScalingGroup
       ComparisonOperator: GreaterThanThreshold
       MetricName: CPUUtilization
-
-  # ElasticFileSystem
-  ElasticFileSystem:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      BackupPolicy: { "Status": "ENABLED" }
-      Encrypted: true
-      PerformanceMode: generalPurpose
-      ThroughputMode: bursting
-      LifecyclePolicies:
-        - TransitionToIA: AFTER_60_DAYS
-        - TransitionToPrimaryStorageClass: AFTER_1_ACCESS
-      FileSystemTags:
-        - Key: Name
-          Value: Efflux-EFS
-        - Key: project
-          Value: efflux
-
-  # Mount Target 1
-  MountTarget1:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !Ref PublicSubnet1
-
-  # Mount Target 2
-  MountTarget2:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !Ref PublicSubnet2
-
-  # Mount Target 3
-  MountTarget3:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref ElasticFileSystem
-      SecurityGroups:
-        - !Ref InstanceSecurityGroup
-      SubnetId: !Ref PublicSubnet3
 
   RDSPostgresDB:
     Type: AWS::RDS::DBInstance
@@ -809,7 +763,15 @@ Resources:
                     TextTransformations:
                       - Priority: 0
                         Type: NONE
-                    SearchString: ".php"
+                    SearchString: "php"
+                - ByteMatchStatement:
+                    FieldToMatch:
+                      UriPath: {}
+                    PositionalConstraint: CONTAINS
+                    TextTransformations:
+                      - Priority: 0
+                        Type: NONE
+                    SearchString: "aws"
           VisibilityConfig:
             SampledRequestsEnabled: true
             CloudWatchMetricsEnabled: false
@@ -1102,9 +1064,6 @@ Outputs:
   CloudWatchAlarm:
     Description: CloudWatch Alarm ID
     Value: !Ref CloudWatchAlarm
-  ElasticFileSystem:
-    Description: Elastic File System ID
-    Value: !Ref ElasticFileSystem
   RDSPostgresDB:
     Description: RDS Postgres Database ID
     Value: !Ref RDSPostgresDB

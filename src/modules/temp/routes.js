@@ -9,7 +9,10 @@ route.get(
   async (req, res) => await temporaryController.fetchAdAccountsFromDatabase(req, res),
 );
 route.post('/adAccounts', async (req, res) => await temporaryController.updateAdAccount(req, res));
-route.delete('/adAccounts', async (req, res) => await temporaryController.deleteAdAccountUserMap(req, res));
+route.delete(
+  '/adAccounts',
+  async (req, res) => await temporaryController.deleteAdAccountUserMap(req, res),
+);
 
 // Find the users with ad accounts and return them.
 route.get(
@@ -20,7 +23,6 @@ route.get(
   '/user_accounts',
   async (req, res) => await temporaryController.fetchUserAccounts(req, res),
 );
-
 // Column Presets
 route.get(
   '/column-presets',
@@ -54,9 +56,14 @@ route.get(
   async (req, res) => await temporaryController.fetchUserOrganization(req, res),
 );
 
-route.post('/update-password', async (req, res) => await temporaryController.updatePassword(req, res));
+route.post(
+  '/update-password',
+  async (req, res) => await temporaryController.updatePassword(req, res),
+);
 
-route.post('/update-details', async (req, res) => await temporaryController.updateUserDetails(req, res));
-
+route.post(
+  '/update-details',
+  async (req, res) => await temporaryController.updateUserDetails(req, res),
+);
 
 module.exports = route;
