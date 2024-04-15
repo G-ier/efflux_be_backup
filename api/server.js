@@ -13,8 +13,8 @@ const initializeAPI = async () => {
   console.log('Environment variables retrieved.');
 
   console.log('Initializing Cache...');
-  const { initMemcached } = require('../src/shared/lib/MemcachedConnection');
-  await initMemcached();
+  // const { initMemcached } = require('../src/shared/lib/MemcachedConnection');
+  // await initMemcached();
 
   try {
     const DISABLE_MEDIAMASTER_QUEUE = EnvironmentVariablesManager.getEnvVariable(
@@ -97,13 +97,13 @@ const initializeAPI = async () => {
         ? 'N/A'
         : process.env.DATABASE_URL_LOCAL;
 
-    const cacheEnvironment = EnvironmentVariablesManager.getEnvVariable('CACHE_ENVIRONMENT');
-    const memcachedUrl =
-      cacheEnvironment === 'production'
-        ? EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_PRODUCTION')
-        : cacheEnvironment === 'staging'
-        ? EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_STAGING')
-        : process.env.MEMCACHED_SERVERS_LOCAL;
+    // const cacheEnvironment = EnvironmentVariablesManager.getEnvVariable('CACHE_ENVIRONMENT');
+    // const memcachedUrl =
+    // cacheEnvironment === 'production'
+    //   ? EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_PRODUCTION')
+    //   : cacheEnvironment === 'staging'
+    //   ? EnvironmentVariablesManager.getEnvVariable('MEMCACHED_SERVERS_STAGING')
+    //   : process.env.MEMCACHED_SERVERS_LOCAL;
 
     console.log(`
       Server Info:
@@ -124,10 +124,6 @@ const initializeAPI = async () => {
       Database RO:
         Environment: ${databaseEnvironment || 'development'}
         URL: ${roDatabaseUrl}
-
-      Memcached:
-        Environment: ${cacheEnvironment || 'development'}
-        URL: ${memcachedUrl}
     `);
   });
 };

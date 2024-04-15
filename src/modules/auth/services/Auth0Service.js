@@ -13,29 +13,23 @@ class Auth0Service {
   }
 
   async getAuth0AccessToken() {
-    const { data, status } = await axios
-      .post(
-        `https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/oauth/token`,
-        {
-          client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
-          client_secret: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_SECRET'),
-          audience: EnvironmentVariablesManager.getEnvVariable('AUTH0_API'),
-          grant_type: 'client_credentials',
-        },
-        {
-          headers: { 'content-type': 'application/json' },
-        },
-      )
-      .catch((err) => {
-        console.error('Error fetching Auth0 access token', err);
-      });
-
-    if (status !== 200) {
+    try {
+      const result = await axios.post(`https://${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}/oauth/token`, {
+        client_id: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_ID'),
+        client_secret: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_SECRET'),
+        audience: EnvironmentVariablesManager.getEnvVariable('AUTH0_API'),
+        grant_type: 'client_credentials',
+      })
+      
+      if (result.status === 200 && result.data.access_token !== null) {
+        return `${result.data.token_type} ${result.data.access_token}`;
+      } else {
+        return null;
+      }
+    } catch (error) {
+      console.error('Error fetching Auth0 access token', error);
       return null;
     }
-
-    const { access_token, token_type } = data;
-    return `${token_type} ${access_token}`;
   }
 
   async getAuth0User(sub) {
