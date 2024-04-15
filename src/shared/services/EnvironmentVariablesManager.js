@@ -115,7 +115,7 @@ class EnvironmentVariablesManager {
     'AUTH0_DOMAIN',
     'AUTH0_API',
     'AUTH0_CLIENT_ID',
-    'AUTH0_CLIENT_SECRET'
+    'AUTH0_CLIENT_SECRET',
   ];
 
   get isInitialized() {
@@ -201,7 +201,7 @@ class EnvironmentVariablesManager {
         this.cachedValues[secretName] = process.env[secretName];
       }
     } else {
-      const requiredEnvVariables = ['DATABASE_ENVIRONMENT', 'CACHE_ENVIRONMENT', 'STACK'];
+      const requiredEnvVariables = ['DATABASE_ENVIRONMENT', 'STACK'];
 
       // Overwriting the env variables with the ones from the file
       const dotenv = require('dotenv');
@@ -221,7 +221,6 @@ class EnvironmentVariablesManager {
 
           Example:
           DATABASE_ENVIRONMENT=staging
-          CACHE_ENVIRONMENT=staging
           STACK=BE
         `);
       }
