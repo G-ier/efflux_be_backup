@@ -501,34 +501,34 @@ Resources:
           Value: efflux
 
   # Create an ElastiCache Memcached Cluster
-  MemcachedCluster:
-    Type: AWS::ElastiCache::CacheCluster
-    Properties:
-      ClusterName: Efflux-BE
-      CacheNodeType: cache.t4g.small
-      Engine: memcached
-      EngineVersion: 1.6.22
-      NumCacheNodes: 1
-      Port: 11211
-      VpcSecurityGroupIds:
-        - !Ref InstanceSecurityGroup
-      CacheSubnetGroupName: !Ref CacheSubnetGroup
-      AutoMinorVersionUpgrade: true
-      Tags:
-        - Key: Name
-          Value: Efflux-BE
-        - Key: project
-          Value: efflux
-        - Key: component
-          Value: cache
+  # MemcachedCluster:
+  #   Type: AWS::ElastiCache::CacheCluster
+  #   Properties:
+  #     ClusterName: Efflux-BE
+  #     CacheNodeType: cache.t4g.small
+  #     Engine: memcached
+  #     EngineVersion: 1.6.22
+  #     NumCacheNodes: 1
+  #     Port: 11211
+  #     VpcSecurityGroupIds:
+  #       - !Ref InstanceSecurityGroup
+  #     CacheSubnetGroupName: !Ref CacheSubnetGroup
+  #     AutoMinorVersionUpgrade: true
+  #     Tags:
+  #       - Key: Name
+  #         Value: Efflux-BE
+  #       - Key: project
+  #         Value: efflux
+  #       - Key: component
+  #         Value: cache
 
-  # Add memcached servers to parameter store
-  MemcachedServersParameter:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: MEMCACHED_SERVERS_PRODUCTION
-      Type: String
-      Value: !GetAtt MemcachedCluster.ConfigurationEndpoint.Address
+  # # Add memcached servers to parameter store
+  # MemcachedServersParameter:
+  #   Type: AWS::SSM::Parameter
+  #   Properties:
+  #     Name: MEMCACHED_SERVERS_PRODUCTION
+  #     Type: String
+  #     Value: !GetAtt MemcachedCluster.ConfigurationEndpoint.Address
 
   # Create a Cache Subnet Group
   CacheSubnetGroup:

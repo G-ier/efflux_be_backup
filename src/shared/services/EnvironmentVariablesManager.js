@@ -41,9 +41,9 @@ class EnvironmentVariablesManager {
     'AUTH0_CLIENT_ID',
     'AUTH0_CLIENT_SECRET',
 
-    'MEMCACHED_SERVERS_STAGING',
-    'MEMCACHED_SERVERS_PRODUCTION',
-    'MEMCACHED_SERVERS_LOCAL',
+    // 'MEMCACHED_SERVERS_STAGING',
+    // 'MEMCACHED_SERVERS_PRODUCTION',
+    // 'MEMCACHED_SERVERS_LOCAL',
 
     // MediaNet
     'MEDIANET_EMAIL',
@@ -75,7 +75,7 @@ class EnvironmentVariablesManager {
     'INSIGHTS_QUEUE_URL',
 
     // Memcached
-    'MEMCACHED_SERVERS_PRODUCTION',
+    // 'MEMCACHED_SERVERS_PRODUCTION',
     'ENABLE_CACHE',
 
     // Logging
