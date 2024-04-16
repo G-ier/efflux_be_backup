@@ -5,8 +5,7 @@ class DatabaseRepository {
   constructor() {
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
     // through inheritance. We can parametrize the function to conditionally use cache or not.
-    this.enableCache = process.env.ENABLE_CACHE === 'true';
-
+    // this.enableCache = process.env.ENABLE_CACHE === 'true';
     // if (this.enableCache) {
     //   const MemcachedConnection = require('./MemcachedConnection');
     //   this.cache = MemcachedConnection.getClient();
@@ -35,9 +34,9 @@ class DatabaseRepository {
       const insertResult = await connection(table).insert(dbObject).returning('*');
 
       // Delete cache for the table
-      if (this.enableCache) {
-        await this.cache.deleteKeysByTableName(table);
-      }
+      // if (this.enableCache) {
+      //   await this.cache.deleteKeysByTableName(table);
+      // }
 
       return insertResult;
     } catch (error) {
@@ -85,13 +84,13 @@ class DatabaseRepository {
 
   async query(tableName, fields = ['*'], filters = {}, limit, joins = [], cache = false) {
     try {
-      if (cache && this.enableCache) {
-        // Check if users are in cache
-        console.log(`Fetching from cache: ${tableName}`);
-        const cacheKey = `${tableName}:${JSON.stringify({ fields, filters, limit })}`;
-        const cachedUsers = await this.cache.getAsync(cacheKey);
-        return JSON.parse(cachedUsers);
-      }
+      // if (cache && this.enableCache) {
+      //   // Check if users are in cache
+      //   console.log(`Fetching from cache: ${tableName}`);
+      //   const cacheKey = `${tableName}:${JSON.stringify({ fields, filters, limit })}`;
+      //   const cachedUsers = await this.cache.getAsync(cacheKey);
+      //   return JSON.parse(cachedUsers);
+      // }
       const connection = this.getConnection();
       let queryBuilder = connection(tableName).select(fields);
 
@@ -133,11 +132,11 @@ class DatabaseRepository {
 
       const results = await queryBuilder;
 
-      if (cache && this.enableCache) {
-        // Set cache
-        console.log(`Setting cache: ${tableName}`);
-        await this.cache.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-      }
+      // if (cache && this.enableCache) {
+      //   // Set cache
+      //   console.log(`Setting cache: ${tableName}`);
+      //   await this.cache.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
+      // }
 
       return results;
     } catch (error) {
@@ -166,9 +165,9 @@ class DatabaseRepository {
       const deletedRowCount = await queryBuilder.del();
 
       // Delete cache for the table
-      if (this.enableCache) {
-        await this.cache.deleteKeysByTableName(tableName);
-      }
+      // if (this.enableCache) {
+      //   await this.cache.deleteKeysByTableName(tableName);
+      // }
 
       return deletedRowCount; // Return number of deleted rows
     } catch (error) {
@@ -204,13 +203,13 @@ class DatabaseRepository {
 
   async queryOne(tableName, fields = ['*'], filters = {}, orderBy = [], cache = false) {
     try {
-      if (cache && this.enableCache) {
-        // Check if users are in cache
-        console.log(`Fetching from cache: ${tableName}`);
-        const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
-        const cachedUsers = await this.cache.getAsync(cacheKey);
-        return JSON.parse(cachedUsers);
-      }
+      // if (cache && this.enableCache) {
+      //   // Check if users are in cache
+      //   console.log(`Fetching from cache: ${tableName}`);
+      //   const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
+      //   const cachedUsers = await this.cache.getAsync(cacheKey);
+      //   return JSON.parse(cachedUsers);
+      // }
 
       const connection = this.getConnection();
       let queryBuilder = connection(tableName).select(fields);
@@ -229,11 +228,11 @@ class DatabaseRepository {
       }
 
       const result = await queryBuilder.first();
-      if (cache && this.enableCache) {
-        // Set cache
-        console.log(`Setting cache: ${tableName}`);
-        await this.cache.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
-      }
+      // if (cache && this.enableCache) {
+      //   // Set cache
+      //   console.log(`Setting cache: ${tableName}`);
+      //   await this.cache.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
+      // }
       return result;
     } catch (error) {
       console.error(`Error querying table ${tableName}`, error);

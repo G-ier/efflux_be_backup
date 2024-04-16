@@ -121,13 +121,13 @@ class UserRepository {
 
   async fetchUserPermissions(userId) {
     // Check if user permissions are in cache
-    const cacheKey = `userPermissions:${userId}`;
+    // const cacheKey = `userPermissions:${userId}`;
 
-    const cachedUserPermissions = await getAsync(cacheKey);
-    if (cachedUserPermissions) {
-      UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
-      return JSON.parse(cachedUserPermissions);
-    }
+    // const cachedUserPermissions = await getAsync(cacheKey);
+    // if (cachedUserPermissions) {
+    //   UserLogger.debug('Fetched: ' + cacheKey + ' from cache');
+    //   return JSON.parse(cachedUserPermissions);
+    // }
 
     const databaseRepository = new DatabaseRepository();
     // If not in cache, fetch from the database
@@ -143,8 +143,8 @@ class UserRepository {
     );
 
     // Set cache
-    UserLogger.debug('Setting: ' + cacheKey + ' in cache');
-    await setAsync(cacheKey, JSON.stringify(userPermissions), 'EX', 3600); // Expires in 1 hour
+    // UserLogger.debug('Setting: ' + cacheKey + ' in cache');
+    // await setAsync(cacheKey, JSON.stringify(userPermissions), 'EX', 3600); // Expires in 1 hour
 
     return userPermissions;
   }
