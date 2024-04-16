@@ -120,19 +120,36 @@ class AdLauncherService extends BaseService {
     }
   }
 
-  async createDynamicAdCreative(params, token, adAccountId) {
+  async createDynamicAdCreative(params, token, adAccountId, adsetData) {
     const payload = {
-      ...params,
-      "dynamic_ad_voice": "DYNAMIC",
-      "asset_feed_spec": {
+      ...params
+    }
+
+    if (adsetData.is_dynamic_creative) {
+      payload["asset_feed_spec"] = {
         ...params.asset_feed_spec,
         "images": params.image_hashes,
       }
+      payload["dynamic_ad_voice"] = "DYNAMIC";
+    } else {
+      delete payload.asset_feed_spec;
+
+      payload["object_story_spec"] = {
+        ...params.object_story_spec,
+        "link_data": {
+          ...params.object_story_spec.link_data,
+          "image_hash": params.image_hashes[0].hash,
+        }
+      }
+      delete payload.image_hashes;
+      payload["degrees_of_freedom_spec"] = {
+        ...params.degrees_of_freedom_spec
+      };
     }
 
     delete payload.image_hashes;
 
-    console.log('Dynamic Ad Creative Payload', JSON.stringify(payload));
+    console.log('Dynamic Ad Creative Payload ==>', JSON.stringify(payload));
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
 
     try {
