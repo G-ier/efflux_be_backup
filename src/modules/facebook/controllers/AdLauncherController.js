@@ -342,6 +342,7 @@ class AdLauncherController {
         req.body.adData.creative,
         token,
         adAccountId,
+        req.body.adsetData
       );
 
       FacebookLogger.info(`New Ad Creative Id ${adcreatives}`);
@@ -370,6 +371,15 @@ class AdLauncherController {
         adAccountId,
         token,
       );
+      FacebookLogger.info(`New Ad Id ${newAd.id}`);
+      return res.json({
+        success: true,
+        message: 'Ad created successfully',
+      })
+      return {
+        success: true,
+        message: 'Ad created successfully',
+      };
     } catch (error) {
       FacebookLogger.error(`Error creating ad ${JSON.stringify(error)}`);
       console.log('Error creating ad ---?>', error);
@@ -379,11 +389,6 @@ class AdLauncherController {
         error: error.message,
       };
     }
-
-    return {
-      success: true,
-      message: 'Ad created successfully',
-    };
   }
 
   async launchAdOld(req, res) {
