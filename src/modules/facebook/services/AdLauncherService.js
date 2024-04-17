@@ -128,16 +128,13 @@ class AdLauncherService extends BaseService {
         images: [...params.image_hashes],
       };
     } else {
+      const imageHash = params.image_hashes[0].hash;
       payload['object_story_spec'] = {
         ...params.object_story_spec,
         link_data: {
           ...params.object_story_spec.link_data,
-          image_hash: params.image_hashes[0].hash,
+          image_hash: imageHash,
         },
-      };
-
-      payload['degrees_of_freedom_spec'] = {
-        ...params.degrees_of_freedom_spec,
       };
     }
 
