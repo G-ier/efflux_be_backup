@@ -1,16 +1,15 @@
 // Third party imports
-const _ = require("lodash");
-const axios = require("axios")
+const _ = require('lodash');
+const axios = require('axios');
 // Local application imports
-const ContentRepository = require("../repositories/AdLauncherMediaRepository"); // Adjust the path as necessary
-const { FacebookLogger } = require("../../../shared/lib/WinstonLogger");
-const { FB_API_URL } = require("../constants");
+const ContentRepository = require('../repositories/AdLauncherMediaRepository'); // Adjust the path as necessary
+const { FacebookLogger } = require('../../../shared/lib/WinstonLogger');
+const { FB_API_URL } = require('../constants');
 
-const BaseService = require("../../../shared/services/BaseService"); // Adjust the import path as necessary
-const dynamoDbService = require("../../../shared/lib/DynamoDBService");
+const BaseService = require('../../../shared/services/BaseService'); // Adjust the import path as necessary
+const dynamoDbService = require('../../../shared/lib/DynamoDBService');
 
 class AdLauncherService extends BaseService {
-
   constructor() {
     super(FacebookLogger);
     this.contentRepository = new ContentRepository();
@@ -21,9 +20,9 @@ class AdLauncherService extends BaseService {
    * Creates a campaign in Facebook's Marketing API
    * @param {*} params
    */
-  async createCampaign (campaignData, adAccountId, token) {
+  async createCampaign(campaignData, adAccountId, token) {
     const { name, objective, special_ad_categories } = campaignData;
-    const status = "PAUSED";
+    const status = 'PAUSED';
     const payload = {
       name,
       objective: objective,
@@ -46,9 +45,7 @@ class AdLauncherService extends BaseService {
   }
 
   async createAdset(adsetData, adAccountId, token, campaignId, adData) {
-    const {
-      status
-    } = adData;
+    const { status } = adData;
     const {
       name,
       attribution_spec,
@@ -62,47 +59,47 @@ class AdLauncherService extends BaseService {
       bid_constraints,
       is_dynamic_creative,
       start_time,
-      end_time
+      end_time,
     } = adsetData;
 
     // TODO: Add device platform targeting logic here
     delete targeting.os;
 
-    // TODO: Review the attribution spec logic with business. 
+    // TODO: Review the attribution spec logic with business.
     // This logic can live in the backend or frontend depending on the business requirements
     // https://developers.facebook.com/docs/marketing-api/reference/ad-campaign-group/
-    
-    let new_attribution_spec = attribution_spec?.filter(j => j.event_type !== "VIEW_THROUGH")
-    
+
+    let new_attribution_spec = attribution_spec?.filter((j) => j.event_type !== 'VIEW_THROUGH');
+
     new_attribution_spec?.map((spec) => ({
       event_type: spec.event_type,
       window_days: spec.window_days || 0,
     }));
 
     const payload = {
-      "name": name,
-      "daily_budget": daily_budget,
-      "bid_amount": bid_amount,
-      "billing_event": billing_event,
-      "optimization_goal": optimization_goal,
-      "bid_strategy": bid_strategy,
-      "bid_constraints": bid_constraints,
-      "campaign_id": campaignId,
-      "targeting": targeting,
-      "promoted_object": promoted_object,
-      "status": status,
-      "is_dynamic_creative": is_dynamic_creative,
+      name: name,
+      daily_budget: daily_budget,
+      bid_amount: bid_amount,
+      billing_event: billing_event,
+      optimization_goal: optimization_goal,
+      bid_strategy: bid_strategy,
+      bid_constraints: bid_constraints,
+      campaign_id: campaignId,
+      targeting: targeting,
+      promoted_object: promoted_object,
+      status: status,
+      is_dynamic_creative: is_dynamic_creative,
     };
 
     if (attribution_spec) {
-      payload["attribution_spec"] = new_attribution_spec;
+      payload['attribution_spec'] = new_attribution_spec;
     }
 
     if (start_time) {
-      payload["start_time"] = start_time.slice(0, -1);
+      payload['start_time'] = start_time.slice(0, -1);
     }
     if (end_time) {
-      payload["end_time"] = end_time.slice(0, -1);
+      payload['end_time'] = end_time.slice(0, -1);
     }
 
     FacebookLogger.info('Adset Payload -->', JSON.stringify(payload));
@@ -122,32 +119,32 @@ class AdLauncherService extends BaseService {
 
   async createDynamicAdCreative(params, token, adAccountId, adsetData) {
     const payload = {
-      ...params
-    }
+      ...params,
+    };
 
     if (adsetData.is_dynamic_creative) {
-      payload["asset_feed_spec"] = {
+      payload['asset_feed_spec'] = {
         ...params.asset_feed_spec,
-        "images": params.image_hashes,
-      }
-      payload["dynamic_ad_voice"] = "DYNAMIC";
+        images: params.image_hashes,
+      };
+      payload['dynamic_ad_voice'] = 'DYNAMIC';
     } else {
-      delete payload.asset_feed_spec;
-
-      payload["object_story_spec"] = {
+      payload['object_story_spec'] = {
         ...params.object_story_spec,
-        "link_data": {
+        link_data: {
           ...params.object_story_spec.link_data,
-          "image_hash": params.image_hashes[0].hash,
-        }
-      }
-      delete payload.image_hashes;
-      payload["degrees_of_freedom_spec"] = {
-        ...params.degrees_of_freedom_spec
+          image_hash: params.image_hashes[0].hash,
+        },
+      };
+
+      payload['degrees_of_freedom_spec'] = {
+        ...params.degrees_of_freedom_spec,
       };
     }
 
-    delete payload.image_hashes;
+    if (payload.image_hashes) {
+      delete payload.image_hashes;
+    }
 
     console.log('Dynamic Ad Creative Payload ==>', JSON.stringify(payload));
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
@@ -158,21 +155,23 @@ class AdLauncherService extends BaseService {
           Authorization: `Bearer ${token}`,
         },
       });
+      console.log('RESPONSE', JSON.stringify(response.data));
       return response.data;
     } catch (error) {
+      console.log('Creative-ERROR', JSON.stringify(error));
       throw error?.response?.data?.error;
     }
   }
 
   async createNewAd(name, adSetId, creativeId, adAccountId, token) {
     const payload = {
-      "name": name,
-      "adset_id": adSetId,
-      "creative": {
-        "creative_id": creativeId
+      name: name,
+      adset_id: adSetId,
+      creative: {
+        creative_id: creativeId,
       },
-      "status": "PAUSED"
-    }
+      status: 'PAUSED',
+    };
 
     const url = `${FB_API_URL}act_${adAccountId}/ads`;
     console.log('New Ad Payload', JSON.stringify(payload));
@@ -185,6 +184,7 @@ class AdLauncherService extends BaseService {
       });
       return response.data;
     } catch (error) {
+      console.log('Creative-ERROR', JSON.stringify(error));
       throw error?.response?.data?.error;
     }
   }
@@ -198,8 +198,8 @@ class AdLauncherService extends BaseService {
     };
 
     // Dont include the images and videos sent for processing to get hashes and id-s
-    delete payload["images"];
-    delete payload["videos"];
+    delete payload['images'];
+    delete payload['videos'];
 
     try {
       // Make the post request to the Facebook API
@@ -221,7 +221,9 @@ class AdLauncherService extends BaseService {
   }
 
   async getImageHashesFromDynamoDB(adAccountId) {
-    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({ adAccountId: adAccountId });
+    const images = await this.ddbRepository.scanItemsByAdAccountIdAndFbhash({
+      adAccountId: adAccountId,
+    });
     const uploadedMedia = images.map((image) => {
       return {
         hash: image.fbhash.S,

@@ -238,7 +238,13 @@ class AdLauncherController {
     FacebookLogger.info(`Request body: ${req.body}`);
 
     const finalTargetUrl = this.constructTargetUrl(req.body);
-    req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
+
+    // Write a logic here - handle both dynamic creatives and non dynamic creatives - ASSUMING SINGLE IMAGE UPLOAD
+    if (req.body.adsetData.is_dynamic_creative) {
+      req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
+    } else {
+      req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
+    }
 
     FacebookLogger.info(`Final Request Body ${JSON.stringify(req.body)}`);
 
@@ -317,7 +323,7 @@ class AdLauncherController {
         adAccountId,
         token,
         campaignId,
-        adData
+        adData,
       );
       FacebookLogger.info(`New Adset Id ${newAdset}`);
     } catch (error) {
@@ -342,7 +348,7 @@ class AdLauncherController {
         req.body.adData.creative,
         token,
         adAccountId,
-        req.body.adsetData
+        req.body.adsetData,
       );
 
       FacebookLogger.info(`New Ad Creative Id ${adcreatives}`);
@@ -375,7 +381,7 @@ class AdLauncherController {
       return res.json({
         success: true,
         message: 'Ad created successfully',
-      })
+      });
       return {
         success: true,
         message: 'Ad created successfully',
