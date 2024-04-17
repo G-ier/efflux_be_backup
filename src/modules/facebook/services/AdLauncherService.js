@@ -125,9 +125,8 @@ class AdLauncherService extends BaseService {
     if (adsetData.is_dynamic_creative) {
       payload['asset_feed_spec'] = {
         ...params.asset_feed_spec,
-        images: params.image_hashes,
+        images: [...params.image_hashes],
       };
-      payload['dynamic_ad_voice'] = 'DYNAMIC';
     } else {
       payload['object_story_spec'] = {
         ...params.object_story_spec,
