@@ -256,11 +256,11 @@ class AdLauncherController {
 
       const rocketKey = req.body.url.split('/')[1];
       // Save target to dynamo db
-      // await this.ddbRepository.putItem('edge-rocket-targets', {
-      //   key: rocketKey,
-      //   internal_campaign_id: req.body.internal_campaign_id,
-      //   destination_url: `https://${req.body.destinationDomain}`,
-      // });
+      await this.ddbRepository.putItem('edge-rocket-targets', {
+        key: rocketKey,
+        internal_campaign_id: req.body.internal_campaign_id,
+        destination_url: `https://${req.body.destinationDomain}`,
+      });
 
       return res.json({
         success: true,
