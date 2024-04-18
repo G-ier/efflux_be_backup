@@ -69,13 +69,6 @@ class AdLauncherService extends BaseService {
     // This logic can live in the backend or frontend depending on the business requirements
     // https://developers.facebook.com/docs/marketing-api/reference/ad-campaign-group/
 
-    let new_attribution_spec = attribution_spec?.filter((j) => j.event_type !== 'VIEW_THROUGH');
-
-    new_attribution_spec?.map((spec) => ({
-      event_type: spec.event_type,
-      window_days: spec.window_days || 0,
-    }));
-
     const payload = {
       name: name,
       daily_budget: daily_budget,
@@ -92,7 +85,7 @@ class AdLauncherService extends BaseService {
     };
 
     if (attribution_spec) {
-      payload['attribution_spec'] = new_attribution_spec;
+      payload['attribution_spec'] = [...attribution_spec];
     }
 
     if (start_time) {
