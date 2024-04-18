@@ -378,10 +378,6 @@ class AdLauncherController {
         token,
       );
       FacebookLogger.info(`New Ad Id ${newAd.id}`);
-      return res.json({
-        success: true,
-        message: 'Ad created successfully',
-      });
       return {
         success: true,
         message: 'Ad created successfully',
