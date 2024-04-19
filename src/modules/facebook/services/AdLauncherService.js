@@ -21,13 +21,10 @@ class AdLauncherService extends BaseService {
    * @param {*} params
    */
   async createCampaign(campaignData, adAccountId, token) {
-    const { name, objective, special_ad_categories } = campaignData;
     const status = 'PAUSED';
     const payload = {
-      name,
-      objective: objective,
+      ...campaignData,
       status,
-      special_ad_categories,
     };
 
     console.log('Campaign Payload -->', JSON.stringify(payload));
