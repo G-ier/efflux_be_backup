@@ -41,7 +41,6 @@ class AdLauncherController {
       'name',
       'billing_event',
       'optimization_goal',
-      'bid_strategy',
       'attribution_spec',
       'targeting',
       'promoted_object',
