@@ -39,7 +39,6 @@ class AdLauncherController {
     const campaignDataKeys = ['name', 'objective', 'special_ad_categories', 'category', 'vertical'];
     const adsetDataKeys = [
       'name',
-      'daily_budget',
       'billing_event',
       'optimization_goal',
       'bid_strategy',
