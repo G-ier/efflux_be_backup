@@ -315,6 +315,7 @@ class AdLauncherController {
     const adsetData = req.body.adsetData;
     const campaignId = newCampaign.id;
     const adData = req.body.adData;
+    const campaignData = req.body.campaignData;
 
     let newAdset;
     try {
@@ -324,6 +325,7 @@ class AdLauncherController {
         token,
         campaignId,
         adData,
+        campaignData?.daily_budget
       );
       FacebookLogger.info(`New Adset Id ${newAdset}`);
     } catch (error) {

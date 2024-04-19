@@ -41,7 +41,7 @@ class AdLauncherService extends BaseService {
     }
   }
 
-  async createAdset(adsetData, adAccountId, token, campaignId, adData) {
+  async createAdset(adsetData, adAccountId, token, campaignId, adData, isAdvantagePlus) {
     const { status } = adData;
     const {
       name,
@@ -61,6 +61,14 @@ class AdLauncherService extends BaseService {
 
     // TODO: Add device platform targeting logic here
     delete targeting.os;
+
+    if (isAdvantagePlus) {
+      FacebookLogger.info('Campaign is Advantage Plus');
+      // Don't need to include placements for Advantage Plus
+      if (targeting.placements) {
+        delete targeting.placements;
+      }
+    }
 
     // TODO: Review the attribution spec logic with business.
     // This logic can live in the backend or frontend depending on the business requirements

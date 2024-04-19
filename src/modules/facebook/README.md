@@ -38,3 +38,7 @@ DB connections:
 
 # Potential Problems & things to look at
 ...
+
+### Business Logic
+    - Advantage+ campaigns doesn't require `placements` field to be passed into
+    payload on adset creation. Facebook will optimize for placement in this case. Sending `daily_budget` on campaign creation payload will make the campaing Advantage+.
