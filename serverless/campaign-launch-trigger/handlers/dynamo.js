@@ -15,12 +15,11 @@ const sqsClient = new SQSService(SqsQueueUrl);
 const dynamoClient = dynamo;
 
 exports.handler = async (event) => {
-  console.debug('Event: ', JSON.stringify(event, null, 2));
-
+  console.debug('Event: ', JSON.stringify(event, null, 2))
   // Process each record in the event
   for (let record of event.Records) {
     // Check if the record is an INSERT event
-    if (record.eventName === 'INSERT') {
+    if (record.eventName === 'INSERT' || record.eventName === 'MODIFY') {
       // Use `unmarshall` to convert the DynamoDB format to a standard JavaScript object
       const launchData = unmarshall(record.dynamodb.NewImage);
 
@@ -34,10 +33,18 @@ exports.handler = async (event) => {
 
       // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
       if (existingCampaignMedia.length) {
-        launchData.adData.creative.image_hashes = [{
-          hash: existingCampaignMedia[0].fbhash
-        }]
-        console.log('Send a launch signal to the Queue');
+        
+        const image_hashes = []
+        existingCampaignMedia.filter(campaignMedia => {
+          return launchData.media_files.some(filename => {
+            if (campaignMedia.rawKey.includes(filename)) {
+              image_hashes.push({ hash: campaignMedia.fbhash })
+            }
+          });
+        });
+        
+        
+        launchData.adData.creative.image_hashes = image_hashes
         await sqsClient.sendMessageToQueue(launchData);
       }
 

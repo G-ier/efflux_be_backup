@@ -98,3 +98,5 @@ testing.js
 start-ilyas-dev.sh
 .DS_Store
 scripts/
+
+.aws-sam/
