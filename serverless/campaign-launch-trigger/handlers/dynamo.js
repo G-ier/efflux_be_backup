@@ -35,16 +35,20 @@ exports.handler = async (event) => {
       if (existingCampaignMedia.length) {
         
         const image_hashes = []
-        existingCampaignMedia.filter(campaignMedia => {
-          return launchData.media_files.some(filename => {
-            if (campaignMedia.rawKey.includes(filename)) {
-              image_hashes.push({ hash: campaignMedia.fbhash })
-            }
+        if (launchData.media_files && launchData.media_files.length > 0) {
+          existingCampaignMedia.filter(campaignMedia => {
+            return launchData.media_files.some(filename => {
+              if (campaignMedia.rawKey.includes(filename)) {
+                image_hashes.push({ hash: campaignMedia.fbhash })
+              }
+            });
           });
-        });
-        
-        
-        launchData.adData.creative.image_hashes = image_hashes
+          launchData.adData.creative.image_hashes = image_hashes
+        } else {
+          launchData.adData.creative.image_hashes = [{
+            hash: existingCampaignMedia[0].fbhash
+          }]
+        }
         await sqsClient.sendMessageToQueue(launchData);
       }
 
