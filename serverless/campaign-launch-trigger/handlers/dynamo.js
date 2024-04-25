@@ -43,8 +43,11 @@ exports.handler = async (event) => {
               }
             });
           });
-          const uniqueImageHashes = [...new Set(image_hashes)];
-          launchData.adData.creative.image_hashes = uniqueImageHashes
+          // TODO: Send a message to user if media files contain duplicates
+          const uniqueHashes = new Map(image_hashes.map(item => [item.hash, item]));
+          const uniqueArray = Array.from(uniqueHashes.values());
+
+          launchData.adData.creative.image_hashes = uniqueArray
           console.debug('Multiple media files found for the same internal_campaign_id', launchData.adData.creative.image_hashes);
         } else {
           launchData.adData.creative.image_hashes = [{
