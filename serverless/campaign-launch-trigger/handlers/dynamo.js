@@ -43,7 +43,9 @@ exports.handler = async (event) => {
               }
             });
           });
-          launchData.adData.creative.image_hashes = image_hashes
+          const uniqueImageHashes = [...new Set(image_hashes)];
+          launchData.adData.creative.image_hashes = uniqueImageHashes
+          console.debug('Multiple media files found for the same internal_campaign_id', launchData.adData.creative.image_hashes);
         } else {
           launchData.adData.creative.image_hashes = [{
             hash: existingCampaignMedia[0].fbhash
