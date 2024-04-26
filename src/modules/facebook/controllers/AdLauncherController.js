@@ -241,7 +241,12 @@ class AdLauncherController {
     if (req.body.adsetData.is_dynamic_creative) {
       req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
     } else {
-      req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
+      if (req.body.adData.creative.object_story_spec.link_data?.link) { 
+        req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
+      }
+      if (req.body.adData.creative.object_story_spec.video_data?.call_to_action?.value?.link) {
+        req.body.adData.creative.object_story_spec.video_data.call_to_action.value.link = finalTargetUrl;
+      }
     }
 
     FacebookLogger.info(`Final Request Body ${JSON.stringify(req.body)}`);
