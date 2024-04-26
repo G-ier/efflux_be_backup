@@ -160,7 +160,9 @@ class AdLauncherService extends BaseService {
       delete payload.video_ids;
     }
 
+    FacebookLogger.info('Dynamic Ad Creative Payload ==>', JSON.stringify(payload));
     console.log('Dynamic Ad Creative Payload ==>', JSON.stringify(payload));
+
     const url = `${FB_API_URL}act_${adAccountId}/adcreatives`;
 
     try {
