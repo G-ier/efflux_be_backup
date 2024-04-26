@@ -143,7 +143,7 @@ class AdLauncherService extends BaseService {
         // TODO: Fix the hardcoded image URL
         const videos = payload.video_ids.map(vid => ({ 
           video_id: vid,
-          image_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGcc3bQc6Hk-Xd6PZsPZme9-Ecza-2UwFibDLZSQI-A&s" 
+          thumbnail_url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGcc3bQc6Hk-Xd6PZsPZme9-Ecza-2UwFibDLZSQI-A&s" 
         }));
         payload['asset_feed_spec'] = {
           ...params.asset_feed_spec,
