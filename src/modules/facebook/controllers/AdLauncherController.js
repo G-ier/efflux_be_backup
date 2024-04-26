@@ -245,6 +245,7 @@ class AdLauncherController {
       if (req.body.adData.creative.object_story_spec.link_data?.link) { 
         req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
       }
+      console.log('Condition ===>', req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value?.link);
       FacebookLogger.info(`Condition`, req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value?.link);
       if (req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value) {
         req.body.adData.creative.object_story_spec.video_data.call_to_action.value.link = finalTargetUrl;
