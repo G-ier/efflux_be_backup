@@ -40,7 +40,7 @@ exports.handler = async (event) => {
           existingCampaignMedia.filter(campaignMedia => {
             return launchData.media_files.some(filename => {
               if (campaignMedia.rawKey.includes(filename)) {
-                if (campaignMedia.type === 'video') {
+                if (campaignMedia.mediaType === 'video') {
                   video_ids.push(campaignMedia.fbhash)
                 } else {
                   image_hashes.push({ hash: campaignMedia.fbhash })
@@ -61,7 +61,8 @@ exports.handler = async (event) => {
           console.debug('Multiple media files found for the same internal_campaign_id', launchData.adData.creative.image_hashes);
           console.debug('Multiple video files found for the same internal_campaign_id', launchData.adData.creative.video_ids);
         } else {
-          if (existingCampaignMedia[0].type === 'video') {
+          console.debug('Show media type', existingCampaignMedia[0]);
+          if (existingCampaignMedia[0].mediaType === 'video') {
             launchData.adData.creative.video_ids = [existingCampaignMedia[0].fbhash]
           } else {
             launchData.adData.creative.image_hashes = [{
@@ -69,6 +70,8 @@ exports.handler = async (event) => {
             }]
           }
         }
+
+        console.debug('Final Launch Data: ', JSON.stringify(launchData, null, 2))
         await sqsClient.sendMessageToQueue(launchData);
       }
 
