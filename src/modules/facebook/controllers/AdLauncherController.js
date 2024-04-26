@@ -325,7 +325,7 @@ class AdLauncherController {
         adData,
         campaignData?.daily_budget
       );
-      FacebookLogger.info(`New Adset Id ${newAdset}`);
+      FacebookLogger.info(`New Adset Id ${JSON.stringify(newAdset)}`);
     } catch (error) {
       FacebookLogger.error(`Error creating adset ${JSON.stringify(error)}`);
       return {

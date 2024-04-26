@@ -120,24 +120,44 @@ class AdLauncherService extends BaseService {
       ...params,
     };
 
-    if (adsetData.is_dynamic_creative) {
-      payload['asset_feed_spec'] = {
-        ...params.asset_feed_spec,
-        images: [...params.image_hashes],
-      };
-    } else {
-      const imageHash = params.image_hashes[0].hash;
-      payload['object_story_spec'] = {
-        ...params.object_story_spec,
-        link_data: {
-          ...params.object_story_spec.link_data,
-          image_hash: imageHash,
-        },
-      };
+    if (payload.image_hashes) {
+      if (adsetData.is_dynamic_creative) {
+        payload['asset_feed_spec'] = {
+          ...params.asset_feed_spec,
+          images: [...params.image_hashes],
+        };
+      } else {
+        const imageHash = params.image_hashes[0].hash;
+        payload['object_story_spec'] = {
+          ...params.object_story_spec,
+          link_data: {
+            ...params.object_story_spec.link_data,
+            image_hash: imageHash,
+          },
+        };
+      }
+    }
+
+    if (payload.video_ids) {
+      if (adsetData.is_dynamic_creative) {
+        // TODO: add logic for dynamic creative
+      } else {
+        payload['object_story_spec'] = {
+          ...params.object_story_spec,
+          video_data: {
+            ...params.object_story_spec.video_data,
+            video_id: payload.video_ids,
+          },
+        };
+      }
     }
 
     if (payload.image_hashes) {
       delete payload.image_hashes;
+    }
+
+    if (payload.video_ids) {
+      delete payload.video_ids;
     }
 
     console.log('Dynamic Ad Creative Payload ==>', JSON.stringify(payload));

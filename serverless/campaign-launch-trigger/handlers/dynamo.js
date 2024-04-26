@@ -35,11 +35,16 @@ exports.handler = async (event) => {
       if (existingCampaignMedia.length) {
         
         const image_hashes = []
-        if (launchData.media_files && launchData.media_files.length > 0) {
+        const video_ids = []
+        if (launchData.media_files && launchData.media_files.length > 0 && launchData.adsetData.is_dynamic_creative) {
           existingCampaignMedia.filter(campaignMedia => {
             return launchData.media_files.some(filename => {
               if (campaignMedia.rawKey.includes(filename)) {
-                image_hashes.push({ hash: campaignMedia.fbhash })
+                if (campaignMedia.type === 'video') {
+                  video_ids.push(campaignMedia.fbhash)
+                } else {
+                  image_hashes.push({ hash: campaignMedia.fbhash })
+                }
               }
             });
           });
@@ -47,12 +52,22 @@ exports.handler = async (event) => {
           const uniqueHashes = new Map(image_hashes.map(item => [item.hash, item]));
           const uniqueArray = Array.from(uniqueHashes.values());
 
+          const uniqueVideoIds = new Map(video_ids.map(item => [item, item]));
+          const newVideoArray = Array.from(uniqueVideoIds.values());
+
           launchData.adData.creative.image_hashes = uniqueArray
+          launchData.adData.creative.video_ids = newVideoArray
+
           console.debug('Multiple media files found for the same internal_campaign_id', launchData.adData.creative.image_hashes);
+          console.debug('Multiple video files found for the same internal_campaign_id', launchData.adData.creative.video_ids);
         } else {
-          launchData.adData.creative.image_hashes = [{
-            hash: existingCampaignMedia[0].fbhash
-          }]
+          if (existingCampaignMedia[0].type === 'video') {
+            launchData.adData.creative.video_ids = [existingCampaignMedia[0].fbhash]
+          } else {
+            launchData.adData.creative.image_hashes = [{
+              hash: existingCampaignMedia[0].fbhash
+            }]
+          }
         }
         await sqsClient.sendMessageToQueue(launchData);
       }
