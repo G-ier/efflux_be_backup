@@ -146,7 +146,7 @@ class AdLauncherService extends BaseService {
           ...params.object_story_spec,
           video_data: {
             ...params.object_story_spec.video_data,
-            video_id: payload.video_ids,
+            video_id: payload.video_ids[0],
           },
         };
       }
