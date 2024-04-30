@@ -242,13 +242,16 @@ class AdLauncherController {
 
     // Write a logic here - handle both dynamic creatives and non dynamic creatives - ASSUMING SINGLE IMAGE UPLOAD
     if (req.body.adsetData.is_dynamic_creative) {
+      FacebookLogger.info(`Dynamic Creative Launch`)
       req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
     } else {
-      if (req.body.adData.creative.object_story_spec.link_data?.link) {
+      FacebookLogger.info(`Non Dynamic Creative Launch`)
+      FacebookLogger.info(`Condition for link: .${req.body.adData.creative.object_story_spec.hasOwnProperty("link_data")}.`);
+      if (req.body.adData.creative.object_story_spec.hasOwnProperty("link_data")) {
         req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
       }
-      FacebookLogger.info(`Condition`, req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value?.link);
-      if (req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value) {
+      FacebookLogger.info(`Condition for video link: .${req.body.adData.creative.object_story_spec.hasOwnProperty("video_data")}.`);
+      if (req.body.adData.creative.object_story_spec.hasOwnProperty("video_data")) {
         req.body.adData.creative.object_story_spec.video_data.call_to_action.value.link = finalTargetUrl;
       }
     }
