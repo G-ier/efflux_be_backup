@@ -141,10 +141,11 @@ class AdLauncherService extends BaseService {
     if (payload.video_ids) {
       if (adsetData.is_dynamic_creative) {
         // TODO: Fix the hardcoded image URL
-        const videos = payload.video_ids.map((vid) => ({
+        const videos = payload.video_ids.map((vid, index) => ({
           video_id: vid,
-          thumbnail_url:
-            'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGcc3bQc6Hk-Xd6PZsPZme9-Ecza-2UwFibDLZSQI-A&s',
+          thumbnail_url: payload.thumbnails[index]
+            ? payload.thumbnails[index]
+            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGcc3bQc6Hk-Xd6PZsPZme9-Ecza-2UwFibDLZSQI-A&s',
         }));
 
         if (payload.image_hashes) {
@@ -164,6 +165,7 @@ class AdLauncherService extends BaseService {
           video_data: {
             ...params.object_story_spec.video_data,
             video_id: payload.video_ids[0],
+            image_url: payload.thumbnails[0],
           },
         };
       }
@@ -175,6 +177,10 @@ class AdLauncherService extends BaseService {
 
     if (payload.video_ids) {
       delete payload.video_ids;
+    }
+
+    if (payload.thumbnails) {
+      delete payload.thumbnails;
     }
 
     FacebookLogger.info('Dynamic Ad Creative Payload ==>', JSON.stringify(payload));

@@ -15,7 +15,7 @@ const sqsClient = new SQSService(SqsQueueUrl);
 const dynamoClient = dynamo;
 
 exports.handler = async (event) => {
-  console.debug('Event: ', JSON.stringify(event, null, 2))
+  console.debug('Event: ', JSON.stringify(event, null, 2));
   // Process each record in the event
   for (let record of event.Records) {
     // Check if the record is an INSERT event
@@ -33,45 +33,63 @@ exports.handler = async (event) => {
 
       // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
       if (existingCampaignMedia.length) {
-        
-        const image_hashes = []
-        const video_ids = []
-        if (launchData.media_files && launchData.media_files.length > 0 && launchData.adsetData.is_dynamic_creative) {
-          existingCampaignMedia.filter(campaignMedia => {
-            return launchData.media_files.some(filename => {
+        const image_hashes = [];
+        const video_ids = [];
+        const video_thumbnail_urls = [];
+        if (
+          launchData.media_files &&
+          launchData.media_files.length > 0 &&
+          launchData.adsetData.is_dynamic_creative
+        ) {
+          existingCampaignMedia.filter((campaignMedia) => {
+            return launchData.media_files.some((filename) => {
               if (campaignMedia.rawKey.includes(filename)) {
                 if (campaignMedia.mediaType === 'video') {
-                  video_ids.push(campaignMedia.fbhash)
+                  video_ids.push(campaignMedia.fbhash);
+                  video_thumbnail_urls.push(campaignMedia.thumbnails);
                 } else {
-                  image_hashes.push({ hash: campaignMedia.fbhash })
+                  image_hashes.push({ hash: campaignMedia.fbhash });
                 }
               }
             });
           });
           // TODO: Send a message to user if media files contain duplicates
-          const uniqueHashes = new Map(image_hashes.map(item => [item.hash, item]));
+          const uniqueHashes = new Map(image_hashes.map((item) => [item.hash, item]));
           const uniqueArray = Array.from(uniqueHashes.values());
 
-          const uniqueVideoIds = new Map(video_ids.map(item => [item, item]));
+          const uniqueVideoIds = new Map(video_ids.map((item) => [item, item]));
           const newVideoArray = Array.from(uniqueVideoIds.values());
 
-          launchData.adData.creative.image_hashes = uniqueArray
-          launchData.adData.creative.video_ids = newVideoArray
+          const uniqueVideoThumbnails = new Map(video_thumbnail_urls.map((item) => [item, item]));
+          const newVideoThumbnails = Array.from(uniqueVideoThumbnails.values());
 
-          console.debug('Multiple media files found for the same internal_campaign_id', launchData.adData.creative.image_hashes);
-          console.debug('Multiple video files found for the same internal_campaign_id', launchData.adData.creative.video_ids);
+          launchData.adData.creative.image_hashes = uniqueArray;
+          launchData.adData.creative.video_ids = newVideoArray;
+          launchData.adData.creative.thumbnails = newVideoThumbnails;
+
+          console.debug(
+            'Multiple media files found for the same internal_campaign_id',
+            launchData.adData.creative.image_hashes,
+          );
+          console.debug(
+            'Multiple video files found for the same internal_campaign_id',
+            launchData.adData.creative.video_ids,
+          );
         } else {
           console.debug('Show media type', existingCampaignMedia[0]);
           if (existingCampaignMedia[0].mediaType === 'video') {
-            launchData.adData.creative.video_ids = [existingCampaignMedia[0].fbhash]
+            launchData.adData.creative.video_ids = [existingCampaignMedia[0].fbhash];
+            launchData.adData.creative.thumbnails = [existingCampaignMedia[0].thumbnails];
           } else {
-            launchData.adData.creative.image_hashes = [{
-              hash: existingCampaignMedia[0].fbhash
-            }]
+            launchData.adData.creative.image_hashes = [
+              {
+                hash: existingCampaignMedia[0].fbhash,
+              },
+            ];
           }
         }
 
-        console.debug('Final Launch Data: ', JSON.stringify(launchData, null, 2))
+        console.debug('Final Launch Data: ', JSON.stringify(launchData, null, 2));
         await sqsClient.sendMessageToQueue(launchData);
       }
 
