@@ -33,7 +33,7 @@ class AdLauncherController {
     this.ddbRepository = dynamoDbService;
   }
 
-  async validateAllParameters(req, res) {
+  validateAllParameters(req, res) {
     const payload = req.body;
 
     const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url'];
@@ -93,7 +93,7 @@ class AdLauncherController {
     return req.body.adAccountId;
   }
 
-  async constructTargetUrl(data) {
+  constructTargetUrl(data) {
     const url = data.url;
     const adtitle = data.adTxt;
     const pixel_id = data.adsetData.promoted_object.pixel_id;
@@ -232,12 +232,13 @@ class AdLauncherController {
     FacebookLogger.info('Pushing in progress data to dynamo db table.');
 
     // Validate the request body
-    await this.validateAllParameters(req, res);
+    this.validateAllParameters(req, res);
 
-    FacebookLogger.info(`Request body: ${req.body}`);
+    FacebookLogger.info(`Request body: ${JSON.stringify(req.body)}`);
 
-    const finalTargetUrl = await this.constructTargetUrl(req.body);
-    console.log('Final Target URL:', finalTargetUrl);
+    const finalTargetUrl = this.constructTargetUrl(req.body);
+    FacebookLogger.info(`Final Target URL: ${finalTargetUrl}`);
+    FacebookLogger.info(`Dynamic Creative: ${req.body.adsetData.is_dynamic_creative}`)
 
     // Write a logic here - handle both dynamic creatives and non dynamic creatives - ASSUMING SINGLE IMAGE UPLOAD
     if (req.body.adsetData.is_dynamic_creative) {
@@ -246,7 +247,6 @@ class AdLauncherController {
       if (req.body.adData.creative.object_story_spec.link_data?.link) {
         req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
       }
-      console.log('Condition ===>', req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value?.link);
       FacebookLogger.info(`Condition`, req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value?.link);
       if (req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value) {
         req.body.adData.creative.object_story_spec.video_data.call_to_action.value.link = finalTargetUrl;
