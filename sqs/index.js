@@ -25,7 +25,11 @@ async function processMessage(message) {
       response.success ? response.message : response.error,
       userId
     );
-    FacebookLogger.info("Campaign Launched Successfully")
+    if (!response.success) {
+      FacebookLogger.error(`Error launching campaign: ${JSON.stringify(response.error)}`);
+    } else {
+      FacebookLogger.info("Campaign Launched Successfully")
+    }
   } catch (error) {
     FacebookLogger.error(JSON.stringify(error));
     FacebookLogger.error(`Error processing message: ${JSON.stringify(error)}`);

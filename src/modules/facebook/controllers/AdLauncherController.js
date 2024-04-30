@@ -18,6 +18,7 @@ const PixelsService = require('../services/PixelsService');
 const PageService = require('../services/PageService');
 
 class AdLauncherController {
+
   constructor() {
     this.adLauncherService = new AdLauncherService();
     this.adsetsService = new AdsetsService();
@@ -32,7 +33,7 @@ class AdLauncherController {
     this.ddbRepository = dynamoDbService;
   }
 
-  validateAllParameters(req, res) {
+  async validateAllParameters(req, res) {
     const payload = req.body;
 
     const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url'];
@@ -92,7 +93,7 @@ class AdLauncherController {
     return req.body.adAccountId;
   }
 
-  constructTargetUrl(data) {
+  async constructTargetUrl(data) {
     const url = data.url;
     const adtitle = data.adTxt;
     const pixel_id = data.adsetData.promoted_object.pixel_id;
@@ -231,18 +232,18 @@ class AdLauncherController {
     FacebookLogger.info('Pushing in progress data to dynamo db table.');
 
     // Validate the request body
-    this.validateAllParameters(req, res);
+    await this.validateAllParameters(req, res);
 
     FacebookLogger.info(`Request body: ${req.body}`);
 
-    const finalTargetUrl = this.constructTargetUrl(req.body);
+    const finalTargetUrl = await this.constructTargetUrl(req.body);
     console.log('Final Target URL:', finalTargetUrl);
 
     // Write a logic here - handle both dynamic creatives and non dynamic creatives - ASSUMING SINGLE IMAGE UPLOAD
     if (req.body.adsetData.is_dynamic_creative) {
       req.body.adData.creative.asset_feed_spec.link_urls = [{ website_url: finalTargetUrl }];
     } else {
-      if (req.body.adData.creative.object_story_spec.link_data?.link) { 
+      if (req.body.adData.creative.object_story_spec.link_data?.link) {
         req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
       }
       console.log('Condition ===>', req.body.adData.creative.object_story_spec?.video_data?.call_to_action?.value?.link);
@@ -404,10 +405,6 @@ class AdLauncherController {
   async getToken(entityId) {
     const details = await this.compositeService.fetchEntitiesOwnerByAdAccounts(entityId);
     return { token: details?.token, userAccountName: details?.name };
-  }
-
-  getAdAccountId(req) {
-    return req.body.adAccountId;
   }
 
   async getAdAccountsDataMap(adAccountId) {
