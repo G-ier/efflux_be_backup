@@ -32,6 +32,7 @@ exports.handler = async (event) => {
       });
 
       console.debug('existingCampaignMedia: ', JSON.stringify(existingCampaignMedia, null, 2));
+      console.debug('existingCampaignMedia: ', existingCampaignMedia);
       // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
       if (existingCampaignMedia.length) {
         const image_hashes = [];
