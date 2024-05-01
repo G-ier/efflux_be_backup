@@ -165,7 +165,9 @@ class AdLauncherService extends BaseService {
           video_data: {
             ...params.object_story_spec.video_data,
             video_id: payload.video_ids[0],
-            image_url: payload.thumbnails[0],
+            image_url:
+              payload.thumbnails[0] ||
+              'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTMGcc3bQc6Hk-Xd6PZsPZme9-Ecza-2UwFibDLZSQI-A&s',
           },
         };
       }
