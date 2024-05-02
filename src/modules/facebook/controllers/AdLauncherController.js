@@ -260,7 +260,7 @@ class AdLauncherController {
 
     try {
       // add createdAt timestamp to the request body
-      req.body.createdAt = new Date().toISOString();e
+      req.body.createdAt = new Date().toISOString();
 
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
 
