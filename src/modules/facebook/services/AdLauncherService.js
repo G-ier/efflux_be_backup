@@ -57,6 +57,8 @@ class AdLauncherService extends BaseService {
       is_dynamic_creative,
       start_time,
       end_time,
+      dsa_beneficiary,
+      dsa_payor,
     } = adsetData;
 
     // TODO: Add device platform targeting logic here
@@ -87,6 +89,8 @@ class AdLauncherService extends BaseService {
       promoted_object: promoted_object,
       status: status,
       is_dynamic_creative: is_dynamic_creative,
+      dsa_beneficiary,
+      dsa_payor,
     };
 
     if (attribution_spec) {
