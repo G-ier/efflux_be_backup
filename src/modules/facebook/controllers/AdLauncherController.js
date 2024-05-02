@@ -260,10 +260,7 @@ class AdLauncherController {
 
     try {
       // add createdAt timestamp to the request body
-      req.body.createdAt = new Date().toISOString();
-
-      // Implement a 1 min period of halting before pushing to dynamo db
-      await new Promise(resolve => setTimeout(resolve, 90000)); // 60000 milliseconds = 1 minute
+      req.body.createdAt = new Date().toISOString();e
 
       await this.ddbRepository.putItem('in-progress-campaigns', req.body);
 
