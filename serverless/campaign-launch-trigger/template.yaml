@@ -1,6 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Transform: AWS::Serverless-2016-10-31
 Description: Campaign Launch Trigger
+
 Globals:
   Function:
     Timeout: 5
@@ -101,6 +102,60 @@ Resources:
           Properties:
             Topic: !ImportValue MediaMaster-SNSTopicArn
 
+  WriteToDynamoFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: ./handlers
+      Handler: dynamo-writer.handler
+      FunctionName: writer-of-dynamo-inprogress-campaigns
+      Description: A Lambda function to write to dynamo db an in-progress campaign
+      Role: !GetAtt LambdaFunctionRole.Arn
+      Policies:
+        - DynamoDBStreamReadPolicy:
+            TableName: !Ref InternalCampaignsTable
+            StreamName: !GetAtt InternalCampaignsTable.StreamArn
+        - DynamoDBCrudPolicy:
+            TableName: !Ref InternalCampaignsTable
+        - SQSSendMessagePolicy:
+            QueueName: !Ref WriteToDynamoQueue
+        - SQSPollerPolicy:
+            QueueName: !Ref WriteToDynamoDLQ
+      Environment:
+        Variables:
+          SQS_QUEUE_URL: !Ref WriteToDynamoQueue
+          DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
+      Events:
+        SqsEvent:
+          Type: SQS
+          Properties:
+            Enabled: true
+            Queue: !GetAtt WriteToDynamoQueue.Arn
+            BatchSize: 10
+
+  WriteToDynamoQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: write-inprogress-campaigns
+      DelaySeconds: 60  # Delay delivery of messages by 60 seconds
+      RedrivePolicy:
+        deadLetterTargetArn: !GetAtt WriteToDynamoDLQ.Arn
+        maxReceiveCount: 3
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: launcher
+
+  WriteToDynamoDLQ:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: write-inprogress-campaigns-dlq
+      Tags:
+        - Key: project
+          Value: efflux
+        - Key: operation
+          Value: launcher
+
   ReadyToLaunchCampaignsQueue:
     Type: AWS::SQS::Queue
     UpdateReplacePolicy: Retain
@@ -115,6 +170,7 @@ Resources:
           Value: campaigns-ready-to-launch
         - Key: project
           Value: efflux
+  
   ReadyToLaunchCampaignsDLQ:
     Type: AWS::SQS::Queue
     UpdateReplacePolicy: Retain
