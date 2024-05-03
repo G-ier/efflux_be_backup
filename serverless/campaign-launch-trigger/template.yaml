@@ -17,8 +17,7 @@ Globals:
       project: efflux
 
 Resources:
-  # Add a dynamodb table with key "internal_campaign_id" and sort field "status"
-  # Enable dynamodb streams
+
   InternalCampaignsTable:
     Type: AWS::DynamoDB::Table
     Properties:
@@ -26,13 +25,9 @@ Resources:
       AttributeDefinitions:
         - AttributeName: internal_campaign_id
           AttributeType: S
-        - AttributeName: status
-          AttributeType: S
       KeySchema:
         - AttributeName: internal_campaign_id
           KeyType: HASH
-        - AttributeName: status
-          KeyType: RANGE
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
@@ -50,8 +45,8 @@ Resources:
       CodeUri: ./handlers
       Handler: dynamo.handler
       FunctionName: campaign-launch-trigger-dynamo
-      Description: A Lambda function to trigger the launch of campaigns -
-        transition them from draft to published
+      Description: A Lambda function to trigger the launch of campaigns - transition
+        them from draft to published
       Role: !GetAtt LambdaFunctionRole.Arn
       Policies:
         - DynamoDBStreamReadPolicy:
@@ -60,12 +55,12 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref InternalCampaignsTable
         - SQSSendMessagePolicy:
-            QueueName: !Ref ReadyToLaunchCampaignsQueue
+            QueueName: !Ref LaunchSignalQueue
         - SQSPollerPolicy:
             QueueName: !Ref ReadyToLaunchCampaignsDLQ
       Environment:
         Variables:
-          SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
+          SQS_QUEUE_URL: !Ref LaunchSignalQueue
           DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
       Events:
         DynamoDBStream:
@@ -81,33 +76,37 @@ Resources:
       CodeUri: ./handlers
       Handler: sns.handler
       FunctionName: campaign-launch-trigger-sns
-      Description: A Lambda function to trigger the launch of campaigns -
-        transition them from draft to published
+      Description: A Lambda function to trigger the launch of campaigns - transition
+        them from draft to published
       Role: !GetAtt LambdaFunctionRole.Arn
       Policies:
         - SQSSendMessagePolicy:
-            QueueName: !Ref ReadyToLaunchCampaignsQueue
+            QueueName: !Ref LaunchSignalQueue
         - DynamoDBCrudPolicy:
             TableName: !Ref InternalCampaignsTable
         - SNSCrudPolicy:
             TopicName: !ImportValue MediaMaster-SNSTopicArn
       Environment:
         Variables:
-          SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
+          SQS_QUEUE_URL: !Ref LaunchSignalQueue
           SNS_TOPIC_ARN: !ImportValue MediaMaster-SNSTopicArn
           DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
       Events:
-        SNS:
-          Type: SNS
+        SqsEvent:
+          Type: SQS
           Properties:
-            Topic: !ImportValue MediaMaster-SNSTopicArn
+            Enabled: true
+            Queue: !ImportValue MediaUploadFinishedQueueArn
+            BatchSize: 10
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: 1
 
-  WriteToDynamoFunction:
+  LaunchSignalerFunction:
     Type: AWS::Serverless::Function
     Properties:
       CodeUri: ./handlers
-      Handler: dynamo-writer.handler
-      FunctionName: writer-of-dynamo-inprogress-campaigns
+      Handler: launch-signaler.handler
+      FunctionName: launch-signaler
       Description: A Lambda function to write to dynamo db an in-progress campaign
       Role: !GetAtt LambdaFunctionRole.Arn
       Policies:
@@ -117,28 +116,30 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref InternalCampaignsTable
         - SQSSendMessagePolicy:
-            QueueName: !Ref WriteToDynamoQueue
+            QueueName: !Ref LaunchSignalQueue
         - SQSPollerPolicy:
             QueueName: !Ref WriteToDynamoDLQ
       Environment:
         Variables:
-          SQS_QUEUE_URL: !Ref WriteToDynamoQueue
+          SQS_QUEUE_URL: !Ref ReadyToLaunchCampaignsQueue
           DYNAMODB_TABLE_NAME: !Ref InternalCampaignsTable
+          EFFLUX_MEDIA_LIBRAY_TABLE: efflux-media-library
       Events:
         SqsEvent:
           Type: SQS
           Properties:
             Enabled: true
-            Queue: !GetAtt WriteToDynamoQueue.Arn
+            Queue: !GetAtt LaunchSignalQueue.Arn
             BatchSize: 10
+      ProvisionedConcurrencyConfig:
+        ProvisionedConcurrentExecutions: 1
 
-  WriteToDynamoQueue:
+  LaunchSignalQueue:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: write-inprogress-campaigns
-      DelaySeconds: 420  # Delay delivery of messages by 7 minutes
+      QueueName: launch-signal-queue
       RedrivePolicy:
-        deadLetterTargetArn: !GetAtt WriteToDynamoDLQ.Arn
+        deadLetterTargetArn: !GetAtt LaunchSignalDLQ.Arn
         maxReceiveCount: 3
       Tags:
         - Key: project
@@ -146,10 +147,10 @@ Resources:
         - Key: operation
           Value: launcher
 
-  WriteToDynamoDLQ:
+  LaunchSignalDLQ:
     Type: AWS::SQS::Queue
     Properties:
-      QueueName: write-inprogress-campaigns-dlq
+      QueueName: launch-signal-dlq
       Tags:
         - Key: project
           Value: efflux
@@ -162,6 +163,7 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       QueueName: campaigns-ready-to-launch
+      DelaySeconds: 180  # Delay delivery of messages by 7 minutes
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ReadyToLaunchCampaignsDLQ.Arn
         maxReceiveCount: 3
@@ -170,7 +172,7 @@ Resources:
           Value: campaigns-ready-to-launch
         - Key: project
           Value: efflux
-  
+
   ReadyToLaunchCampaignsDLQ:
     Type: AWS::SQS::Queue
     UpdateReplacePolicy: Retain
@@ -194,7 +196,7 @@ Resources:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AmazonDynamoDBFullAccess
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Sid: AllowLambdaServiceToAssumeRole
             Effect: Allow
@@ -203,6 +205,15 @@ Resources:
             Principal:
               Service:
                 - lambda.amazonaws.com
+      Policies:
+        - PolicyName: AdditionalLambdaPermissions
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - sqs:*
+                Resource: '*' # It's better to restrict this to specific resources if possible
       Tags:
         - Key: project
           Value: efflux

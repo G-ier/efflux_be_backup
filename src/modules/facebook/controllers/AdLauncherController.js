@@ -265,7 +265,7 @@ class AdLauncherController {
       req.body.createdAt = new Date().toISOString();
 
       // Sending the inprogress campaign to the queue to be processed & launched
-      await this.inprogressCampaignsQueue.sendMessageToQueue(req.body);
+      await this.ddbRepository.putItem('in-progress-campaigns', req.body);
 
       const rocketKey = req.body.url.split('/')[1];
       // Save target to dynamo db

@@ -5,6 +5,7 @@ const {
   GetCommand,
   QueryCommand,
   ScanCommand,
+  UpdateCommand
 } = require('@aws-sdk/lib-dynamodb');
 
 class DynamoDBService {
@@ -88,6 +89,46 @@ class DynamoDBService {
       console.error('Error scanning items:', error);
     }
   }
+
+  async updateItem(tableName, key, updates) {
+    // Constructing the UpdateExpression and ExpressionAttributeValues dynamically
+    const updateKeys = Object.keys(updates);
+    const ExpressionAttributeNames = {};
+    const ExpressionAttributeValues = {};
+
+    let UpdateExpression = "SET ";
+
+    updateKeys.forEach((key, index) => {
+      // Using # to denote expression attribute names
+      const expressionKey = `#${key}`;
+      const expressionValue = `:${key}`;
+
+      ExpressionAttributeNames[expressionKey] = key;
+      ExpressionAttributeValues[expressionValue] = updates[key];
+
+      UpdateExpression += `${expressionKey} = ${expressionValue}`;
+      if (index < updateKeys.length - 1) {
+        UpdateExpression += ", ";
+      }
+    });
+
+    const params = {
+      TableName: tableName,
+      Key: key,
+      UpdateExpression,
+      ExpressionAttributeNames,
+      ExpressionAttributeValues,
+      ReturnValues: "UPDATED_NEW"
+    };
+
+    try {
+      const data = await this.docClient.send(new UpdateCommand(params));
+      return data.Attributes;
+    } catch (error) {
+      console.error('Error updating item:', error);
+    }
+  }
+
 }
 
 const dynamoDBService = DynamoDBService.getInstance();

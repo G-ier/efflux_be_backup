@@ -31,10 +31,13 @@ exports.handler = async (event) => {
         },
       });
 
+      const alledgedFilesNumber = launchData.media_files.length;
+      console.debug('Alledged files number: ', alledgedFilesNumber);
+      console.debug('Current files number: ', existingCampaignMedia.length);
+
       console.debug('existingCampaignMedia: ', JSON.stringify(existingCampaignMedia, null, 2));
-      console.debug('existingCampaignMedia: ', existingCampaignMedia);
       // If there is an existing media with the same internal_campaign_id, send a message to the Queue to Launch
-      if (existingCampaignMedia.length) {
+      if (alledgedFilesNumber === existingCampaignMedia.length) {
         const image_hashes = [];
         const video_ids = [];
         const video_thumbnail_urls = [];
@@ -71,12 +74,9 @@ exports.handler = async (event) => {
 
           console.debug(
             'Multiple media files found for the same internal_campaign_id',
-            launchData.adData.creative.image_hashes,
+            launchData.adData.creative.image_hashes || launchData.adData.creative.video_ids,
           );
-          console.debug(
-            'Multiple video files found for the same internal_campaign_id',
-            launchData.adData.creative.video_ids,
-          );
+
         } else {
           console.debug('Show media type', existingCampaignMedia[0]);
           if (existingCampaignMedia[0].mediaType === 'video') {
@@ -97,7 +97,7 @@ exports.handler = async (event) => {
 
       // Otherwise, return without doing anything
       else {
-        console.log('No existing media with the same internal_campaign_id');
+        console.log('No existing media with the same internal_campaign_id or the number of media files does not match.');
         return;
       }
     }
