@@ -6,6 +6,7 @@ const AdAccountService = require('../services/AdAccountService');
 const CampaignService = require('../services/CampaignsService');
 const UserAccountService = require('../services/UserAccountService');
 const dynamoDbService = require('../../../shared/lib/DynamoDBService');
+const SqsService = require('../../../shared/lib/SQSService');
 const AdLauncherMedia = require('../services/AdLauncherMediaService');
 const CompositeService = require('../services/CompositeService');
 const AdQueueService = require('../services/AdQueueService');
@@ -31,6 +32,7 @@ class AdLauncherController {
     this.pixelService = new PixelsService();
     this.pageService = new PageService();
     this.ddbRepository = dynamoDbService;
+    this.inprogressCampaignsQueue = new SqsService("https://sqs.us-east-1.amazonaws.com/524744845066/write-inprogress-campaigns");
   }
 
   validateAllParameters(req, res) {
@@ -262,7 +264,8 @@ class AdLauncherController {
       // add createdAt timestamp to the request body
       req.body.createdAt = new Date().toISOString();
 
-      await this.ddbRepository.putItem('in-progress-campaigns', req.body);
+      // Sending the inprogress campaign to the queue to be processed & launched
+      await this.inprogressCampaignsQueue.sendMessageToQueue(req.body);
 
       const rocketKey = req.body.url.split('/')[1];
       // Save target to dynamo db

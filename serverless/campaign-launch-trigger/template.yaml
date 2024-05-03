@@ -136,7 +136,7 @@ Resources:
     Type: AWS::SQS::Queue
     Properties:
       QueueName: write-inprogress-campaigns
-      DelaySeconds: 60  # Delay delivery of messages by 60 seconds
+      DelaySeconds: 420  # Delay delivery of messages by 7 minutes
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt WriteToDynamoDLQ.Arn
         maxReceiveCount: 3
