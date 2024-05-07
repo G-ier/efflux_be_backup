@@ -98,10 +98,10 @@ class AdLauncherService extends BaseService {
     }
 
     if (start_time) {
-      payload['start_time'] = start_time.slice(0, -1);
+      payload['start_time'] = start_time;
     }
     if (end_time) {
-      payload['end_time'] = end_time.slice(0, -1);
+      payload['end_time'] = end_time;
     }
 
     FacebookLogger.info('Adset Payload -->', JSON.stringify(payload));
