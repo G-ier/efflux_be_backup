@@ -163,7 +163,7 @@ Resources:
     DeletionPolicy: Delete
     Properties:
       QueueName: campaigns-ready-to-launch
-      DelaySeconds: 180  # Delay delivery of messages by 7 minutes
+      DelaySeconds: 60  # Delay delivery of messages by 1 minutes
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt ReadyToLaunchCampaignsDLQ.Arn
         maxReceiveCount: 3
