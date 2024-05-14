@@ -85,7 +85,7 @@ Resources:
         - DynamoDBCrudPolicy:
             TableName: !Ref InternalCampaignsTable
         - SNSCrudPolicy:
-            TopicName: !ImportValue MediaMaster-SNSTopicArn
+            TopicName: !ImportValue Mediamaster-Downstream-Notifications
       Environment:
         Variables:
           SQS_QUEUE_URL: !Ref LaunchSignalQueue
