@@ -26,14 +26,15 @@ exports.handler = async (event) => {
 
   // Step 1: Receives message from SQS
   const message = JSON.parse(event.Records[0].body);
+  const QueueMessage = JSON.parse(message.Message);
   console.debug('Message: ', message);
-  console.debug('Internal Campaign ID: ', message.internalCampaignId);
+  console.debug('Internal Campaign ID: ', QueueMessage.internalCampaignId);
 
   // Step 2: queries dynamoDB table for the campaign details using the key "internalCampaignId" from the message payload
   const launchingData = await dynamoClient.queryItems(DynamodbTableName, {
     KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
     ExpressionAttributeValues: {
-      ':internal_campaign_id': message.internalCampaignId,
+      ':internal_campaign_id': QueueMessage.internalCampaignId,
     },
   });
   console.debug('Campaign: ', launchingData);
@@ -46,7 +47,7 @@ exports.handler = async (event) => {
     const uploadedFiles = await dynamoClient.queryItems('efflux-media-library', {
       KeyConditionExpression: 'internal_campaign_id = :internal_campaign_id',
       ExpressionAttributeValues: {
-        ':internal_campaign_id': message.internalCampaignId,
+        ':internal_campaign_id': QueueMessage.internalCampaignId,
       },
     });
     console.log('Current files number: ', uploadedFiles.length);
@@ -112,14 +113,14 @@ exports.handler = async (event) => {
       console.debug('Final Launch Data: ', JSON.stringify(launchData, null, 2));
       await sqsClient.sendMessageToQueue(launchData);
       console.log('Sending a launch signal to the Queue');
-      return `Successfully sent a launch signal to the Queue for campaign with internalCampaignId: ${message.internalCampaignId}`;
+      return `Successfully sent a launch signal to the Queue for campaign with internalCampaignId: ${QueueMessage.internalCampaignId}`;
     }
 
   } else {
     console.log(
       'No campaign in progress found for internal campaign id: ',
-      message.internalCampaignId,
+      QueueMessage.internalCampaignId,
     );
-    return `No campaign in progress found for internal campaign id: ${message.internalCampaignId}`;
+    return `No campaign in progress found for internal campaign id: ${QueueMessage.internalCampaignId}`;
   }
 };
