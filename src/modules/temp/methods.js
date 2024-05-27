@@ -2,6 +2,7 @@
 const _ = require('lodash');
 const assert = require('assert');
 const axios = require('axios');
+const async = require('async');
 // Local imports
 const UserRepository = require('../auth/repositories/UserRepository');
 const UserAccountRepository = require('../facebook/repositories/UserAccountRepository');
@@ -10,6 +11,7 @@ const AdsetsRepository = require('../facebook/repositories/AdsetsRepository');
 const CampaignRepository = require('../facebook/repositories/CampaignRepository');
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
+const PixelsService = require('../facebook/services/PixelsService');
 
 class TemporaryService {
   constructor() {
@@ -19,6 +21,7 @@ class TemporaryService {
     this.adsetsRepository = new AdsetsRepository();
     this.campaignRepository = new CampaignRepository();
     this.UserAccountRepository = new UserAccountRepository();
+    this.pixelService = new PixelsService;
   }
 
   // Use static method to get the connection where needed
@@ -85,6 +88,82 @@ class TemporaryService {
 
     return users;
   }
+
+  async fetchUsersWithAdAccountsForNewEfflux(userId, isAdmin) {
+    let userFilters = {};
+    if (!isAdmin) userFilters = { id: userId };
+    let users = await this.userRepository.fetchUsers(['*'], userFilters);
+    const userIds = users.map((user) => user.id);
+
+    // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
+    let whereClause = {};
+    if (!isAdmin) whereClause['map.u_id'] = userIds;
+
+    const adAccounts = await this.adAccountRepository.fetchAdAccounts(
+      [
+        '*',
+        'map.u_id AS user_id',
+      ],
+      whereClause,
+      false,
+      [
+        {
+          type: 'inner',
+          table: 'u_aa_map AS map',
+          first: `ad_accounts.id`,
+          operator: '=',
+          second: 'map.aa_id',
+        },
+      ],
+    );
+
+    // Logic for adding data for each ad account -----------------------------------------
+
+
+
+
+
+    // Grab pixel data and inject it
+
+    //await this.pixelService.syncPixels(users[0].token, adAccounts, "today");
+
+    let whereClause2 = {};
+    const pixels = this.pixelService.fetchPixelsFromDatabase(
+      ['*'],
+      whereClause2,
+      false,
+      [],
+    );
+
+    console.log(`
+    ------------------------------
+      AD ACCOUNT
+      ${JSON.stringify(adAccounts)}
+    ------------------------------
+    `);
+
+    adAccounts.forEach(adacc => {
+      adacc.pixels = [];
+      for(const pix in pixels){
+        if(pix.ad_account_id == adacc.id){
+          adacc.pixels.push(pix);
+        }
+      }
+    });
+
+
+
+
+    // Logic ends here -------------------------------------------------------------------
+
+    users = users.map((user) => {
+      user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
+      return user;
+    });
+
+    return users;
+  }
+
 
   async fetchUserAccounts(fields, filters, limit) {
     const userAccounts = await this.UserAccountRepository.fetchUserAccounts(fields, filters, limit);
@@ -169,6 +248,55 @@ class TemporaryService {
     return response.data;
   }
 
+  async updateSingleAdAccount(id,
+    name,
+    status,
+    adpage,
+    usertype,
+    pixel,
+    assigned
+  ) {
+
+    /*
+    const auth0Token = await this.getAuth0ManagementApiToken(); // Retrieve your Auth0 Management API token
+
+    const url = `https://${EnvironmentVariablesManager.getEnvVariable(
+      'AUTH0_DOMAIN',
+    )}/api/v2/users/${userId}`;
+
+    const headers = {
+      Authorization: `Bearer ${auth0Token}`,
+      'Content-Type': 'application/json',
+    };
+
+    const body = {};
+    if (name) body.name = name;
+    const response = await axios.patch(url, body, { headers });
+    */
+
+    let output;
+    try {
+      const updatedField = {
+        id,
+        name,
+        status,
+        adpage,
+        usertype,
+        pixel,
+        assigned
+      };
+      const criterion = {
+        id: id
+      };
+      output = await this.adAccountRepository.update(updatedField, criterion);
+    } catch (error) {
+      console.log(error);
+      throw error;
+    }
+
+    return output;
+  }
+
   async fetchUser(id) {
     const user = await this.userRepository.fetchOne(['*'], { id });
     return user;
@@ -234,6 +362,22 @@ class TemporaryController {
       const userId = req.user.id;
       const isAdmin = req.user.roles.includes('admin');
       const users = await this.temporaryService.fetchUsersWithAdAccounts(userId, isAdmin);
+      res.status(200).json(users);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchUsersWithAdAccountsForNewEfflux(req, res) {
+
+    try {
+
+      const userId = req.query.user_id;
+      console.log("ADMIN: " + req.query.user_id);
+      const isAdmin = req.query.admin;
+
+      const users = await this.temporaryService.fetchUsersWithAdAccountsForNewEfflux(userId, isAdmin);
       res.status(200).json(users);
     } catch (error) {
       console.log('ERROR', error);
@@ -321,6 +465,86 @@ class TemporaryController {
       if (name) message += 'Name ';
 
       res.status(200).json({ message: message.trim(), updateResult });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  // update single field changes --- update domains, users changes
+  async updateSingleAdAccount(req, res) {
+    try {
+      const {
+        id,
+        name,
+        status,
+        adpage,
+        usertype,
+        pixel,
+        assigned,
+
+      } = req.query;
+
+      console.log(JSON.stringify(req.query))
+
+      // Validate the id as necessary
+      //if (!id) {
+      //  return res.status(400).json({ message: 'No id parameters provided.' });
+      //}
+
+      // Validate the name as necessary
+      //if (!name) {
+      //  return res.status(400).json({ message: 'No name parameters provided.' });
+      //}
+
+      for (let key in req.query) {
+        if (req.query[key] == null) {
+          return res.status(400).json({ message: 'No ' + key + ' parameters provided.' });
+        }
+      }
+
+
+      // Call a service method to update the user details
+      /*
+      const updateResult = await this.temporaryService.updateSingleAdAccount(
+        id,
+        name,
+        status,
+        currency,
+        tz_name,
+        adPage,
+        userType,
+        pixel,
+        token,
+        provider_id,
+        created_at,
+        updated_at,
+        network,
+        amount_spent,
+        balance,
+        assigned,
+        spend_cap,
+        tz_offset,
+        fb_account_id,
+        date_start,
+        today_spent,
+        org_id,
+        user_access_data_pass,
+        domains_assign_id
+      );
+      */
+      const updateResult = await this.temporaryService.updateSingleAdAccount(
+        id,
+        name,
+        status,
+        adpage,
+        usertype,
+        pixel,
+        assigned
+      );
+
+
+      res.status(200).json({ message: "Update run successfully", updateResult });
     } catch (error) {
       console.log('ERROR', error);
       res.status(500).json({ message: error.message });
