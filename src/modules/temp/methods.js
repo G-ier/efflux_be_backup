@@ -181,6 +181,7 @@ class TemporaryService {
 }
 
 class TemporaryController {
+
   constructor() {
     this.temporaryService = new TemporaryService();
   }

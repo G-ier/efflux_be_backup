@@ -204,7 +204,7 @@ Resources:
             DeleteOnTermination: yes
             Groups:
               - !Ref InstanceSecurityGroup
-        ImageId: ami-0fc5d935ebf8bc3bc # Ubuntu Server 22.04 LTS (HVM) SSD
+        ImageId: ami-0e001c9271cf7f3b9 # Ubuntu Server 22.04 LTS (HVM) SSD
         KeyName: efflux-backend
         InstanceType: t3a.small
         UserData:
@@ -801,95 +801,6 @@ Resources:
       ResourceArn: !Ref ApplicationLoadBalancer
       WebACLArn: !GetAtt FirewallProtection.Arn
 
-  DataLakeBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: events-raw
-      AccessControl: AwsExecRead
-      # transition all files to One Zone-IA after 5 days
-      LifecycleConfiguration:
-        Rules:
-          - Id: TransitionToOneZoneIA
-            Status: Enabled
-            Transitions:
-              - StorageClass: ONEZONE_IA
-                TransitionInDays: 30
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-      NotificationConfiguration:
-        QueueConfigurations:
-          - Event: s3:ObjectCreated:Put
-            Queue: !GetAtt RedirectionsWranglerQueue.Arn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: redirections/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue PostbacksWranglerQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: medianet/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue PostbacksWranglerQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: tonic/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue PostbacksWranglerQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: sedo/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue PostbacksWranglerQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: crossroads/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue PostbacksWranglerQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: epcvip/
-      Tags:
-        - Key: project
-          Value: efflux
-        - Key: operation
-          Value: postbacks
-
-  # Allow DataLakeBucket To send notifications to RedirectionsWranglerQueue
-  SQSQueuePolicy:
-    Type: AWS::SQS::QueuePolicy
-    Properties:
-      PolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: s3.amazonaws.com
-            Action:
-              - sqs:SendMessage
-              - sqs:Publish
-            Resource:
-              - !GetAtt RedirectionsWranglerQueue.Arn
-              - !ImportValue PostbacksWranglerQueueArn
-            Condition:
-              ArnEquals:
-                aws:SourceArn: !GetAtt DataLakeBucket.Arn
-      Queues:
-        - !Ref RedirectionsWranglerQueue
-        - !ImportValue PostbacksWranglerQueueUrl
-
   RedirectionsWranglerQueue:
     Type: AWS::SQS::Queue
     Properties:
@@ -905,6 +816,7 @@ Resources:
           Value: events-wrangler
         - Key: operation
           Value: analytics
+
   # Add a DLQ to the EventsWranglerQueue
   RedirectionsWranglerQueueDLQ:
     Type: AWS::SQS::Queue
@@ -916,65 +828,6 @@ Resources:
           Value: efflux-on-edge
         - Key: component
           Value: events-wrangler
-        - Key: operation
-          Value: analytics
-
-  AnalyticsBucket:
-    Type: AWS::S3::Bucket
-    Properties:
-      BucketName: events-for-analytics
-      AccessControl: AwsExecRead
-      # transition all files to One Zone-IA after 5 days
-      LifecycleConfiguration:
-        Rules:
-          - Id: TransitionToOneZoneIA
-            Status: Enabled
-            Transitions:
-              - StorageClass: ONEZONE_IA
-                TransitionInDays: 30
-      OwnershipControls:
-        Rules:
-          - ObjectOwnership: BucketOwnerPreferred
-      NotificationConfiguration:
-        QueueConfigurations:
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue ClickhouseEventsQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: crossroads/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue ClickhouseEventsQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: sedo/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue ClickhouseEventsQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: tonic/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue ClickhouseEventsQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: medianet/
-          - Event: s3:ObjectCreated:Put
-            Queue: !ImportValue RocketClickhouseEventsQueueArn
-            Filter:
-              S3Key:
-                Rules:
-                  - Name: prefix
-                    Value: rockets/
-      Tags:
-        - Key: project
-          Value: efflux
         - Key: operation
           Value: analytics
 
@@ -1090,30 +943,6 @@ Outputs:
     Value: !GetAtt RedirectionsWranglerQueue.QueueName
     Export:
       Name: RedirectionsToWranglerQueueName
-
-  DataLakeBucketArn:
-    Description: Data Lake Bucket ARN
-    Value: !GetAtt DataLakeBucket.Arn
-    Export:
-      Name: DataLakeBucketArn
-
-  DataLakeBucketName:
-    Description: Data Lake Bucket Name
-    Value: !Ref DataLakeBucket
-    Export:
-      Name: DataLakeBucketName
-
-  AnalyticsBucketName:
-    Description: "AnalyticsBucket Name"
-    Value: !Ref AnalyticsBucket
-    Export:
-      Name: AnalyticsBucketName
-
-  AnalyticsBucketArn:
-    Description: "AnalyticsBucket ARN"
-    Value: !GetAtt AnalyticsBucket.Arn
-    Export:
-      Name: AnalyticsBucketArn
 
   MaliciousClicksBucketName:
     Description: "MaliciousClicksBucket Name"
