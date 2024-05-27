@@ -1,6 +1,6 @@
 AWS_REGION ?= us-east-1
-AWS_ACCOUNT_ID ?= 524744845066
-AWS_PROFILE ?= efflux
+AWS_ACCOUNT_ID ?= 033156084586
+AWS_PROFILE ?= new-efflux
 STACK_NAME ?= Efflux-Campaign-Launch-Trigger
 
 deploy-stack:
