@@ -72,7 +72,7 @@ module.exports = {
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: './migrations/staging', // Updated to match environment
+      directory: './migrations/development', // Updated to match environment
     },
     seeds: {
       directory: './seeds',

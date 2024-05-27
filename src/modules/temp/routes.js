@@ -20,6 +20,10 @@ route.get(
   async (req, res) => await temporaryController.fetchUsersWithAdAccounts(req, res),
 );
 route.get(
+  '/users-formatted',
+  async (req, res) => await temporaryController.fetchUsersWithAdAccountsForNewEfflux(req, res),
+);
+route.get(
   '/user_accounts',
   async (req, res) => await temporaryController.fetchUserAccounts(req, res),
 );
@@ -50,6 +54,8 @@ route.post(
 // Find a user by their id and return them.
 route.get('/user/:id', async (req, res) => await temporaryController.fetchUser(req, res));
 
+
+
 // Find user organization and return them.
 route.get(
   '/user/:userId/organization',
@@ -64,6 +70,11 @@ route.post(
 route.post(
   '/update-details',
   async (req, res) => await temporaryController.updateUserDetails(req, res),
+);
+
+route.post(
+  '/update-single-ad-account',
+  async (req, res) => await temporaryController.updateSingleAdAccount(req, res),
 );
 
 module.exports = route;
