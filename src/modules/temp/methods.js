@@ -15,7 +15,7 @@ const PixelsService = require('../facebook/services/PixelsService');
 
 class TemporaryService {
   constructor() {
-    this.userRepository = new UserRepository();
+
     this.adAccountRepository = new AdAccountRepository();
     this.userRepository = new UserRepository();
     this.adsetsRepository = new AdsetsRepository();
@@ -89,79 +89,383 @@ class TemporaryService {
     return users;
   }
 
-  async fetchUsersWithAdAccountsForNewEfflux(userId, isAdmin) {
-    let userFilters = {};
-    if (!isAdmin) userFilters = { id: userId };
-    let users = await this.userRepository.fetchUsers(['*'], userFilters);
-    const userIds = users.map((user) => user.id);
+  /*
+    - userId: id in OUR database
+    - businessId: business_id given by facebook
+    - isAdmin: sets wether current user is admin, this gets every account/ad_account
+    - ts: sets traffic source, this gets from fb or tt tables
+  */
+  async fetchUsersWithAdAccountsForNewEfflux(userId, businessId=null, isAdmin, ts="fb") {
 
-    // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
-    let whereClause = {};
-    if (!isAdmin) whereClause['map.u_id'] = userIds;
+    if(ts == "tt"){
+      this.pixelService.pixelRepository.tableName = "tt_pixels";
+      if(!businessId){
+        let userFilters = {};
+        if (!isAdmin) userFilters = { id: userId };
+        let users = await this.userRepository.fetchUsers(['*'], userFilters);
+        const userIds = users.map((user) => user.id);
 
-    const adAccounts = await this.adAccountRepository.fetchAdAccounts(
-      [
-        '*',
-        'map.u_id AS user_id',
-      ],
-      whereClause,
-      false,
-      [
-        {
-          type: 'inner',
-          table: 'u_aa_map AS map',
-          first: `ad_accounts.id`,
-          operator: '=',
-          second: 'map.aa_id',
-        },
-      ],
-    );
+        // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
+        let whereClause = {};
+        if (!isAdmin) whereClause['map.u_id'] = userIds;
 
-    // Logic for adding data for each ad account -----------------------------------------
+        const adAccounts = await this.adAccountRepository.fetchAdAccounts(
+          [
+            '*',
+            'map.u_id AS user_id',
+          ],
+          whereClause,
+          false,
+          [
+            {
+              type: 'inner',
+              table: 'u_aa_map AS map',
+              first: `ad_accounts.id`,
+              operator: '=',
+              second: 'map.aa_id',
+            },
+          ],
+        );
+
+        // Logic for adding data for each ad account -----------------------------------------
 
 
 
 
 
-    // Grab pixel data and inject it
+        // Grab pixel data and inject it
 
-    //await this.pixelService.syncPixels(users[0].token, adAccounts, "today");
+        //await this.pixelService.syncPixels(users[0].token, adAccounts, "today");
 
-    let whereClause2 = {};
-    const pixels = this.pixelService.fetchPixelsFromDatabase(
-      ['*'],
-      whereClause2,
-      false,
-      [],
-    );
+        let whereClause2 = {};
+        const pixels = this.pixelService.fetchPixelsFromDatabase(
+          [
+            'tt_pixels.id',
+            'tt_pixels.name',
+            'tt_pixels.ad_account_id'
+          ],
+        );
 
-    console.log(`
-    ------------------------------
-      AD ACCOUNT
-      ${JSON.stringify(adAccounts)}
-    ------------------------------
-    `);
+        console.log(`
+        ------------------------------
+          AD ACCOUNT
+          ${JSON.stringify(adAccounts)}
+        ------------------------------
+        `);
 
-    adAccounts.forEach(adacc => {
-      adacc.pixels = [];
-      for(const pix in pixels){
-        if(pix.ad_account_id == adacc.id){
-          adacc.pixels.push(pix);
-        }
+        adAccounts.forEach(adacc => {
+          adacc.pixels = [];
+          for(const pix in pixels){
+            if(pix.ad_account_id == adacc.id){
+              adacc.pixels.push(pix);
+            }
+          }
+        });
+
+
+
+
+        // Logic ends here -------------------------------------------------------------------
+
+        users = users.map((user) => {
+          user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
+          return user;
+        });
+
+        return users;
+      } else {
+
+        let accountFilters = {business_id: businessId};
+        let accounts = await this.UserAccountRepository.fetchUserAccounts(['*'], accountFilters);
+        const userIds = accounts.map((account) => account.user_id);
+
+        // Fetch users based on user_id
+        let users = [];
+        userIds.forEach(async user => {
+          let userFilters = {id: user};
+
+          const luxus = await this.userRepository.fetchUsers(['*'], userFilters);
+
+          luxus.forEach(single => {
+            users.push(single);
+          })
+
+
+        });
+
+
+        const otherUserIds = users.map((user) => user.id);
+
+
+        // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
+        let whereClause = {};
+        if (!isAdmin) whereClause['map.u_id'] = otherUserIds;
+
+        const adAccounts = await this.adAccountRepository.fetchAdAccounts(
+          [
+            '*',
+            'map.u_id AS user_id',
+          ],
+          whereClause,
+          false,
+          [
+            {
+              type: 'inner',
+              table: 'u_aa_map AS map',
+              first: `ad_accounts.id`,
+              operator: '=',
+              second: 'map.aa_id',
+            },
+          ],
+        );
+
+        // Logic for adding data for each ad account -----------------------------------------
+
+
+        // Grab pixel data and inject it
+
+        //await this.pixelService.syncPixels(users[0].token, adAccounts, "today");
+
+        let whereClause2 = {};
+        let pixels = await this.pixelService.fetchPixelsFromDatabase(
+          [
+            'tt_pixels.id',
+            'tt_pixels.name',
+            'tt_pixels.ad_account_id'
+          ],
+
+        );
+
+
+
+
+        adAccounts.forEach(adacc => {
+          adacc.pixels = [];
+
+
+          pixels.forEach(pix => {
+
+            if(pix.ad_account_id == adacc.id){
+
+              console.log(pix.ad_account_id);
+              adacc.pixels.push(pix);
+            }
+          });
+          if(adacc.pixels.length > 0){
+            console.log(`
+            --------------------------------
+
+              CORRECT RESULT
+              ${adacc.id}
+              ${JSON.stringify(adacc.pixels)}
+
+            --------------------------------
+            `);
+          }
+
+
+        });
+
+
+
+
+        // Logic ends here -------------------------------------------------------------------
+
+        users = users.map((user) => {
+          user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
+          return user;
+        });
+
+
+
+
+        return users;
       }
-    });
+    }
+
+    // this is case where ts=="fb"
+    if(!businessId){
+      let userFilters = {};
+      if (!isAdmin) userFilters = { id: userId };
+      let users = await this.userRepository.fetchUsers(['*'], userFilters);
+      const userIds = users.map((user) => user.id);
+
+      // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
+      let whereClause = {};
+      if (!isAdmin) whereClause['map.u_id'] = userIds;
+
+      const adAccounts = await this.adAccountRepository.fetchAdAccounts(
+        [
+          '*',
+          'map.u_id AS user_id',
+        ],
+        whereClause,
+        false,
+        [
+          {
+            type: 'inner',
+            table: 'u_aa_map AS map',
+            first: `ad_accounts.id`,
+            operator: '=',
+            second: 'map.aa_id',
+          },
+        ],
+      );
+
+      // Logic for adding data for each ad account -----------------------------------------
 
 
 
 
-    // Logic ends here -------------------------------------------------------------------
 
-    users = users.map((user) => {
-      user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
-      return user;
-    });
+      // Grab pixel data and inject it
 
-    return users;
+      //await this.pixelService.syncPixels(users[0].token, adAccounts, "today");
+
+      let whereClause2 = {};
+      const pixels = this.pixelService.fetchPixelsFromDatabase(
+        ['*'],
+        whereClause2,
+        false,
+        [],
+      );
+
+      console.log(`
+      ------------------------------
+        AD ACCOUNT
+        ${JSON.stringify(adAccounts)}
+      ------------------------------
+      `);
+
+      adAccounts.forEach(adacc => {
+        adacc.pixels = [];
+        for(const pix in pixels){
+          if(pix.ad_account_id == adacc.id){
+            adacc.pixels.push(pix);
+          }
+        }
+      });
+
+
+
+
+      // Logic ends here -------------------------------------------------------------------
+
+      users = users.map((user) => {
+        user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
+        return user;
+      });
+
+      return users;
+    } else {
+
+      let accountFilters = {business_id: businessId};
+      let accounts = await this.UserAccountRepository.fetchUserAccounts(['*'], accountFilters);
+      const userIds = accounts.map((account) => account.user_id);
+
+      // Fetch users based on user_id
+      let users = [];
+      userIds.forEach(async user => {
+        let userFilters = {id: user};
+
+        const luxus = await this.userRepository.fetchUsers(['*'], userFilters);
+
+        luxus.forEach(single => {
+          users.push(single);
+        })
+
+
+      });
+
+
+      const otherUserIds = users.map((user) => user.id);
+
+
+      // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
+      let whereClause = {};
+      if (!isAdmin) whereClause['map.u_id'] = otherUserIds;
+
+      const adAccounts = await this.adAccountRepository.fetchAdAccounts(
+        [
+          '*',
+          'map.u_id AS user_id',
+        ],
+        whereClause,
+        false,
+        [
+          {
+            type: 'inner',
+            table: 'u_aa_map AS map',
+            first: `ad_accounts.id`,
+            operator: '=',
+            second: 'map.aa_id',
+          },
+        ],
+      );
+
+      // Logic for adding data for each ad account -----------------------------------------
+
+
+      // Grab pixel data and inject it
+
+      //await this.pixelService.syncPixels(users[0].token, adAccounts, "today");
+
+      let whereClause2 = {};
+      let pixels = await this.pixelService.fetchPixelsFromDatabase(
+        [
+          'fb_pixels.id',
+          'fb_pixels.name',
+          'fb_pixels.business_id',
+          'fb_pixels.ad_account_id'
+        ],
+
+      );
+
+
+
+
+      adAccounts.forEach(adacc => {
+        adacc.pixels = [];
+
+
+        pixels.forEach(pix => {
+
+          if(pix.ad_account_id == adacc.id){
+
+            console.log(pix.ad_account_id);
+            adacc.pixels.push(pix);
+          }
+        });
+        if(adacc.pixels.length > 0){
+          console.log(`
+          --------------------------------
+
+            CORRECT RESULT
+            ${adacc.id}
+            ${JSON.stringify(adacc.pixels)}
+
+          --------------------------------
+          `);
+        }
+
+
+      });
+
+
+
+
+      // Logic ends here -------------------------------------------------------------------
+
+      users = users.map((user) => {
+        user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
+        return user;
+      });
+
+
+
+
+      return users;
+    }
   }
 
 
@@ -375,10 +679,12 @@ class TemporaryController {
     try {
 
       const userId = req.query.user_id;
+      const businessId = req.query.business_id;
       console.log("ADMIN: " + req.query.user_id);
       const isAdmin = req.query.admin;
+      const ts = req.query.ts;
 
-      const users = await this.temporaryService.fetchUsersWithAdAccountsForNewEfflux(userId, isAdmin);
+      const users = await this.temporaryService.fetchUsersWithAdAccountsForNewEfflux(userId, businessId, isAdmin, ts);
       res.status(200).json(users);
     } catch (error) {
       console.log('ERROR', error);
