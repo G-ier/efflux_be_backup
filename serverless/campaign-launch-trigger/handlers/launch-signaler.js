@@ -7,7 +7,9 @@ const SqsService = require('./services/SQSService');
 // Constants
 const dynamoDbTable = process.env.DYNAMODB_TABLE_NAME;
 const mediaLibraryDynamoDbTable = process.env.EFFLUX_MEDIA_LIBRAY_TABLE;
-const readyToLaunchQueue = process.env.SQS_QUEUE_URL;
+const readyToLaunchQueue =
+  process.env.SQS_QUEUE_URL ||
+  'https://sqs.us-east-1.amazonaws.com/033156084586/campaigns-ready-to-launch';
 const sqsClient = new SqsService(readyToLaunchQueue);
 
 exports.handler = async (event) => {

@@ -9,7 +9,7 @@ const dynamo = require('./services/DynamoDBService');
 // Constants
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
-  'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
+  'https://sqs.us-east-1.amazonaws.com/033156084586/launch-signal-queue';
 
 const sqsClient = new SQSService(SqsQueueUrl);
 const dynamoClient = dynamo;

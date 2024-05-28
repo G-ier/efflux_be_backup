@@ -3,7 +3,7 @@
 
 const SqsQueueUrl =
   process.env.SQS_QUEUE_URL ||
-  'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
+  'https://sqs.us-east-1.amazonaws.com/033156084586/launch-signal-queue';
 
 const DynamodbTableName = process.env.DYNAMODB_TABLE_NAME || 'in-progress-campaigns';
 
