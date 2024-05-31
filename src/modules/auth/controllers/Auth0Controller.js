@@ -10,6 +10,13 @@ class Auth0Controller {
   async login(req, res) {
     try {
       const user = req.user;
+      console.log(`
+      ------------------------------------
+        USER
+
+        ${user}
+      ------------------------------------
+      `);
       const account = req.body;
       const userDetails = await this.auth0Service.login(user, account);
       res.json(userDetails);
