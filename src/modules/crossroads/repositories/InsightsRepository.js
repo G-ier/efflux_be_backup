@@ -13,10 +13,6 @@ class InsightsRepository {
 
     // TEMPORARY
     this.tiktokCampaignIds = []
-    const queueUrl =
-      process.env.CROSSROAD_QUEUE_URL ||
-      'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-crossroads-queue';
-    // this.sqsService = new SqsService(queueUrl);
   }
 
   // TEMPORARY

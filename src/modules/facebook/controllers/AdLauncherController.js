@@ -32,7 +32,6 @@ class AdLauncherController {
     this.pixelService = new PixelsService();
     this.pageService = new PageService();
     this.ddbRepository = dynamoDbService;
-    this.inprogressCampaignsQueue = new SqsService("https://sqs.us-east-1.amazonaws.com/524744845066/write-inprogress-campaigns");
   }
 
   validateAllParameters(req, res) {

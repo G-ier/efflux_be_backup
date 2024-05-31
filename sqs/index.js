@@ -6,7 +6,7 @@ const { FacebookLogger } = require("../src/shared/lib/WinstonLogger");
 
 
 // TODO: Update these values to use AWS parameter store or environment variables
-const queueUrl = 'https://sqs.us-east-1.amazonaws.com/524744845066/campaigns-ready-to-launch';
+const queueUrl = 'https://sqs.us-east-1.amazonaws.com/033156084586/campaigns-ready-to-launch';
 
 async function processMessage(message) {
   const adLauncherController = new AdLauncherController();

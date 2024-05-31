@@ -4,7 +4,7 @@ const EnvironmentVariablesManager = require('../services/EnvironmentVariablesMan
 
 const serviceURL =
   EnvironmentVariablesManager.getEnvVariable('NOTIFICATIONS_SERVICE_URL') ||
-  'https://notifications.efflux.com';
+  'https://notifications.effluxboard.com';
 
 class NotificationsService {
   async notifyUser(title, message, userId) {

@@ -11,12 +11,6 @@ class InsightsRepository {
     this.tableName = 'tonic_raw_insights';
     this.aggregatesTableName = 'tonic';
     this.database = new DatabaseRepository();
-
-    // const queueUrl =
-    //   process.env.TONIC_QUEUE_URL ||
-    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-tonic-queue';
-
-    // this.sqsService = new SqsService(queueUrl);
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {

@@ -11,12 +11,6 @@ class InsightRepository {
     this.tableName = 'medianet_raw_insights';
     this.aggregatesTableName = 'medianet';
     this.database = new DatabaseRepository();
-
-    // const queueUrl =
-    //   process.env.CROSSROAD_QUEUE_URL ||
-    //   'https://sqs.us-east-1.amazonaws.com/524744845066/edge-pipeline-medianet-queue';
-
-    // this.sqsService = new SqsService(queueUrl);
   }
 
   async fetchInsights(fields = ['*'], filters = {}, limit) {
