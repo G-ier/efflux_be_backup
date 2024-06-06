@@ -12,6 +12,7 @@ const CampaignsController = require('../../controllers/CampaignsController');
 const AdsetsController = require('../../controllers/AdsetsController');
 const AdLauncherController = require('../../controllers/AdLauncherController');
 const AdQueueController = require('../../controllers/AdQueueController');
+const { error } = require('winston');
 
 const campaignsController = new CampaignsController();
 const adsetsController = new AdsetsController();
@@ -116,7 +117,46 @@ route.post(
     { name: 'video', maxCount: 5 },
     { name: 'images', maxCount: 10 },
   ]),
-  (req, res) => adLauncherController.launchAd(req, res),
+  // retry mechanism -- tries 3 times max
+  async (req, res) => {
+
+    let pause = 2;
+    let counter = 0;
+    const max_retry = 4;
+    let error = false;
+    let error_msg = "";
+    for(counter; counter<max_retry; counter++){
+      const response = await adLauncherController.launchAd(payload).catch(async error => {
+        console.log(`Ad Launching failed --- lambda version ---`);
+        console.log(`${error}`);
+        console.log(`Ad Launching error above --- lambda version ---`);
+        error_msg = error;
+        await Promise(resolve => setImmediate(() => setTimeout(resolve, pause*1000)));
+        pause = 2*pause;
+        error = true;
+
+      });
+
+      if(error){
+        if(counter < 2){
+          error = false;
+          continue;
+        } else if(counter == 2){
+          continue;
+        }
+      } else {
+        counter = 5;
+      }
+    }
+
+    if(error){
+      res.status(500).json({
+        success: false,
+        message: 'An error occurred while launching the ad. All retries failed.',
+        error: error?.error_user_msg || error.message,
+      });
+    }
+  }
 );
 route.post(
   '/queue-ad',

@@ -19,7 +19,30 @@ async function processMessage(message) {
       body: messageBody,
     }
     const userId = messageBody.userId;
-    const response = await adLauncherController.launchAd(payload);
+    // retry mechanism for automatic launching -- retries max 3 times
+    let pause = 2;
+    let counter = 0;
+    const max_retry = 4;
+    let error = false;
+    for(counter; counter<max_retry; counter++){
+      const response = await adLauncherController.launchAd(payload).catch(async error => {
+        FacebookLogger.info(`Ad Launching failed --- lambda version ---`);
+        FacebookLogger.info(`${error}`);
+        FacebookLogger.info(`Ad Launching error above --- lambda version ---`);
+        await Promise(resolve => setImmediate(() => setTimeout(resolve, pause*1000)));
+        pause = 2*pause;
+        error = true;
+      });
+      if(error){
+        if(counter <= 3){
+          error = false;
+          continue;
+        }
+      } else {
+        counter = 5;
+      }
+    }
+
     await notificationsServiceInstance.notifyUser(
       response.success ? "Campaign Launched Successfully" : "Campaign Launch Failed",
       response.success ? response.message : response.error,
