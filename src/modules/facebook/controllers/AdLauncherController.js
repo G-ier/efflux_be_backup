@@ -37,7 +37,7 @@ class AdLauncherController {
   validateAllParameters(req, res) {
     const payload = req.body;
 
-    const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url'];
+    const requiredKeys = ['adAccountId', 'campaignData', 'adsetData', 'adData', 'url']; // might need to add is dynamic creative or other required control variables
     const campaignDataKeys = ['name', 'objective', 'special_ad_categories', 'category', 'vertical'];
     const adsetDataKeys = [
       'name',

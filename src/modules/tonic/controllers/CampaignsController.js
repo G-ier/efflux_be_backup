@@ -27,7 +27,9 @@ class CampaignsController {
         const parsedFields = fields ? JSON.parse(fields) : undefined;
         const parsedFilters = filters ? JSON.parse(filters) : undefined;
         const parsedLimit = limit ? parseInt(limit, 10) : undefined;
-        const campaigns = await this.service.fetchCampaigns(parsedFields, parsedFilters, parsedLimit);
+        const campaigns = await this.service.fetchCampaigns(parsedFields, parsedFilters, parsedLimit).catch(error => {
+          TonicLogger.error("EFFLUX-BE: Tonic GET Campaigns dont work.")
+        });
         res.status(200).json(campaigns);
       } catch (error) {
         this.logger.error(`Error fetching Tonic Campaigns: ${error.message}`);
