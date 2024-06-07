@@ -108,7 +108,7 @@ class ClickhouseRepository {
     }
   }
 
-  // query campaigns
+  // query campaigns --- networks
   async queryClickHouseCampaigns(campaign_id) {
     try {
         // SQL query to execute
@@ -134,6 +134,40 @@ class ClickhouseRepository {
     try {
         // SQL query to execute
         const query = `SELECT * FROM efflux.adset_timeseries WHERE adset_id='${adset_id}';`;
+
+        // Execute the query and fetch results
+        const response = await this.connection.query(query).toPromise();
+
+        console.log("---------------- RESPONSE ----------------------");
+        console.log(response);
+        console.log("---------------- RESPONSE ----------------------");
+
+        return response;
+
+    } catch (error) {
+        // Handle any errors that occur
+        console.error('Error querying ClickHouse:', error);
+    }
+  }
+
+  // query campaigns --- sources
+  // both dates neccessary
+  /*
+    startDate ex.: 2024-04-12 09:13:46
+    endDate ex.: 2024-04-12 09:13:46
+  */
+  async queryClickHouseCampaignsFacebook(campaign_id, startDate=null, endDate=null) {
+    try {
+
+        let query;
+
+        if(!startDate || !endDate){
+          // SQL query to execute
+          query = `SELECT * FROM efflux.campaign_timeseries WHERE campaign_id='${campaign_id}';`;
+        } else {
+          // SQL query to execute
+          query = `SELECT * FROM efflux.campaign_timeseries WHERE campaign_id='${campaign_id}' AND createdAt>='${startDate}' AND createdAt<='${endDate}';`;
+        }
 
         // Execute the query and fetch results
         const response = await this.connection.query(query).toPromise();

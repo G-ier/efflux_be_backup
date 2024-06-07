@@ -77,6 +77,10 @@ route.get('/campaigns', checkPermission(['read_campaigns']), (req, res) =>
   campaignsController.fetchCampaigns(req, res),
 );
 
+route.get('/campaigns_clickhouse', (req, res) =>
+  campaignsController.fetchCampaignsFromClickhouse(req, res),
+);
+
 route.get('/adsets', checkPermission(['read_adsets']), (req, res) => {
   adsetsController.fetchAdsets(req, res);
 });

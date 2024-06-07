@@ -94,6 +94,13 @@ class CampaignsService extends BaseService {
     return results;
   }
 
+  async fetchCampaignsFromClickhouse(campaign_id, startDate, endDate) {
+    this.logger.info(`Fetching Facebook Campaigns from the Clickhouse database`);
+    const results = await this.clickhouse.queryClickHouseCampaignsFacebook(campaign_id, startDate, endDate);
+    this.logger.info(`Fetched ${results.length} Facebook Campaigns from the Clickhouse database`);
+    return results;
+  }
+
   async duplicateCampaign({ deep_copy, status_option, rename_options, entity_id, access_token }) {
     const url = `${FB_API_URL}${entity_id}/copies`;
 

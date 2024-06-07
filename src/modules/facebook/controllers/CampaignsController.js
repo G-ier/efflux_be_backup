@@ -36,6 +36,21 @@ class CampaignsController {
     }
   }
 
+  async fetchCampaignsFromClickhouse(req, res) {
+    try{
+      const { campaign_id, startDate, endDate } = req.query;
+      if(!campaign_id){
+        res.status(500).send('No campaign_id given.');
+      }
+
+      const campaigns = await this.campaignService.fetchCampaignsFromClickhouse(campaign_id, startDate, endDate);
+      res.status(200).json(campaigns);
+    } catch (error) {
+      this.logger.error(`Error fetching Facebook Campaigns: ${error.message}`);
+      res.status(500).send('Error fetching Facebook Campaigns');
+    }
+  }
+
 }
 
 module.exports = CampaignsController;
