@@ -1,18 +1,39 @@
 // Local application imports
 const InsightsRepository          = require("../repositories/InsightsRepository");
 const TonicBaseService            = require('./TonicBaseService');
+const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
 
 class InsightsService extends TonicBaseService {
 
   constructor() {
     super();
     this.repository = new InsightsRepository();
+    this.clickhouse = new ClickhouseRepository();
   }
 
   async fetchInsights(fields = ["*"], filters = {}, limit) {
     this.logger.info(`Fetching Tonic Campaigns from the database`);
     const results = await this.repository.fetchInsights(fields, filters, limit);
     this.logger.info(`Fetched ${results.length} Tonic Campaigns from the database`);
+    return results;
+  }
+
+  async fetchInsightsClickhouse(network, ts, startDate, endDate) {
+    this.logger.info(`Fetching Tonic Insights from the Clickhouse database`);
+    const results = await this.clickhouse.queryClickHouseInsights(network, ts, startDate, endDate);
+    this.logger.info(`Fetched ${results.length} Tonic Insights from the Clickhouse database`);
+    return results;
+  }
+  async fetchCampaignsClickhouse(campaign_id) {
+    this.logger.info(`Fetching Tonic Campaigns from the Clickhouse database`);
+    const results = await this.clickhouse.queryClickHouseCampaigns(campaign_id);
+    this.logger.info(`Fetched ${results.length} Tonic Campaigns from the Clickhouse database`);
+    return results;
+  }
+  async fetchAdsetsClickhouse(adset_id) {
+    this.logger.info(`Fetching Tonic Adsets from the Clickhouse database`);
+    const results = await this.clickhouse.queryClickHouseInsights(adset_id);
+    this.logger.info(`Fetched ${results.length} Tonic Adsets from the Clickhouse database`);
     return results;
   }
 

@@ -28,6 +28,13 @@ route.get("/insights", async (req, res) => {
   await insightsController.fetchInsights(req, res);
 });
 
+// @route    /api/tonic/insights_clickhouse
+// @desc     GET insights_clickhouse
+// @Access   Private
+route.get("/insights_clickhouse", async (req, res) => {
+  await insightsController.fetchInsightsClickhouse(req, res);
+});
+
 route.use("/campaigns", campaigns);
 route.use("/pixels", pixels);
 

@@ -1,3 +1,5 @@
+
+
 const ClickhouseConnection = require('./ClickhouseConnection');
 const { ClickhouseLogger } = require('./WinstonLogger');
 
@@ -84,6 +86,70 @@ class ClickhouseRepository {
       throw error;
     }
   }
+
+  // query insights
+  async queryClickHouseInsights(network, ts, startDate, endDate) {
+    try {
+        // SQL query to execute
+        const query = `SELECT * FROM efflux.insights WHERE network='${network}' AND traffic_source='${ts}' AND updatedAt >= '${startDate} 00:00:00' AND updatedAt <= '${endDate} 23:59:59';`;
+
+        // Execute the query and fetch results
+        const response = await this.connection.query(query).toPromise();
+
+        console.log("---------------- RESPONSE ----------------------");
+        console.log(response);
+        console.log("---------------- RESPONSE ----------------------");
+
+        return response;
+
+    } catch (error) {
+        // Handle any errors that occur
+        console.error('Error querying ClickHouse:', error);
+    }
+  }
+
+  // query campaigns
+  async queryClickHouseCampaigns(campaign_id) {
+    try {
+        // SQL query to execute
+        const query = `SELECT * FROM efflux.campaign_timeseries WHERE campaign_id='${campaign_id}';`;
+
+        // Execute the query and fetch results
+        const response = await this.connection.query(query).toPromise();
+
+        console.log("---------------- RESPONSE ----------------------");
+        console.log(response);
+        console.log("---------------- RESPONSE ----------------------");
+
+        return response;
+
+    } catch (error) {
+        // Handle any errors that occur
+        console.error('Error querying ClickHouse:', error);
+    }
+  }
+
+  // query adsets
+  async queryClickHouseAdsets(adset_id) {
+    try {
+        // SQL query to execute
+        const query = `SELECT * FROM efflux.adset_timeseries WHERE adset_id='${adset_id}';`;
+
+        // Execute the query and fetch results
+        const response = await this.connection.query(query).toPromise();
+
+        console.log("---------------- RESPONSE ----------------------");
+        console.log(response);
+        console.log("---------------- RESPONSE ----------------------");
+
+        return response;
+
+    } catch (error) {
+        // Handle any errors that occur
+        console.error('Error querying ClickHouse:', error);
+    }
+  }
+
 }
 
 module.exports = ClickhouseRepository;
