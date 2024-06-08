@@ -130,7 +130,7 @@ route.post(
     let error = false;
     let error_msg = "";
     for(counter; counter<max_retry; counter++){
-      const response = await adLauncherController.launchAd(payload).catch(async error => {
+      const response = await adLauncherController.launchAd(req, res).catch(async error => {
         console.log(`Ad Launching failed --- lambda version ---`);
         console.log(`${error}`);
         console.log(`Ad Launching error above --- lambda version ---`);
@@ -149,6 +149,7 @@ route.post(
           continue;
         }
       } else {
+        return response;
         counter = 5;
       }
     }
