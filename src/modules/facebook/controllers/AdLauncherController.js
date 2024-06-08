@@ -289,6 +289,9 @@ class AdLauncherController {
   }
 
   async launchAd(req, res) {
+
+    FacebookLogger.info(`Launching ad`);
+
     // Validate the request body
     this.validateAllParameters(req, res);
 
