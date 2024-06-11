@@ -237,7 +237,7 @@ class AdLauncherController {
 
     FacebookLogger.info(`Request body: ${JSON.stringify(req.body)}`);
 
-    const finalTargetUrl = this.constructTargetUrl(req.body);
+    const finalTargetUrl = this.constructTargetUrl(req.body); // fills in the links --- tohouston.link should be the base url
     FacebookLogger.info(`Final Target URL: ${finalTargetUrl}`);
     FacebookLogger.info(`Dynamic Creative: ${req.body.adsetData.is_dynamic_creative}`)
 
@@ -248,7 +248,7 @@ class AdLauncherController {
     } else {
       FacebookLogger.info(`Non Dynamic Creative Launch`)
       FacebookLogger.info(`Condition for link: .${req.body.adData.creative.object_story_spec.hasOwnProperty("link_data")}.`);
-      if (req.body.adData.creative.object_story_spec.hasOwnProperty("link_data")) {
+      if (req.body.adData.creative.object_story_spec.hasOwnProperty("link_data")) { // sets property to false
         req.body.adData.creative.object_story_spec.link_data.link = finalTargetUrl;
       }
       FacebookLogger.info(`Condition for video link: .${req.body.adData.creative.object_story_spec.hasOwnProperty("video_data")}.`);
@@ -290,7 +290,7 @@ class AdLauncherController {
 
   async launchAd(req, res) {
 
-    FacebookLogger.info(`Launching ad!!!!!!"!!`);
+    FacebookLogger.info(`Launching ad!!!!!!!!!!!`);
 
     // Validate the request body
     this.validateAllParameters(req, res);
@@ -400,7 +400,7 @@ class AdLauncherController {
         message: 'Ad created successfully',
       };
     } catch (error) {
-      FacebookLogger.error(`Error creating ad ${JSON.stringify(error)}`);
+      FacebookLogger.error(`Error creating ad ${JSON.stringify(error)}`); // should theoretically print facebook errors
       console.log('Error creating ad ---?>', error);
       return {
         success: false,

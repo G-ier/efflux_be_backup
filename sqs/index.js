@@ -24,8 +24,9 @@ async function processMessage(message) {
     let counter = 0;
     const max_retry = 4;
     let error = false;
+    let response;
     for(counter; counter<max_retry; counter++){
-      const response = await adLauncherController.launchAd(payload).catch(async error => {
+      response = await adLauncherController.launchAd(payload).catch(async error => {
         FacebookLogger.info(`Ad Launching failed --- lambda version ---`);
         FacebookLogger.info(`${error}`);
         FacebookLogger.info(`Ad Launching error above --- lambda version ---`);
@@ -56,6 +57,7 @@ async function processMessage(message) {
   } catch (error) {
     FacebookLogger.error(JSON.stringify(error));
     FacebookLogger.error(`Error processing message: ${JSON.stringify(error)}`);
+    FacebookLogger.error(`Error processing message: ${error}`);
   }
 }
 

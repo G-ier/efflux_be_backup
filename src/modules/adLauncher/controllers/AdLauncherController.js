@@ -41,7 +41,7 @@ class AdLauncherController {
     const month = String(now.getMonth() + 1).padStart(2, '0');
     const day = String(now.getDate()).padStart(2, '0');
     const formattedDate = `${year}-${month}-${day}`; // Combines them in the "YYYY-MM-DD" format
-    let mediType = 'unknown';
+    let mediType = 'unknown'; // signs links off as unknown
     if (type.includes('video')) {
       mediType = 'videos';
     }

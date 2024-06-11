@@ -27,6 +27,7 @@ class RedirectUrlRepository {
     }
   }
 
+  // Returns a list containing objects that have source, campaign id and redirect Urls for entries in the table 'redirect_urls'
   async fetchRedirectUrls(fields = ["*"], filters = {}, limit = 500) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results.map(this.toDomainEntity);
