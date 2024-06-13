@@ -21,4 +21,10 @@ route.get("/", async (req, res) => {
   await campaignsController.fetchCampaigns(req, res);
 });
 
+// @route     /api/tonic/campaigns/active_domains
+// @desc      GET active domains
+// @Access    Private
+route.get("/", async (req, res) => {
+  await campaignsController.get_active_domains(req, res);
+});
 module.exports = route;

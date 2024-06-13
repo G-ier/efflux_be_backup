@@ -20,6 +20,13 @@ class CampaignsService extends TonicBaseService {
     return results;
   }
 
+  async fetch_active_domains(){
+    this.logger.info(`Fetching Tonic Active Domains from the database`);
+    const endpoint = `campaign/list?output=json&state=${state}`;
+    const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching campaigns');
+    return results;
+  }
+
   async fetchCampaignCallback(campaignId) {
     this.logger.info(`Fetching callback for Tonic Campaign ID ${campaignId} from API`);
     const endpoint = `campaign/callback?campaign_id=${campaignId}`;

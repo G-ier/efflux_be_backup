@@ -153,6 +153,29 @@ class AggregatesController {
     }
   }
 
+  async tqirracen(req, res) {
+    try {
+      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
+        await this.extractRequestDataWithUser(req);
+      const user = req.user;
+      const orgId = user?.org_id || 1; // 1 is for default org
+      const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
+        startDate,
+        endDate,
+        network,
+        trafficSource,
+        mediaBuyer,
+        adAccountId,
+        q,
+        // orgId,
+      );
+      return res.json(data);
+    } catch (e) {
+      console.log(e);
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =

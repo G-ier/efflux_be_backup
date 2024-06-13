@@ -28,7 +28,9 @@ class CampaignsController {
         const parsedFilters = filters ? JSON.parse(filters) : undefined;
         const parsedLimit = limit ? parseInt(limit, 10) : undefined;
         const campaigns = await this.service.fetchCampaigns(parsedFields, parsedFilters, parsedLimit).catch(error => {
-          TonicLogger.error("EFFLUX-BE: Tonic GET Campaigns dont work.")
+          TonicLogger.error("EFFLUX-BE: Tonic GET Campaigns dont work.");
+          TonicLogger.error(error);
+          throw error;
         });
         res.status(200).json(campaigns);
       } catch (error) {
@@ -36,6 +38,22 @@ class CampaignsController {
         res.status(500).send('Error fetching Tonic Campaigns');
       }
     }
+
+    async get_active_domains(req, res) {
+
+      try {
+        // implement here the get active domains request to tonic
+
+        const domains = this.service.fetch_active_domains();
+
+        res.status(200).json(domains);
+      } catch (error) {
+        this.logger.error(`Error fetching Tonic Active Domains: ${error.message}`);
+        res.status(500).send('Error fetching Tonic Active Domains.');
+      }
+    }
+
+
 }
 
 module.exports = CampaignsController;
