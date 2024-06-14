@@ -43,8 +43,8 @@ class CampaignsController {
 
       try {
         // implement here the get active domains request to tonic
-
-        const domains = this.service.fetch_active_domains();
+        const account_id = req.query.account_id;
+        const domains = await this.service.fetch_active_domains(account_id);
 
         res.status(200).json(domains);
       } catch (error) {

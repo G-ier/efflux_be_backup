@@ -1,4 +1,5 @@
 // Local application imports
+const AccountsRepository = require("../repositories/AccountsRepository");
 const CampaignsRepository         = require("../repositories/CampaignsRepository");
 const TonicBaseService            = require('./TonicBaseService');
 
@@ -7,6 +8,7 @@ class CampaignsService extends TonicBaseService {
   constructor() {
     super();
     this.repository = new CampaignsRepository();
+    this.accounts_repo = new AccountsRepository();
   }
 
   async getCampaignsAccount(campaignId) {
@@ -20,10 +22,18 @@ class CampaignsService extends TonicBaseService {
     return results;
   }
 
-  async fetch_active_domains(){
+  /*
+    Fetches only active domains for the ad launcher destination domain
+  */
+  async fetch_active_domains(account_id){
     this.logger.info(`Fetching Tonic Active Domains from the database`);
-    const endpoint = `campaign/list?output=json&state=${state}`;
-    const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching campaigns');
+    const account = await this.accounts_repo.fetchAccount(account_id);
+
+    const endpoint = `/privileged/v3/campaign/list?output=json&state=active`;
+    //const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching campaigns');
+    const response = await this.makeTonicAPIRequest(account, 'GET', endpoint, {}, 'Error fetching campaigns').catch(error => {
+      console.log(error);
+    });
     return response;
   }
 

@@ -29,6 +29,7 @@ class CampaignsRepository {
     return [];
   }
 
+
   async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
     return results;
