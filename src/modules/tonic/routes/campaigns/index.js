@@ -23,7 +23,7 @@ route.get("/", async (req, res) => {
 
 // @route     /api/tonic/campaigns/active_domains
 // @desc      GET active domains
-// @Access    Private
+// @Access    Public
 route.get("/active_domains", async (req, res) => {
   await campaignsController.get_active_domains(req, res);
 });
