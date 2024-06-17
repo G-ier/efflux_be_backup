@@ -48,6 +48,8 @@ class CampaignsController {
 
         res.status(200).json(domains);
       } catch (error) {
+
+        console.log(error);
         this.logger.error(`Error fetching Tonic Active Domains: ${error.message}`);
         res.status(500).send('Error fetching Tonic Active Domains.');
       }
