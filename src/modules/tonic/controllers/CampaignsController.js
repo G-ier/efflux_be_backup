@@ -1,12 +1,12 @@
 // Local application imports
-const { TonicLogger }             = require("../../../shared/lib/WinstonLogger");
+const { RequestsLogger }             = require("../../../shared/lib/WinstonLogger");
 const CampaignsService            = require('../services/CampaignsService');
 
 class CampaignsController {
 
     constructor() {
       this.service = new CampaignsService();
-      this.logger = TonicLogger;
+      this.logger = RequestsLogger;
     }
 
     async getCampaignCallback(req, res) {
