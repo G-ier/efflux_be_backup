@@ -21,6 +21,7 @@ exports.up = function(knex) {
     table.integer('link_clicks').defaultTo(0);
     table.integer('ts_conversions').defaultTo(0);
     table.timestamps(true, true);
+    table.unique(['ad_id', 'occurred_at'], 'unique_ad_id_occurred_at');
   });
 };
 
