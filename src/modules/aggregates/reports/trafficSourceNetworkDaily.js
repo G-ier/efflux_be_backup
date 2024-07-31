@@ -1,7 +1,7 @@
 const { buildConditionsInsights, buildSelectionColumns } = require('./utils');
 
-async function trafficSourceNetworkDaily(database, startDate, endDate, network = 'crossroads', trafficSource, mediaBuyer, adAccountId, q, orgId) {
-  const { mediaBuyerCondition, adAccountCondition, queryCondition, orgIdCondition } = buildConditionsInsights(mediaBuyer, adAccountId, q, orgId);
+async function trafficSourceNetworkDaily(database, startDate, endDate, mediaBuyer, adAccountId) {
+  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, adAccountId);
   const query = `
     WITH daily_data AS (
       SELECT
@@ -15,8 +15,6 @@ async function trafficSourceNetworkDaily(database, startDate, endDate, network =
         AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
         ${mediaBuyerCondition}
         ${adAccountCondition}
-        ${queryCondition}
-        ${orgIdCondition}
       GROUP BY
         DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), traffic_source, network
       ORDER BY

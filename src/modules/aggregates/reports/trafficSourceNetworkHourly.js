@@ -1,8 +1,8 @@
 const { buildConditionsInsights, buildSelectionColumns } = require('./utils');
 
-async function trafficSourceNetworkHourly(database, startDate, endDate, network = 'crossroads', trafficSource, mediaBuyer, adAccountIds, q, orgId) {
+async function trafficSourceNetworkHourly(database, startDate, endDate, mediaBuyer, adAccountIds) {
 
-  const { mediaBuyerCondition, adAccountCondition, queryCondition, orgIdCondition } = buildConditionsInsights(mediaBuyer, adAccountIds, q, orgId);
+  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, adAccountIds);
   const query = `
   WITH hourly_data AS (
     SELECT
@@ -16,8 +16,6 @@ async function trafficSourceNetworkHourly(database, startDate, endDate, network 
       AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
       ${mediaBuyerCondition}
       ${adAccountCondition}
-      ${queryCondition}
-      ${orgIdCondition}
     GROUP BY
       hour_link, traffic_source, network
     ORDER BY

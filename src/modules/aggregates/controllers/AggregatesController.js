@@ -2,6 +2,7 @@ const AggregatesService = require('../services/AggregatesService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 
 class AggregatesController {
+
   constructor() {
     this.aggregatesService = new AggregatesService();
   }
@@ -50,13 +51,10 @@ class AggregatesController {
   async generateCampaignDailyReport(req, res) {
     try {
       const { startDate, endDate, campaignId } = await this.extractRequestDataWithUser(req);
-      const user = req.user;
-      const orgId = user?.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateCampaignDailyReport(
         startDate,
         endDate,
-        campaignId,
-        // orgId,
+        campaignId
       );
       return res.json(data);
     } catch (e) {
@@ -85,10 +83,8 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkCampaignsAdsetsStatsReport(req, res) {
     try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
+      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId } =
         await this.extractRequestDataWithUser(req);
-      const user = req.user;
-      const orgId = user?.org_id || 1; // 1 is for default org
       const data =
         await this.aggregatesService.generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
           startDate,
@@ -96,9 +92,7 @@ class AggregatesController {
           network,
           trafficSource,
           mediaBuyer,
-          adAccountId,
-          q,
-          // orgId,
+          adAccountId
         );
       return res.json(data);
     } catch (e) {
@@ -132,19 +126,13 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkDailyReport(req, res) {
     try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
+      const { startDate, endDate, mediaBuyer, adAccountId } =
         await this.extractRequestDataWithUser(req);
-      const user = req.user;
-      const orgId = user?.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
         startDate,
         endDate,
-        network,
-        trafficSource,
         mediaBuyer,
         adAccountId,
-        q,
-        // orgId,
       );
       return res.json(data);
     } catch (e) {
@@ -178,19 +166,13 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
+      const { startDate, endDate, mediaBuyer, adAccountId } =
         await this.extractRequestDataWithUser(req);
-      const user = req.user;
-      const orgId = user?.org_id || 1; // 1 is for default org
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
         startDate,
         endDate,
-        network,
-        trafficSource,
         mediaBuyer,
-        adAccountId,
-        q,
-        // orgId,
+        adAccountId
       );
       return res.json(data);
     } catch (e) {

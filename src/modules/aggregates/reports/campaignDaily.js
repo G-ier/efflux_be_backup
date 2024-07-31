@@ -1,6 +1,6 @@
 const { buildSelectionColumns } = require('./utils');
 
-async function campaignDaily(database, startDate, endDate, campaignId, orgId) {
+async function campaignDaily(database, startDate, endDate, campaignId) {
 
   const query = `
     SELECT
