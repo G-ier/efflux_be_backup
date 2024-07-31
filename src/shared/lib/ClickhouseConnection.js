@@ -17,7 +17,6 @@ const defaultConfig = {
 
 class ClickhouseConnection {
   constructor() {
-    console.log('ClickhouseConnection constructor called', defaultConfig);
     if (!ClickhouseConnection.instance) {
       this.connection = new ClickHouse(defaultConfig);
       ClickhouseConnection.instance = this;

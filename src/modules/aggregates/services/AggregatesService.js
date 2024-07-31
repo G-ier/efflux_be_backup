@@ -5,6 +5,7 @@ const { AggregatesLogger } = require('../../../shared/lib/WinstonLogger');
 const { yesterdayYMD, dayYMD } = require('../../../shared/helpers/calendar');
 
 class AggregatesService {
+
   constructor() {
     this.aggregatesRepository = new AggregatesRepository();
   }

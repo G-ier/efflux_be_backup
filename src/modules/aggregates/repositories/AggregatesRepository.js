@@ -17,6 +17,7 @@ const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository')
 const { cleanData, formatDateToISO } = require('../utils');
 
 class AggregatesRepository {
+
   constructor(database) {
     this.tableName = 'insights';
     this.database = database || new DatabaseRepository();
@@ -51,6 +52,7 @@ class AggregatesRepository {
       return await campaignAdsets(this.database, startDate, endDate, campaignId, orgId);
     }
   }
+
   async campaignDaily(params) {
     const { startDate, endDate, campaignId, orgId } = params;
     return await campaignDaily(this.database, startDate, endDate, campaignId, orgId);
