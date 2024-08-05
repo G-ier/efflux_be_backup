@@ -5,6 +5,7 @@ const { AggregatesLogger } = require('../../../shared/lib/WinstonLogger');
 const { yesterdayYMD, dayYMD } = require('../../../shared/helpers/calendar');
 
 class AggregatesService {
+
   constructor() {
     this.aggregatesRepository = new AggregatesRepository();
   }
@@ -17,9 +18,7 @@ class AggregatesService {
       network,
       trafficSource,
       mediaBuyer,
-      adAccountId,
-      q,
-      orgId,
+      adAccountId
     } = params;
     if (!startDate || !endDate) {
       throw new Error(
@@ -49,9 +48,7 @@ class AggregatesService {
       network,
       trafficSource,
       mediaBuyer,
-      adAccountId,
-      q,
-      orgId,
+      adAccountId
     };
     try {
       return await callback(finalParams);
@@ -68,10 +65,10 @@ class AggregatesService {
     );
   }
 
-  async generateCampaignDailyReport(startDate, endDate, campaignId, orgId) {
+  async generateCampaignDailyReport(startDate, endDate, campaignId) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.campaignDaily(...args),
-      { startDate, endDate, campaignId, orgId },
+      { startDate, endDate, campaignId },
     );
   }
 
@@ -88,13 +85,11 @@ class AggregatesService {
     network = 'crossroads',
     trafficSource,
     mediaBuyer,
-    adAccountId,
-    q,
-    orgId,
+    adAccountId
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetowrkCampaignsAdsetsStats(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId },
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId},
     );
   }
 
@@ -117,32 +112,24 @@ class AggregatesService {
   async generateTrafficSourceNetworkDailyReport(
     startDate,
     endDate,
-    network = 'crossroads',
-    trafficSource,
     mediaBuyer,
-    adAccountId,
-    q,
-    orgId,
+    adAccountId
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkDaily(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId },
+      { startDate, endDate, mediaBuyer, adAccountId },
     );
   }
 
   async generateTrafficSourceNetworkHourlyReport(
     startDate,
     endDate,
-    network = 'crossroads',
-    trafficSource,
     mediaBuyer,
     adAccountId,
-    q,
-    orgId,
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, q, orgId },
+      { startDate, endDate, mediaBuyer, adAccountId },
     );
   }
 
