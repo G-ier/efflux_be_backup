@@ -27,7 +27,7 @@ exports.up = function(knex) {
     table.decimal('spend_plus_fee', 14, 2).defaultTo(0);
     table.decimal('revenue', 14, 2).defaultTo(0);
     table.timestamps(true, true);
-    table.unique(['network', 'traffic_source', 'timeframe', 'nw_last_updated_at', 'adset_id'], 'unique_analytic_record');
+    table.unique(['network', 'traffic_source', 'timeframe', 'adset_id'], 'unique_analytic_record');
   });
 };
 
