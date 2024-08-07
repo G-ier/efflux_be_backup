@@ -11,7 +11,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       MAX(campaign_name) as campaign_name,
       MAX(analytics.nw_campaign_name) as nw_campaign_name,
       ${
-        trafficSource !== 'unknown' ?
+        trafficSource !== 'unknown' && trafficSource !== 'tiktok' ?
         `
         ${
           trafficSource !== 'taboola' ?
@@ -31,7 +31,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     FROM
       analytics
     ${
-      trafficSource !== 'unknown' ?
+      trafficSource !== 'unknown' && trafficSource !== 'tiktok' ?
       `
       JOIN ${
         trafficSource !== 'taboola' ?
@@ -60,7 +60,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     ${buildSelectionColumns("ad.", calculateSpendRevenue=false)},
 
     ${
-      trafficSource !== 'unknown' ?
+      trafficSource !== 'unknown' && trafficSource !== 'tiktok' ?
       `
         COALESCE(MAX(ad.campaign_name), MAX(c.name)) as campaign_name,
         MAX(c.status) as status,
@@ -75,10 +75,12 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
           )
           ELSE CAST(MAX(c.daily_budget) AS FLOAT)
         END AS daily_budget,
-      ` :
       `
-        MAX(ad.nw_campaign_name) as campaign_name,
+      : trafficSource === 'tiktok' ?
       `
+        MAX(ad.campaign_name) as campaign_name,
+      `
+      :`MAX(ad.nw_campaign_name) as campaign_name,`
     }
 
     ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as adsets
@@ -86,7 +88,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     FROM
       adset_data ad
     ${
-      trafficSource !== 'unknown' ?
+      trafficSource !== 'unknown' && trafficSource !== 'tiktok' ?
       `
       JOIN campaigns c ON ad.campaign_id = c.id
       ` :
