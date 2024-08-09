@@ -1,6 +1,7 @@
 const S3Service = require('../../../shared/lib/S3Service');
 const AdLauncherService = require('../service/AdLauncherService');
 const RedirectUrlsService = require('../service/RedirectUrlsService');
+const tiktok_launch = require('../service/TiktokLauncher');
 
 class AdLauncherController {
 
@@ -8,6 +9,7 @@ class AdLauncherController {
     this.s3Service = new S3Service();
     this.redirectUrlsService = new RedirectUrlsService();
     this.adLauncherService = new AdLauncherService();
+    this.tiktok_launcher = tiktok_launch;
   }
 
   async generatePresignedUrl(req, res) {
@@ -66,10 +68,15 @@ class AdLauncherController {
     });
   }
 
-  async getTonicCampaigns(req, res) {
-    const campaigns = await this.adLauncherService.getTonicCampaigns();
+  async launchTiktokFromMonday(req, res) {
+    const launcher = await this.tiktok_launch().catch(error => {
+      console.log(error);
+      return res.json({
+        "delivery": "FAILED",
+      });
+    });
     return res.json({
-      campaigns,
+      "delivery": launcher.delivery,
     });
   }
 }

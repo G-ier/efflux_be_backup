@@ -26,5 +26,11 @@ route.get('/tonic/campaigns', async (req, res) => {
   adLauncherController.getTonicCampaigns(req, res);
 });
 
+// @route /api/add-launcher/tiktok/launcher
+// @desc  GET Start launcher
+route.get('/tiktok/launcher', async (req, res) => {
+  adLauncherController.launchTiktokFromMonday(req, res);
+});
+
 
 module.exports = route;
