@@ -1,5 +1,6 @@
 // imports
 require('dotenv').config();
+const EnvironmentVariablesManager = require('../../../../src/shared/services/EnvironmentVariablesManager');
 const axios = require('axios');
 const crypto = require('crypto');
 const FormData = require('form-data');
@@ -23,19 +24,19 @@ async function tiktok_launch() {
 
   const requiredEnvVars = ['TIKTOK_API_KEY', 'MONDAY_API_KEY', 'MONDAY_BOARD_ID'];
   for(const varName of requiredEnvVars){
-    if(!process.env[varName]){
+    if(EnvironmentVariablesManager.getEnvVariable(varName)){
       throw new Error(`Environment variable ${varName} is missing.`);
     }
   }
   console.log("All variables are set.");
 
-  const apiTiktok = process.env['TIKTOK_API_KEY'];
-  const apiKey = process.env['MONDAY_API_KEY'];
+  const apiTiktok = EnvironmentVariablesManager.getEnvVariable('TIKTOK_API_KEY');
+  const apiKey = EnvironmentVariablesManager.getEnvVariable('MONDAY_API_KEY');
 
   // constants and variables
   let cursor = null;
   const limit = 50; // Supposed to be the page size. Adjust the page size as neede
-  const board_id = process.env['MONDAY_BOARD_ID'];
+  const board_id = EnvironmentVariablesManager.getEnvVariable('MONDAY_BOARD_ID');
   const api_base = "https://business-api.tiktok.com/open_api";
   const api_version = "v1.3";
   const fail_limit = 4;

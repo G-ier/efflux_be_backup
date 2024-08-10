@@ -55,6 +55,13 @@ class EnvironmentVariablesManager {
     // MediaConvert
     'MEDIA_CONVERT_ACCESS_KEY',
     'MEDIA_CONVERT_SECRET_ACCESS_KEY',
+
+    // TIKTOK
+    'TIKTOK_API_KEY',
+    'MONDAY_API_KEY',
+
+    // MONDAY
+    'MONDAY_BOARD_ID'
   ];
 
   static parameters = [
