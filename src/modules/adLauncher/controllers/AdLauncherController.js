@@ -69,7 +69,7 @@ class AdLauncherController {
   }
 
   async launchTiktokFromMonday(req, res) {
-    const launcher = await this.tiktok_launch().catch(error => {
+    const launcher = await this.tiktok_launcher().catch(error => {
       console.log(error);
       return res.json({
         "delivery": "FAILED",
