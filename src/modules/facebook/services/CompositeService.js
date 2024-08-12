@@ -187,7 +187,7 @@ class CompositeService {
       const joins = [
         {
           type: "inner",
-          table: "ua_aa_map AS map",
+          table: "aa_prioritized_ua_map AS map",
           first: `${config.tableName}.${config.tableName !== 'ad_accounts' ? 'ad_account_id' : 'id' }`,
           operator: "=",
           second: "map.aa_id",
@@ -271,6 +271,8 @@ class CompositeService {
         ...(dailyBudget && { daily_budget: dailyBudget }),
       };
 
+      console.log("UPDATE DATA", updateData);
+
       if (type === "adset") {
         await this.adsetsService.updateAdset(updateData, { provider_id: entityId });
       } else {
@@ -291,6 +293,8 @@ class CompositeService {
 
     try {
       const response = await axios.post(url, params);
+
+      console.log("RESPONSE", response.data);
       if (response.data?.success) {
         await updateDatabase.call(this, type, entityId, dailyBudget, status);
       }
