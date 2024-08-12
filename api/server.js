@@ -7,6 +7,7 @@ const EnvironmentVariablesManager = require('../src/shared/services/EnvironmentV
 
 // Initialize API
 const initializeAPI = async () => {
+
   // Retrieve environment variables
   console.log('Retrieving environment variables...');
   await EnvironmentVariablesManager.init();
@@ -48,16 +49,8 @@ const initializeAPI = async () => {
 
   ServerLogger.info('Server initialized');
   ServerLogger.info('Database Url being used');
-  ServerLogger.info(
-    'DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'),
-  );
+  ServerLogger.info('DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'));
   ServerLogger.info('DATABASE_URL: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'));
-  ServerLogger.info(
-    'DATABASE_URL_BE_RO: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO'),
-  );
-  ServerLogger.info(
-    'DATABASE_URL_BE_RW: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RW'),
-  );
 
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
@@ -65,24 +58,20 @@ const initializeAPI = async () => {
   server.listen(port, async () => {
     console.log(`🔥 ---------- Server started ------------ 🔥`);
 
-    const DISABLE_SLACK_NOTIFICATION = EnvironmentVariablesManager.getEnvVariable(
-      'DISABLE_SLACK_NOTIFICATION',
-    );
+    // Slack notification
+    const DISABLE_SLACK_NOTIFICATION = EnvironmentVariablesManager.getEnvVariable('DISABLE_SLACK_NOTIFICATION',);
+    const disableSlackNotification = DISABLE_SLACK_NOTIFICATION === 'true' || DISABLE_SLACK_NOTIFICATION !== 'false';
 
-    const disableSlackNotification =
-      DISABLE_SLACK_NOTIFICATION === 'true' || DISABLE_SLACK_NOTIFICATION !== 'false';
-
-    const loggingEnvironment =
-      EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT') || 'development';
+    // Logging
+    const loggingEnvironment = EnvironmentVariablesManager.getEnvVariable('LOGGING_ENVIRONMENT') || 'development';
     const logLevel = EnvironmentVariablesManager.getEnvVariable('LOG_LEVEL') || 'info';
 
-    const databaseEnvironment =
-      EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
+    // Database urls
+    const databaseEnvironment = EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
     const productionDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
-    const productionReadOnlyDatabaseUrl =
-      EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_BE_RO');
-    const stagingDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
+    const stagingDatabaseUrl = 'non functional';
 
+    // In use database url
     const databaseUrl =
       databaseEnvironment === 'production'
         ? productionDatabaseUrl
@@ -90,12 +79,6 @@ const initializeAPI = async () => {
         ? stagingDatabaseUrl
         : process.env.DATABASE_URL_LOCAL;
 
-    const roDatabaseUrl =
-      databaseEnvironment === 'production'
-        ? productionReadOnlyDatabaseUrl
-        : databaseEnvironment === 'staging'
-        ? 'N/A'
-        : process.env.DATABASE_URL_LOCAL;
 
     // const cacheEnvironment = EnvironmentVariablesManager.getEnvVariable('CACHE_ENVIRONMENT');
     // const memcachedUrl =
@@ -120,10 +103,6 @@ const initializeAPI = async () => {
       Database:
         Environment: ${databaseEnvironment || 'development'}
         URL: ${databaseUrl}
-
-      Database RO:
-        Environment: ${databaseEnvironment || 'development'}
-        URL: ${roDatabaseUrl}
     `);
   });
 };
