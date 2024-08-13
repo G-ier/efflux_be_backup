@@ -4,6 +4,8 @@ const pixels                = require("./pixels");
 const userAccounts          = require("./user_accounts");
 const CompositeController   = require("../controllers/CompositeController");
 const compositeController   = new CompositeController();
+const UserAccountController = require("../controllers/UserAccountController");
+const userAccountController = new userAccountController();
 
 // @route    /api/tiktok/refresh
 // @desc     GET tiktok refresh data
@@ -21,5 +23,9 @@ route.get("/sync-account-data", async (req, res) => {
 
 route.use("/pixels", pixels);
 route.use("/user_accounts", userAccounts);
+
+route.get('/launcher', async (req, res) => {
+  userAccountController.launchTiktokFromMonday(req, res);
+});
 
 module.exports = route;

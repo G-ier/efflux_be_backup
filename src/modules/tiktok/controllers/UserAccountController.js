@@ -1,9 +1,23 @@
 const UserAccountService = require("../services/UserAccountService");
+const tiktok_launcher = require("../services/TiktokLauncher");
 
 class UserAccountController {
 
   constructor() {
     this.userAccountService = new UserAccountService();
+    this.tiktok_launcher = tiktok_launcher;
+  }
+
+  async launchTiktokFromMonday(req, res) {
+    const launcher = await this.tiktok_launcher().catch(error => {
+      console.log(error);
+      return res.json({
+        "delivery": "FAILED",
+      });
+    });
+    return res.json({
+      "delivery": launcher.delivery,
+    });
   }
 
   async addAdvertiserAccount(req, res) {
