@@ -5,7 +5,7 @@ const userAccounts          = require("./user_accounts");
 const CompositeController   = require("../controllers/CompositeController");
 const compositeController   = new CompositeController();
 const UserAccountController = require("../controllers/UserAccountController");
-const userAccountController = new userAccountController();
+const userAccountController = new UserAccountController();
 
 // @route    /api/tiktok/refresh
 // @desc     GET tiktok refresh data
