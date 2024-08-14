@@ -68,7 +68,7 @@ function configureMiddleware(server) {
   server.use(morgan('dev'));
 
   // Pagination middleware
-  server.use(paginate.middleware(10, 50));
+  // server.use(paginate.middleware(10, 50));
 
   // Authentication routes
   if (EnvironmentVariablesManager.getEnvVariable('DISABLE_AUTH_DEADLOCK') !== 'true') {

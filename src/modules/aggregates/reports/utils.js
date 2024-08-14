@@ -42,9 +42,11 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
   return {
     mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND analytics.ad_account_id IN (
       SELECT
-        map.aa_id
+        aa.provider_id
       FROM
         u_aa_map map
+      INNER JOIN
+        ad_accounts aa ON aa.id = map.aa_id
       WHERE
         map.u_id = ${mediaBuyer}
     )

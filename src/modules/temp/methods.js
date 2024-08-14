@@ -14,8 +14,8 @@ const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVa
 const PixelsService = require('../facebook/services/PixelsService');
 
 class TemporaryService {
-  constructor() {
 
+  constructor() {
     this.adAccountRepository = new AdAccountRepository();
     this.userRepository = new UserRepository();
     this.adsetsRepository = new AdsetsRepository();
@@ -31,9 +31,6 @@ class TemporaryService {
 
   // This will be used to get ad accounts from a user_id. If the user is admin, it will get all ad accounts.
   async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit) {
-    if (filters.user_id && filters.user_id === 'admin') {
-      delete filters.user_id;
-    }
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
     return results;
   }
@@ -43,7 +40,7 @@ class TemporaryService {
     return response;
   }
 
-  async updateAdAccount(filter, updateData) {
+  async assignAdAccountToUser(filter, updateData) {
     const userId = updateData.user_id;
     const adAccountIds = [filter.id];
     const uCount = await this.adAccountRepository.upsertUserAssociation(adAccountIds, userId);
@@ -53,40 +50,22 @@ class TemporaryService {
   async fetchUsersWithAdAccounts(userId, isAdmin) {
     let userFilters = {};
     if (!isAdmin) userFilters = { id: userId };
-    let users = await this.userRepository.fetchUsers(['*'], userFilters);
-    const userIds = users.map((user) => user.id);
-
-    // Fetch ad_account ids of backup user accounts and exclude them from the ad accounts query.
-    let whereClause = {};
-    if (!isAdmin) whereClause['map.u_id'] = userIds;
-
-    const adAccounts = await this.adAccountRepository.fetchAdAccounts(
-      [
-        'ad_accounts.id',
-        'ad_accounts.provider_id',
-        'ad_accounts.name',
-        'ad_accounts.provider',
-        'map.u_id AS user_id',
-      ],
-      whereClause,
-      false,
-      [
-        {
-          type: 'inner',
-          table: 'u_aa_map AS map',
-          first: `ad_accounts.id`,
-          operator: '=',
-          second: 'map.aa_id',
-        },
-      ],
+    let users = await this.userRepository.database.raw(
+      `
+      SELECT
+          u.id,
+          u.name,
+          COALESCE(ARRAY_AGG(map.aa_id) FILTER (WHERE map.aa_id IS NOT NULL), ARRAY[]::INTEGER[]) AS ad_accounts
+      FROM
+          users u
+      LEFT JOIN
+          u_aa_map map ON u.id = map.u_id
+      GROUP BY
+          u.id;
+      `
     );
 
-    users = users.map((user) => {
-      user.ad_accounts = adAccounts.filter((adAccount) => adAccount.user_id === user.id);
-      return user;
-    });
-
-    return users;
+    return users.rows;
   }
 
   /*
@@ -468,7 +447,6 @@ class TemporaryService {
     }
   }
 
-
   async fetchUserAccounts(fields, filters, limit) {
     const userAccounts = await this.UserAccountRepository.fetchUserAccounts(fields, filters, limit);
     return userAccounts;
@@ -621,8 +599,8 @@ class TemporaryController {
   async fetchAdAccountsFromDatabase(req, res) {
     try {
       let { fields, filters, limit } = req.query;
-      if (fields) fields = JSON.parse(fields);
-      if (filters) filters = JSON.parse(filters);
+      if (fields) fields = Array.isArray(fields) ? fields : JSON.parse(fields);
+      if (filters) filters = Array.isArray(filters) ? filters : JSON.parse(filters);
       const adAccounts = await this.temporaryService.fetchAdAccountsFromDatabase(
         fields,
         filters,
@@ -635,7 +613,7 @@ class TemporaryController {
     }
   }
 
-  async deleteAdAccountUserMap(req, res) {
+  async unassignAdAccountFromUser(req, res) {
     try {
       const { id, userId } = req.body;
       const deleted = await this.temporaryService.deleteAdAccountUserMap(id, userId);
@@ -648,11 +626,11 @@ class TemporaryController {
     }
   }
 
-  async updateAdAccount(req, res) {
+  async assignAdAccountToUser(req, res) {
     try {
       const { id, updateData } = req.body;
       const filter = { id };
-      const updated = await this.temporaryService.updateAdAccount(filter, updateData);
+      const updated = await this.temporaryService.assignAdAccountToUser(filter, updateData);
       res.status(200).json({
         message: `AdAccount ${id} and it's campaigns + adsets were updated. Updated campaigns count: ${updated}`,
       });
@@ -664,6 +642,9 @@ class TemporaryController {
 
   async fetchUsersWithAdAccounts(req, res) {
     try {
+      if (!req.user) {
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
       const userId = req.user.id;
       const isAdmin = req.user.roles.includes('admin');
       const users = await this.temporaryService.fetchUsersWithAdAccounts(userId, isAdmin);
