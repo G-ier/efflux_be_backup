@@ -664,12 +664,10 @@ class TemporaryController {
     try {
       const { id, userId } = req.body;
       const deleted = await this.temporaryService.unassignAdAccountFromUser(id, userId);
-      res.status(200).json({
-        message: `AdAccount ${id} and it's campaigns + adsets were updated. Updated campaigns count: ${deleted}`,
-      });
+      res.status(200).json({ message: `Access to Ad Account was removed from User successfully`});
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: "Failed to remove Ad Account access from User" });
     }
   }
 
@@ -678,12 +676,10 @@ class TemporaryController {
       const { id, updateData } = req.body;
       const filter = { id };
       const updated = await this.temporaryService.assignAdAccountToUser(filter, updateData);
-      res.status(200).json({
-        message: `AdAccount ${id} and it's campaigns + adsets were updated. Updated campaigns count: ${updated}`,
-      });
+      res.status(200).json({ message: `Successfully Assigned AdAccount to User` });
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: "Failed to assign ad account to user" });
     }
   }
   //  --------------------------------------------
@@ -711,12 +707,10 @@ class TemporaryController {
     try {
       const { network, networkCampaignId, userId } = req.body;
       const updated = await this.temporaryService.assignNetworkCampaignToUser(network, networkCampaignId, userId);
-      res.status(200).json({
-        message: `Network Campaign ${networkCampaignId} was updated. Updated campaigns count: ${updated}`,
-      });
+      res.status(200).json({ message: `Successfully Assigned Network Campaign to User`});
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: "Failed to assign Network Campaign to user" });
     }
   }
 
@@ -724,12 +718,10 @@ class TemporaryController {
     try {
       const { networkCampaignId, userId } = req.body;
       const deleted = await this.temporaryService.unassignNetworkCampaignFromUser(networkCampaignId, userId);
-      res.status(200).json({
-        message: `Network Campaign ${networkCampaignId} was updated. Updated campaigns count: ${deleted}`,
-      });
+      res.status(200).json({ message: `Access to Network Campaign was removed from User successfully` });
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: error.message });
+      res.status(500).json({ message: "Failed to remove network campaign access from user" });
     }
   }
   //  --------------------------------------------
