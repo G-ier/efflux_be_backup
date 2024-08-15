@@ -6,6 +6,7 @@ const CompositeController   = require("../controllers/CompositeController");
 const compositeController   = new CompositeController();
 const UserAccountController = require("../controllers/UserAccountController");
 const userAccountController = new UserAccountController();
+const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 
 // @route    /api/tiktok/refresh
 // @desc     GET tiktok refresh data
@@ -25,7 +26,8 @@ route.get("/sync-account-data", async (req, res) => {
 // @desc     GET TIKTOK start launcher
 // @Access   Public
 route.get('/launcher', async (req, res) => {
-  userAccountController.launchTiktokFromMonday(req, res);
+  TiktokLogger.info("Request reaches server.");
+  await userAccountController.launchTiktokFromMonday(req, res);
 });
 
 route.use("/pixels", pixels);
