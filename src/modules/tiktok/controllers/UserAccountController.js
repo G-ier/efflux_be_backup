@@ -1,5 +1,6 @@
 const UserAccountService = require("../services/UserAccountService");
 const tiktok_launcher = require("../services/TiktokLauncher");
+const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 
 class UserAccountController {
 
@@ -11,6 +12,7 @@ class UserAccountController {
   async launchTiktokFromMonday(req, res) {
     const launcher = await this.tiktok_launcher().catch(error => {
       console.log(error);
+      TiktokLogger.error(`Error in launchTiktokFromMonday: ${error}`);
       return res.json({
         "delivery": "FAILED",
       });

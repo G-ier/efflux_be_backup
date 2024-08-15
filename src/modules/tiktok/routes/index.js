@@ -28,7 +28,7 @@ route.get("/sync-account-data", async (req, res) => {
 route.get('/launcher', async (req, res) => {
   TiktokLogger.info("Request reaches server.");
   await userAccountController.launchTiktokFromMonday(req, res).catch(error => {
-    TiktokLogger.info(`Error: ${error}`);
+    TiktokLogger.error(`Error: ${error}`);
   });
 });
 
