@@ -1,10 +1,11 @@
 const _ = require("lodash");
 const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
-const Campaign = require("../entities/Campaign");
 
 class CampaignRepository {
+
   constructor(database) {
-    this.tableName = "crossroads_campaigns";
+    this.tableName = "network_campaigns";
+    this.userAssociationTableName = "network_campaigns_user_relations";
     this.database = database || new DatabaseRepository();
   }
 
@@ -37,9 +38,22 @@ class CampaignRepository {
     }
   }
 
+  async upsertUserAssociation(network, networkCampaignId, userId) {
+
+    const relation = {
+      network,
+      network_campaign_id: networkCampaignId,
+      user_id: userId
+    }
+
+    await this.database.upsert(this.userAssociationTableName, [relation], "user_id, network_campaign_id, network");
+
+    return relation;
+  }
+
   async fetchCampaigns(fields = ["*"], filters = {}, limit) {
     const results = await this.database.query(this.tableName, fields, filters, limit);
-    return results.map(this.toDomainEntity);
+    return results;
   }
 
   toDatabaseDTO(campaign) {
@@ -49,20 +63,6 @@ class CampaignRepository {
       type: campaign.type,
       created_at: campaign.created_at,
     };
-  }
-
-  toDomainEntity(dbObject) {
-    return new Campaign(
-      dbObject.id,
-      dbObject.name,
-      dbObject.vertical,
-      dbObject.category,
-      dbObject.type,
-      dbObject.user_id,
-      dbObject.account_id,
-      dbObject.created_at,
-      dbObject.updated_at,
-    );
   }
 }
 

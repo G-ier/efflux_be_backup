@@ -40,7 +40,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
     adAccountCondition = "";
   }
   return {
-    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND analytics.ad_account_id IN (
+    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND ( analytics.ad_account_id IN (
       SELECT
         aa.provider_id
       FROM
@@ -49,7 +49,14 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
         ad_accounts aa ON aa.id = map.aa_id
       WHERE
         map.u_id = ${mediaBuyer}
-    )
+    ) OR analytics.nw_campaign_id IN (
+      SELECT
+        network_campaign_id
+      FROM
+        network_campaigns_user_relations
+      WHERE
+        user_id = ${mediaBuyer}
+  ))
     ` : "",
     adAccountCondition: adAccountCondition
   };

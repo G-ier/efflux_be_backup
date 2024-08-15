@@ -6,7 +6,11 @@ route.get('/adAccounts', async (req, res) => await temporaryController.fetchAdAc
 route.post('/assign-adaccount-to-user', async (req, res) => await temporaryController.assignAdAccountToUser(req, res));
 route.delete('/unassign-adaccount-from-user', async (req, res) => await temporaryController.unassignAdAccountFromUser(req, res));
 
-route.get('/users', async (req, res) => await temporaryController.fetchUsersWithAdAccounts(req, res));
+route.get('/network-campaigns', async (req, res) => await temporaryController.fetchNetworkCampaignsFromDatabase(req, res));
+route.post('/assign-network-campaign-to-user', async (req, res) => await temporaryController.assignNetworkCampaignToUser(req, res));
+route.delete('/unassign-network-campaign-from-user', async (req, res) => await temporaryController.unassignNetworkCampaignFromUser(req, res));
+
+route.get('/users', async (req, res) => await temporaryController.fetchUsersWithRelations(req, res));
 route.get('/users-formatted', async (req, res) => await temporaryController.fetchUsersWithAdAccountsForNewEfflux(req, res));
 route.get('/user_accounts', async (req, res) => await temporaryController.fetchUserAccounts(req, res));
 

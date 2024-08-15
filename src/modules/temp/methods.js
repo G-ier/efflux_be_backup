@@ -2,13 +2,14 @@
 const _ = require('lodash');
 const assert = require('assert');
 const axios = require('axios');
-const async = require('async');
+
 // Local imports
 const UserRepository = require('../auth/repositories/UserRepository');
 const UserAccountRepository = require('../facebook/repositories/UserAccountRepository');
 const AdAccountRepository = require('../facebook/repositories/AdAccountRepository');
 const AdsetsRepository = require('../facebook/repositories/AdsetsRepository');
 const CampaignRepository = require('../facebook/repositories/CampaignRepository');
+const NetworkCampaignsRepository = require('../crossroads/repositories/CampaignRepository');
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
 const PixelsService = require('../facebook/services/PixelsService');
@@ -20,6 +21,7 @@ class TemporaryService {
     this.userRepository = new UserRepository();
     this.adsetsRepository = new AdsetsRepository();
     this.campaignRepository = new CampaignRepository();
+    this.networkCampaignsRepository = new NetworkCampaignsRepository();
     this.UserAccountRepository = new UserAccountRepository();
     this.pixelService = new PixelsService;
   }
@@ -29,13 +31,13 @@ class TemporaryService {
     return DatabaseConnection.getReadWriteConnection();
   }
 
-  // This will be used to get ad accounts from a user_id. If the user is admin, it will get all ad accounts.
+  // AD ACCOUNTS
   async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit) {
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
     return results;
   }
 
-  async deleteAdAccountUserMap(aa_id, u_id) {
+  async unassignAdAccountFromUser(aa_id, u_id) {
     const response = await this.database('u_aa_map').where({ aa_id, u_id }).del();
     return response;
   }
@@ -46,27 +48,71 @@ class TemporaryService {
     const uCount = await this.adAccountRepository.upsertUserAssociation(adAccountIds, userId);
     return uCount !== 0;
   }
+  //  --------------------------------------------
 
-  async fetchUsersWithAdAccounts(userId, isAdmin) {
+  // NETWORK CAMPAIGNS
+  async fetchNetworkCampaignsFromDatabase(fields = ['*'], filters = {}, limit) {
+    const results = await this.networkCampaignsRepository.fetchCampaigns(fields, filters, limit);
+    return results;
+  }
+
+  async unassignNetworkCampaignFromUser(networkCampaignId, userId) {
+    const response = await this.database('network_campaigns_user_relations').where({ network_campaign_id: networkCampaignId, user_id: userId }).del();
+    return response;
+  }
+
+  async assignNetworkCampaignToUser(network, networkCampaignId, userId) {
+    const results = await this.networkCampaignsRepository.upsertUserAssociation(network, networkCampaignId, userId);
+    return results;
+  }
+  //  --------------------------------------------
+
+  // USER RELATIONS
+  async fetchUsersWithRelations(userId, isAdmin) {
     let userFilters = {};
     if (!isAdmin) userFilters = { id: userId };
     let users = await this.userRepository.database.raw(
       `
+      -- Subquery to aggregate ad accounts
+      WITH ad_accounts_agg AS (
+          SELECT
+              map.u_id AS user_id,
+              ARRAY_AGG(DISTINCT map.aa_id) AS ad_accounts
+          FROM
+              u_aa_map map
+          GROUP BY
+              map.u_id
+      ),
+
+      -- Subquery to aggregate network campaigns
+      network_campaigns_agg AS (
+          SELECT
+              nwcr.user_id,
+              ARRAY_AGG(DISTINCT nwcr.network_campaign_id) AS network_campaigns
+          FROM
+              network_campaigns_user_relations nwcr
+          GROUP BY
+              nwcr.user_id
+      )
+
+      -- Main query to join users with aggregated data
       SELECT
           u.id,
           u.name,
-          COALESCE(ARRAY_AGG(map.aa_id) FILTER (WHERE map.aa_id IS NOT NULL), ARRAY[]::INTEGER[]) AS ad_accounts
+          COALESCE(aa.ad_accounts, ARRAY[]::INTEGER[]) AS ad_accounts,
+          COALESCE(nc.network_campaigns, ARRAY[]::VARCHAR[]) AS network_campaigns
       FROM
           users u
       LEFT JOIN
-          u_aa_map map ON u.id = map.u_id
-      GROUP BY
-          u.id;
+          ad_accounts_agg aa ON u.id = aa.user_id
+      LEFT JOIN
+          network_campaigns_agg nc ON u.id = nc.user_id;
       `
     );
 
     return users.rows;
   }
+  // --------------------------------------------
 
   /*
     - userId: id in OUR database
@@ -596,6 +642,7 @@ class TemporaryController {
     this.temporaryService = new TemporaryService();
   }
 
+  // AD ACCOUNTS
   async fetchAdAccountsFromDatabase(req, res) {
     try {
       let { fields, filters, limit } = req.query;
@@ -616,7 +663,7 @@ class TemporaryController {
   async unassignAdAccountFromUser(req, res) {
     try {
       const { id, userId } = req.body;
-      const deleted = await this.temporaryService.deleteAdAccountUserMap(id, userId);
+      const deleted = await this.temporaryService.unassignAdAccountFromUser(id, userId);
       res.status(200).json({
         message: `AdAccount ${id} and it's campaigns + adsets were updated. Updated campaigns count: ${deleted}`,
       });
@@ -639,15 +686,63 @@ class TemporaryController {
       res.status(500).json({ message: error.message });
     }
   }
+  //  --------------------------------------------
 
-  async fetchUsersWithAdAccounts(req, res) {
+  // NETWORK CAMPAIGNS
+  async fetchNetworkCampaignsFromDatabase(req, res) {
+    try {
+      let { fields, filters, limit } = req.query;
+      if (fields) fields = Array.isArray(fields) ? fields : JSON.parse(fields);
+      if (filters) filters = Array.isArray(filters) ? filters : JSON.parse(filters);
+
+      const networkCampaigns = await this.temporaryService.fetchNetworkCampaignsFromDatabase(
+        fields,
+        filters,
+        limit,
+      );
+      res.status(200).json(networkCampaigns);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async assignNetworkCampaignToUser(req, res) {
+    try {
+      const { network, networkCampaignId, userId } = req.body;
+      const updated = await this.temporaryService.assignNetworkCampaignToUser(network, networkCampaignId, userId);
+      res.status(200).json({
+        message: `Network Campaign ${networkCampaignId} was updated. Updated campaigns count: ${updated}`,
+      });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async unassignNetworkCampaignFromUser(req, res) {
+    try {
+      const { networkCampaignId, userId } = req.body;
+      const deleted = await this.temporaryService.unassignNetworkCampaignFromUser(networkCampaignId, userId);
+      res.status(200).json({
+        message: `Network Campaign ${networkCampaignId} was updated. Updated campaigns count: ${deleted}`,
+      });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+  //  --------------------------------------------
+
+  // This fetches users with their ad accounts and network campaigns relations
+  async fetchUsersWithRelations(req, res) {
     try {
       if (!req.user) {
         return res.status(401).json({ message: 'Unauthorized' });
       }
       const userId = req.user.id;
       const isAdmin = req.user.roles.includes('admin');
-      const users = await this.temporaryService.fetchUsersWithAdAccounts(userId, isAdmin);
+      const users = await this.temporaryService.fetchUsersWithRelations(userId, isAdmin);
       res.status(200).json(users);
     } catch (error) {
       console.log('ERROR', error);
