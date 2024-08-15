@@ -42,10 +42,8 @@ class TemporaryService {
     return response;
   }
 
-  async assignAdAccountToUser(filter, updateData) {
-    const userId = updateData.user_id;
-    const adAccountIds = [filter.id];
-    const uCount = await this.adAccountRepository.upsertUserAssociation(adAccountIds, userId);
+  async assignAdAccountToUser(adAccountId, userId) {
+    const uCount = await this.adAccountRepository.upsertUserAssociation([adAccountId], userId);
     return uCount !== 0;
   }
   //  --------------------------------------------
@@ -661,25 +659,24 @@ class TemporaryController {
   }
 
   async unassignAdAccountFromUser(req, res) {
+    const { adAccountId, userId, adAccountName, userName } = req.body;
     try {
-      const { id, userId } = req.body;
-      const deleted = await this.temporaryService.unassignAdAccountFromUser(id, userId);
-      res.status(200).json({ message: `Access to Ad Account was removed from User successfully`});
+      await this.temporaryService.unassignAdAccountFromUser(adAccountId, userId);
+      res.status(200).json({ message: `Access to ${adAccountName} was removed from ${userName} successfully`});
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: "Failed to remove Ad Account access from User" });
+      res.status(500).json({ message: `Failed to remove ${userName} access from ${adAccountName}` });
     }
   }
 
   async assignAdAccountToUser(req, res) {
+    const { adAccountId, userId, adAccountName, userName } = req.body;
     try {
-      const { id, updateData } = req.body;
-      const filter = { id };
-      const updated = await this.temporaryService.assignAdAccountToUser(filter, updateData);
-      res.status(200).json({ message: `Successfully Assigned AdAccount to User` });
+      await this.temporaryService.assignAdAccountToUser(adAccountId, userId);
+      res.status(200).json({ message: `Successfully Assigned ${adAccountName} to ${userName}` });
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: "Failed to assign ad account to user" });
+      res.status(500).json({ message: `Failed to assign ${adAccountName} to ${userName}` });
     }
   }
   //  --------------------------------------------
@@ -704,29 +701,30 @@ class TemporaryController {
   }
 
   async assignNetworkCampaignToUser(req, res) {
+    const { network, networkCampaignId, userId, networkCampaignName, userName } = req.body;
     try {
-      const { network, networkCampaignId, userId } = req.body;
-      const updated = await this.temporaryService.assignNetworkCampaignToUser(network, networkCampaignId, userId);
-      res.status(200).json({ message: `Successfully Assigned Network Campaign to User`});
+      await this.temporaryService.assignNetworkCampaignToUser(network, networkCampaignId, userId);
+      res.status(200).json({ message: `Successfully Assigned ${networkCampaignName} to ${userName}` });
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: "Failed to assign Network Campaign to user" });
+      res.status(500).json({ message: `Failed to assign ${networkCampaignName} to ${userName}` });
     }
   }
 
   async unassignNetworkCampaignFromUser(req, res) {
+    const { networkCampaignId, userId, userName, networkCampaignName } = req.body;
     try {
-      const { networkCampaignId, userId } = req.body;
       const deleted = await this.temporaryService.unassignNetworkCampaignFromUser(networkCampaignId, userId);
-      res.status(200).json({ message: `Access to Network Campaign was removed from User successfully` });
+      res.status(200).json({ message: `Access to ${networkCampaignName} was removed from ${userName} successfully` });
     } catch (error) {
       console.log('ERROR', error);
-      res.status(500).json({ message: "Failed to remove network campaign access from user" });
+      res.status(500).json({ message: `Failed to remove ${networkCampaignName} access from ${userName}` });
     }
   }
   //  --------------------------------------------
 
   // This fetches users with their ad accounts and network campaigns relations
+
   async fetchUsersWithRelations(req, res) {
     try {
       if (!req.user) {
