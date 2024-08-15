@@ -15,6 +15,7 @@ class UserAccountController {
         "delivery": "FAILED",
       });
     });
+    console.log(`launcher obj: ${launcher}`);
     return res.json({
       "delivery": launcher.delivery,
     });

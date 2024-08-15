@@ -201,6 +201,7 @@ class EnvironmentVariablesManager {
   // Initialize the service by retrieving all secrets
   async init() {
     if (this.environmentLocation === 'Local') {
+      console.log("Initializing local server of variables.");
       const envVars = EnvironmentVariablesManager.secrets.concat(
         EnvironmentVariablesManager.parameters,
       );

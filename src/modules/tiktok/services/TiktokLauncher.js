@@ -24,7 +24,8 @@ async function tiktok_launcher() {
 
   const requiredEnvVars = ['TIKTOK_API_KEY', 'MONDAY_API_KEY', 'MONDAY_BOARD_ID'];
   for(const varName of requiredEnvVars){
-    if(EnvironmentVariablesManager.getEnvVariable(varName)){
+
+    if(!EnvironmentVariablesManager.getEnvVariable(varName)){
       throw new Error(`Environment variable ${varName} is missing.`);
     }
   }
