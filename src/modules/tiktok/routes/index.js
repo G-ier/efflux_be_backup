@@ -21,11 +21,14 @@ route.get("/sync-account-data", async (req, res) => {
   compositeController.syncAccountData(req, res);
 });
 
-route.use("/pixels", pixels);
-route.use("/user_accounts", userAccounts);
-
+// @route    /api/tiktok/launcher
+// @desc     GET TIKTOK start launcher
+// @Access   Public
 route.get('/launcher', async (req, res) => {
   userAccountController.launchTiktokFromMonday(req, res);
 });
+
+route.use("/pixels", pixels);
+route.use("/user_accounts", userAccounts);
 
 module.exports = route;
