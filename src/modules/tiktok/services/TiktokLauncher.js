@@ -6,11 +6,10 @@ const crypto = require('crypto');
 const FormData = require('form-data');
 const fs = require('fs');
 const s3Service = require("../../../shared/lib/S3Service");
-const { method, identity, get } = require('lodash');
 const path = require('path');
-const archiver = require('archiver');
 const download = require('download');
 const Jimp = require('jimp');
+const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
 
 // monday ids
 /*
@@ -26,10 +25,11 @@ async function tiktok_launcher() {
   for(const varName of requiredEnvVars){
 
     if(!EnvironmentVariablesManager.getEnvVariable(varName)){
+      TiktokLogger.error(`Environment variable ${varName} is missing.`);
       throw new Error(`Environment variable ${varName} is missing.`);
     }
   }
-  console.log("All variables are set.");
+  TiktokLogger.info(`All variables are set.`);
   return {
     "delivery": "OK"
   }
