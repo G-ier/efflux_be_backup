@@ -30,9 +30,6 @@ async function tiktok_launcher() {
     }
   }
   TiktokLogger.info(`All variables are set.`);
-  return {
-    "delivery": "OK"
-  }
 
   const apiTiktok = EnvironmentVariablesManager.getEnvVariable('TIKTOK_API_KEY');
   const apiKey = EnvironmentVariablesManager.getEnvVariable('MONDAY_API_KEY');
