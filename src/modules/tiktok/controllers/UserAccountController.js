@@ -13,12 +13,13 @@ class UserAccountController {
     const launcher = await this.tiktok_launcher().catch(error => {
       console.log(error);
       TiktokLogger.error(`Error in launchTiktokFromMonday: ${error}`);
-      return res.json({
-        "delivery": "FAILED",
+      res.status(500).json({
+        "delivery": "FAILED"
       });
+      throw new Error("STOP. DELIVERY FAILED.");
     });
 
-    return res.json({
+    res.status(200).json({
       "delivery": launcher.delivery,
     });
   }
