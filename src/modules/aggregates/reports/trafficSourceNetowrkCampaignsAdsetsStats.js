@@ -47,7 +47,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
       AND analytics.traffic_source = '${trafficSource}'
       AND analytics.network = '${network}'
-      ${trafficSource !== 'unknown' ? mediaBuyerCondition : ''}
+      ${mediaBuyerCondition}
       ${adAccountCondition}
     GROUP BY
       analytics.campaign_id, analytics.adset_id
