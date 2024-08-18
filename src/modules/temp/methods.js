@@ -32,8 +32,8 @@ class TemporaryService {
   }
 
   // AD ACCOUNTS
-  async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit) {
-    const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit);
+  async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit, joins = []) {
+    const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit, joins);
     return results;
   }
 
@@ -49,8 +49,8 @@ class TemporaryService {
   //  --------------------------------------------
 
   // NETWORK CAMPAIGNS
-  async fetchNetworkCampaignsFromDatabase(fields = ['*'], filters = {}, limit) {
-    const results = await this.networkCampaignsRepository.fetchCampaigns(fields, filters, limit);
+  async fetchNetworkCampaignsFromDatabase(fields = ['*'], filters = {}, limit, joins = []) {
+    const results = await this.networkCampaignsRepository.fetchCampaigns(fields, filters, limit, joins);
     return results;
   }
 
@@ -658,6 +658,34 @@ class TemporaryController {
     }
   }
 
+  async fetchMediaBuyerAdAccounts(req, res) {
+
+    try {
+      const fields = ['ad_accounts.name', 'ad_accounts.provider', 'ad_accounts.provider_id'];
+      const filters = { "map.u_id": req.user.id };
+      const limit = null;
+      const joins = [
+        {
+          type: "inner",
+          table: "u_aa_map AS map",
+          first: `ad_accounts.id`,
+          operator: "=",
+          second: "map.aa_id",
+        }
+      ];
+      const adAccounts = await this.temporaryService.fetchAdAccountsFromDatabase(
+        fields,
+        filters,
+        limit,
+        joins
+      );
+      res.status(200).json(adAccounts);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   async unassignAdAccountFromUser(req, res) {
     const { adAccountId, userId, adAccountName, userName } = req.body;
     try {
@@ -692,6 +720,34 @@ class TemporaryController {
         fields,
         filters,
         limit,
+      );
+      res.status(200).json(networkCampaigns);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchMediaBuyerNetworkCampaigns(req, res) {
+    try {
+      const fields = ['network_campaigns.id', 'network_campaigns.name', 'network_campaigns.network'];
+      const filters = { "map.user_id": req.user.id };
+      const limit = null;
+      const joins = [
+        {
+          type: "inner",
+          table: "network_campaigns_user_relations AS map",
+          first: `network_campaigns.id`,
+          operator: "=",
+          second: "map.network_campaign_id",
+        }
+      ];
+
+      const networkCampaigns = await this.temporaryService.fetchNetworkCampaignsFromDatabase(
+        fields,
+        filters,
+        limit,
+        joins
       );
       res.status(200).json(networkCampaigns);
     } catch (error) {
