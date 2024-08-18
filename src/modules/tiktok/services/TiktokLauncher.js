@@ -935,7 +935,7 @@ async function storeAndDeleteFile(fileAddr, bucketName, folderName) {
   }
 }
 
-async function createAd(adgroup_id, video_hashes, image_hashes, advertiser_id, accessToken, ad_name='Ad Name', identity_id, identity_type, display_name, landing_page_url, call_to_action="LEARN_MORE", music_id) {
+async function createAd(adgroup_id, video_hashes, image_hashes, advertiser_id, accessToken, ad_name='Ad Name', identity_id, identity_type, display_name, landing_page_url, call_to_action="LEARN_MORE", music_id, primary_text="boilerplate text") {
   const url = `${api_base}/${api_version}/ad/create/`;
 
   let creatives = [];
@@ -947,7 +947,7 @@ async function createAd(adgroup_id, video_hashes, image_hashes, advertiser_id, a
       {
         "call_to_action": "CONTACT_US",
         "ad_name": ad_name+" || "+`${counter}`,
-        "ad_text": "boilerplate testing text",
+        "ad_text": primary_text,
         "ad_format": "SINGLE_VIDEO", // SINGLE_VIDEO
         "video_id": kar.video_id,
         "image_ids": ["ad-site-i18n-sg/202408075d0d7685584c2b6d4d199b2a"],
@@ -1544,7 +1544,8 @@ async function tiktok_launcher() {
   // -----------------> createdCampaigns full
 
   //console.log(JSON.stringify(createdCampaigns[0]));
-
+  let adset_counter = 0;
+  let ads_counter = 0;
   for(const createdCamp of createdCampaigns){
 
     console.log("Pass page_id");
@@ -1614,6 +1615,7 @@ async function tiktok_launcher() {
       createdCamp.row.launched_adset_id = adset_reponse.adgroup_id;
 
       await updateStatus(item_id_c, 'text1__1', adset_reponse.adgroup_id ? adset_reponse.adgroup_id : ''); // launched ad group id
+      adset_counter += 1;
     } else {
       await updateStatus(item_id_c, 'text46__1', 'Error creating Tiktok ad group.');
       await updateStatus(item_id, 'status62__1', 'Launch Fail');
@@ -1637,7 +1639,7 @@ async function tiktok_launcher() {
     let bad_counter = 0;
     // make the decision whether single_image, single video or carousel
 
-    if(parseInt(createdCamp.row.total_images_requested, 10)+parseInt(createdCamp.row.total_videos_requested, 10)>1){
+    if(parseInt(createdCamp.row.total_images_requested, 10)+parseInt(createdCamp.row.total_videos_requested, 10)>=1){
       // its CAROUSEL_ADS
       carousel_ad = true;
 
@@ -1645,7 +1647,7 @@ async function tiktok_launcher() {
       console.log(`URLs: ${urls}`)
       for(const image_url of urls){
         // upload creative
-        const seg = extractSegment(image_url);item_id
+        const seg = extractSegment(image_url);
         const item_id = getNumberFromSegment(seg);
         //console.log(item_id);
         const public_url = await getPublicUrls(item_id);
@@ -1693,7 +1695,7 @@ async function tiktok_launcher() {
           });
 
           if(hash_obj){
-            image_hashes.push({image_id:hash_obj.image_id, attachment_type:'video', iname: hash_obj.iname});
+            image_hashes.push({image_id:hash_obj.image_id, attachment_type:'photo', iname: hash_obj.iname});
           }
 
         }
@@ -1726,7 +1728,8 @@ async function tiktok_launcher() {
       display_name="EmailMarketingJobs",
       landing_page_url=createdCamp.row.final_link,
       call_to_action=createdCamp.row.call_to_action,
-      music_id="7396726317032966161"
+      music_id="7396726317032966161",
+      primary_text=createdCamp.row.primary_text
     ).catch(error => {
       console.log("Error in ad creation:");
       //console.log(error);
@@ -1738,6 +1741,7 @@ async function tiktok_launcher() {
       createdCamp.row.launched_ad_ids = ad_id.data.ad_ids.join(', ');
       await updateStatus(item_id_c, 'text20__1', ad_id.data.ad_ids.join(', ')); // launched ad group id
       await updateStatus(item_id_c, 'status62__1', 'launched');
+      ads_counter += 1;
     } else {
       await updateStatus(item_id_c, 'text46__1', 'Error creating Tiktok ad.');
 
@@ -1766,7 +1770,10 @@ async function tiktok_launcher() {
   }
 
   return {
-    "delivery": "OK"
+    "delivery": "OK",
+    "campaigns_created": createdCampaigns.length.toString(),
+    "adsets_created": adset_counter.toString(),
+    "ads_created": ads_counter.toString()
   }
 }
 
