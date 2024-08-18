@@ -3,10 +3,12 @@ const TemporaryController = require('./methods');
 const temporaryController = new TemporaryController();
 
 route.get('/adAccounts', async (req, res) => await temporaryController.fetchAdAccountsFromDatabase(req, res));
+route.get('/media-buyer-adAccounts', async (req, res) => await temporaryController.fetchMediaBuyerAdAccounts(req, res));
 route.post('/assign-adaccount-to-user', async (req, res) => await temporaryController.assignAdAccountToUser(req, res));
 route.delete('/unassign-adaccount-from-user', async (req, res) => await temporaryController.unassignAdAccountFromUser(req, res));
 
 route.get('/network-campaigns', async (req, res) => await temporaryController.fetchNetworkCampaignsFromDatabase(req, res));
+route.get('/media-buyer-network-campaigns', async (req, res) => await temporaryController.fetchMediaBuyerNetworkCampaigns(req, res));
 route.post('/assign-network-campaign-to-user', async (req, res) => await temporaryController.assignNetworkCampaignToUser(req, res));
 route.delete('/unassign-network-campaign-from-user', async (req, res) => await temporaryController.unassignNetworkCampaignFromUser(req, res));
 
