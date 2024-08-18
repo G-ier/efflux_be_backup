@@ -18,281 +18,281 @@ const { TiktokLogger } = require("../../../shared/lib/WinstonLogger");
   launched adset id field: text1__1,
   launched ad ids field: text20__1
 */
-async function tiktok_launcher() {
-  // secrets
 
-  const requiredEnvVars = ['TIKTOK_API_KEY', 'MONDAY_API_KEY', 'MONDAY_BOARD_ID'];
-  for(const varName of requiredEnvVars){
+const requiredEnvVars = ['TIKTOK_API_KEY', 'MONDAY_API_KEY', 'MONDAY_BOARD_ID'];
+for(const varName of requiredEnvVars){
 
-    if(!EnvironmentVariablesManager.getEnvVariable(varName)){
-      TiktokLogger.error(`Environment variable ${varName} is missing.`);
-      throw new Error(`Environment variable ${varName} is missing.`);
-    }
+  if(!EnvironmentVariablesManager.getEnvVariable(varName)){
+    TiktokLogger.error(`Environment variable ${varName} is missing.`);
+    throw new Error(`Environment variable ${varName} is missing.`);
   }
-  TiktokLogger.info(`All variables are set.`);
+}
+TiktokLogger.info(`All variables are set.`);
 
-  const apiTiktok = EnvironmentVariablesManager.getEnvVariable('TIKTOK_API_KEY');
-  const apiKey = EnvironmentVariablesManager.getEnvVariable('MONDAY_API_KEY');
+const apiTiktok = EnvironmentVariablesManager.getEnvVariable('TIKTOK_API_KEY');
+const apiKey = EnvironmentVariablesManager.getEnvVariable('MONDAY_API_KEY');
 
-  // constants and variables
-  let cursor = null;
-  const limit = 50; // Supposed to be the page size. Adjust the page size as neede
-  const board_id = EnvironmentVariablesManager.getEnvVariable('MONDAY_BOARD_ID');
-  const api_base = "https://business-api.tiktok.com/open_api";
-  const api_version = "v1.3";
-  const fail_limit = 4;
-  const current_date = new Date();
-  const formattedCurrentDate = `${current_date.getFullYear()}-${String(current_date.getMonth() + 1).padStart(2, '0')}-${String(current_date.getDate()).padStart(2, '0')}`;
+// constants and variables
+const limit = 50; // Supposed to be the page size. Adjust the page size as neede
+const board_id = EnvironmentVariablesManager.getEnvVariable('MONDAY_BOARD_ID');
+const api_base = "https://business-api.tiktok.com/open_api";
+const api_version = "v1.3";
 
+// result global variables
+let results = [];
 
-  // result global variables
-  let results = [];
+async function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+function substituteSpaces(str) {
+  return str ? str.replace(/ /g, '+') : '';
+}
 
-  /*
-  async function run() {
-    const campaignId = await createCampaign();
-    const adSetId = await createAdSet(campaignId);
-    const imageHash = await uploadImage();
-    const videoId = await uploadVideo();
-    const creativeId = await createImageAdCreative(imageHash);
-    // or for video: const creativeId = await createVideoAdCreative(videoId);
-    await createAd(adSetId, creativeId);
-  }
-  */
+function getFormattedStartSchedule() {
+  // Get the current date and time
+  const now = new Date();
 
-  async function sleep(ms) {
-    return new Promise(resolve => setTimeout(resolve, ms));
-  }
-  function substituteSpaces(str) {
-    return str ? str.replace(/ /g, '+') : '';
-  }
+  // Add one hour to the current time
+  now.setHours(now.getHours() + 1);
 
-  function getFormattedStartSchedule() {
-    // Get the current date and time
-    const now = new Date();
+  // Format the date and time
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
 
-    // Add one hour to the current time
-    now.setHours(now.getHours() + 1);
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
-    // Format the date and time
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
+function getFormattedEndSchedule() {
+  // Get the current date and time
+  const now = new Date();
 
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  }
+  // Add one hour to the current time
+  //now.setHours(now.getHours() + 1);
+  now.setDate(now.getDate() + 5);
 
-  function getFormattedEndSchedule() {
-    // Get the current date and time
-    const now = new Date();
+  // Format the date and time
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+  const day = String(now.getDate()).padStart(2, '0');
+  const hours = String(now.getHours()).padStart(2, '0');
+  const minutes = String(now.getMinutes()).padStart(2, '0');
+  const seconds = String(now.getSeconds()).padStart(2, '0');
 
-    // Add one hour to the current time
-    //now.setHours(now.getHours() + 1);
-    now.setDate(now.getDate() + 5);
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
 
-    // Format the date and time
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-    const day = String(now.getDate()).padStart(2, '0');
-    const hours = String(now.getHours()).padStart(2, '0');
-    const minutes = String(now.getMinutes()).padStart(2, '0');
-    const seconds = String(now.getSeconds()).padStart(2, '0');
+function extractSegment (url) {
+  // Define the base part we want to locate before the segment
+  const startIndicator = 'resources/';
+  // Find the start index of the segment
+  const startIndex = url.indexOf(startIndicator);
+  if (startIndex === -1) return null;
 
-    return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
-  }
+  // Extract from startIndicator to the next '/', which would be the end of the segment
+  const endIndex = url.indexOf('/', startIndex + startIndicator.length);
+  return url.substring(startIndex, endIndex !== -1 ? endIndex : undefined);
+};
 
-  function extractSegment (url) {
-    // Define the base part we want to locate before the segment
-    const startIndicator = 'resources/';
-    // Find the start index of the segment
-    const startIndex = url.indexOf(startIndicator);
-    if (startIndex === -1) return null;
+function getNumberFromSegment(segment) {
+  const match = segment.match(/resources\/(\d+)/);
+  return match ? match[1] : null;
+};
 
-    // Extract from startIndicator to the next '/', which would be the end of the segment
-    const endIndex = url.indexOf('/', startIndex + startIndicator.length);
-    return url.substring(startIndex, endIndex !== -1 ? endIndex : undefined);
-  };
+function extractFileName(filePath) {
+  // Find the start of the query string (indicated by '?') and remove it
+  const cleanPath = filePath.split('?')[0];
 
-  function getNumberFromSegment(segment) {
-    const match = segment.match(/resources\/(\d+)/);
-    return match ? match[1] : null;
-  };
+  // Extract the filename using the last occurrence of '/'
+  const fileNameWithExtension = path.basename(cleanPath);
 
-  function extractFileName(filePath) {
-    // Find the start of the query string (indicated by '?') and remove it
-    const cleanPath = filePath.split('?')[0];
+  // Remove the file extension
+  const fileNameWithoutExtension = fileNameWithExtension.replace(path.extname(fileNameWithExtension), '');
 
-    // Extract the filename using the last occurrence of '/'
-    const fileNameWithExtension = path.basename(cleanPath);
+  // Remove all whitespace characters from the filename
+  const fileNameNoWhitespace = fileNameWithoutExtension.replace(/\s+/g, '');
 
-    // Remove the file extension
-    const fileNameWithoutExtension = fileNameWithExtension.replace(path.extname(fileNameWithExtension), '');
+  return fileNameNoWhitespace;
+}
+function extractFileNameWithExtension(filePath) {
+  // Find the start of the query string (indicated by '?') and remove it
+  const cleanPath = filePath.split('?')[0];
 
-    // Remove all whitespace characters from the filename
-    const fileNameNoWhitespace = fileNameWithoutExtension.replace(/\s+/g, '');
+  // Extract the filename using the last occurrence of '/'
+  const fileNameWithExtension = path.basename(cleanPath);
 
-    return fileNameNoWhitespace;
-  }
-  function extractFileNameWithExtension(filePath) {
-    // Find the start of the query string (indicated by '?') and remove it
-    const cleanPath = filePath.split('?')[0];
+  // Remove the file extension
+  //const fileNameWithoutExtension = fileNameWithExtension.replace(path.extname(fileNameWithExtension), '');
 
-    // Extract the filename using the last occurrence of '/'
-    const fileNameWithExtension = path.basename(cleanPath);
+  // Remove all whitespace characters from the filename
+  const fileNameNoWhitespace = fileNameWithExtension.replace(/\s+/g, '');
 
-    // Remove the file extension
-    //const fileNameWithoutExtension = fileNameWithExtension.replace(path.extname(fileNameWithExtension), '');
+  return fileNameNoWhitespace;
+}
 
-    // Remove all whitespace characters from the filename
-    const fileNameNoWhitespace = fileNameWithExtension.replace(/\s+/g, '');
+function extractFileExtension(filePath) {
+  // Find the start of the query string (indicated by '?') and remove it
+  const cleanPath = filePath.split('?')[0];
 
-    return fileNameNoWhitespace;
-  }
+  // Extract the file extension using path.extname and remove the leading dot
+  const fileExtension = path.extname(cleanPath).slice(1);
 
-  function extractFileExtension(filePath) {
-    // Find the start of the query string (indicated by '?') and remove it
-    const cleanPath = filePath.split('?')[0];
+  return fileExtension;
+}
 
-    // Extract the file extension using path.extname and remove the leading dot
-    const fileExtension = path.extname(cleanPath).slice(1);
+async function getMD5Hash(filePath) {
+  const hash = crypto.createHash('md5');
+  console.log(`BUSSIN: ${filePath}`);
+  const stream = fs.createReadStream(filePath);
 
-    return fileExtension;
-  }
-
-  async function getMD5Hash(filePath) {
-    const hash = crypto.createHash('md5');
-    console.log(`BUSSIN: ${filePath}`);
-    const stream = fs.createReadStream(filePath);
-
-    return new Promise((resolve, reject) => {
-      stream.on('data', (data) => {
-        hash.update(data);
-      });
-
-      stream.on('error', (err) => {
-        reject(err);
-      });
-
-      stream.on('end', () => {
-        const md5Hash = hash.digest('hex');
-        resolve(md5Hash);
-      });
+  return new Promise((resolve, reject) => {
+    stream.on('data', (data) => {
+      hash.update(data);
     });
+
+    stream.on('error', (err) => {
+      reject(err);
+    });
+
+    stream.on('end', () => {
+      const md5Hash = hash.digest('hex');
+      resolve(md5Hash);
+    });
+  });
+}
+
+function appendKeyword(keyword, nextExists) {
+  if (keyword) {
+      return substituteSpaces(keyword) + (nextExists ? "%2C" : "");
+  }
+  return "";
+}
+
+function generateCampaignName(data) {
+  let result = '';
+
+  if (data.adAccountName) {
+      result += data.adAccountName + ' | ';
   }
 
-  function appendKeyword(keyword, nextExists) {
-    if (keyword) {
-        return substituteSpaces(keyword) + (nextExists ? "%2C" : "");
-    }
-    return "";
+  if (data.buyer) {
+      result += data.buyer + '_';
   }
 
-  function generateCampaignName(data) {
-    let result = '';
-
-    if (data.adAccountName) {
-        result += data.adAccountName + ' | ';
-    }
-
-    if (data.buyer) {
-        result += data.buyer + '_';
-    }
-
-    if (data.country) {
-        result += data.country + '_';
-    }
-
-    if (data.language) {
-        result += data.language + '_';
-    }
-
-    if (data.vertical) {
-        result += data.vertical + '_';
-    }
-
-    if (data.uniqueIdentifier) {
-        result += data.uniqueIdentifier + '_';
-    }
-
-    if (data.creativeRequestedOn) {
-        result += data.creativeRequestedOn;
-    }
-
-    return result;
+  if (data.country) {
+      result += data.country + '_';
   }
 
-  function generateAdsetName(data) {
-    let result = 'Adset | ';
-
-    if (data.event) {
-        result += data.event + '_';
-    }
-
-    if (data.country) {
-        result += data.country + '_';
-    }
-
-    if (data.language) {
-        result += data.language + '_';
-    }
-
-    if (data.vertical) {
-        result += data.vertical + '_';
-    }
-
-    if (data.uniqueIdentifier) {
-        result += data.uniqueIdentifier + '_';
-    }
-
-    if (data.creativeRequestedOn) {
-        result += data.creativeRequestedOn;
-    }
-
-    return result;
+  if (data.language) {
+      result += data.language + '_';
   }
 
-  function generateFinalLink(data) {
-
-
-    if (data.partner === 'DA') {
-        /*
-        let link = data.baseOfferLink + "&sqs=";
-        link += appendKeyword(data.kw1, data.kw2 || data.kw3 || data.kw4 || data.kw5 || data.kw6 || data.kw7 || data.kw8);
-        link += appendKeyword(data.kw2, data.kw3 || data.kw4 || data.kw5 || data.kw6 || data.kw7 || data.kw8);
-        link += appendKeyword(data.kw3, data.kw4 || data.kw5 || data.kw6 || data.kw7 || data.kw8);
-        link += appendKeyword(data.kw4, data.kw5 || data.kw6 || data.kw7 || data.kw8);
-        link += appendKeyword(data.kw5, data.kw6 || data.kw7 || data.kw8);
-        link += appendKeyword(data.kw6, data.kw7 || data.kw8);
-        link += appendKeyword(data.kw7, data.kw8);
-        link += appendKeyword(data.kw8, false);
-        */
-
-        let link = data.baseOfferLink;
-
-        link += "&ad_title=" + substituteSpaces(data.adTitle);
-        link += "&buyer=" + substituteSpaces(data.buyer);
-        link += "&creator=" + substituteSpaces(data.creator);
-        link += "&creative_manager=" + substituteSpaces(data.creativeManagerNames);
-        link += "&creative_id=" + data.requestId;
-
-        return link;
-    } else {
-        return data.baseOfferLink;
-    }
+  if (data.vertical) {
+      result += data.vertical + '_';
   }
 
-  async function getReadyToLaunchBoardItems_lambda(cursor, limit, board_id){
-    const query = `
-      query ($cursor: String, $limit: Int, $board_id: ID!) {
-        boards (ids: [$board_id]){
-          items_page (cursor: $cursor, limit: $limit) {
-            cursor
-            items {
+  if (data.uniqueIdentifier) {
+      result += data.uniqueIdentifier + '_';
+  }
+
+  if (data.creativeRequestedOn) {
+      result += data.creativeRequestedOn;
+  }
+
+  return result;
+}
+
+function generateAdsetName(data) {
+  let result = 'Adset | ';
+
+  if (data.event) {
+      result += data.event + '_';
+  }
+
+  if (data.country) {
+      result += data.country + '_';
+  }
+
+  if (data.language) {
+      result += data.language + '_';
+  }
+
+  if (data.vertical) {
+      result += data.vertical + '_';
+  }
+
+  if (data.uniqueIdentifier) {
+      result += data.uniqueIdentifier + '_';
+  }
+
+  if (data.creativeRequestedOn) {
+      result += data.creativeRequestedOn;
+  }
+
+  return result;
+}
+
+function generateFinalLink(data) {
+
+
+  if (data.partner === 'DA') {
+      /*
+      let link = data.baseOfferLink + "&sqs=";
+      link += appendKeyword(data.kw1, data.kw2 || data.kw3 || data.kw4 || data.kw5 || data.kw6 || data.kw7 || data.kw8);
+      link += appendKeyword(data.kw2, data.kw3 || data.kw4 || data.kw5 || data.kw6 || data.kw7 || data.kw8);
+      link += appendKeyword(data.kw3, data.kw4 || data.kw5 || data.kw6 || data.kw7 || data.kw8);
+      link += appendKeyword(data.kw4, data.kw5 || data.kw6 || data.kw7 || data.kw8);
+      link += appendKeyword(data.kw5, data.kw6 || data.kw7 || data.kw8);
+      link += appendKeyword(data.kw6, data.kw7 || data.kw8);
+      link += appendKeyword(data.kw7, data.kw8);
+      link += appendKeyword(data.kw8, false);
+      */
+
+      let link = data.baseOfferLink;
+
+      link += "&ad_title=" + substituteSpaces(data.adTitle);
+      link += "&buyer=" + substituteSpaces(data.buyer);
+      link += "&creator=" + substituteSpaces(data.creator);
+      link += "&creative_manager=" + substituteSpaces(data.creativeManagerNames);
+      link += "&creative_id=" + data.requestId;
+
+      return link;
+  } else {
+      return data.baseOfferLink;
+  }
+}
+
+async function getReadyToLaunchBoardItems_lambda(cursor, limit, board_id){
+  const query = `
+    query ($cursor: String, $limit: Int, $board_id: ID!) {
+      boards (ids: [$board_id]){
+        items_page (cursor: $cursor, limit: $limit) {
+          cursor
+          items {
+            id
+            name
+            column_values {
               id
-              name
+              value
+              text
+              type
+              ... on BoardRelationValue {
+                linked_item_ids
+                linked_items {
+                  id
+                  name
+                }
+              }
+              ... on FormulaValue {
+                value
+                text
+              }
+            }
+            subitems {
+              id
               column_values {
                 id
                 value
@@ -310,809 +310,822 @@ async function tiktok_launcher() {
                   text
                 }
               }
-              subitems {
-                id
-                column_values {
-                  id
-                  value
-                  text
-                  type
-                  ... on BoardRelationValue {
-                    linked_item_ids
-                    linked_items {
-                      id
-                      name
-                    }
-                  }
-                  ... on FormulaValue {
-                    value
-                    text
-                  }
-                }
-              }
             }
           }
         }
       }
-      `
+    }
+    `
 
-      const variables = {
-        cursor: cursor,
-        limit: limit,
-        board_id: board_id
-      };
+    const variables = {
+      cursor: cursor,
+      limit: limit,
+      board_id: board_id
+    };
 
-      try {
-        const response = await axios.post(
-          'https://api.monday.com/v2',
-          {
-            query: query,
-            variables: variables
-          },
-          {
-            headers: {
-              Authorization: apiKey
-            }
+    try {
+      const response = await axios.post(
+        'https://api.monday.com/v2',
+        {
+          query: query,
+          variables: variables
+        },
+        {
+          headers: {
+            Authorization: apiKey
           }
-        );
-
-        console.log(response.data.data);
-
-        return response.data.data;
-      } catch (error) {
-        console.error('Error fetching data from Monday API:', error);
-        throw error;
-      }
-
-  }
-
-  async function getAccessTokenFromAdAccountId(ad_account_id){
-    const url = 'https://api.retool.com/v1/workflows/c775f633-f9b0-4eb9-bf41-f2400042a785/startTrigger';
-    const data = {
-      ad_account_id: ad_account_id
-    };
-
-    const headers = {
-      'X-Workflow-Api-Key': 'retool_wk_ab2f697bdeec45729c62363e43b4cdfe',  // Replace with your actual API key if required
-      'Content-Type': 'application/json'
-    };
-
-    let res;
-
-    await axios.post(url, data, { headers })
-      .then(response => {
-        console.log('Webhook response:', response.data);
-        res = response.data;
-      })
-      .catch(error => {
-        console.error('Error making webhook call:', error);
-      });
-
-    return res.data;
-  }
-
-  async function getAccessTokenFromAdAccountName(ad_account_name){
-    const url = 'https://api.retool.com/v1/workflows/09c43ab3-3689-4b47-abba-3cc9d3849254/startTrigger';
-    const data = {
-      ad_account_name: ad_account_name
-    };
-
-    const headers = {
-      'X-Workflow-Api-Key': 'retool_wk_3f7d813ffbd44169bb484e42ee334ab7',  // Replace with your actual API key if required
-      'Content-Type': 'application/json'
-    };
-
-    let res;
-
-    await axios.post(url, data, { headers })
-      .then(response => {
-        console.log('Webhook response:', response.data);
-        res = response.data;
-      })
-      .catch(error => {
-        console.error('Error making webhook call:', error);
-      });
-
-    return res.data;
-  }
-
-  // creates a campaign
-  async function create_tiktok_campaign_lambda(advertiser_id, token, campaign_name, campaign_objective, bid_strategy, daily_budget, countries){
-    const apiEndpoint = api_base+`/${api_version}/`+"/campaign/create/";
-
-    try{
-
-      const campaign_data = {
-        "advertiser_id": advertiser_id,
-        "budget_mode": bid_strategy, // bid_strategy
-        "campaign_name": campaign_name,
-        "objective_type": campaign_objective,
-        "budget": daily_budget
-      }
-
-      let resposs;
-
-      await axios.post(apiEndpoint, campaign_data, {
-        headers: {
-          "Access-Token": token,
-          "Content-Type": "application/json"
         }
-      }).then(response => {
-        //console.log('Success:', response.data);
-        resposs = response.data;
-      });
+      );
 
-      return resposs.data;
+      console.log(response.data.data);
 
+      return response.data.data;
     } catch (error) {
-      console.error('Error fetching campaigns:', error.response ? error.response.data : error.message);
+      console.error('Error fetching data from Monday API:', error);
       throw error;
     }
-  }
 
-  async function update_tiktok_campaign_lambda(advertiser_id, token, campaign_name, campaign_objective, bid_strategy, daily_budget, countries, campaign_id){
-    const apiEndpoint = api_base+`/${api_version}/`+"/campaign/update/";
+}
 
-    try{
+async function getAccessTokenFromAdAccountId(ad_account_id){
+  const url = 'https://api.retool.com/v1/workflows/c775f633-f9b0-4eb9-bf41-f2400042a785/startTrigger';
+  const data = {
+    ad_account_id: ad_account_id
+  };
 
-      const campaign_data = {
-        "advertiser_id": advertiser_id,
-        "campaign_id": campaign_id, // bid_strategy
-        "campaign_name": campaign_name,
-        "budget": daily_budget
-      }
+  const headers = {
+    'X-Workflow-Api-Key': 'retool_wk_ab2f697bdeec45729c62363e43b4cdfe',  // Replace with your actual API key if required
+    'Content-Type': 'application/json'
+  };
 
-      let resposs;
+  let res;
 
-      await axios.post(apiEndpoint, campaign_data, {
-        headers: {
-          "Access-Token": token,
-          "Content-Type": "application/json"
-        }
-      })
-      .then(response => {
-        console.log('Success:', response.data);
-        resposs = response.data;
-      }).catch(error => {
-        console.error('Error:', error.response ? error.response.data : error.message);
-      });
+  await axios.post(url, data, { headers })
+    .then(response => {
+      console.log('Webhook response:', response.data);
+      res = response.data;
+    })
+    .catch(error => {
+      console.error('Error making webhook call:', error);
+    });
 
-      if(resposs.data.message == "Campaign name already exists. Please try another one."){
+  return res.data;
+}
 
-      }
+async function getAccessTokenFromAdAccountName(ad_account_name){
+  const url = 'https://api.retool.com/v1/workflows/09c43ab3-3689-4b47-abba-3cc9d3849254/startTrigger';
+  const data = {
+    ad_account_name: ad_account_name
+  };
 
-      return resposs.data;
+  const headers = {
+    'X-Workflow-Api-Key': 'retool_wk_3f7d813ffbd44169bb484e42ee334ab7',  // Replace with your actual API key if required
+    'Content-Type': 'application/json'
+  };
 
-    } catch (error) {
-      console.error('Error fetching campaigns:', error.response ? error.response.data : error.message);
-      throw error;
-    }
-  }
+  let res;
 
-  // creates an adset - returns created adset ID
-  async function createAdSet(advertiser_id, access_token, adgroup_name, campaign_id, daily_budget, location, genders, custom_event_type, schedule_start_time, schedule_end_time, billing_event="CPC", optimization_goal="CLICK", pacing="PACING_MODE_SMOOTH", promotion_type="WEBSITE", age=["AGE_18_24"], bid=5, schedule_type="SCHEDULE_FROM_NOW", pixel_id="7343393979666382850") {
+  await axios.post(url, data, { headers })
+    .then(response => {
+      console.log('Webhook response:', response.data);
+      res = response.data;
+    })
+    .catch(error => {
+      console.error('Error making webhook call:', error);
+    });
 
+  return res.data;
+}
 
-    console.log(custom_event_type);
+// creates a campaign
+async function create_tiktok_campaign_lambda(advertiser_id, token, campaign_name, campaign_objective, bid_strategy, daily_budget, countries){
+  const apiEndpoint = api_base+`/${api_version}/`+"/campaign/create/";
 
-    const locations_ids = location.split(',').map(str => str.trim());
+  try{
 
-    const adset_url = `${api_base}/${api_version}/adgroup/create/`;
-
-    const adgroup_data = {
+    const campaign_data = {
       "advertiser_id": advertiser_id,
-      "campaign_id": campaign_id,
-      "adgroup_name": adgroup_name,
-      "placement_type": "PLACEMENT_TYPE_AUTOMATIC",
-      //"placement": ["PLACEMENT_TIKTOK"],
-      "promotion_type": "WEBSITE",
-      "promotion_website_type": "UNSET",
-      "location_ids": locations_ids, // [6252001]
-      "age": age, // ["AGE_18_24", "AGE_25_34", "AGE_35_44"]
-      "gender": "GENDER_UNLIMITED", // GENDER_UNLIMITED
-      "budget": daily_budget,
-      "budget_mode": "BUDGET_MODE_DAY", // BUDGET_MODE_DAY
-      "schedule_type": schedule_type, // SCHEDULE_FROM_NOW
-      "schedule_start_time": schedule_start_time, // 2024-06-01 12:00:00
-      "optimization_goal": optimization_goal,
-      "pacing": pacing,
-      "billing_event": billing_event,
-      "bid_price": bid, // 5.0,
-      //"pixel_id": pixel_id,
-      //"optimization_event": "SHOPPING",
-      "conversion_bid_price": 1.3
-
-
+      "budget_mode": bid_strategy, // bid_strategy
+      "campaign_name": campaign_name,
+      "objective_type": campaign_objective,
+      "budget": daily_budget
     }
 
     let resposs;
 
-    await axios.post(adset_url, adgroup_data, {
+    await axios.post(apiEndpoint, campaign_data, {
       headers: {
-        "Access-Token": access_token,
+        "Access-Token": token,
+        "Content-Type": "application/json"
+      }
+    }).then(response => {
+      //console.log('Success:', response.data);
+      resposs = response.data;
+    });
+
+    return resposs.data;
+
+  } catch (error) {
+    console.error('Error fetching campaigns:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+async function update_tiktok_campaign_lambda(advertiser_id, token, campaign_name, campaign_objective, bid_strategy, daily_budget, countries, campaign_id){
+  const apiEndpoint = api_base+`/${api_version}/`+"/campaign/update/";
+
+  try{
+
+    const campaign_data = {
+      "advertiser_id": advertiser_id,
+      "campaign_id": campaign_id, // bid_strategy
+      "campaign_name": campaign_name,
+      "budget": daily_budget
+    }
+
+    let resposs;
+
+    await axios.post(apiEndpoint, campaign_data, {
+      headers: {
+        "Access-Token": token,
         "Content-Type": "application/json"
       }
     })
     .then(response => {
-      //console.log('Success:', response.data);
+      console.log('Success:', response.data);
       resposs = response.data;
     }).catch(error => {
       console.error('Error:', error.response ? error.response.data : error.message);
     });
 
-    return resposs.data;
-  }
+    if(resposs.data.message == "Campaign name already exists. Please try another one."){
 
-  async function getPublicUrls(itemId) {
-
-    const apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjM5MDU4NDk2NSwiYWFpIjoxMSwidWlkIjo2MzczMDAwNSwiaWFkIjoiMjAyNC0wNy0zMFQwODozNjowNy4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTk2MDQ2MzIsInJnbiI6InVzZTEifQ.IA8eWA107718o5UPUSLMnZJsSONkjWTMjwFhaJ0QPts";
-
-    const query = `
-      {
-        assets(ids: ${itemId}){
-          public_url
-        }
-      }
-    `;
-
-    try {
-      const response = await axios.post('https://api.monday.com/v2', {
-        query: query
-      }, {
-        headers: {
-          Authorization: `Bearer ${apiToken}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log(JSON.stringify(response.data.data.assets));
-
-      const assets = response.data.data.assets;
-      assets.forEach(asset => {
-        console.log(`Public URL: ${asset.public_url}`);
-      });
-
-      return response.data.data.assets[0].public_url;
-    } catch (error) {
-      console.error('Error fetching assets:', error);
     }
+
+    return resposs.data;
+
+  } catch (error) {
+    console.error('Error fetching campaigns:', error.response ? error.response.data : error.message);
+    throw error;
+  }
+}
+
+// creates an adset - returns created adset ID
+async function createAdSet(advertiser_id, access_token, adgroup_name, campaign_id, daily_budget, location, genders, custom_event_type, schedule_start_time, schedule_end_time, billing_event="CPC", optimization_goal="CLICK", pacing="PACING_MODE_SMOOTH", promotion_type="WEBSITE", age=["AGE_18_24"], bid=5, schedule_type="SCHEDULE_FROM_NOW", pixel_id="7343393979666382850") {
+
+
+  console.log(custom_event_type);
+
+  const locations_ids = location.split(',').map(str => str.trim());
+
+  const adset_url = `${api_base}/${api_version}/adgroup/create/`;
+
+  const adgroup_data = {
+    "advertiser_id": advertiser_id,
+    "campaign_id": campaign_id,
+    "adgroup_name": adgroup_name,
+    "placement_type": "PLACEMENT_TYPE_AUTOMATIC",
+    //"placement": ["PLACEMENT_TIKTOK"],
+    "promotion_type": "WEBSITE",
+    "promotion_website_type": "UNSET",
+    "location_ids": locations_ids, // [6252001]
+    "age": age, // ["AGE_18_24", "AGE_25_34", "AGE_35_44"]
+    "gender": "GENDER_UNLIMITED", // GENDER_UNLIMITED
+    "budget": daily_budget,
+    "budget_mode": "BUDGET_MODE_DAY", // BUDGET_MODE_DAY
+    "schedule_type": schedule_type, // SCHEDULE_FROM_NOW
+    "schedule_start_time": schedule_start_time, // 2024-06-01 12:00:00
+    "optimization_goal": optimization_goal,
+    "pacing": pacing,
+    "billing_event": billing_event,
+    "bid_price": bid, // 5.0,
+    //"pixel_id": pixel_id,
+    //"optimization_event": "SHOPPING",
+    "conversion_bid_price": 1.3
+
+
   }
 
-  async function uploadImageFromUrl2(ad_account_id, access_token, imageUrl) {
-    const url = `https://graph.facebook.com/v20.0/act_${ad_account_id}/adimages`;
-    const monday_token="eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjM5MDU4NDk2NSwiYWFpIjoxMSwidWlkIjo2MzczMDAwNSwiaWFkIjoiMjAyNC0wNy0zMFQwODozNjowNy44NDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTk2MDQ2MzIsInJnbiI6InVzZTEifQ.fg0F8CJB9tMjmAaB0tuVA_a2dcW8zo6FibuBPcsqtyw";
-    // Download the image
-    console.log(imageUrl);
+  let resposs;
+
+  await axios.post(adset_url, adgroup_data, {
+    headers: {
+      "Access-Token": access_token,
+      "Content-Type": "application/json"
+    }
+  })
+  .then(response => {
+    //console.log('Success:', response.data);
+    resposs = response.data;
+  }).catch(error => {
+    console.error('Error:', error.response ? error.response.data : error.message);
+  });
+
+  return resposs.data;
+}
+
+async function getPublicUrls(itemId) {
+
+  const apiToken = "eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjM5MDU4NDk2NSwiYWFpIjoxMSwidWlkIjo2MzczMDAwNSwiaWFkIjoiMjAyNC0wNy0zMFQwODozNjowNy4wMDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTk2MDQ2MzIsInJnbiI6InVzZTEifQ.IA8eWA107718o5UPUSLMnZJsSONkjWTMjwFhaJ0QPts";
+
+  const query = `
+    {
+      assets(ids: ${itemId}){
+        public_url
+      }
+    }
+  `;
+
+  try {
+    const response = await axios.post('https://api.monday.com/v2', {
+      query: query
+    }, {
+      headers: {
+        Authorization: `Bearer ${apiToken}`,
+        'Content-Type': 'application/json'
+      }
+    });
+
+    console.log(JSON.stringify(response.data.data.assets));
+
+    const assets = response.data.data.assets;
+    assets.forEach(asset => {
+      console.log(`Public URL: ${asset.public_url}`);
+    });
+
+    return response.data.data.assets[0].public_url;
+  } catch (error) {
+    console.error('Error fetching assets:', error);
+  }
+}
+
+async function uploadImageFromUrl2(ad_account_id, access_token, imageUrl) {
+  const url = `https://graph.facebook.com/v20.0/act_${ad_account_id}/adimages`;
+  const monday_token="eyJhbGciOiJIUzI1NiJ9.eyJ0aWQiOjM5MDU4NDk2NSwiYWFpIjoxMSwidWlkIjo2MzczMDAwNSwiaWFkIjoiMjAyNC0wNy0zMFQwODozNjowNy44NDBaIiwicGVyIjoibWU6d3JpdGUiLCJhY3RpZCI6MTk2MDQ2MzIsInJnbiI6InVzZTEifQ.fg0F8CJB9tMjmAaB0tuVA_a2dcW8zo6FibuBPcsqtyw";
+  // Download the image
+  console.log(imageUrl);
+  const response = await axios({
+    url: imageUrl,
+    method: 'GET',
+    responseType: 'arraybuffer'
+  }).catch(error => {
+    console.log("Download the image");
+    console.log(error);
+  });
+
+  try {
+
+    const base64Image = new Buffer.from(response.data).toString('base64');
+    console.log(base64Image);
+
+    // Prepare form data
+    const form = new FormData();
+    form.append('access_token', access_token);
+    //form.append('filename', imageUrl);
+    //form.append('file', response.data);
+
+    form.append('bytes', base64Image);
+
+    // Upload the image
+    const uploadResponse = await axios.post(url, form, {
+      headers: {
+        ...form.getHeaders()
+      }
+    });
+
+    console.log('Image Hash:', uploadResponse.data.images[0].hash);
+    return uploadResponse.data.images[0].hash;
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    throw error;
+  }
+}
+
+async function uploadImageFromUrl(advertiser_id, access_token, creativeUrl) {
+  const url = `${api_base}/${api_version}/file/image/ad/upload/`;
+
+  try {
+    /*
+    // Ensure the images_to_upload directory exists
+    const imageDir = path.join(__dirname, 'images_to_upload');
+    if (!fs.existsSync(imageDir)) {
+      fs.mkdirSync(imageDir);
+    }
+
+    // Set the filename and path for the image
+    const filename = path.basename(imageUrl);
+    const imagePath = path.join(imageDir, filename);
+
+    // Download the image as a stream and save it
+    console.log(`Downloading image from: ${imageUrl}`);
     const response = await axios({
       url: imageUrl,
       method: 'GET',
-      responseType: 'arraybuffer'
-    }).catch(error => {
-      console.log("Download the image");
-      console.log(error);
+      responseType: 'stream', // Ensures the data is received as a stream
     });
 
-    try {
+    // Pipe the image data stream to a file
+    const writer = fs.createWriteStream(imagePath);
+    response.data.pipe(writer);
 
-      const base64Image = new Buffer.from(response.data).toString('base64');
-      console.log(base64Image);
+    // Wait for the writing process to complete
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
 
-      // Prepare form data
-      const form = new FormData();
-      form.append('access_token', access_token);
-      //form.append('filename', imageUrl);
-      //form.append('file', response.data);
+    console.log(`Image saved to ${imagePath}`);
+    */
 
-      form.append('bytes', base64Image);
+    const download_name = extractFileNameWithExtension(creativeUrl)
+    const filename = extractFileName(imageUrl);
+    console.log(filename);
 
-      // Upload the image
-      const uploadResponse = await axios.post(url, form, {
-        headers: {
-          ...form.getHeaders()
-        }
-      });
+    //await download(imageUrl, path.dirname(path.join(__dirname, 'images_to_upload', filename+".png")), { filename: filename+".png" });
+    //await download(creativeUrl, path.dirname(path.join(__dirname, download_name)), { filename: download_name});
 
-      console.log('Image Hash:', uploadResponse.data.images[0].hash);
-      return uploadResponse.data.images[0].hash;
-    } catch (error) {
-      console.error('Error uploading image:', error);
-      throw error;
+    //await convertPngToJpg(path.join(__dirname, filename)+".png", path.join(__dirname, filename)+".jpg");
+
+    /*
+    // Create a ZIP file containing the image
+    const imageDir = path.join(__dirname, 'images_to_upload');
+    const zipFilePath = path.join(imageDir, `${filename}.zip`);
+    const output = fs.createWriteStream(zipFilePath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level
+    });
+
+    output.on('close', () => {
+      console.log(`ZIP file created: ${zipFilePath} (${archive.pointer()} total bytes)`);
+    });
+
+    archive.on('error', (err) => {
+      throw err;
+    });
+
+    archive.pipe(output);
+    archive.file(path.join(__dirname, 'images_to_upload', filename), { name: filename });
+    await archive.finalize();
+
+    console.log(`Image successfully zipped: ${zipFilePath}`);
+    */
+
+    // Prepare data to upload
+
+    const image_data = {
+      "advertiser_id": advertiser_id,
+      "file_name": filename,
+      "upload_type": "UPLOAD_BY_URL",
+      "image_url": creativeUrl // upload file directly from URL
     }
+
+    // Upload the image to Facebook
+    const uploadResponse = await axios.post(url, image_data, {
+      headers: {
+        "Access-Token": access_token,
+        "Content-Type": "application/json"
+      }
+    });
+
+    console.log('image_id:', uploadResponse.data.image_id);
+    return {
+      image_id: uploadResponse.data.image_id,
+      fileAddr: "",
+      iname: filename
+    };
+  } catch (error) {
+    console.error('Error uploading image:', error.response ? error.response.data : error.message);
+    throw error;
   }
+}
 
-  async function uploadImageFromUrl(advertiser_id, access_token, creativeUrl) {
-    const url = `${api_base}/${api_version}/file/image/ad/upload/`;
+async function convertPngToJpg(inputPath, outputPath) {
+  try {
+    // Load the PNG image
+    const image = await Jimp.read(inputPath);
 
-    try {
-      /*
-      // Ensure the images_to_upload directory exists
-      const imageDir = path.join(__dirname, 'images_to_upload');
-      if (!fs.existsSync(imageDir)) {
-        fs.mkdirSync(imageDir);
-      }
+    // Convert the image to JPEG and save it
+    await image.quality(90) // Set JPEG quality
+      .writeAsync(outputPath);
 
-      // Set the filename and path for the image
-      const filename = path.basename(imageUrl);
-      const imagePath = path.join(imageDir, filename);
-
-      // Download the image as a stream and save it
-      console.log(`Downloading image from: ${imageUrl}`);
-      const response = await axios({
-        url: imageUrl,
-        method: 'GET',
-        responseType: 'stream', // Ensures the data is received as a stream
-      });
-
-      // Pipe the image data stream to a file
-      const writer = fs.createWriteStream(imagePath);
-      response.data.pipe(writer);
-
-      // Wait for the writing process to complete
-      await new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-      });
-
-      console.log(`Image saved to ${imagePath}`);
-      */
-
-      const download_name = extractFileNameWithExtension(creativeUrl)
-      const filename = extractFileName(imageUrl);
-      console.log(filename);
-
-      //await download(imageUrl, path.dirname(path.join(__dirname, 'images_to_upload', filename+".png")), { filename: filename+".png" });
-      //await download(creativeUrl, path.dirname(path.join(__dirname, download_name)), { filename: download_name});
-
-      //await convertPngToJpg(path.join(__dirname, filename)+".png", path.join(__dirname, filename)+".jpg");
-
-      /*
-      // Create a ZIP file containing the image
-      const imageDir = path.join(__dirname, 'images_to_upload');
-      const zipFilePath = path.join(imageDir, `${filename}.zip`);
-      const output = fs.createWriteStream(zipFilePath);
-      const archive = archiver('zip', {
-        zlib: { level: 9 } // Sets the compression level
-      });
-
-      output.on('close', () => {
-        console.log(`ZIP file created: ${zipFilePath} (${archive.pointer()} total bytes)`);
-      });
-
-      archive.on('error', (err) => {
-        throw err;
-      });
-
-      archive.pipe(output);
-      archive.file(path.join(__dirname, 'images_to_upload', filename), { name: filename });
-      await archive.finalize();
-
-      console.log(`Image successfully zipped: ${zipFilePath}`);
-      */
-
-      // Prepare data to upload
-
-      const image_data = {
-        "advertiser_id": advertiser_id,
-        "file_name": filename,
-        "upload_type": "UPLOAD_BY_URL",
-        "image_url": creativeUrl // upload file directly from URL
-      }
-
-      // Upload the image to Facebook
-      const uploadResponse = await axios.post(url, image_data, {
-        headers: {
-          "Access-Token": access_token,
-          "Content-Type": "application/json"
-        }
-      });
-
-      console.log('image_id:', uploadResponse.data.image_id);
-      return {
-        image_id: uploadResponse.data.image_id,
-        fileAddr: "",
-        iname: filename
-      };
-    } catch (error) {
-      console.error('Error uploading image:', error.response ? error.response.data : error.message);
-      throw error;
-    }
+    console.log(`Converted PNG to JPEG: ${outputPath}`);
+  } catch (error) {
+    console.error('Error converting image:', error);
   }
+}
 
-  async function convertPngToJpg(inputPath, outputPath) {
-    try {
-      // Load the PNG image
-      const image = await Jimp.read(inputPath);
+async function uploadVideoFromUrl(advertiser_id, access_token, creativeUrl) {
+  const url = `${api_base}/${api_version}/file/video/ad/upload/`;
 
-      // Convert the image to JPEG and save it
-      await image.quality(90) // Set JPEG quality
-        .writeAsync(outputPath);
-
-      console.log(`Converted PNG to JPEG: ${outputPath}`);
-    } catch (error) {
-      console.error('Error converting image:', error);
+  try {
+    /*
+    // Ensure the images_to_upload directory exists
+    const imageDir = path.join(__dirname, 'images_to_upload');
+    if (!fs.existsSync(imageDir)) {
+      fs.mkdirSync(imageDir);
     }
+
+    // Set the filename and path for the image
+    const filename = path.basename(imageUrl);
+    const imagePath = path.join(imageDir, filename);
+
+    // Download the image as a stream and save it
+    console.log(`Downloading image from: ${imageUrl}`);
+    const response = await axios({
+      url: imageUrl,
+      method: 'GET',
+      responseType: 'stream', // Ensures the data is received as a stream
+    });
+
+    // Pipe the image data stream to a file
+    const writer = fs.createWriteStream(imagePath);
+    response.data.pipe(writer);
+
+    // Wait for the writing process to complete
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+
+    console.log(`Image saved to ${imagePath}`);
+    */
+
+    const download_name = extractFileNameWithExtension(creativeUrl)
+    const filename = extractFileName(creativeUrl);
+
+
+    //await download(imageUrl, path.dirname(path.join(__dirname, 'images_to_upload', filename+".png")), { filename: filename+".png" });
+    await download(creativeUrl, path.dirname(path.join(__dirname, download_name)), { filename: download_name});
+
+    //await convertPngToJpg(path.join(__dirname, filename)+".png", path.join(__dirname, filename)+".jpg");
+
+    /*
+    // Create a ZIP file containing the image
+    const imageDir = path.join(__dirname, 'images_to_upload');
+    const zipFilePath = path.join(imageDir, `${filename}.zip`);
+    const output = fs.createWriteStream(zipFilePath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level
+    });
+
+    output.on('close', () => {
+      console.log(`ZIP file created: ${zipFilePath} (${archive.pointer()} total bytes)`);
+    });
+
+    archive.on('error', (err) => {
+      throw err;
+    });
+
+    archive.pipe(output);
+    archive.file(path.join(__dirname, 'images_to_upload', filename), { name: filename });
+    await archive.finalize();
+
+    console.log(`Image successfully zipped: ${zipFilePath}`);
+    */
+    await sleep(2000);
+    // Prepare data to upload
+    const now = new Date();
+
+    // Extract individual components from the Date object
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+
+    const form = new FormData();
+
+    form.append('advertiser_id', advertiser_id);
+    form.append('file_name', `${filename}_${year}-${month}-${day}-|-${hours}:${minutes}:${seconds}`);
+    form.append('upload_type', 'UPLOAD_BY_FILE');
+    form.append('video_file', fs.createReadStream(path.join(__dirname, download_name)));
+    form.append('video_signature', await getMD5Hash(path.join(__dirname, download_name)));
+
+    // Upload the image to Facebook
+    const uploadResponse = await axios.post(url, form, {
+      headers: {
+        "Access-Token": access_token,
+        "Content-Type": "multipart/form-data"
+      }
+    });
+
+    console.log('video_id:', uploadResponse.data.data);
+    return {
+      video_id: uploadResponse.data.data[0].video_id,
+      fileAddr: download_name,
+      iname: filename
+    };
+  } catch (error) {
+    console.error('Error uploading image:', error.response ? error.response.data : error.message);
+    throw error;
   }
+}
 
-  async function uploadVideoFromUrl(advertiser_id, access_token, creativeUrl) {
-    const url = `${api_base}/${api_version}/file/video/ad/upload/`;
+async function uploadVideoThroughUrl(advertiser_id, access_token, creativeUrl) {
+  const url = `${api_base}/${api_version}/file/image/ad/upload/`;
 
-    try {
-      /*
-      // Ensure the images_to_upload directory exists
-      const imageDir = path.join(__dirname, 'images_to_upload');
-      if (!fs.existsSync(imageDir)) {
-        fs.mkdirSync(imageDir);
-      }
-
-      // Set the filename and path for the image
-      const filename = path.basename(imageUrl);
-      const imagePath = path.join(imageDir, filename);
-
-      // Download the image as a stream and save it
-      console.log(`Downloading image from: ${imageUrl}`);
-      const response = await axios({
-        url: imageUrl,
-        method: 'GET',
-        responseType: 'stream', // Ensures the data is received as a stream
-      });
-
-      // Pipe the image data stream to a file
-      const writer = fs.createWriteStream(imagePath);
-      response.data.pipe(writer);
-
-      // Wait for the writing process to complete
-      await new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-      });
-
-      console.log(`Image saved to ${imagePath}`);
-      */
-
-      const download_name = extractFileNameWithExtension(creativeUrl)
-      const filename = extractFileName(creativeUrl);
-
-
-      //await download(imageUrl, path.dirname(path.join(__dirname, 'images_to_upload', filename+".png")), { filename: filename+".png" });
-      await download(creativeUrl, path.dirname(path.join(__dirname, download_name)), { filename: download_name});
-
-      //await convertPngToJpg(path.join(__dirname, filename)+".png", path.join(__dirname, filename)+".jpg");
-
-      /*
-      // Create a ZIP file containing the image
-      const imageDir = path.join(__dirname, 'images_to_upload');
-      const zipFilePath = path.join(imageDir, `${filename}.zip`);
-      const output = fs.createWriteStream(zipFilePath);
-      const archive = archiver('zip', {
-        zlib: { level: 9 } // Sets the compression level
-      });
-
-      output.on('close', () => {
-        console.log(`ZIP file created: ${zipFilePath} (${archive.pointer()} total bytes)`);
-      });
-
-      archive.on('error', (err) => {
-        throw err;
-      });
-
-      archive.pipe(output);
-      archive.file(path.join(__dirname, 'images_to_upload', filename), { name: filename });
-      await archive.finalize();
-
-      console.log(`Image successfully zipped: ${zipFilePath}`);
-      */
-      await sleep(2000);
-      // Prepare data to upload
-      const now = new Date();
-
-      // Extract individual components from the Date object
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0'); // Months are zero-based
-      const day = String(now.getDate()).padStart(2, '0');
-      const hours = String(now.getHours()).padStart(2, '0');
-      const minutes = String(now.getMinutes()).padStart(2, '0');
-      const seconds = String(now.getSeconds()).padStart(2, '0');
-
-      const form = new FormData();
-
-      form.append('advertiser_id', advertiser_id);
-      form.append('file_name', `${filename}_${year}-${month}-${day}-|-${hours}:${minutes}:${seconds}`);
-      form.append('upload_type', 'UPLOAD_BY_FILE');
-      form.append('video_file', fs.createReadStream(path.join(__dirname, download_name)));
-      form.append('video_signature', await getMD5Hash(path.join(__dirname, download_name)));
-
-      // Upload the image to Facebook
-      const uploadResponse = await axios.post(url, form, {
-        headers: {
-          "Access-Token": access_token,
-          "Content-Type": "multipart/form-data"
-        }
-      });
-
-      console.log('video_id:', uploadResponse.data.data);
-      return {
-        video_id: uploadResponse.data.data[0].video_id,
-        fileAddr: download_name,
-        iname: filename
-      };
-    } catch (error) {
-      console.error('Error uploading image:', error.response ? error.response.data : error.message);
-      throw error;
+  try {
+    /*
+    // Ensure the images_to_upload directory exists
+    const imageDir = path.join(__dirname, 'images_to_upload');
+    if (!fs.existsSync(imageDir)) {
+      fs.mkdirSync(imageDir);
     }
+
+    // Set the filename and path for the image
+    const filename = path.basename(imageUrl);
+    const imagePath = path.join(imageDir, filename);
+
+    // Download the image as a stream and save it
+    console.log(`Downloading image from: ${imageUrl}`);
+    const response = await axios({
+      url: imageUrl,
+      method: 'GET',
+      responseType: 'stream', // Ensures the data is received as a stream
+    });
+
+    // Pipe the image data stream to a file
+    const writer = fs.createWriteStream(imagePath);
+    response.data.pipe(writer);
+
+    // Wait for the writing process to complete
+    await new Promise((resolve, reject) => {
+      writer.on('finish', resolve);
+      writer.on('error', reject);
+    });
+
+    console.log(`Image saved to ${imagePath}`);
+    */
+
+    const download_name = extractFileNameWithExtension(creativeUrl)
+    const filename = extractFileName(imageUrl);
+    console.log(filename);
+
+    //await download(imageUrl, path.dirname(path.join(__dirname, 'images_to_upload', filename+".png")), { filename: filename+".png" });
+    //await download(creativeUrl, path.dirname(path.join(__dirname, download_name)), { filename: download_name});
+
+    //await convertPngToJpg(path.join(__dirname, filename)+".png", path.join(__dirname, filename)+".jpg");
+
+    /*
+    // Create a ZIP file containing the image
+    const imageDir = path.join(__dirname, 'images_to_upload');
+    const zipFilePath = path.join(imageDir, `${filename}.zip`);
+    const output = fs.createWriteStream(zipFilePath);
+    const archive = archiver('zip', {
+      zlib: { level: 9 } // Sets the compression level
+    });
+
+    output.on('close', () => {
+      console.log(`ZIP file created: ${zipFilePath} (${archive.pointer()} total bytes)`);
+    });
+
+    archive.on('error', (err) => {
+      throw err;
+    });
+
+    archive.pipe(output);
+    archive.file(path.join(__dirname, 'images_to_upload', filename), { name: filename });
+    await archive.finalize();
+
+    console.log(`Image successfully zipped: ${zipFilePath}`);
+    */
+
+    // Prepare data to upload
+
+    const image_data = {
+      "advertiser_id": advertiser_id,
+      "file_name": filename,
+      "upload_type": "UPLOAD_BY_URL",
+      "image_url": creativeUrl // upload file directly from URL
+    }
+
+    // Upload the image to Facebook
+    const uploadResponse = await axios.post(url, image_data, {
+      headers: {
+        "Access-Token": access_token,
+        "Content-Type": "application/json"
+      }
+    });
+
+    console.log('image_id:', uploadResponse.data.image_id);
+    return {
+      image_id: uploadResponse.data.image_id,
+      fileAddr: "",
+      iname: filename
+    };
+  } catch (error) {
+    console.error('Error uploading image:', error.response ? error.response.data : error.message);
+    throw error;
   }
+}
 
-  async function uploadVideoThroughUrl(advertiser_id, access_token, creativeUrl) {
-    const url = `${api_base}/${api_version}/file/image/ad/upload/`;
+async function storeAndDeleteFile(fileAddr, bucketName, folderName) {
+  try {
 
-    try {
-      /*
-      // Ensure the images_to_upload directory exists
-      const imageDir = path.join(__dirname, 'images_to_upload');
-      if (!fs.existsSync(imageDir)) {
-        fs.mkdirSync(imageDir);
-      }
+    const contentType = 'image/png';
+    const filename = path.basename(fileAddr);
+    const data = fs.createReadStream(path.join(__dirname, fileAddr));
 
-      // Set the filename and path for the image
-      const filename = path.basename(imageUrl);
-      const imagePath = path.join(imageDir, filename);
-
-      // Download the image as a stream and save it
-      console.log(`Downloading image from: ${imageUrl}`);
-      const response = await axios({
-        url: imageUrl,
-        method: 'GET',
-        responseType: 'stream', // Ensures the data is received as a stream
-      });
-
-      // Pipe the image data stream to a file
-      const writer = fs.createWriteStream(imagePath);
-      response.data.pipe(writer);
-
-      // Wait for the writing process to complete
-      await new Promise((resolve, reject) => {
-        writer.on('finish', resolve);
-        writer.on('error', reject);
-      });
-
-      console.log(`Image saved to ${imagePath}`);
-      */
-
-      const download_name = extractFileNameWithExtension(creativeUrl)
-      const filename = extractFileName(imageUrl);
-      console.log(filename);
-
-      //await download(imageUrl, path.dirname(path.join(__dirname, 'images_to_upload', filename+".png")), { filename: filename+".png" });
-      //await download(creativeUrl, path.dirname(path.join(__dirname, download_name)), { filename: download_name});
-
-      //await convertPngToJpg(path.join(__dirname, filename)+".png", path.join(__dirname, filename)+".jpg");
-
-      /*
-      // Create a ZIP file containing the image
-      const imageDir = path.join(__dirname, 'images_to_upload');
-      const zipFilePath = path.join(imageDir, `${filename}.zip`);
-      const output = fs.createWriteStream(zipFilePath);
-      const archive = archiver('zip', {
-        zlib: { level: 9 } // Sets the compression level
-      });
-
-      output.on('close', () => {
-        console.log(`ZIP file created: ${zipFilePath} (${archive.pointer()} total bytes)`);
-      });
-
-      archive.on('error', (err) => {
-        throw err;
-      });
-
-      archive.pipe(output);
-      archive.file(path.join(__dirname, 'images_to_upload', filename), { name: filename });
-      await archive.finalize();
-
-      console.log(`Image successfully zipped: ${zipFilePath}`);
-      */
-
-      // Prepare data to upload
-
-      const image_data = {
-        "advertiser_id": advertiser_id,
-        "file_name": filename,
-        "upload_type": "UPLOAD_BY_URL",
-        "image_url": creativeUrl // upload file directly from URL
-      }
-
-      // Upload the image to Facebook
-      const uploadResponse = await axios.post(url, image_data, {
-        headers: {
-          "Access-Token": access_token,
-          "Content-Type": "application/json"
-        }
-      });
-
-      console.log('image_id:', uploadResponse.data.image_id);
-      return {
-        image_id: uploadResponse.data.image_id,
-        fileAddr: "",
-        iname: filename
-      };
-    } catch (error) {
-      console.error('Error uploading image:', error.response ? error.response.data : error.message);
-      throw error;
-    }
+    // Use the existing function to store the file
+    await s3Service.storeImgVidInFolder(bucketName, folderName, filename, data, contentType);
+    await fs.unlink(path.join(__dirname, fileAddr));
+  } catch (error) {
+    //console.error('Error downloading or uploading file:', error);
   }
+}
 
-  async function storeAndDeleteFile(fileAddr, bucketName, folderName) {
-    try {
+async function createAd(adgroup_id, video_hashes, image_hashes, advertiser_id, accessToken, ad_name='Ad Name', identity_id, identity_type, display_name, landing_page_url, call_to_action="LEARN_MORE", music_id) {
+  const url = `${api_base}/${api_version}/ad/create/`;
 
-      const contentType = 'image/png';
-      const filename = path.basename(fileAddr);
-      const data = fs.createReadStream(path.join(__dirname, fileAddr));
+  let creatives = [];
+  let counter = 1;
 
-      // Use the existing function to store the file
-      await s3Service.storeImgVidInFolder(bucketName, folderName, filename, data, contentType);
-      await fs.unlink(path.join(__dirname, fileAddr));
-    } catch (error) {
-      //console.error('Error downloading or uploading file:', error);
+  for(const kar of video_hashes){
+    console.log(kar.video_id);
+    creatives.push(
+      {
+        "call_to_action": "CONTACT_US",
+        "ad_name": ad_name+" || "+`${counter}`,
+        "ad_text": "boilerplate testing text",
+        "ad_format": "SINGLE_VIDEO", // SINGLE_VIDEO
+        "video_id": kar.video_id,
+        "image_ids": ["ad-site-i18n-sg/202408075d0d7685584c2b6d4d199b2a"],
+        //"app_name": "digittopia", // hardcoded value?
+        "display_name": display_name, // hardcoded value?
+        //"avatar_icon_web_uri": "{{url}}", // hardcoded value?
+        "landing_page_url": landing_page_url, // hardcoded value?
+        "identity_id": identity_id,
+        "identity_type": identity_type
     }
-  }
-
-  async function createAd(adgroup_id, video_hashes, image_hashes, advertiser_id, accessToken, ad_name='Ad Name', identity_id, identity_type, display_name, landing_page_url, call_to_action="LEARN_MORE", music_id) {
-    const url = `${api_base}/${api_version}/ad/create/`;
-
-    let creatives = [];
-    let counter = 1;
-
-    for(const kar of video_hashes){
-      console.log(kar.video_id);
-      creatives.push(
-        {
-          "call_to_action": "CONTACT_US",
-          "ad_name": ad_name+" || "+`${counter}`,
-          "ad_text": "boilerplate testing text",
-          "ad_format": "SINGLE_VIDEO", // SINGLE_VIDEO
-          "video_id": kar.video_id,
-          "image_ids": ["ad-site-i18n-sg/202408075d0d7685584c2b6d4d199b2a"],
-          //"app_name": "digittopia", // hardcoded value?
-          "display_name": display_name, // hardcoded value?
-          //"avatar_icon_web_uri": "{{url}}", // hardcoded value?
-          "landing_page_url": landing_page_url, // hardcoded value?
-          "identity_id": identity_id,
-          "identity_type": identity_type
-      }
-      );
-
-      counter += 1;
-    }
-
-    if(image_hashes.length > 1){
-      const imageIds = image_hashes.map(image => image.image_id);
-
-      creatives.push(
-        {
-          "call_to_action": "CONTACT_US",
-          "ad_name": ad_name+" || "+`${counter}`,
-          "ad_text": "boilerplate testing text",
-          "ad_format": "CAROUSEL_ADS", // SINGLE_VIDEO
-          //"video_id": kar.video_id,
-          "image_ids": imageIds,
-          "music_id": music_id,
-          //"app_name": "digittopia", // hardcoded value?
-          "display_name": display_name, // hardcoded value?
-          //"avatar_icon_web_uri": "{{url}}", // hardcoded value?
-          //"landing_page_url": landing_page_url, // hardcoded value?
-          "identity_id": identity_id,
-          "identity_type": identity_type
-      }
-      );
-    } else if(image_hashes.length == 1){
-      const imageIds = image_hashes.map(image => image.image_id);
-
-      creatives.push(
-        {
-          "call_to_action": "CONTACT_US",
-          "ad_name": ad_name+" || "+`${counter}`,
-          "ad_text": "boilerplate testing text",
-          "ad_format": "SINGLE_IMAGE", // SINGLE_VIDEO
-          //"video_id": kar.video_id,
-          "image_ids": imageIds,
-          //"music_id": music_id,
-          //"app_name": "digittopia", // hardcoded value?
-          "display_name": display_name, // hardcoded value?
-          //"avatar_icon_web_uri": "{{url}}", // hardcoded value?
-          //"landing_page_url": landing_page_url, // hardcoded value?
-          "identity_id": identity_id,
-          "identity_type": identity_type
-      }
-      );
-    }
+    );
 
     counter += 1;
-
-    // Prepare form data
-    const ad_data = {
-      "advertiser_id": advertiser_id,
-      "adgroup_id": adgroup_id,
-      "creatives": creatives
-    }
-
-    try {
-      // Send the request to create the ad
-      const response = await axios.post(url, ad_data, {
-        headers: {
-          "Access-Token": accessToken,
-          "Content-Type": "application/json"
-        }
-      });
-
-      console.log('Ad ID:', response.data);
-      return response.data;
-    } catch (error) {
-      //console.error('Error creating ad:', error);
-      //throw error;
-    }
   }
 
-  async function fetchItems(cursor) {
-    try {
-      // Trigger the lambda function with the current cursor and page size
-      const result = await getReadyToLaunchBoardItems_lambda(cursor, limit, board_id); // currently this is a query in retool
+  if(image_hashes.length > 1){
+    const imageIds = image_hashes.map(image => image.image_id);
 
-      // Push the result to the results array
-      if (result && result.boards && result.boards[0] && result.boards[0].items_page && result.boards[0].items_page.items) {
-        results.push(...result.boards[0].items_page.items);
-      }
-
-      // Check if the result structure is as expected and get the new cursor
-      const newCursor = result?.boards?.[0]?.items_page?.cursor;
-
-      return newCursor;
-    } catch (error) {
-      console.log('Error fetching items:', error);
-      return null; // Stop fetching if there's an error
+    creatives.push(
+      {
+        "call_to_action": "CONTACT_US",
+        "ad_name": ad_name+" || "+`${counter}`,
+        "ad_text": "boilerplate testing text",
+        "ad_format": "CAROUSEL_ADS", // SINGLE_VIDEO
+        //"video_id": kar.video_id,
+        "image_ids": imageIds,
+        "music_id": music_id,
+        //"app_name": "digittopia", // hardcoded value?
+        "display_name": display_name, // hardcoded value?
+        //"avatar_icon_web_uri": "{{url}}", // hardcoded value?
+        //"landing_page_url": landing_page_url, // hardcoded value?
+        "identity_id": identity_id,
+        "identity_type": identity_type
     }
+    );
+  } else if(image_hashes.length == 1){
+    const imageIds = image_hashes.map(image => image.image_id);
+
+    creatives.push(
+      {
+        "call_to_action": "CONTACT_US",
+        "ad_name": ad_name+" || "+`${counter}`,
+        "ad_text": "boilerplate testing text",
+        "ad_format": "SINGLE_IMAGE", // SINGLE_VIDEO
+        //"video_id": kar.video_id,
+        "image_ids": imageIds,
+        //"music_id": music_id,
+        //"app_name": "digittopia", // hardcoded value?
+        "display_name": display_name, // hardcoded value?
+        //"avatar_icon_web_uri": "{{url}}", // hardcoded value?
+        //"landing_page_url": landing_page_url, // hardcoded value?
+        "identity_id": identity_id,
+        "identity_type": identity_type
+    }
+    );
   }
 
-  async function update_monday_status (board_id, item_id, column_id, column_value){
+  counter += 1;
 
-    const variables = {
-      board_id: board_id,
-      item_id: item_id,
-      column_id: column_id,
-      value: column_value
-    };
+  // Prepare form data
+  const ad_data = {
+    "advertiser_id": advertiser_id,
+    "adgroup_id": adgroup_id,
+    "creatives": creatives
+  }
 
-    const query = `
-      mutation ($board_id: ID!, $item_id: ID!, $column_id: String!, $value: String!) {
-        change_simple_column_value (board_id: $board_id, item_id: $item_id, column_id: $column_id, value: $value) {
-          id
-        }
-      }
-    `;
-
-    let respo;
-
-    await axios.post('https://api.monday.com/v2', {
-      query: query,
-      variables: variables
-    }, {
+  try {
+    // Send the request to create the ad
+    const response = await axios.post(url, ad_data, {
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': apiKey
+        "Access-Token": accessToken,
+        "Content-Type": "application/json"
       }
-    })
-    .then(response => {
-      console.log(response.data);
-      respo = response.data.data;
-    })
-    .catch(error => {
-      console.error(error);
     });
 
-    console.log(respo);
-    return respo;
+    console.log('Ad ID:', response.data);
+    return response.data;
+  } catch (error) {
+    //console.error('Error creating ad:', error);
+    //throw error;
   }
+}
 
-  function isEmptyObject(obj) {
-    return obj && Object.keys(obj).length === 0 && obj.constructor === Object;
+async function fetchItems(cursor) {
+  try {
+    // Trigger the lambda function with the current cursor and page size
+    const result = await getReadyToLaunchBoardItems_lambda(cursor, limit, board_id); // currently this is a query in retool
+
+    // Push the result to the results array
+    if (result && result.boards && result.boards[0] && result.boards[0].items_page && result.boards[0].items_page.items) {
+      results.push(...result.boards[0].items_page.items);
+    }
+
+    // Check if the result structure is as expected and get the new cursor
+    const newCursor = result?.boards?.[0]?.items_page?.cursor;
+
+    return newCursor;
+  } catch (error) {
+    console.log('Error fetching items:', error);
+    return null; // Stop fetching if there's an error
   }
+}
+
+async function update_monday_status (board_id, item_id, column_id, column_value){
+
+  const variables = {
+    board_id: board_id,
+    item_id: item_id,
+    column_id: column_id,
+    value: column_value
+  };
+
+  const query = `
+    mutation ($board_id: ID!, $item_id: ID!, $column_id: String!, $value: String!) {
+      change_simple_column_value (board_id: $board_id, item_id: $item_id, column_id: $column_id, value: $value) {
+        id
+      }
+    }
+  `;
+
+  let respo;
+
+  await axios.post('https://api.monday.com/v2', {
+    query: query,
+    variables: variables
+  }, {
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': apiKey
+    }
+  })
+  .then(response => {
+    console.log(response.data);
+    respo = response.data.data;
+  })
+  .catch(error => {
+    console.error(error);
+  });
+
+  console.log(respo);
+  return respo;
+}
+
+function isEmptyObject(obj) {
+  return obj && Object.keys(obj).length === 0 && obj.constructor === Object;
+}
+
+async function tiktok_launcher() {
+  // secrets
+
+  const requiredEnvVars = ['TIKTOK_API_KEY', 'MONDAY_API_KEY', 'MONDAY_BOARD_ID'];
+  for(const varName of requiredEnvVars){
+
+    if(!EnvironmentVariablesManager.getEnvVariable(varName)){
+      TiktokLogger.error(`Environment variable ${varName} is missing.`);
+      throw new Error(`Environment variable ${varName} is missing.`);
+    }
+  }
+  TiktokLogger.info(`All variables are set.`);
+
+  // constants and variables
+  let cursor = null;
+  const fail_limit = 4;
+  const current_date = new Date();
+  const formattedCurrentDate = `${current_date.getFullYear()}-${String(current_date.getMonth() + 1).padStart(2, '0')}-${String(current_date.getDate()).padStart(2, '0')}`;
+
+
+  /*
+  async function run() {
+    const campaignId = await createCampaign();
+    const adSetId = await createAdSet(campaignId);
+    const imageHash = await uploadImage();
+    const videoId = await uploadVideo();
+    const creativeId = await createImageAdCreative(imageHash);
+    // or for video: const creativeId = await createVideoAdCreative(videoId);
+    await createAd(adSetId, creativeId);
+  }
+  */
 
   // Function to trigger status update
   const updateStatus = async (item_id, column_id, column_value) => {
@@ -1502,7 +1515,7 @@ async function tiktok_launcher() {
       );
     }
     */
-
+    console.log(`Tiktok campaign: ${JSON.stringify(result)}`);
     if (result && result.campaign_id) {
       createCampaignObject.row.launched_campaign_id = result.campaign_id;
       createCampaignObject.launched_campaign_id = result.campaign_id;
@@ -1517,14 +1530,13 @@ async function tiktok_launcher() {
         createdCampaigns.push(payload);
       }
     } else {
-      await updateStatus(item_id, 'text46__1', 'Error creating Facebook campaign.');
-      console.log("skiobidi");
-      console.log(result);
+      await updateStatus(item_id, 'text46__1', 'Error creating Tiktok campaign.');
+      await updateStatus(item_id, 'status62__1', 'Launch Fail');
       if(result.message != "OK"){
         await updateStatus(item_id, 'text07__1', result.message);
       }
       await updateStatus(item_id, 'text68__1', `${JSON.stringify(result)}`);
-      throw new Error('Error creating Facebook campaign.');
+      throw new Error('Error creating Tiktok campaign.');
     }
 
   }
@@ -1604,6 +1616,7 @@ async function tiktok_launcher() {
       await updateStatus(item_id_c, 'text1__1', adset_reponse.adgroup_id ? adset_reponse.adgroup_id : ''); // launched ad group id
     } else {
       await updateStatus(item_id_c, 'text46__1', 'Error creating Tiktok ad group.');
+      await updateStatus(item_id, 'status62__1', 'Launch Fail');
       if(adset_reponse.message != "OK"){
         await updateStatus(item_id_c, 'text07__1', adset_reponse.message);
       }
@@ -1632,7 +1645,7 @@ async function tiktok_launcher() {
       console.log(`URLs: ${urls}`)
       for(const image_url of urls){
         // upload creative
-        const seg = extractSegment(image_url);
+        const seg = extractSegment(image_url);item_id
         const item_id = getNumberFromSegment(seg);
         //console.log(item_id);
         const public_url = await getPublicUrls(item_id);
@@ -1724,9 +1737,10 @@ async function tiktok_launcher() {
     if(ad_id && ad_id.data && ad_id.data.ad_ids){
       createdCamp.row.launched_ad_ids = ad_id.data.ad_ids.join(', ');
       await updateStatus(item_id_c, 'text20__1', ad_id.data.ad_ids.join(', ')); // launched ad group id
-      await updateStatus(item_id, 'status62__1', 'launched');
+      await updateStatus(item_id_c, 'status62__1', 'launched');
     } else {
       await updateStatus(item_id_c, 'text46__1', 'Error creating Tiktok ad.');
+
       if(ad_id.message != "OK"){
         await updateStatus(item_id_c, 'text07__1', ad_id.message);
       }
@@ -1735,14 +1749,14 @@ async function tiktok_launcher() {
       let fail_current = 1;
       if(createdCamp.row.fail_counter){
         if(createdCamp.row.fail_counter == fail_limit){
-          await updateStatus(item_id, 'status62__1', 'Resort to manual launch');
+          await updateStatus(item_id_c, 'status62__1', 'Resort to manual launch');
           throw new Error("Could not create tiktok ad and fail limit has been reached.");
         }
         fail_current = parseInt(createdCamp.row.fail_counter) + 1;
       }
-      await updateStatus(item_id, 'text49__1', `${fail_current}`);
+      await updateStatus(item_id_c, 'text49__1', `${fail_current}`);
       // --------------------
-      await updateStatus(item_id, 'status62__1', 'Launch Fail');
+      await updateStatus(item_id_c, 'status62__1', 'Launch Fail');
       throw new Error("Could not create tiktok ad.");
     }
 
