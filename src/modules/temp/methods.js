@@ -661,7 +661,7 @@ class TemporaryController {
   async fetchMediaBuyerAdAccounts(req, res) {
 
     try {
-      const fields = ['ad_accounts.name', 'ad_accounts.provider'];
+      const fields = ['ad_accounts.name', 'ad_accounts.provider', 'ad_accounts.provider_id'];
       const filters = { "map.u_id": req.user.id };
       const limit = null;
       const joins = [
@@ -730,7 +730,7 @@ class TemporaryController {
 
   async fetchMediaBuyerNetworkCampaigns(req, res) {
     try {
-      const fields = ['network_campaigns.name', 'network_campaigns.network'];
+      const fields = ['network_campaigns.id', 'network_campaigns.name', 'network_campaigns.network'];
       const filters = { "map.user_id": req.user.id };
       const limit = null;
       const joins = [
