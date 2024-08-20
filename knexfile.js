@@ -65,20 +65,21 @@ module.exports = {
   },
   development: {
     client: 'pg',
-    connection: process.env.DATABASE_URL_LOCAL,
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
     pool: {
-      min: 2,
-      max: 20,
+      min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
+      max: 7,
+      acquireTimeoutMillis: 120000,
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: './migrations/development', // Updated to match environment
+      directory: './migrations/production',
     },
     seeds: {
       directory: './seeds',
     },
     useNullAsDefault: true,
-    ssl: false,
+    ssl: { rejectUnauthorized: false },
   },
   oldproduction: {
     client: 'pg',
