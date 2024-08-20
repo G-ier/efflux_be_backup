@@ -27,7 +27,9 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
 
       MAX(analytics.adset_name) as adset_name,
       0 as nw_uniq_conversions,
-      ${buildSelectionColumns("analytics.", calculateSpendRevenue=true)}
+      ${buildSelectionColumns("analytics.", calculateSpendRevenue=true)},
+      analytics.ad_account_name,
+      analytics.domain_name
     FROM
       analytics
     ${
