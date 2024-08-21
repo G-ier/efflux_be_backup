@@ -71,7 +71,7 @@
     "sqlite3": "^5.1.7",
     "ua-parser-js": "^0.7.28",
     "uniqid": "^5.4.0",
-    "uuid": "^9.0.1",
+    "uuid": "^10.0.0",
     "winston": "^3.13",
     "winston-cloudwatch": "^6.2",
     "xml2js": "^0.6"
