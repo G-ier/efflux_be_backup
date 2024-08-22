@@ -286,7 +286,7 @@ Resources:
       Port: "443"
       Protocol: HTTPS
       Certificates:
-        - CertificateArn: arn:aws:acm:us-east-1:524744845066:certificate/3b81d94e-8a66-41ee-a9c7-8a5e80efe6d3 # SSL certificate ARN
+        - CertificateArn: arn:aws:acm:us-east-1:033156084586:certificate/37bf88c5-2adb-46fc-8ac2-efcb3f3ad6ad # SSL certificate ARN
 
   ALBHttpsListenerRule:
     Type: AWS::ElasticLoadBalancingV2::ListenerRule
