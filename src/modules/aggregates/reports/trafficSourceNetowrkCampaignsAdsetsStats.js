@@ -28,8 +28,8 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       MAX(analytics.adset_name) as adset_name,
       0 as nw_uniq_conversions,
       ${buildSelectionColumns("analytics.", calculateSpendRevenue=true)},
-      analytics.ad_account_name as ad_account_name,
-      analytics.domain_name as domain_name
+      MAX(analytics.ad_account_name) as ad_account_name,
+      MAX(analytics.domain_name) as domain_name
     FROM
       analytics
     ${
@@ -83,11 +83,12 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
         MAX(ad.campaign_name) as campaign_name,
       `
       :`MAX(ad.nw_campaign_name) as campaign_name,`
-    },
-    ad.ad_account_name as ad_account_name,
-    ad. as domain_name
+    }
+    MAX(ad.ad_account_name) as ad_account_name,
 
-    ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as adsets
+    ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as adsets,
+
+    MAX(ad.domain_name) as domain_name
 
     FROM
       adset_data ad

@@ -65,7 +65,7 @@ module.exports = {
   },
   development: {
     client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
+    connection: process.env.DATABASE_URL_LOCAL,
     pool: {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 7,
