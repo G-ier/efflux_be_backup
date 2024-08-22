@@ -171,6 +171,14 @@ class AggregatesService {
       await this.updateAggregates(network, 'tiktok', startDate, endDate, campaignIdsRestriction);
     }
   }
+
+  async getNetworkCampaigns(network, mediaBuyerId) {
+    return await this.aggregatesRepository.networkCampaignGrouping(network, mediaBuyerId);
+  }
+
+  async getAdAccountsSpend(network, mediaBuyerId) {
+    return await this.aggregatesRepository.adAccountsGrouping(network, mediaBuyerId);
+  }
 }
 
 module.exports = AggregatesService;

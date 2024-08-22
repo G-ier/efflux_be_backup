@@ -197,6 +197,28 @@ class AggregatesController {
       return res.status(500).json({ error: e.message });
     }
   }
+
+  async networkCampaigns(req, res) {
+    try {
+      const { network, mediaBuyerId } = req.query;
+      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyerId);
+      return res.json(data);
+    } catch (e) {
+      console.log(e);
+      return res.status(500).json({ error: e.message });
+    }
+  }
+
+  async adAccountsSpend(req, res) {
+    try {
+      const { network, mediaBuyerId } = req.query;
+      const data = await this.aggregatesService.getAdAccountsSpend(network, mediaBuyerId);
+      return res.json(data);
+    } catch (e) {
+      console.log(e);
+      return res.status(500).json({ error: e.message });
+    }
+  }
 }
 
 module.exports = AggregatesController;

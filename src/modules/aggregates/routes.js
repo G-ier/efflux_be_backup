@@ -41,6 +41,14 @@ route.get('/sync-data', async (req, res) =>
 
 route.get('/refresh-sheet', async (req, res) =>  {
   await revealBotSheetController.refreshSheet(req, res)
-})
+});
+
+route.get('/network-campaigns-revenue-view', async (req, res) =>  {
+  await aggregatesController.networkCampaigns(req, res);
+});
+
+route.get('/ad-accounts-spend-view', async (req, res) =>  {
+  await aggregatesController.adAccountsSpend(req, res);
+});
 
 module.exports = route;
