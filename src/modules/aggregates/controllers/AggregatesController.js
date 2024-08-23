@@ -201,7 +201,7 @@ class AggregatesController {
   async networkCampaigns(req, res) {
     try {
       const { network, mediaBuyerId } = req.query;
-      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyerId);
+      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyerId, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -211,8 +211,11 @@ class AggregatesController {
 
   async adAccountsSpend(req, res) {
     try {
-      const { network, mediaBuyerId } = req.query;
-      const data = await this.aggregatesService.getAdAccountsSpend(network, mediaBuyerId);
+      const { trafficSource, mediaBuyerId, startDate, endDate } = req.query;
+      if (!trafficSource || !mediaBuyerId || !startDate || !endDate) {
+        return res.status(400).send({ error: "Missing required query parameters" });
+      }
+      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyerId, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);

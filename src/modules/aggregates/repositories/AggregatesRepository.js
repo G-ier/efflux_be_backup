@@ -15,7 +15,6 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
 const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
 const { cleanData, formatDateToISO } = require('../utils');
-const { buildConditionsInsights, buildSelectionColumns, castSum } = require("./utils");
 
 class AggregatesRepository {
 
@@ -217,102 +216,98 @@ class AggregatesRepository {
     return row;
   }
 
-  networkCampaignGroupingQueryMaker(table, network, mediaBuyerId){
+  networkCampaignGroupingQueryMaker(network, mediaBuyerId, startDate, endDate){
+
+    // Missing media buyer correlation
 
     const query = `
-      WITH daily_data AS (
-        SELECT
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') AS timeframe,
-          'TS: ' || traffic_source || ' - ' || 'NW: ' || network AS adset_name,
-          ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
-        FROM
-          analytics
-        WHERE
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-          AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
-          ${mediaBuyerCondition}
-          ${adAccountCondition}
-        GROUP BY
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), traffic_source, network
-        ORDER BY
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')
-      )
       SELECT
-          TO_CHAR(DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), 'YYYY-MM-DD') AS adset_name,
-          ${buildSelectionColumns(prefix="dd.", calculateSpendRevenue=true)},
-          json_agg(dd.*) AS adsets
+        MAX(network) AS network,
+        network_campaign_id,
+        MAX(network_campaign_name) AS network_campaign_name,
+        SUM(landings) AS total_landings,
+        SUM(keyword_clicks) AS total_keyword_clicks,
+        SUM(conversions) AS total_conversions,
+        SUM(revenue) AS total_revenue,
+        CASE
+            WHEN COUNT(DISTINCT final) = 1 AND MAX(final) IS NOT NULL THEN MAX(final)
+            ELSE not_final
+        END AS final,
+        MAX(account) AS account
       FROM
-          daily_data dd
+        revenue
+      WHERE
+        occurred_at >= ${startDate}
+        AND occurred_at <= ${endDate}
+        AND network=${network}
       GROUP BY
-          DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles');
+        network_campaign_id;
+      `
+
+    return query;
+
+  }
+
+  adAccountsGroupingQueryMaker(trafficSource, mediaBuyerId, startDate, endDate){
+
+    // Missing media buyer correlation
+
+    const query = `
+      SELECT
+        ad_account_id,
+        ad_account_name,
+        traffic_source,
+        SUM(spend) AS total_spend,
+        SUM(spend_plus_fee) AS total_spend_plus_fee,
+        SUM(impressions) AS total_impressions,
+        SUM(clicks) AS total_clicks,
+        SUM(link_clicks) AS total_link_clicks,
+        SUM(ts_conversions) AS total_ts_conversions
+      FROM
+        spend
+      WHERE
+        occurred_at >= ${startDate}
+        AND occurred_at <= ${endDate}
+        AND traffic_source=${trafficSource}
+      GROUP BY
+        ad_account_id, ad_account_name, traffic_source;
+
     `;
 
     return query;
 
   }
 
-  adAccountsGroupingQueryMaker(table, network, mediaBuyerId){
-
-    const query = `
-      WITH daily_data AS (
-        SELECT
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') AS timeframe,
-          'TS: ' || traffic_source || ' - ' || 'NW: ' || network AS adset_name,
-          ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
-        FROM
-          analytics
-        WHERE
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-          AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
-          ${mediaBuyerCondition}
-          ${adAccountCondition}
-        GROUP BY
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), traffic_source, network
-        ORDER BY
-          DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')
-      )
-      SELECT
-          TO_CHAR(DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), 'YYYY-MM-DD') AS adset_name,
-          ${buildSelectionColumns(prefix="dd.", calculateSpendRevenue=true)},
-          json_agg(dd.*) AS adsets
-      FROM
-          daily_data dd
-      GROUP BY
-          DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles');
-    `;
-
-    return query;
-
-  }
-
-  async networkCampaignGrouping(network, mediaBuyerId){
+  async networkCampaignGrouping(network, mediaBuyerId, startDate, endDate){
 
     // Create query
 
-    const query = networkCampaignGroupingQueryMaker(
-      "revenue",
+    const query = this.networkCampaignGroupingQueryMaker(
       network,
-      mediaBuyerId
+      mediaBuyerId,
+      startDate,
+      endDate
     );
 
     // Pass query and get values
-    const { rows } = await database.raw(query);
+    const { rows } = await this.database.raw(query);
     return rows;
 
   }
 
-  async adAccountsGrouping(network, mediaBuyerId){
+  async adAccountsGrouping(trafficSource, mediaBuyerId, startDate, endDate){
 
     // Create query
 
-    const query = adAccountsGroupingQueryMaker(
-      "spend",
-      network,
-      mediaBuyerId
+    const query = this.adAccountsGroupingQueryMaker(
+      trafficSource,
+      mediaBuyerId,
+      startDate,
+      endDate
     );
 
     // Pass query and get values
-    const { rows } = await database.raw(query);
+    const { rows } = await this.database.raw(query);
     return rows;
 
   }

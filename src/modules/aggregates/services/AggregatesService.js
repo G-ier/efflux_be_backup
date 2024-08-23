@@ -173,11 +173,11 @@ class AggregatesService {
   }
 
   async getNetworkCampaigns(network, mediaBuyerId) {
-    return await this.aggregatesRepository.networkCampaignGrouping(network, mediaBuyerId);
+    return await this.aggregatesRepository.networkCampaignGrouping(network, mediaBuyerId, startDate, endDate);
   }
 
-  async getAdAccountsSpend(network, mediaBuyerId) {
-    return await this.aggregatesRepository.adAccountsGrouping(network, mediaBuyerId);
+  async getAdAccountsSpend(trafficSource, mediaBuyerId, startDate, endDate) {
+    return await this.aggregatesRepository.adAccountsGrouping(trafficSource, mediaBuyerId, startDate, endDate);
   }
 }
 
