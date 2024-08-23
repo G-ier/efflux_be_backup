@@ -48,7 +48,7 @@ module.exports = {
   },
   staging: {
     client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING'),
     pool: {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 4,
