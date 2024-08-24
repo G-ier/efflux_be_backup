@@ -3,6 +3,7 @@ const Adset = require('../entities/Adset');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 
 class AdsetsRepository {
+
   constructor(database) {
     this.tableName = 'adsets';
     this.database = database || new DatabaseRepository();

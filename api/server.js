@@ -48,9 +48,6 @@ const initializeAPI = async () => {
   configureMiddleware(server);
 
   ServerLogger.info('Server initialized');
-  ServerLogger.info('Database Url being used');
-  ServerLogger.info('DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'));
-  ServerLogger.info('DATABASE_URL: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'));
 
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;

@@ -10,6 +10,7 @@ const PixelService = require("./PixelsService")
 const EventsApiService = require("./EventsApiService")
 const { TiktokLogger, CapiLogger } = require("../../../shared/lib/WinstonLogger");
 const detectCrossroadsPurchaseEvents = require("../../../shared/reports/detectCrossroadsPurchaseEvents")
+const { validateInput } = require("../helpers");
 
 class CompositeService {
 
@@ -55,13 +56,13 @@ class CompositeService {
     let result;
     try {
       const whereClause = {
-        [`${config.tableName}.${config.tableName === "campaigns" ? "id" : config.tableName === 'tt_pixels' ? "code" : "provider_id"}`]: entityId,
+        [`${config.tableName}.${config.tableName === "campaigns" || config.tableName === "ad_accounts" ? "id" : config.tableName === 'tt_pixels' ? "code" : "provider_id"}`]: entityId,
       };
-      result = await config.service(["ua.name", "ua.token"], whereClause, 1, [
+      const joins = [
         {
           type: "inner",
           table: "aa_prioritized_ua_map AS map",
-          first: `${config.tableName}.ad_account_id`,
+          first: `${config.tableName}.${config.tableName !== 'ad_accounts' ? 'ad_account_id' : 'id' }`,
           operator: "=",
           second: "map.aa_id",
         },
@@ -71,8 +72,9 @@ class CompositeService {
           first: `map.ua_id`,
           operator: "=",
           second: "ua.id",
-        },
-      ]);
+        }
+      ];
+      result = await config.service(["ua.name", "ua.token"], whereClause, 1, joins);
     } catch (e) {
       console.log(e);
       await sendSlackNotification(`Error fetching account for entity ${entityType} with id ${entityId}`);
@@ -186,34 +188,53 @@ class CompositeService {
   }
 
   async updateEntity({ type, entityId, dailyBudget, status }) {
+
+    console.log({ type, entityId, dailyBudget, status});
+
     try {
-        this.logger.info(`Starting update for entity of type ${type} with ID: ${entityId}`);
+        const { name: userName, token } = await this.fetchEntitiesOwnerAccount(type, entityId);
+        console.log("Fetched Token for account", userName);
 
-        const { token } = await this.fetchEntitiesOwnerAccount(type, entityId);
-        this.logger.debug('Fetched user accounts information');
+        validateInput({ type, token, status });
 
-        let service;
-        let ad_account_id;
-
-        if (type === 'adset' || type === 'campaign') {
-          service = type === 'adset' ? this.adsetService : this.campaignService;
-          const fetchMethod = type === 'adset' ? 'fetchAdsetsFromDatabase' : 'fetchCampaignsFromDatabase';
-          ad_account_id = await service[fetchMethod](["ad_account_id"], {id: entityId});
-        } else {
-            throw new Error('Invalid type specified');
+        const entitiesConfig = {
+            adset: {
+              tableName: "adsets",
+              service: this.adsetService,
+              fetch: this.adsetService.fetchAdsetsFromDatabase.bind(this.adsetService),
+            },
+            campaign: {
+              tableName: "campaigns",
+              service: this.campaignService,
+              fetch: this.campaignService.fetchCampaignsFromDatabase.bind(this.campaignService),
+            },
         }
-        this.logger.debug(`Determined service and fetched ad account ID for entity ID ${entityId}`);
 
-        const { provider_id } = await this.adAccountService.fetchAdAccountDetails(ad_account_id[0].ad_account_id);
+        const config = entitiesConfig[type];
+        const fields = [`${config.tableName}.name`, `aa.provider_id`];
+        const filter = {};
+        filter[`${config.tableName}.id`] = entityId;
+        const joins = [
+          {
+            type: "inner",
+            table: "ad_accounts AS aa",
+            first: "aa.id",
+            operator: "=",
+            second: `${config.tableName}.ad_account_id`,
+          }
+        ]
+        const adAccount = await config.fetch(fields, filter, 1, joins);
+        const { name: entityName, provider_id } = adAccount[0];
+
         const updateResponse = await this.updateServiceEntity({
-            service,
+            service: config.service,
             entityId,
             dailyBudget,
             status,
             type,
             advertiser_id: provider_id,
             token,
-            entityName: ad_account_id[0].name
+            entityName: entityName
         });
         const { statusResponse, budgetResponse } = updateResponse.tikTokResponse;
 
