@@ -215,6 +215,105 @@ class AggregatesRepository {
     delete row.ad_account_name;
     return row;
   }
+
+  networkCampaignGroupingQueryMaker(network, mediaBuyerId, startDate, endDate){
+
+    // Missing media buyer correlation
+
+    const query = `
+
+      SELECT
+        MAX(network) AS network,
+        network_campaign_id,
+        MAX(network_campaign_name) AS network_campaign_name,
+        SUM(landings) AS total_landings,
+        SUM(keyword_clicks) AS total_keyword_clicks,
+        SUM(conversions) AS total_conversions,
+        SUM(revenue) AS total_revenue,
+        CASE
+            WHEN COUNT(DISTINCT final) = 1 AND MAX(final) IS NOT NULL THEN MAX(final)
+            ELSE not_final
+        END AS final,
+        MAX(account) AS account
+      FROM
+        revenue
+      WHERE
+        occurred_at >= ${startDate}
+        AND occurred_at <= ${endDate}
+        AND network=${network}
+      GROUP BY
+        network_campaign_id;
+      `
+
+    return query;
+
+  }
+
+  adAccountsGroupingQueryMaker(trafficSource, mediaBuyerId, startDate, endDate){
+
+    const query = `
+        SELECT
+            s.ad_account_id,
+            s.ad_account_name,
+            s.traffic_source,
+            SUM(s.spend) AS total_spend,
+            SUM(s.spend_plus_fee) AS total_spend_plus_fee,
+            SUM(s.impressions) AS total_impressions,
+            SUM(s.clicks) AS total_clicks,
+            SUM(s.link_clicks) AS total_link_clicks,
+            SUM(s.ts_conversions) AS total_ts_conversions,
+            adc.id AS adc_id,
+            adc.provider_id AS provider_id
+        FROM
+            spend s
+        JOIN
+            ad_accounts adc ON s.ad_account_id::text = adc.provider_id
+        JOIN
+            u_aa_map uam ON adc.id = uam.aa_id
+        WHERE
+            s.traffic_source='facebook'
+            AND DATE(s.occurred_at) = '2024-08-22'
+        GROUP BY
+            s.ad_account_id, s.ad_account_name, s.traffic_source, adc_id, provider_id;
+    `;
+
+    return query;
+
+  }
+
+  async networkCampaignGrouping(network, mediaBuyerId, startDate, endDate){
+
+    // Create query
+
+    const query = this.networkCampaignGroupingQueryMaker(
+      network,
+      mediaBuyerId,
+      startDate,
+      endDate
+    );
+
+    // Pass query and get values
+    const { rows } = await this.database.raw(query);
+    return rows;
+
+  }
+
+  async adAccountsGrouping(trafficSource, mediaBuyerId, startDate, endDate){
+
+    // Create query
+    const query = this.adAccountsGroupingQueryMaker(
+      trafficSource,
+      mediaBuyerId,
+      startDate,
+      endDate
+    );
+
+    // Pass query and get values
+    const { rows } = await this.database.raw(query);
+    return rows;
+
+  }
+
 }
 
 module.exports = AggregatesRepository;
