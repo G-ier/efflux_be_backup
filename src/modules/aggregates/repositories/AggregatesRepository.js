@@ -221,6 +221,7 @@ class AggregatesRepository {
     // Missing media buyer correlation
 
     const query = `
+
       SELECT
         MAX(network) AS network,
         network_campaign_id,
@@ -252,26 +253,82 @@ class AggregatesRepository {
 
     // Missing media buyer correlation
 
+    /*
     const query = `
+      WITH cet_ids AS(
+        SELECT
+            s.ad_account_id,
+            s.ad_account_name,
+            s.traffic_source,
+            SUM(s.spend) AS total_spend,
+            SUM(s.spend_plus_fee) AS total_spend_plus_fee,
+            SUM(s.impressions) AS total_impressions,
+            SUM(s.clicks) AS total_clicks,
+            SUM(s.link_clicks) AS total_link_clicks,
+            SUM(s.ts_conversions) AS total_ts_conversions,
+            adc.id AS adc_id,
+            adc.provider_id AS provider_id
+        FROM
+            spend s
+        JOIN
+            ad_accounts adc ON s.ad_account_id::text = adc.provider_id
+        GROUP BY
+            s.ad_account_id, s.ad_account_name, s.traffic_source, adc_id, provider_id
+      )
+      WITH u_aa_ids AS(
+        SELECT
+            u.id,
+            u.u_id,
+            u.aa_id
+        FROM
+            u_aa_map u;
+      )
       SELECT
-        ad_account_id,
-        ad_account_name,
-        traffic_source,
-        SUM(spend) AS total_spend,
-        SUM(spend_plus_fee) AS total_spend_plus_fee,
-        SUM(impressions) AS total_impressions,
-        SUM(clicks) AS total_clicks,
-        SUM(link_clicks) AS total_link_clicks,
-        SUM(ts_conversions) AS total_ts_conversions
+          ci.*
       FROM
-        spend
+          cet_ids ci
+      JOIN
+          u_aa_ids u_ids ON ci.adc_id::bigint = u_ids.aa_id
       WHERE
-        occurred_at >= ${startDate}
-        AND occurred_at <= ${endDate}
-        AND traffic_source=${trafficSource}
-      GROUP BY
-        ad_account_id, ad_account_name, traffic_source;
+          u_ids.u_id='3';
 
+    `;
+    */
+
+    const query = `
+    WITH cet_ids AS(
+        SELECT
+            s.ad_account_id,
+            s.ad_account_name,
+            s.traffic_source,
+            SUM(s.spend) AS total_spend,
+            SUM(s.spend_plus_fee) AS total_spend_plus_fee,
+            SUM(s.impressions) AS total_impressions,
+            SUM(s.clicks) AS total_clicks,
+            SUM(s.link_clicks) AS total_link_clicks,
+            SUM(s.ts_conversions) AS total_ts_conversions,
+            adc.id AS adc_id,
+            adc.provider_id AS provider_id
+        FROM
+            spend s
+        JOIN
+            ad_accounts adc ON s.ad_account_id::text = adc.provider_id
+        WHERE
+            s.traffic_source=${trafficSource}
+            AND s.occurred_at > ${startDate}
+            AND s.occurred_at <= ${endDate}
+        GROUP BY
+            s.ad_account_id, s.ad_account_name, s.traffic_source, adc_id, provider_id
+      )
+      SELECT
+          ci.*,
+          uam.u_id AS user_id
+      FROM
+          cet_ids ci
+      JOIN
+          u_aa_map uam ON ci.adc_id::bigint = uam.aa_id
+      WHERE
+          uam.u_id=${mediaBuyerId};
     `;
 
     return query;
