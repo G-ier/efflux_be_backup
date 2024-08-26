@@ -252,7 +252,7 @@ class AggregatesRepository {
 
   }
 
-  adAccountsGroupingQueryMaker(trafficSource, mediaBuyerId, startDate, endDate){
+  adAccountsGroupingQueryMaker(trafficSource, mediaBuyer, startDate, endDate){
 
     const query = `
         SELECT
@@ -277,14 +277,14 @@ class AggregatesRepository {
             s.traffic_source='${trafficSource}'
             AND DATE(s.occurred_at) > '${startDate}'
             AND DATE(s.occurred_at) <= '${endDate}'
-            AND (${mediaBuyerId} IS NULL OR uam.u_id = ${mediaBuyerId})
+            ${mediaBuyer !== "admin" && mediaBuyer ? `AND uam.u_id = ${mediaBuyer}` : ""}
         GROUP BY
             s.ad_account_id, s.ad_account_name, s.traffic_source, adc_id, provider_id;
     `;
 
     return query;
-
   }
+
   async networkCampaignGrouping(network, mediaBuyerId, startDate, endDate){
 
     // Create query
@@ -302,12 +302,13 @@ class AggregatesRepository {
 
   }
 
-  async adAccountsGrouping(trafficSource, mediaBuyerId, startDate, endDate){
+  async adAccountsGrouping(params){
+    const { trafficSource, mediaBuyer, startDate, endDate } = params;
 
     // Create query
     const query = this.adAccountsGroupingQueryMaker(
       trafficSource,
-      mediaBuyerId,
+      mediaBuyer,
       startDate,
       endDate
     );

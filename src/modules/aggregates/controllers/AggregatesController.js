@@ -211,11 +211,8 @@ class AggregatesController {
 
   async adAccountsSpend(req, res) {
     try {
-      const { trafficSource, mediaBuyerId, startDate, endDate } = req.query;
-      if (!trafficSource || !mediaBuyerId || !startDate || !endDate) {
-        return res.status(400).send({ error: "Missing required query parameters" });
-      }
-      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyerId, startDate, endDate);
+      const { startDate, endDate, mediaBuyer, trafficSource } = await this.extractRequestDataWithUser(req);
+      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyer, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);

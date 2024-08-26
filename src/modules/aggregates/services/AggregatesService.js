@@ -177,7 +177,10 @@ class AggregatesService {
   }
 
   async getAdAccountsSpend(trafficSource, mediaBuyerId, startDate, endDate) {
-    return await this.aggregatesRepository.adAccountsGrouping(trafficSource, mediaBuyerId, startDate, endDate);
+    return await this.paramConvertWrapper(
+      (...args) => this.aggregatesRepository.adAccountsGrouping(...args),
+      { trafficSource, mediaBuyer: mediaBuyerId, startDate, endDate },
+    );
   }
 }
 
