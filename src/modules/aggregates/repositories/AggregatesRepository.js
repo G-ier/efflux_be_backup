@@ -223,26 +223,29 @@ class AggregatesRepository {
     const query = `
 
       SELECT
-        MAX(network) AS network,
-        network_campaign_id,
-        MAX(network_campaign_name) AS network_campaign_name,
-        SUM(landings) AS total_landings,
-        SUM(keyword_clicks) AS total_keyword_clicks,
-        SUM(conversions) AS total_conversions,
-        SUM(revenue) AS total_revenue,
+        MAX(r.network) AS network,
+        r.network_campaign_id AS network_campaign_id,
+        MAX(r.network_campaign_name) AS network_campaign_name,
+        SUM(r.landings) AS total_landings,
+        SUM(r.keyword_clicks) AS total_keyword_clicks,
+        SUM(r.conversions) AS total_conversions,
+        SUM(r.revenue) AS total_revenue,
         CASE
             WHEN COUNT(DISTINCT final) = 1 AND MAX(final) IS NOT NULL THEN MAX(final)
-            ELSE not_final
+            ELSE 'not_final'
         END AS final,
-        MAX(account) AS account
+        MAX(r.account) AS account
       FROM
-        revenue
+        revenue r
+      JOIN
+        network_campaigns_user_relations ncur ON r.network_campaign_id = ncur.network_campaign_id
       WHERE
-        occurred_at >= ${startDate}
-        AND occurred_at <= ${endDate}
-        AND network=${network}
+        r.occurred_at::date > '${startDate}'
+        AND r.occurred_at::date <= '${endDate}'
+        AND r.network='${network}'
+        AND (${mediaBuyerId} IS NULL OR ncur.user_id = ${mediaBuyerId})
       GROUP BY
-        network_campaign_id;
+        r.network_campaign_id;
       `
 
     return query;
@@ -271,8 +274,10 @@ class AggregatesRepository {
         JOIN
             u_aa_map uam ON adc.id = uam.aa_id
         WHERE
-            s.traffic_source='facebook'
-            AND DATE(s.occurred_at) = '2024-08-22'
+            s.traffic_source='${trafficSource}'
+            AND DATE(s.occurred_at) > '${startDate}'
+            AND DATE(s.occurred_at) <= '${endDate}'
+            AND (${mediaBuyerId} IS NULL OR uam.u_id = ${mediaBuyerId})
         GROUP BY
             s.ad_account_id, s.ad_account_name, s.traffic_source, adc_id, provider_id;
     `;
@@ -280,7 +285,6 @@ class AggregatesRepository {
     return query;
 
   }
-
   async networkCampaignGrouping(network, mediaBuyerId, startDate, endDate){
 
     // Create query
