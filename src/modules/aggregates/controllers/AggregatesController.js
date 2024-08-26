@@ -200,8 +200,8 @@ class AggregatesController {
 
   async networkCampaigns(req, res) {
     try {
-      const { network, mediaBuyerId, startDate, endDate } = req.query;
-      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyerId, startDate, endDate);
+      const { startDate, endDate, mediaBuyer, network } = await this.extractRequestDataWithUser(req);
+      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyer, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);

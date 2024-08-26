@@ -11,6 +11,8 @@ const trafficSourceNetworkCampaignsStats = require('../reports/trafficSourceNetw
 const trafficSourceNetworkDaily = require('../reports/trafficSourceNetworkDaily');
 const trafficSourceNetworkHourly = require('../reports/trafficSourceNetworkHourly');
 const compileAggregates = require('../reports/compileAggregates');
+const networkCampaignData = require('../reports/networkCampaignsView');
+const adAccountData = require('../reports/adAccountView');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
 const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
@@ -216,118 +218,30 @@ class AggregatesRepository {
     return row;
   }
 
-  networkCampaignGroupingQueryMaker(network, mediaBuyerId, startDate, endDate){
+  async networkCampaignGrouping(params){
 
-    // Missing media buyer correlation
+    const { network, mediaBuyer, startDate, endDate } = params;
 
-    const query = `
-
-      SELECT
-        MAX(r.network) AS network,
-        r.network_campaign_id AS network_campaign_id,
-        MAX(r.network_campaign_name) AS network_campaign_name,
-        SUM(r.landings) AS total_landings,
-        SUM(r.keyword_clicks) AS total_keyword_clicks,
-        SUM(r.conversions) AS total_conversions,
-        SUM(r.revenue) AS total_revenue,
-        CASE
-            WHEN COUNT(DISTINCT final) = 1 AND MAX(final) IS NOT NULL THEN MAX(final)
-            ELSE 'not_final'
-        END AS final,
-        MAX(r.account) AS account
-      FROM
-        revenue r
-      JOIN
-        network_campaigns_user_relations ncur ON r.network_campaign_id = ncur.network_campaign_id
-      WHERE
-        r.occurred_at::date > '${startDate}'
-        AND r.occurred_at::date <= '${endDate}'
-        AND r.network='${network}'
-        AND (${mediaBuyerId} IS NULL OR ncur.user_id = ${mediaBuyerId})
-      GROUP BY
-        r.network_campaign_id;
-      `
-
-    return query;
-
-  }
-
-  adAccountsGroupingQueryMaker(trafficSource, mediaBuyer, startDate, endDate) {
-    console.log('In adAccountsGroupingQueryMaker', trafficSource, mediaBuyer, startDate, endDate);
-
-    const query = `
-      WITH spend_aggregated AS (
-        SELECT
-          s.ad_account_id,
-          s.ad_account_name,
-          s.traffic_source,
-          CAST(SUM(s.spend) AS FLOAT) as spend,
-          CAST(SUM(s.spend_plus_fee) AS FLOAT) as spend_plus_fee,
-          CAST(SUM(s.impressions) AS INTEGER) as impressions,
-          CAST(SUM(s.link_clicks) AS INTEGER) as link_clicks,
-          CAST(SUM(s.ts_conversions) AS INTEGER) as ts_conversions
-        FROM
-          spend s
-        WHERE
-          DATE(s.occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-          AND DATE(s.occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
-        GROUP BY
-          s.ad_account_id, s.ad_account_name, s.traffic_source
-      )
-      SELECT DISTINCT
-        sa.ad_account_id,
-        sa.ad_account_name as name,
-        sa.traffic_source,
-        sa.spend,
-        sa.spend_plus_fee,
-        sa.impressions,
-        sa.link_clicks,
-        sa.ts_conversions
-      FROM
-        spend_aggregated sa
-      JOIN
-        ad_accounts adc ON sa.ad_account_id::text = adc.provider_id
-      JOIN
-        u_aa_map uam ON adc.id = uam.aa_id
-      WHERE
-        ${mediaBuyer !== "admin" && mediaBuyer ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
-        ${trafficSource ? `AND sa.traffic_source = '${trafficSource}'` : ''}
-    `;
-
-    return query;
-  }
-
-  async networkCampaignGrouping(network, mediaBuyerId, startDate, endDate){
-
-    // Create query
-
-    const query = this.networkCampaignGroupingQueryMaker(
-      network,
-      mediaBuyerId,
+    return await networkCampaignData(
+      this.database,
       startDate,
-      endDate
+      endDate,
+      mediaBuyer,
+      network
     );
-
-    // Pass query and get values
-    const { rows } = await this.database.raw(query);
-    return rows;
 
   }
 
   async adAccountsGrouping(params){
     const { trafficSource, mediaBuyer, startDate, endDate } = params;
 
-    // Create query
-    const query = this.adAccountsGroupingQueryMaker(
-      trafficSource,
-      mediaBuyer,
+    return await adAccountData(
+      this.database,
       startDate,
-      endDate
+      endDate,
+      mediaBuyer,
+      trafficSource
     );
-
-    // Pass query and get values
-    const { rows } = await this.database.raw(query);
-    return rows;
 
   }
 
