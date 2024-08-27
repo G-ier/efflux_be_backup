@@ -10,6 +10,7 @@
     "server": "nodemon index.js",
     "make-migration": "node commands/makeMigration.js",
     "migrate": "knex migrate:latest",
+    "migrate_dev": "knex migrate:latest --env development",
     "migrate:down": "knex migrate:down",
     "migrate:make": "knex migrate:make",
     "knex": "knex --help",
