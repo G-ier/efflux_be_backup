@@ -114,12 +114,29 @@ class CompositeController {
   }
 
   async updateEntity(req, res) {
-    const { entityId, status, dailyBudget, type } = req.query;
+    const { entityId, entityName, status, dailyBudget, type } = req.query;
     try {
       const updated = await this.compositeService.updateEntity({ type, entityId, status, dailyBudget });
-      res.status(200).json({ updated });
+      let message;
+      if (status) {
+        message = `Set status of ${type} (${entityName}) to ${status}`;
+      } else if (dailyBudget) {
+        message = `Set daily budget of ${type} (${entityName}) to ${dailyBudget / 100 }$`;
+      } else {
+        message = `Updated ${entityName} successfully`;
+      }
+      res.status(200).json({ updated: true, message });
     } catch ({ message }) {
-      res.status(500).json({ message });
+      let errorMessage;
+      if (status) {
+        errorMessage = `Failed to set status of ${type} (${entityName}) to ${status}. Error: ${message}`;
+      } else if (dailyBudget) {
+        errorMessage = `Failed to set daily budget of ${type} (${entityName}) to ${dailyBudget / 100 }$. Error: ${message}`;
+      } else {
+        errorMessage = `Failed to update ${entityName}`;
+      }
+      this.campaignService.logger.error(errorMessage);
+      res.status(400).json({ updated: false, errorMessage: errorMessage });
     }
   }
 
