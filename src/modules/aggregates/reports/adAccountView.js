@@ -10,14 +10,14 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
           s.traffic_source,
           CAST(SUM(s.spend) AS FLOAT) as spend,
           CAST(SUM(s.spend_plus_fee) AS FLOAT) as spend_plus_fee,
-          CAST(SUM(s.impressions) AS INTEGER) as impressions,
-          CAST(SUM(s.link_clicks) AS INTEGER) as link_clicks,
+          CAST(SUM(s.ts_impressions) AS INTEGER) as impressions,
+          CAST(SUM(s.ts_link_clicks) AS INTEGER) as link_clicks,
           CAST(SUM(s.ts_conversions) AS INTEGER) as ts_conversions
         FROM
-          spend s
+          analytics s
         WHERE
-          DATE(s.occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-          AND DATE(s.occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
+          DATE(s.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
+          AND DATE(s.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
         GROUP BY
           s.ad_account_id, s.ad_account_name, s.traffic_source
       )

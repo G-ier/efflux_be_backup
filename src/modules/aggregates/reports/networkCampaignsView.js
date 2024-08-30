@@ -6,25 +6,25 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
   WITH revenue_aggregated AS (
     SELECT
       MAX(r.network) AS network,
-      r.network_campaign_id AS network_campaign_id,
-      MAX(r.network_campaign_name) AS network_campaign_name,
-      CAST(SUM(r.landings) AS FLOAT) AS landings,
-      CAST(SUM(r.keyword_clicks) AS FLOAT) AS keyword_clicks,
-      CAST(SUM(r.conversions) AS FLOAT) AS nw_conversions,
+      r.nw_campaign_id,
+      MAX(r.nw_campaign_name) AS network_campaign_name,
+      CAST(SUM(r.nw_tracked_visitors) AS FLOAT) AS tracked_visitors,
+      CAST(SUM(r.nw_kw_clicks) AS FLOAT) AS keyword_clicks,
+      CAST(SUM(r.nw_conversions) AS FLOAT) AS nw_conversions,
       CAST(SUM(r.revenue) AS FLOAT) AS revenue
     FROM
-      revenue r
+      analytics r
     WHERE
-      DATE(r.occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-      AND DATE(r.occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
+      DATE(r.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
+      AND DATE(r.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
     GROUP BY
-      r.network_campaign_id
+      r.nw_campaign_id
   )
   SELECT DISTINCT
     ra.network,
-    ra.network_campaign_id,
+    ra.nw_campaign_id as network_campaign_id,
     ra.network_campaign_name as name,
-    ra.landings,
+    ra.tracked_visitors,
     ra.keyword_clicks,
     ra.nw_conversions,
     ra.revenue
