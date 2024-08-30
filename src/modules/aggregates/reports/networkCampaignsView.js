@@ -5,27 +5,27 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
   const query = `
   WITH revenue_aggregated AS (
     SELECT
-      MAX(r.network) AS network,
-      r.nw_campaign_id,
-      MAX(r.nw_campaign_name) AS network_campaign_name,
-      CAST(SUM(r.nw_tracked_visitors) AS FLOAT) AS tracked_visitors,
-      CAST(SUM(r.nw_kw_clicks) AS FLOAT) AS keyword_clicks,
-      CAST(SUM(r.nw_conversions) AS FLOAT) AS nw_conversions,
-      CAST(SUM(r.revenue) AS FLOAT) AS revenue
+      MAX(a.network) AS network,
+      a.nw_campaign_id,
+      MAX(a.nw_campaign_name) AS network_campaign_name,
+    CAST(SUM(a.nw_tracked_visitors) AS FLOAT) AS nw_tracked_visitors,
+      CAST(SUM(a.nw_kw_clicks) AS FLOAT) AS nw_kw_clicks,
+      CAST(SUM(a.nw_conversions) AS FLOAT) AS nw_conversions,
+      CAST(SUM(a.revenue) AS FLOAT) AS revenue
     FROM
-      analytics r
+      analytics a
     WHERE
-      DATE(r.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-      AND DATE(r.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
+      DATE(a.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
+      AND DATE(a.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
     GROUP BY
-      r.nw_campaign_id
+      a.nw_campaign_id
   )
   SELECT DISTINCT
     ra.network,
     ra.nw_campaign_id as network_campaign_id,
     ra.network_campaign_name as name,
-    ra.tracked_visitors,
-    ra.keyword_clicks,
+    ra.nw_tracked_visitors,
+    ra.nw_kw_clicks,
     ra.nw_conversions,
     ra.revenue
   FROM
@@ -37,7 +37,7 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
     ${mediaBuyer !== "admin" && mediaBuyer ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
     ${network ? `AND ra.network = '${network}'` : ''}
   `
-
+  console.log(query);
   const { rows } = await database.raw(query);
   return rows;
 }

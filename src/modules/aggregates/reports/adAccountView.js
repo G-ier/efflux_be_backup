@@ -5,21 +5,21 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
   const query = `
       WITH spend_aggregated AS (
         SELECT
-          s.ad_account_id,
-          s.ad_account_name,
-          s.traffic_source,
-          CAST(SUM(s.spend) AS FLOAT) as spend,
-          CAST(SUM(s.spend_plus_fee) AS FLOAT) as spend_plus_fee,
-          CAST(SUM(s.ts_impressions) AS INTEGER) as impressions,
-          CAST(SUM(s.ts_link_clicks) AS INTEGER) as link_clicks,
-          CAST(SUM(s.ts_conversions) AS INTEGER) as ts_conversions
+          a.ad_account_id,
+          a.ad_account_name,
+          a.traffic_source,
+          CAST(SUM(a.spend) AS FLOAT) as spend,
+          CAST(SUM(a.spend_plus_fee) AS FLOAT) as spend_plus_fee,
+          CAST(SUM(a.ts_impressions) AS INTEGER) as ts_impressions,
+          CAST(SUM(a.ts_link_clicks) AS INTEGER) as ts_link_clicks,
+          CAST(SUM(a.ts_conversions) AS INTEGER) as ts_conversions
         FROM
-          analytics s
+          analytics a
         WHERE
-          DATE(s.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-          AND DATE(s.created_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
+          DATE(a.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
+          AND DATE(a.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
         GROUP BY
-          s.ad_account_id, s.ad_account_name, s.traffic_source
+          a.ad_account_id, a.ad_account_name, a.traffic_source
       )
       SELECT DISTINCT
         sa.ad_account_id,
@@ -27,8 +27,8 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
         sa.traffic_source,
         sa.spend,
         sa.spend_plus_fee,
-        sa.impressions,
-        sa.link_clicks,
+        sa.ts_impressions,
+        sa.ts_link_clicks,
         sa.ts_conversions
       FROM
         spend_aggregated sa
@@ -40,7 +40,7 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
         ${mediaBuyer !== "admin" && mediaBuyer ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
         ${trafficSource ? `AND sa.traffic_source = '${trafficSource}'` : ''}
     `;
-
+  console.log(query);
   const { rows } = await database.raw(query);
   return rows;
 }
