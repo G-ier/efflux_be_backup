@@ -48,9 +48,6 @@ const initializeAPI = async () => {
   configureMiddleware(server);
 
   ServerLogger.info('Server initialized');
-  ServerLogger.info('Database Url being used');
-  ServerLogger.info('DATABASE_ENVIRONMENT: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT'));
-  ServerLogger.info('DATABASE_URL: ' + EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'));
 
   // Start server
   const port = EnvironmentVariablesManager.getEnvVariable('PORT') || 5000;
@@ -69,7 +66,7 @@ const initializeAPI = async () => {
     // Database urls
     const databaseEnvironment = EnvironmentVariablesManager.getEnvVariable('DATABASE_ENVIRONMENT') || 'development';
     const productionDatabaseUrl = EnvironmentVariablesManager.getEnvVariable('DATABASE_URL');
-    const stagingDatabaseUrl = 'non functional';
+    const stagingDatabaseUrl =  EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING');
 
     // In use database url
     const databaseUrl =

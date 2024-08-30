@@ -54,6 +54,21 @@ const statusMapping = {
   ACTIVE: 'ENABLE',
   PAUSED: 'DISABLE'
 };
+
+const availableStatuses = Object.keys(statusMapping);
+
+function validateInput({ type, token, status }) {
+  if (!type || (type !== "adset" && type !== "campaign")) {
+    throw Error("Type must be either 'adset' or 'campaign'.");
+  }
+  if (!token) {
+    throw Error("Token is required.");
+  }
+  if (status && !availableStatuses.includes(status)) {
+    throw Error("Status is not valid.");
+  }
+}
+
 const updateTikTokEntity = async ({type, access_token, advertiser_id, updateParams, entityId, entityName}) => {
   let endpoint;
   const headers = {
@@ -133,5 +148,5 @@ const calculateAccumulated = (data, fields=['spend']) => {
   })
 }
 
-module.exports = { getTikTokEndpointData, updateTikTokEntity, calculateAccumulated, statusMapping };
+module.exports = { getTikTokEndpointData, updateTikTokEntity, calculateAccumulated, statusMapping, validateInput };
 

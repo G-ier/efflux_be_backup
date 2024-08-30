@@ -11,6 +11,8 @@ const trafficSourceNetworkCampaignsStats = require('../reports/trafficSourceNetw
 const trafficSourceNetworkDaily = require('../reports/trafficSourceNetworkDaily');
 const trafficSourceNetworkHourly = require('../reports/trafficSourceNetworkHourly');
 const compileAggregates = require('../reports/compileAggregates');
+const networkCampaignData = require('../reports/networkCampaignsView');
+const adAccountData = require('../reports/adAccountView');
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 const adsetsByCampaignId = require('../reports/adsetsByCampaignId');
 const ClickhouseRepository = require('../../../shared/lib/ClickhouseRepository');
@@ -215,6 +217,34 @@ class AggregatesRepository {
     delete row.ad_account_name;
     return row;
   }
+
+  async networkCampaignGrouping(params){
+
+    const { network, mediaBuyer, startDate, endDate } = params;
+
+    return await networkCampaignData(
+      this.database,
+      startDate,
+      endDate,
+      mediaBuyer,
+      network
+    );
+
+  }
+
+  async adAccountsGrouping(params){
+    const { trafficSource, mediaBuyer, startDate, endDate } = params;
+
+    return await adAccountData(
+      this.database,
+      startDate,
+      endDate,
+      mediaBuyer,
+      trafficSource
+    );
+
+  }
+
 }
 
 module.exports = AggregatesRepository;

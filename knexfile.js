@@ -20,7 +20,7 @@ module.exports = {
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: './migrations/production',
+      directory: './migrations',
     },
     seeds: {
       directory: './seeds',
@@ -38,7 +38,7 @@ module.exports = {
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: './migrations/production',
+      directory: './migrations',
     },
     seeds: {
       directory: './seeds',
@@ -48,14 +48,14 @@ module.exports = {
   },
   staging: {
     client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
+    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING'),
     pool: {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 4,
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: './migrations/staging',
+      directory: './migrations',
     },
     seeds: {
       directory: './seeds',
@@ -67,29 +67,16 @@ module.exports = {
     client: 'pg',
     connection: process.env.DATABASE_URL_LOCAL,
     pool: {
-      min: 2,
-      max: 20,
+      min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
+      max: 7,
+      acquireTimeoutMillis: 120000,
     },
     migrations: {
       tableName: 'knex_migrations',
-      directory: './migrations/development', // Updated to match environment
+      directory: './migrations',
     },
     seeds: {
       directory: './seeds',
-    },
-    useNullAsDefault: true,
-    ssl: false,
-  },
-  oldproduction: {
-    client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('OLD_PRODUCTION_DATABASE_URL'),
-    pool: {
-      min: 2,
-      max: 20,
-    },
-    migrations: {
-      tableName: 'knex_migrations',
-      directory: './data/migrations',
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
