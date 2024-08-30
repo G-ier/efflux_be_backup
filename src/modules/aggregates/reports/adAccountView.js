@@ -40,7 +40,7 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
         ${mediaBuyer !== "admin" && mediaBuyer ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
         ${trafficSource ? `AND sa.traffic_source = '${trafficSource}'` : ''}
     `;
-  console.log(query);
+
   const { rows } = await database.raw(query);
   return rows;
 }

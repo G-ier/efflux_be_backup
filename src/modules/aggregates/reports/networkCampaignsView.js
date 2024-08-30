@@ -37,7 +37,7 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
     ${mediaBuyer !== "admin" && mediaBuyer ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
     ${network ? `AND ra.network = '${network}'` : ''}
   `
-  console.log(query);
+
   const { rows } = await database.raw(query);
   return rows;
 }
