@@ -31,7 +31,7 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
   FROM
     revenue_aggregated ra
   ${
-    mediaBuyer !== "admin" && mediaBuyer ? `JOIN network_campaigns_user_relations ncur ON ra.network_campaign_id = ncur.network_campaign_id` : ''
+    mediaBuyer !== "admin" && mediaBuyer ? `JOIN network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id` : ''
   }
   WHERE
     ${mediaBuyer !== "admin" && mediaBuyer ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
