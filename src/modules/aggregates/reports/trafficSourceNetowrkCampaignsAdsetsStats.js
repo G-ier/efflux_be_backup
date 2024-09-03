@@ -9,6 +9,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       analytics.campaign_id,
       analytics.adset_id,
       MAX(campaign_name) as campaign_name,
+      analytics.nw_campaign_id AS nw_campaign_id,
       MAX(analytics.nw_campaign_name) as nw_campaign_name,
       ${
         trafficSource !== 'unknown' ?
@@ -52,7 +53,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       ${mediaBuyerCondition}
       ${adAccountCondition}
     GROUP BY
-      analytics.campaign_id, analytics.adset_id
+      analytics.campaign_id, analytics.adset_id, analytics.nw_campaign_id
   )
   SELECT
     ad.campaign_id,
@@ -96,8 +97,9 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       ``
     }
     GROUP BY
-      ad.campaign_id, ad.campaign_name;
+      ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
   `;
+  console.log(query);
   const { rows } = await database.raw(query);
   return rows;
 }
