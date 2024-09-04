@@ -47,7 +47,7 @@
     "g-sheets-api": "^2.2.0",
     "generate-password": "^1.7.1",
     "google-ads-api": "^8.1.0",
-    "googleapis": "^87.0.0",
+    "googleapis": "^144.0.0",
     "helmet": "^7.1",
     "http-errors": "^2.0.0",
     "isbot": "^5.1.17",
