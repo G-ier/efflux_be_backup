@@ -43,7 +43,8 @@ class CampaignRepository {
     const relation = {
       network,
       network_campaign_id: networkCampaignId,
-      user_id: userId
+      user_id: userId,
+      source: 'manual' // is set to manual by default here.
     }
 
     await this.database.upsert(this.userAssociationTableName, [relation], "user_id, network_campaign_id, network");

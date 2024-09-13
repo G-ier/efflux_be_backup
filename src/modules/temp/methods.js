@@ -86,9 +86,17 @@ class TemporaryService {
       network_campaigns_agg AS (
           SELECT
               nwcr.user_id,
-              ARRAY_AGG(DISTINCT nwcr.network_campaign_id) AS network_campaigns
+              ARRAY_AGG(
+                  DISTINCT jsonb_build_object(
+                      'id', nwcr.network_campaign_id,
+                      'name', network_campaigns.name,
+                      'source', nwcr.source
+                  )
+              ) AS network_campaigns
           FROM
               network_campaigns_user_relations nwcr
+          INNER JOIN
+              network_campaigns ON nwcr.network_campaign_id = network_campaigns.id
           GROUP BY
               nwcr.user_id
       )
@@ -98,7 +106,7 @@ class TemporaryService {
           u.id,
           u.name,
           COALESCE(aa.ad_accounts, ARRAY[]::INTEGER[]) AS ad_accounts,
-          COALESCE(nc.network_campaigns, ARRAY[]::VARCHAR[]) AS network_campaigns
+          COALESCE(nc.network_campaigns, ARRAY[]::JSONB[]) AS network_campaigns
       FROM
           users u
       LEFT JOIN
