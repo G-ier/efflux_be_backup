@@ -3,7 +3,7 @@ const { EmailsLogger } = require('./WinstonLogger');
 const EnvironmentVariablesManager = require('../services/EnvironmentVariablesManager');
 
 const serviceURL =
-  EnvironmentVariablesManager.getEnvVariable('EMAILS_SERVICE_URL') || 'https://emails.efflux.com';
+  EnvironmentVariablesManager.getEnvVariable('EMAILS_SERVICE_URL') || 'https://emails.effluxboard.com';
 
 class EmailsService {
   emailType = {

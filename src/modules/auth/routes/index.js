@@ -13,25 +13,30 @@ const usersController = new UsersController();
 
 // Auth0 Routes
 route.post("/login", async (req, res) => await auth0Controller.login(req, res));
-route.post("/users", async (req, res) => await auth0Controller.createUser(req, res));
-route.post("/invite-user", async (req, res) => await usersController.createUser(req, res));
+
+// Joint user management routes
+route.get("/getUsers", async (req, res) => await auth0Controller.getUsers(req, res));
+route.post("/createUser", async (req, res) => await auth0Controller.createUser(req, res));
+route.post("/inviteUser", async (req, res) => await auth0Controller.inviteUser(req, res));
+route.post("/deleteUser", async (req, res) => await auth0Controller.deleteUser(req, res));
+route.post("/editUser", async (req, res) => await auth0Controller.editUser(req, res));
 
 // Role Routes
-route.post("/roles", async (req, res) => await roleController.saveRole(req, res)); 
-route.post("/roles/bulk", async (req, res) => await roleController.saveRolesInBulk(req, res)); 
+route.post("/roles", async (req, res) => await roleController.saveRole(req, res));
+route.post("/roles/bulk", async (req, res) => await roleController.saveRolesInBulk(req, res));
 route.get("/roles", async (req, res) => await roleController.fetchRoles(req, res));
 route.get("/roles/:id", async (req, res) => await roleController.fetchOne(req, res));
 route.put("/roles", async (req, res) => await roleController.updateRole(req, res));
-route.delete("/roles", async (req, res) => await roleController.deleteRole(req, res)); 
+route.delete("/roles", async (req, res) => await roleController.deleteRole(req, res));
 
 
 // Permission Routes
 route.post("/permissions", async (req, res) => await permissionController.savePermission(req, res));
-route.post("/permissions/bulk", async (req, res) => await permissionController.savePermissionsInBulk(req, res)); 
+route.post("/permissions/bulk", async (req, res) => await permissionController.savePermissionsInBulk(req, res));
 route.get("/permissions", async (req, res) => await permissionController.fetchPermissions(req, res));
 route.get("/permissions/:id", async (req, res) => await permissionController.fetchOne(req, res));
 route.put("/permissions", async (req, res) => await permissionController.updatePermission(req, res));
-route.delete("/permissions", async (req, res) => await permissionController.deletePermission(req, res)); 
+route.delete("/permissions", async (req, res) => await permissionController.deletePermission(req, res));
 
 
 module.exports = route;

@@ -20,7 +20,7 @@ class Auth0Service {
         audience: EnvironmentVariablesManager.getEnvVariable('AUTH0_API'),
         grant_type: 'client_credentials',
       })
-      
+
       if (result.status === 200 && result.data.access_token !== null) {
         return `${result.data.token_type} ${result.data.access_token}`;
       } else {
@@ -47,7 +47,7 @@ class Auth0Service {
     return user;
   }
 
-  async createAuth0User({ email, password, fullName }) {
+  async createAuth0User({ email, password, fullName, username }) {
     const Authorization = await this.getAuth0AccessToken();
     return axios.post(
       `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users`,
@@ -64,7 +64,31 @@ class Auth0Service {
       },
     );
   }
-  
+
+  async deleteAuth0User(selectedUser) {
+    const Authorization = await this.getAuth0AccessToken();
+    return axios.delete(
+      `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${selectedUser}`,
+      {
+        headers: {
+          Authorization,
+        },
+      },
+    );
+  }
+
+  async editAuth0User(selectedUser) {
+    const Authorization = await this.getAuth0AccessToken();
+    return axios.post(
+      `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${selectedUser}`,
+      {
+        headers: {
+          Authorization,
+        },
+      },
+    );
+  }
+
 
   getUserIdentity(userFromAuth0) {
     const oauthProviders = ['facebook', 'google'];

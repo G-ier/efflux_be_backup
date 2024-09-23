@@ -27,8 +27,8 @@ class UserService {
   }
 
   // Delete a user or users based on given criteria
-  async deleteUser(criteria) {
-    return await this.userRepository.delete(criteria);
+  async deleteUser(id) {
+    return await this.userRepository.delete(id);
   }
 
   // Upsert users (insert or update) to the database in bulk
@@ -41,12 +41,31 @@ class UserService {
     return await this.userRepository.fetchUsers(fields, filters, limit);
   }
 
+   // Get Users from database
+   async getUsers() {
+    return await this.userRepository.getUsers();
+  }
+
   async fetchOne(fields = ['*'], filters = {}) {
     return await this.userRepository.fetchOne(fields, filters);
   }
 
   async fetchUserPermissions(userId) {
     return await this.userRepository.fetchUserPermissions(userId);
+  }
+
+  async createUser(userCreationResponseData, rights, password, username) {
+    const creation_result = await this.userRepository.createUser(userCreationResponseData, rights, password, username);
+
+    if(creation_result.insertion_result == "OK"){
+      return {
+        "insertion_result": "OK"
+      }
+    } else {
+      return {
+        "insertion_result": "FAILED"
+      }
+    }
   }
 }
 
