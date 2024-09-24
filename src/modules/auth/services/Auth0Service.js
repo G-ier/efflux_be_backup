@@ -77,16 +77,85 @@ class Auth0Service {
     );
   }
 
-  async editAuth0User(selectedUser) {
+  async editAuth0User(selectedAuthUser, email, name, password) {
     const Authorization = await this.getAuth0AccessToken();
-    return axios.post(
-      `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${selectedUser}`,
-      {
-        headers: {
-          Authorization,
-        },
+
+    let data;
+
+    if(email != null){
+      if(name != null){
+        if(password != null){
+          data = JSON.stringify({
+            "email": email,
+            "name": name,
+            "password": password,
+            "connection": "Username-Password-Authentication",
+          });
+        } else {
+          data = JSON.stringify({
+            "email": email,
+            "name": name,
+            "connection": "Username-Password-Authentication",
+          });
+        }
+      } else {
+        if(password != null){
+          data = JSON.stringify({
+            "email": email,
+            "password": password,
+            "connection": "Username-Password-Authentication",
+          });
+        } else {
+          data = JSON.stringify({
+            "email": email,
+            "connection": "Username-Password-Authentication",
+          });
+        }
+      }
+    } else {
+      if(name != null){
+        if(password != null){
+          data = JSON.stringify({
+
+            "name": name,
+            "password": password,
+            "connection": "Username-Password-Authentication",
+          });
+        } else {
+          data = JSON.stringify({
+
+            "name": name,
+            "connection": "Username-Password-Authentication",
+          });
+        }
+      } else {
+        if(password != null){
+          data = JSON.stringify({
+
+            "password": password,
+            "connection": "Username-Password-Authentication",
+          });
+        } else {
+          return null;
+        }
+      }
+    }
+
+    let config = {
+      method: 'patch',
+      maxBodyLength: Infinity,
+      url: `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${selectedAuthUser}`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        Authorization
       },
-    );
+      data : data
+    };
+
+    const response = axios.request(config);
+
+    return response;
   }
 
 

@@ -4,6 +4,7 @@ const User = require('../entities/User');
 const createUserQuery = require('../queries/createUserQuery');
 const getUsersQuery = require('../queries/getUsersQuery');
 const deleteUserQuery = require('../queries/deleteUserQuery');
+const editUserQuery = require('../queries/editUserQuery');
 
 class UserRepository {
   constructor() {
@@ -206,6 +207,23 @@ class UserRepository {
     } else {
       return {
         "insertion_result": "FAILED"
+      }
+    }
+
+  }
+
+  async editUser(selectedUser, fullName, username, email, password, rights){
+
+    // Run complex raw queries from folder 'queries'
+    const rows = await editUserQuery(this.database, selectedUser, fullName, username, email, password, rights);
+
+    if(rows){
+      return {
+        "edit_result": "OK"
+      }
+    } else {
+      return {
+        "edit_result": "FAILED"
       }
     }
 

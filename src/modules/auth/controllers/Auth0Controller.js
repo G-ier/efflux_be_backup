@@ -224,21 +224,65 @@ class Auth0Controller {
   async editUser(req, res) {
     try {
 
-      const { selectedUser, username, email, password, rights, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+      const { selectedUser, fullName, username, email, password, rights, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+
+      console.log("Parameters");
+      console.log(fullName);
+      console.log(username);
+      console.log(email);
+      console.log(password);
+      console.log(rights);
 
       if(mediaBuyer!="admin"){
         throw new Error("No rights for this action.");
       }
 
-      // Delete user from auth0
-      const toBeEditedUser = await this.auth0Service.editUser(selectedUser, username, email, password, rights);
+      // Get auth0 user's id from the database
+      const user_id = await this.userService.fetchUsers(['"providerId"'], {id: selectedUser});
 
-      // Delete user to database if previous action is successful
-      // TODO
+
+      // Delete user from auth0
+      let editTrueResponse = {
+        edit: "unnecessary",
+        status: 200
+      };
+      if(fullName || email || password){
+
+        const editResponse = await this.auth0Service.editAuth0User(user_id[0].providerId, email, fullName, password);
+        editTrueResponse = editResponse;
+      }
+
+      if(editTrueResponse == null){
+
+        res.status(200).json({"process_code": "500", "message": "None of the fields updated."});
+        return;
+      }
+
+      if(editTrueResponse.status == 200 || editTrueResponse.edit == "unnecessary"){
+
+        console.log("Passes through here!");
+
+        // Edit user in database if previous action is successful
+        const edit_event = await this.userService.editUser(selectedUser, fullName, username, email, password, rights);
+
+        if(edit_event.edit_result == "OK"){
+
+          res.status(200).json({"process_code": "200"});
+        } else {
+          res.status(201).json({"process_code": "201", "message": "Database was not successfully updated. Run refresh."});
+        }
+      } else {
+        const fail_data = this.handleFailCases(editResponse.data);
+        res.status(500).json(fail_data);
+      }
+
+
+
 
     } catch (error) {
-      console.error('Error during user editing:', error);
-      res.status(500).send('Failed to edit user using Auth0.');
+      console.log(error);
+      const fail_data_catch = this.handleFailCases(error.response.data);
+      res.status(500).json(fail_data_catch);
     }
   }
 }

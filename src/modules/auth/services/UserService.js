@@ -67,6 +67,20 @@ class UserService {
       }
     }
   }
+
+  async editUser(selectedUser, fullName, username, email, password, rights) {
+    const edit_result = await this.userRepository.editUser(selectedUser, fullName, username, email, password, rights);
+
+    if(edit_result.edit_result == "OK"){
+      return {
+        "edit_result": "OK"
+      }
+    } else {
+      return {
+        "edit_result": "FAILED"
+      }
+    }
+  }
 }
 
 module.exports = UserService;
