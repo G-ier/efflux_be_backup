@@ -4,7 +4,7 @@ const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
 
 class AdCreativeRepository {
   constructor(database) {
-    this.tableName = "adcreatives";
+    this.tableName = "adlinks";
     this.database = database || new DatabaseRepository();
   }
 
