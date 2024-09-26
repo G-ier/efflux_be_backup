@@ -5,11 +5,21 @@ const axios = require('axios');
 const UserService = require('./UserService');
 const RoleService = require('./RoleService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
+const EmailsService = require('../../../shared/lib/EmailsService');
 
 class Auth0Service {
   constructor() {
     this.userService = new UserService();
-    this.roleService = new RoleService()
+    this.roleService = new RoleService();
+    this.emailService = new EmailsService;
+  }
+
+  handleFailCases(data){
+    return {
+      "process_code": "501",
+      "message": data.message,
+      "auth0_code": data.statusCode
+    }
   }
 
   async getAuth0AccessToken() {
@@ -204,6 +214,167 @@ class Auth0Service {
       if (user.acct_type !== acct_type)
         await this.userService.updateUser({ acct_type }, { id: user.id });
       return { id: user.id, acct_type: acct_type,...user, ...userFromAuth0  };
+    }
+  }
+
+  // Method to handle user creation
+  async createUser(fullName, username, email, password, rights, mediaBuyer) {
+    try {
+
+      const userCreationResponse = await this.createAuth0User({ email, password, fullName, username });
+
+      //console.log(JSON.stringify(userCreationResponse.data));
+
+      if(userCreationResponse.status == 201){
+        // Insert user to database
+        const insert_event = await this.userService.createUser(userCreationResponse.data, rights, password, username);
+
+        if(insert_event.insertion_result == "OK"){
+          return {"process_code": "200"};
+        } else {
+          return {"process_code": "201"};
+        }
+      } else {
+        const fail_data = handleFailCases(userCreationResponse.status);
+        return fail_data;
+      }
+
+
+    } catch (error) {
+      console.log(error);
+      const fail_data_catch = this.handleFailCases(error.response.data);
+      return fail_data_catch;
+    }
+  }
+
+  // Method to handle user creation
+  async inviteUser(email, rights, mediaBuyer) {
+    try {
+
+      // Get full name
+      const fullName = email.split('@')[0];
+
+      // Generate a random password
+      const password = generateRandomPassword();
+
+      const userCreationResponse = await this.createAuth0User({ email, password, fullName, username: fullName });
+
+      if(userCreationResponse.status == 201){
+        // Insert user to database
+        const insert_event = await this.userService.createUser(userCreationResponse.data, rights, password);
+
+        if(insert_event.insertion_result == "OK"){
+          // Send email invitation
+          await this.emailService.sendInvitationEmail(email, fullName, "Efflux", password);
+          return {"process_code": "200"};
+        } else {
+          return {"process_code": "201", "message": "Database was not successfully updated. Run refresh."};
+        }
+      } else {
+        const fail_data = this.handleFailCases(userCreationResponse.data);
+        return fail_data;
+      }
+
+
+    } catch (error) {
+      console.log(error);
+      const fail_data_catch = this.handleFailCases(error.response.data);
+      return fail_data_catch;
+    }
+  }
+
+  // Method to handle user delete
+  async deleteUser(selectedUser, mediaBuyer) {
+    try {
+
+      // Get auth0 user's id from the database
+      const user_id = await this.userService.fetchUsers(['"providerId"'], {id: selectedUser});
+
+      console.log("User ID");
+      console.log(user_id);
+
+      // Delete user from auth0
+      const toBeDeletedUser = await this.deleteAuth0User(user_id[0].providerId);
+
+      // Delete user from database if previous action is successful
+      if(toBeDeletedUser.status == 204){
+
+        // Error handler var
+        var deletion_error = false;
+        // Insert user to database
+        const delete_event = await this.userService.deleteUser(selectedUser).catch(error => {
+          deletion_error = true;
+        });
+
+        if(!deletion_error){
+          return {"process_code": "200"};
+        } else {
+          return {"process_code": "201"};
+        }
+      } else {
+        const fail_data = handleFailCases(userCreationResponse.status);
+        return fail_data;
+      }
+
+
+
+    } catch (error) {
+      console.log(error);
+      const fail_data_catch = this.handleFailCases(error.response.data);
+      return fail_data_catch;
+    }
+  }
+
+  // Method to handle user edit
+  async editUser(selectedUser, fullName, username, email, password, rights, mediaBuyer) {
+    try {
+
+      // Get auth0 user's id from the database
+      const user_id = await this.userService.fetchUsers(['"providerId"'], {id: selectedUser});
+
+
+      // Delete user from auth0
+      let editTrueResponse = {
+        edit: "unnecessary",
+        status: 200
+      };
+      if(fullName || email || password){
+
+        const editResponse = await this.editAuth0User(user_id[0].providerId, email, fullName, password);
+        editTrueResponse = editResponse;
+      }
+
+      if(editTrueResponse == null){
+
+        res.status(200).json({"process_code": "500", "message": "None of the fields updated."});
+        return;
+      }
+
+      if(editTrueResponse.status == 200 || editTrueResponse.edit == "unnecessary"){
+
+        console.log("Passes through here!");
+
+        // Edit user in database if previous action is successful
+        const edit_event = await this.userService.editUser(selectedUser, fullName, username, email, password, rights);
+
+        if(edit_event.edit_result == "OK"){
+
+          return {"process_code": "200"};
+        } else {
+          return {"process_code": "201", "message": "Database was not successfully updated. Run refresh."};
+        }
+      } else {
+        const fail_data = this.handleFailCases(editResponse.data);
+        return fail_data;
+      }
+
+
+
+
+    } catch (error) {
+      console.log(error);
+      const fail_data_catch = this.handleFailCases(error.response.data);
+      return fail_data_catch;
     }
   }
 }

@@ -12,14 +12,6 @@ class Auth0Controller {
     this.emailService = new EmailsService();
   }
 
-  handleFailCases(data){
-    return {
-      "process_code": "500",
-      "message": data.message,
-      "auth0_code": data.statusCode
-    }
-  }
-
   async extractRequestDataWithUser(req) {
     try {
       const user = req.user;
@@ -105,29 +97,19 @@ class Auth0Controller {
         throw new Error("No rights for this action.");
       }
 
+      const userCreationResponse = await this.auth0Service.createUser(fullName, username, email, password, rights, mediaBuyer);
 
-      const userCreationResponse = await this.auth0Service.createAuth0User({ email, password, fullName, username });
-
-      console.log(JSON.stringify(userCreationResponse.data));
-
-      if(userCreationResponse.status == 201){
-        // Insert user to database
-        const insert_event = await this.userService.createUser(userCreationResponse.data, rights, password, username);
-
-        if(insert_event.insertion_result == "OK"){
-          res.status(200).json({"process_code": "200"});
-        } else {
-          res.status(201).json({"process_code": "201"});
-        }
+      if(userCreationResponse.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(userCreationResponse.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
       } else {
-        const fail_data = handleFailCases(userCreationResponse.status);
-        res.status(500).json(fail_data);
+        res.status(500).json(userCreationResponse);
       }
 
-
     } catch (error) {
-      console.error('Error during user creation:', error);
-      res.status(500).send('Failed to create user using Auth0.');
+      console.log(error);
+      res.status(501).json(error);
     }
   }
 
@@ -140,35 +122,21 @@ class Auth0Controller {
         throw new Error("No rights for this action.");
       }
 
-      // Get full name
-      const fullName = email.split('@')[0];
+      const userCreationResponse = await this.auth0Service.inviteUser(email, rights, mediaBuyer);
 
-      // Generate a random password
-      const password = generateRandomPassword();
-
-      const userCreationResponse = await this.auth0Service.createAuth0User({ email, password, fullName, username: fullName });
-
-      if(userCreationResponse.status == 201){
-        // Insert user to database
-        const insert_event = await this.userService.createUser(userCreationResponse.data, rights, password);
-
-        if(insert_event.insertion_result == "OK"){
-          // Send email invitation
-          await this.emailService.sendInvitationEmail(email, fullName, "Efflux", password);
-          res.status(200).json({"process_code": "200"});
-        } else {
-          res.status(200).json({"process_code": "201", "message": "Database was not successfully updated. Run refresh."});
-        }
+      if(userCreationResponse.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(userCreationResponse.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
       } else {
-        const fail_data = this.handleFailCases(userCreationResponse.data);
-        res.status(500).json(fail_data);
+        res.status(500).json(userCreationResponse);
       }
 
 
     } catch (error) {
+
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      res.status(500).json(fail_data_catch);
+      res.status(501).json(error);
     }
   }
 
@@ -189,34 +157,21 @@ class Auth0Controller {
       console.log(user_id);
 
       // Delete user from auth0
-      const toBeDeletedUser = await this.auth0Service.deleteAuth0User(user_id[0].providerId);
+      const toBeDeletedUser = await this.auth0Service.deleteUser(selectedUser, mediaBuyer);
 
-      // Delete user from database if previous action is successful
-      if(toBeDeletedUser.status == 204){
 
-        // Error handler var
-        var deletion_error = false;
-        // Insert user to database
-        const delete_event = await this.userService.deleteUser(selectedUser).catch(error => {
-          deletion_error = true;
-        });
-
-        if(!deletion_error){
-          res.status(200).json({"process_code": "200"});
-        } else {
-          res.status(201).json({"process_code": "201"});
-        }
+      if(toBeDeletedUser.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(toBeDeletedUser.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
       } else {
-        const fail_data = handleFailCases(userCreationResponse.status);
-        res.status(500).json(fail_data);
+        res.status(500).json(toBeDeletedUser);
       }
-
 
 
     } catch (error) {
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      res.status(500).json(fail_data_catch);
+      res.status(501).json(error);
     }
   }
 
@@ -226,63 +181,24 @@ class Auth0Controller {
 
       const { selectedUser, fullName, username, email, password, rights, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
 
-      console.log("Parameters");
-      console.log(fullName);
-      console.log(username);
-      console.log(email);
-      console.log(password);
-      console.log(rights);
-
       if(mediaBuyer!="admin"){
         throw new Error("No rights for this action.");
       }
 
-      // Get auth0 user's id from the database
-      const user_id = await this.userService.fetchUsers(['"providerId"'], {id: selectedUser});
+      const editResponse = await this.auth0Service.editUser(selectedUser, fullName, username, email, password, rights, mediaBuyer);
 
-
-      // Delete user from auth0
-      let editTrueResponse = {
-        edit: "unnecessary",
-        status: 200
-      };
-      if(fullName || email || password){
-
-        const editResponse = await this.auth0Service.editAuth0User(user_id[0].providerId, email, fullName, password);
-        editTrueResponse = editResponse;
-      }
-
-      if(editTrueResponse == null){
-
-        res.status(200).json({"process_code": "500", "message": "None of the fields updated."});
-        return;
-      }
-
-      if(editTrueResponse.status == 200 || editTrueResponse.edit == "unnecessary"){
-
-        console.log("Passes through here!");
-
-        // Edit user in database if previous action is successful
-        const edit_event = await this.userService.editUser(selectedUser, fullName, username, email, password, rights);
-
-        if(edit_event.edit_result == "OK"){
-
-          res.status(200).json({"process_code": "200"});
-        } else {
-          res.status(201).json({"process_code": "201", "message": "Database was not successfully updated. Run refresh."});
-        }
+      if(editResponse.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(editResponse.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
       } else {
-        const fail_data = this.handleFailCases(editResponse.data);
-        res.status(500).json(fail_data);
+        res.status(500).json(editResponse);
       }
-
-
 
 
     } catch (error) {
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      res.status(500).json(fail_data_catch);
+      res.status(501).json(error);
     }
   }
 }
