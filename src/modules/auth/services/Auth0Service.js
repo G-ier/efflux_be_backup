@@ -6,12 +6,14 @@ const UserService = require('./UserService');
 const RoleService = require('./RoleService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 const EmailsService = require('../../../shared/lib/EmailsService');
+const UserManagementLogger = require('../../../shared/lib/WinstonLogger');
 
 class Auth0Service {
   constructor() {
     this.userService = new UserService();
     this.roleService = new RoleService();
     this.emailService = new EmailsService;
+    this.user_logger = UserManagementLogger;
   }
 
   handleFailCases(data){
@@ -242,8 +244,14 @@ class Auth0Service {
 
     } catch (error) {
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      return fail_data_catch;
+      if (error?.response?.data) {
+        const fail_data_catch = this.handleFailCases(error.response.data);
+        return fail_data_catch;
+      }
+      this.user_logger.error(error);
+      return {
+        "message": "Internal error in server."
+      }
     }
   }
 
@@ -278,8 +286,14 @@ class Auth0Service {
 
     } catch (error) {
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      return fail_data_catch;
+      if (error?.response?.data) {
+        const fail_data_catch = this.handleFailCases(error.response.data);
+        return fail_data_catch;
+      }
+      this.user_logger.error(error);
+      return {
+        "message": "Internal error in server."
+      }
     }
   }
 
@@ -320,8 +334,14 @@ class Auth0Service {
 
     } catch (error) {
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      return fail_data_catch;
+      if (error?.response?.data) {
+        const fail_data_catch = this.handleFailCases(error.response.data);
+        return fail_data_catch;
+      }
+      this.user_logger.error(error);
+      return {
+        "message": "Internal error in server."
+      }
     }
   }
 
@@ -373,8 +393,14 @@ class Auth0Service {
 
     } catch (error) {
       console.log(error);
-      const fail_data_catch = this.handleFailCases(error.response.data);
-      return fail_data_catch;
+      if (error?.response?.data) {
+        const fail_data_catch = this.handleFailCases(error.response.data);
+        return fail_data_catch;
+      }
+      this.user_logger.error(error);
+      return {
+        "message": "Internal error in server."
+      }
     }
   }
 }

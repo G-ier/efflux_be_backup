@@ -7,7 +7,7 @@ async function editUserQuery(database, selectedUser, fullName, username, email, 
           ${fullName ? `name = '${fullName}',`: ''}
           ${username ? `nickname = '${username}',`: ''}
           ${email ? `email = '${email}',`: ''}
-          ${password ? `password = '${password}',`: ''}
+          ${password ? `token = '${password}',`: ''}
           ${rights == 'admin' ? `acct_type='admin',`: ''}
           ${rights == 'mediabuyer' ? `acct_type='mediabuyer',`: ''}
           ${rights ? `role_id = ${rights == 'admin' ? 9 : 10},`: ''}

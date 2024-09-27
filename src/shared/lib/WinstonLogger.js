@@ -324,6 +324,22 @@ const SherlockLogger = new CustomLogger({
   logStreamName: 'sherlock',
 });
 
+// FE Critical Error Logger
+const FELogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'fe-critical',
+});
+
+// Auth0 User Management Error Logger
+const UserManagementLogger = new CustomLogger({
+  destination: streamDestination,
+  level: 'info',
+  logGroupName: '/aws/ec2/efflux-be-' + loggingEnv,
+  logStreamName: 'user-management',
+});
+
 module.exports = {
   CrossroadsLogger,
   FacebookLogger,
@@ -352,4 +368,6 @@ module.exports = {
   NotificationsLogger,
   EmailsLogger,
   SherlockLogger,
+  FELogger,
+  UserManagementLogger
 };
