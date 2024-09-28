@@ -19,7 +19,9 @@ route.get("/getUsers", async (req, res) => await auth0Controller.getUsers(req, r
 route.post("/createUser", async (req, res) => await auth0Controller.createUser(req, res));
 route.post("/inviteUser", async (req, res) => await auth0Controller.inviteUser(req, res));
 route.post("/deleteUser", async (req, res) => await auth0Controller.deleteUser(req, res));
-route.post("/editUser", async (req, res) => await auth0Controller.editUser(req, res));
+route.post("/editUserInfo", async (req, res) => await auth0Controller.editUserInfo(req, res));
+route.post("/editUserRights", async (req, res) => await auth0Controller.editUserRights(req, res));
+route.post("/editUserPassword", async (req, res) => await auth0Controller.editUserPassword(req, res));
 
 // Role Routes
 route.post("/roles", async (req, res) => await roleController.saveRole(req, res));

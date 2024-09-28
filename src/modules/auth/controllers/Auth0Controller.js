@@ -1,6 +1,5 @@
 // Local application imports
 const Auth0Service = require('../services/Auth0Service');
-const {generateRandomPassword} = require('../../../shared/helpers/Utils');
 const UserService = require('../services/UserService');
 const EmailsService = require('../../../shared/lib/EmailsService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
@@ -81,7 +80,7 @@ class Auth0Controller {
 
 
     } catch (error) {
-      console.error('Error during user retrieval:', error);
+      this.auth0Service.log_error(error);
       res.status(500).send('Failed to gets users, INTERNAL ERROR.');
     }
   }
@@ -104,12 +103,12 @@ class Auth0Controller {
       } else if(userCreationResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else {
-        res.status(500).json(userCreationResponse);
+        res.status(501).json(userCreationResponse);
       }
 
     } catch (error) {
       console.log(error);
-      res.status(501).json(error);
+      res.status(500).json(error);
     }
   }
 
@@ -129,14 +128,14 @@ class Auth0Controller {
       } else if(userCreationResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else {
-        res.status(500).json(userCreationResponse);
+        res.status(501).json(userCreationResponse);
       }
 
 
     } catch (error) {
 
       console.log(error);
-      res.status(501).json(error);
+      res.status(500).json(error);
     }
   }
 
@@ -165,40 +164,96 @@ class Auth0Controller {
       } else if(toBeDeletedUser.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else {
-        res.status(500).json(toBeDeletedUser);
+        res.status(501).json(toBeDeletedUser);
       }
 
 
     } catch (error) {
       console.log(error);
-      res.status(501).json(error);
+      res.status(500).json(error);
     }
   }
 
-  // Method to handle user edit
-  async editUser(req, res) {
+  // Method to handle user edit info
+  async editUserInfo(req, res) {
     try {
 
-      const { selectedUser, fullName, username, email, password, rights, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+      const { selectedUser, fullName, username, email, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
 
       if(mediaBuyer!="admin"){
         throw new Error("No rights for this action.");
       }
 
-      const editResponse = await this.auth0Service.editUser(selectedUser, fullName, username, email, password, rights, mediaBuyer);
+      const editResponse = await this.auth0Service.editUser(selectedUser, fullName, username, email, null, null, mediaBuyer);
 
       if(editResponse.process_code == "200"){
         res.status(200).json({"process_code": "200"});
       } else if(editResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else {
-        res.status(500).json(editResponse);
+        res.status(501).json(editResponse);
       }
 
 
     } catch (error) {
       console.log(error);
-      res.status(501).json(error);
+      res.status(500).json(error);
+    }
+  }
+
+  // Method to handle user edit rights
+  async editUserRights(req, res) {
+    try {
+
+      const { selectedUser, rights, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+
+      if(mediaBuyer!="admin"){
+        throw new Error("No rights for this action.");
+      }
+
+      const editResponse = await this.auth0Service.editUser(selectedUser, null, null, null, null, rights, mediaBuyer);
+
+      if(editResponse.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(editResponse.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
+      } else if(editResponse.process_code == "203") {
+        res.status(203).json({"process_code": "203"});
+      } else {
+        res.status(501).json(editResponse);
+      }
+
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+
+  // Method to handle user edit password
+  async editUserPassword(req, res) {
+    try {
+
+      const { selectedUser, password, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+
+      if(mediaBuyer!="admin"){
+        throw new Error("No rights for this action.");
+      }
+
+      const editResponse = await this.auth0Service.editUser(selectedUser, null, null, null, password, null, mediaBuyer);
+
+      if(editResponse.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(editResponse.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
+      } else {
+        res.status(501).json(editResponse);
+      }
+
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
     }
   }
 }

@@ -13,7 +13,7 @@ const NetworkCampaignsRepository = require('../crossroads/repositories/CampaignR
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
 const PixelsService = require('../facebook/services/PixelsService');
-const FELogger = require('../../shared/lib/WinstonLogger');
+const {FELogger} = require('../../shared/lib/WinstonLogger');
 
 class TemporaryService {
 
@@ -648,8 +648,9 @@ class TemporaryService {
     var error_var = false;
 
     try{
-      this.fe_logger.error(errorData);
+      this.fe_logger.info(errorData);
     } catch(error){
+      console.log(error);
       error_var = true;
     }
 

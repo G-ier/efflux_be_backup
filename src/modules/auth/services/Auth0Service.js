@@ -7,6 +7,7 @@ const RoleService = require('./RoleService');
 const EnvironmentVariablesManager = require('../../../shared/services/EnvironmentVariablesManager');
 const EmailsService = require('../../../shared/lib/EmailsService');
 const UserManagementLogger = require('../../../shared/lib/WinstonLogger');
+const {generateRandomPassword} = require('../../../shared/helpers/Utils');
 
 class Auth0Service {
   constructor() {
@@ -89,6 +90,14 @@ class Auth0Service {
     );
   }
 
+
+  /*
+    200 - Auth0 edited AND DB edited
+    201 - Only Auth0 edited
+    203 - Auth0 non necessary but DB edited
+    500 - Unexplainable internal error
+    501 - Explainable internal error
+  */
   async editAuth0User(selectedAuthUser, email, name, password) {
     const Authorization = await this.getAuth0AccessToken();
 
@@ -148,7 +157,7 @@ class Auth0Service {
             "connection": "Username-Password-Authentication",
           });
         } else {
-          return null;
+          return {process: "202", message: "Process runs OK but unnecessary."};
         }
       }
     }
@@ -248,7 +257,7 @@ class Auth0Service {
         const fail_data_catch = this.handleFailCases(error.response.data);
         return fail_data_catch;
       }
-      this.user_logger.error(error);
+      this.user_logger.info(error);
       return {
         "message": "Internal error in server."
       }
@@ -290,7 +299,7 @@ class Auth0Service {
         const fail_data_catch = this.handleFailCases(error.response.data);
         return fail_data_catch;
       }
-      this.user_logger.error(error);
+      this.user_logger.info(error);
       return {
         "message": "Internal error in server."
       }
@@ -338,7 +347,7 @@ class Auth0Service {
         const fail_data_catch = this.handleFailCases(error.response.data);
         return fail_data_catch;
       }
-      this.user_logger.error(error);
+      this.user_logger.info(error);
       return {
         "message": "Internal error in server."
       }
@@ -346,6 +355,13 @@ class Auth0Service {
   }
 
   // Method to handle user edit
+  /*
+    200 - Auth0 edited AND DB edited
+    201 - Only Auth0 edited
+    203 - Auth0 non necessary but DB edited
+    500 - Unexplainable internal error
+    501 - Explainable internal error
+  */
   async editUser(selectedUser, fullName, username, email, password, rights, mediaBuyer) {
     try {
 
@@ -366,8 +382,24 @@ class Auth0Service {
 
       if(editTrueResponse == null){
 
-        res.status(200).json({"process_code": "500", "message": "None of the fields updated."});
-        return;
+        let edit_null_event = {edit_result: "UNSTARTED", message: "DB update process did not run."};
+
+        try {
+          edit_null_event = await this.userService.editUser(selectedUser, fullName, username, email, password, rights);
+
+          if(edit_null_event.edit_result == "OK"){
+
+            return {"process_code": "203", "message": "Auth0 update not necessary. DB ok."};
+          } else {
+
+            return {"process_code": "500", "message": "Database was not successfully updated. Run refresh."};
+          }
+
+        } catch (error) {
+          this.user_logger.error(error);
+          return {"process_code": "500", "message": "Database was not successfully updated. Run refresh."};
+        }
+
       }
 
       if(editTrueResponse.status == 200 || editTrueResponse.edit == "unnecessary"){
@@ -397,11 +429,14 @@ class Auth0Service {
         const fail_data_catch = this.handleFailCases(error.response.data);
         return fail_data_catch;
       }
-      this.user_logger.error(error);
+      this.user_logger.info(error);
       return {
         "message": "Internal error in server."
       }
     }
+  }
+  async log_error(error) {
+    this.user_logger.error(error);
   }
 }
 
