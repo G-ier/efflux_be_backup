@@ -282,8 +282,15 @@ class Auth0Service {
 
         if(insert_event.insertion_result == "OK"){
           // Send email invitation
-          await this.emailService.sendInvitationEmail(email, fullName, "Efflux", password);
-          return {"process_code": "200"};
+          const email_response = await this.emailService.sendInvitationEmail(email, fullName, "Efflux", password).catch(error => {
+            return {"process_code": "203", "message": "Invitation not sent."}
+          });
+          if(email_response.status == 200){
+            return {"process_code": "200"};
+          } else {
+            return {"process_code": "203", "message": "Invitation not sent."}
+          }
+
         } else {
           return {"process_code": "201", "message": "Database was not successfully updated. Run refresh."};
         }
@@ -295,10 +302,15 @@ class Auth0Service {
 
     } catch (error) {
       console.log(error);
+      if (error?.response?.config && error.response.config == "https://emails.effluxboard.com/invitation/new") {
+        const fail_data_catch = this.handleFailCases({message: "User created but invitation not sent.", statusCode: "200"});
+        return fail_data_catch;
+      }
       if (error?.response?.data) {
         const fail_data_catch = this.handleFailCases(error.response.data);
         return fail_data_catch;
       }
+
       this.user_logger.info(error);
       return {
         "message": "Internal error in server."

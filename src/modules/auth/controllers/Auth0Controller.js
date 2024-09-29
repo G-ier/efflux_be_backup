@@ -127,6 +127,8 @@ class Auth0Controller {
         res.status(200).json({"process_code": "200"});
       } else if(userCreationResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
+      } else if(userCreationResponse.process_code == "203") {
+        res.status(203).json({"process_code": "203"});
       } else {
         res.status(501).json(userCreationResponse);
       }
