@@ -1,7 +1,7 @@
 const { buildConditionsInsights, buildSelectionColumns, castSum } = require("./utils");
 
-async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, endDate, network='crossroads', trafficSource, mediaBuyer, ad_accounts) {
-  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, ad_accounts);
+async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, endDate, network='crossroads', trafficSource, mediaBuyer, ad_accounts, assignment) {
+  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, ad_accounts, assignment);
 
   const query = `
   WITH adset_data AS (
@@ -99,7 +99,6 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     GROUP BY
       ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
   `;
-  console.log(query);
   const { rows } = await database.raw(query);
   return rows;
 }

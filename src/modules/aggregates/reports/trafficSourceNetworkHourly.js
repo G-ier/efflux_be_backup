@@ -1,8 +1,8 @@
 const { buildConditionsInsights, buildSelectionColumns } = require('./utils');
 
-async function trafficSourceNetworkHourly(database, startDate, endDate, mediaBuyer, adAccountIds) {
+async function trafficSourceNetworkHourly(database, startDate, endDate, mediaBuyer, assignment, adAccountIds) {
 
-  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, adAccountIds);
+  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, adAccountIds, assignment);
   const query = `
   WITH hourly_data AS (
     SELECT

@@ -1,5 +1,6 @@
 
-async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSource) {
+async function adAccountData(database, startDate, endDate, mediaBuyer, assignment, trafficSource) {
+
 
 
   const query = `
@@ -38,6 +39,7 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
         u_aa_map uam ON adc.id = uam.aa_id
       WHERE
         ${mediaBuyer !== "admin" && mediaBuyer ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
+        ${mediaBuyer == "admin" && mediaBuyer && assignment == "assigned" ? `uam.u_id = 3` : (mediaBuyer == "admin" || !mediaBuyer ? "AND TRUE" : "TRUE")}
         ${trafficSource ? `AND sa.traffic_source = '${trafficSource}'` : ''}
     `;
 

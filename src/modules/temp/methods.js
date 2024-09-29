@@ -91,8 +91,8 @@ class TemporaryService {
               ARRAY_AGG(
                   DISTINCT jsonb_build_object(
                       'id', nwcr.network_campaign_id,
-                      'name', network_campaigns.name,
-                      'source', nwcr.source
+                      'name', network_campaigns.name
+
                   )
               ) AS network_campaigns
           FROM

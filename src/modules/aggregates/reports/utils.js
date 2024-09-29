@@ -25,7 +25,7 @@ function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
   `;
 }
 
-function buildConditionsInsights(mediaBuyer, adAccountIds) {
+function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
   let adAccountCondition;
 
   if (Array.isArray(adAccountIds)) {
@@ -35,8 +35,11 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
   } else {
     adAccountCondition = "";
   }
-  return {
-    mediaBuyerCondition: mediaBuyer !== "admin" && mediaBuyer ? `AND ( analytics.ad_account_id IN (
+
+  // Alter mediaBuyerCondition for new 'unassigned' case here
+  let mediaBuyerCondition = "";
+  if(mediaBuyer !== "admin" && assignment !== "unassigned" && mediaBuyer){
+    mediaBuyerCondition = `AND ( analytics.ad_account_id IN (
       SELECT
         aa.provider_id
       FROM
@@ -52,8 +55,32 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
         network_campaigns_user_relations
       WHERE
         user_id = ${mediaBuyer}
-  ))
-    ` : "",
+    ))`;
+  } else if(mediaBuyer == "admin" && assignment == "unassigned" && mediaBuyer){
+    mediaBuyerCondition = `AND (
+        analytics.ad_account_id IN (
+          SELECT
+            aa.provider_id
+          FROM
+            u_aa_map map
+          INNER JOIN
+            ad_accounts aa ON aa.id = map.aa_id
+          WHERE
+            map.u_id = 3
+        ) OR analytics.nw_campaign_id IN (
+          SELECT
+            network_campaign_id
+          FROM
+            network_campaigns_user_relations
+          WHERE
+            user_id = 3;
+        )
+      )
+      `;
+  }
+
+  return {
+    mediaBuyerCondition: mediaBuyerCondition,
     adAccountCondition: adAccountCondition
   };
 }

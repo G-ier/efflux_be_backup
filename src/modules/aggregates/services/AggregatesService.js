@@ -18,7 +18,8 @@ class AggregatesService {
       network,
       trafficSource,
       mediaBuyer,
-      adAccountId
+      adAccountId,
+      assignment
     } = params;
     if (!startDate || !endDate) {
       throw new Error(
@@ -48,7 +49,8 @@ class AggregatesService {
       network,
       trafficSource,
       mediaBuyer,
-      adAccountId
+      adAccountId,
+      assignment
     };
     try {
       return await callback(finalParams);
@@ -85,11 +87,12 @@ class AggregatesService {
     network = 'crossroads',
     trafficSource,
     mediaBuyer,
-    adAccountId
+    adAccountId,
+    assignment
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetowrkCampaignsAdsetsStats(...args),
-      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId},
+      { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, assignment},
     );
   }
 
@@ -113,11 +116,12 @@ class AggregatesService {
     startDate,
     endDate,
     mediaBuyer,
+    assignment,
     adAccountId
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkDaily(...args),
-      { startDate, endDate, mediaBuyer, adAccountId },
+      { startDate, endDate, mediaBuyer, assignment, adAccountId },
     );
   }
 
@@ -125,11 +129,12 @@ class AggregatesService {
     startDate,
     endDate,
     mediaBuyer,
+    assignment,
     adAccountId,
   ) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args),
-      { startDate, endDate, mediaBuyer, adAccountId },
+      { startDate, endDate, mediaBuyer, assignment, adAccountId },
     );
   }
 
@@ -172,19 +177,19 @@ class AggregatesService {
     }
   }
 
-  async getNetworkCampaigns(network, mediaBuyerId, startDate, endDate) {
+  async getNetworkCampaigns(network, mediaBuyerId, assignment, startDate, endDate) {
 
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.networkCampaignGrouping(...args),
-      { network, mediaBuyer: mediaBuyerId, startDate, endDate },
+      { network, mediaBuyer: mediaBuyerId, assignment, startDate, endDate },
     );
 
   }
 
-  async getAdAccountsSpend(trafficSource, mediaBuyerId, startDate, endDate) {
+  async getAdAccountsSpend(trafficSource, mediaBuyerId, assignment, startDate, endDate) {
     return await this.paramConvertWrapper(
       (...args) => this.aggregatesRepository.adAccountsGrouping(...args),
-      { trafficSource, mediaBuyer: mediaBuyerId, startDate, endDate },
+      { trafficSource, mediaBuyer: mediaBuyerId, assignment, startDate, endDate },
     );
   }
 }

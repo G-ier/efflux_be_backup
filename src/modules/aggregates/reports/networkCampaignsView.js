@@ -1,5 +1,6 @@
 
-async function networkCampaignData(database, startDate, endDate, mediaBuyer, network) {
+async function networkCampaignData(database, startDate, endDate, mediaBuyer, assignment, network) {
+
 
 
   const query = `
@@ -8,7 +9,7 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
       MAX(a.network) AS network,
       a.nw_campaign_id,
       MAX(a.nw_campaign_name) AS network_campaign_name,
-    CAST(SUM(a.nw_tracked_visitors) AS FLOAT) AS nw_tracked_visitors,
+      CAST(SUM(a.nw_tracked_visitors) AS FLOAT) AS nw_tracked_visitors,
       CAST(SUM(a.nw_kw_clicks) AS FLOAT) AS nw_kw_clicks,
       CAST(SUM(a.nw_conversions) AS FLOAT) AS nw_conversions,
       CAST(SUM(a.revenue) AS FLOAT) AS revenue
@@ -35,6 +36,7 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
   }
   WHERE
     ${mediaBuyer !== "admin" && mediaBuyer ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
+    ${mediaBuyer == "admin" && mediaBuyer && assignment == "assigned" ? `ncur.user_id = 3` : (mediaBuyer == "admin" || !mediaBuyer ? "AND TRUE" : "TRUE")}
     ${network ? `AND ra.network = '${network}'` : ''}
   `
 

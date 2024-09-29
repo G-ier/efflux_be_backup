@@ -83,7 +83,7 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkCampaignsAdsetsStatsReport(req, res) {
     try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId } =
+      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, assignment } =
         await this.extractRequestDataWithUser(req);
       const data =
         await this.aggregatesService.generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
@@ -92,7 +92,8 @@ class AggregatesController {
           network,
           trafficSource,
           mediaBuyer,
-          adAccountId
+          adAccountId,
+          assignment
         );
       return res.json(data);
     } catch (e) {
@@ -126,12 +127,13 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkDailyReport(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, adAccountId } =
+      const { startDate, endDate, mediaBuyer, assignment, adAccountId } =
         await this.extractRequestDataWithUser(req);
       const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
         startDate,
         endDate,
         mediaBuyer,
+        assignment,
         adAccountId,
       );
       return res.json(data);
@@ -166,12 +168,13 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, adAccountId } =
+      const { startDate, endDate, mediaBuyer, assignment, adAccountId } =
         await this.extractRequestDataWithUser(req);
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
         startDate,
         endDate,
         mediaBuyer,
+        assignment,
         adAccountId
       );
       return res.json(data);
@@ -200,8 +203,8 @@ class AggregatesController {
 
   async networkCampaigns(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, network } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyer, startDate, endDate);
+      const { startDate, endDate, mediaBuyer, assignment, network } = await this.extractRequestDataWithUser(req);
+      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyer, assignment, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -211,8 +214,8 @@ class AggregatesController {
 
   async adAccountsSpend(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, trafficSource } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyer, startDate, endDate);
+      const { startDate, endDate, mediaBuyer, assignment, trafficSource } = await this.extractRequestDataWithUser(req);
+      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyer, assignment, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);
