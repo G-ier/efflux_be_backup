@@ -1,5 +1,5 @@
 // Local Utils
-const { isNotNumeric } = require("../../../shared/helpers/Utils");
+const { isNotNumeric } = require("../../../src/shared/helpers/Utils");
 
 const interpretDataWTemplateV1 = (insight, date) => {
 
