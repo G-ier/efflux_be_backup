@@ -13,6 +13,7 @@ const NetworkCampaignsRepository = require('../crossroads/repositories/CampaignR
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
 const PixelsService = require('../facebook/services/PixelsService');
+const {FELogger} = require('../../shared/lib/WinstonLogger');
 
 class TemporaryService {
 
@@ -24,6 +25,7 @@ class TemporaryService {
     this.networkCampaignsRepository = new NetworkCampaignsRepository();
     this.UserAccountRepository = new UserAccountRepository();
     this.pixelService = new PixelsService;
+    this.fe_logger = FELogger;
   }
 
   // Use static method to get the connection where needed
@@ -640,6 +642,29 @@ class TemporaryService {
     const organization = await this.userRepository.fetchUserOrganization(userId);
     return organization;
   }
+
+  async logCriticalError(errorData) {
+
+    var error_var = false;
+
+    try{
+      this.fe_logger.info(errorData);
+    } catch(error){
+      console.log(error);
+      error_var = true;
+    }
+
+    if(error_var){
+      return {
+        procedureStatus: 501
+      }
+    }else {
+      return {
+        procedureStatus: 200
+      }
+    }
+
+  }
 }
 
 class TemporaryController {
@@ -1007,6 +1032,31 @@ class TemporaryController {
       res.status(200).json(organization);
     } catch (error) {
       res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchUserOrganization(req, res) {
+    try {
+      const { userId } = req.params;
+      const organization = await this.temporaryService.fetchUserOrganization(userId);
+      res.status(200).json(organization);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async logCriticalError(req, res) {
+    try {
+      const { errorData } = req.body;
+      const errorLogEvent = await this.temporaryService.logCriticalError(errorData);
+      if(errorLogEvent.procedureStatus == 200){
+        res.status(200).json({message: "Error successfully logged."});
+      } else {
+        res.status(501).json({message: "Error could not be logged."});
+      }
+
+    } catch (error) {
+      res.status(500).json({ message: "Error could not be logged. Internal fault." });
     }
   }
 }
