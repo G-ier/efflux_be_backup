@@ -24,6 +24,8 @@ route.get('/users', async (req, res) => await temporaryController.fetchUsersWith
 
 // Efflux Health Page
 route.get('/link-generation-usage-data', async (req, res) => await temporaryController.fetchLinkGenerationUsageData(req, res));
+route.get('/operational-errors', async (req, res) => await temporaryController.fetchOperationalErrors(req, res));
+route.post('/operational-errors/change-status', async (req, res) => await temporaryController.changeOperationalErrorStatus(req, res));
 
 // Unknown routes to me [Deni]
 route.get('/users-formatted', async (req, res) => await temporaryController.fetchUsersWithAdAccountsForNewEfflux(req, res));

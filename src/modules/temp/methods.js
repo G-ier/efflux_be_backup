@@ -68,6 +68,15 @@ class TemporaryService {
     return reports.rows;
   }
 
+  async fetchOperationalErrors(fields = ['*'], filters = {}, limit) {
+    const errors = await this.UserAccountRepository.database.query("operational_errors", fields, filters, limit);
+    return errors;
+  }
+
+  async changeOperationalErrorStatus(id, type, traffic_source, resolved) {
+    await this.UserAccountRepository.database.update("operational_errors", { resolved: resolved },{ id: id, type: type, traffic_source: traffic_source });
+  }
+
   // AD ACCOUNTS
   async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit, joins = []) {
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit, joins);
@@ -683,6 +692,33 @@ class TemporaryController {
     try {
       const data = await this.temporaryService.fetchLinkGenerationUsageData();
       res.status(200).json(data);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchOperationalErrors(req, res) {
+
+    let { fields, filters, limit } = req.query;
+    if (fields) fields = Array.isArray(fields) ? fields : JSON.parse(fields);
+    if (filters) filters = Array.isArray(filters) ? filters : JSON.parse(filters);
+
+    try {
+      const errors = await this.temporaryService.fetchOperationalErrors(fields, filters, limit);
+      res.status(200).json(errors);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async changeOperationalErrorStatus(req, res) {
+    const { id, type, traffic_source, resolved } = req.body;
+    console.log(req.body);
+    try {
+      await this.temporaryService.changeOperationalErrorStatus(id, type, traffic_source, resolved);
+      res.status(200).json({ message: 'Operational error status changed successfully' });
     } catch (error) {
       console.log('ERROR', error);
       res.status(500).json({ message: error.message });
