@@ -31,6 +31,43 @@ class TemporaryService {
     return DatabaseConnection.getReadWriteConnection();
   }
 
+  async fetchLinkGenerationUsageData() {
+
+    const query = `
+      WITH active_ads AS (
+        SELECT
+          ads.id AS ad_id,
+          ads.traffic_source,
+          ads.ad_account_id,
+          ads.campaign_id,
+          ads.adset_id,
+          ads.status,
+          adlinks.raw_ad_link,
+          CASE WHEN adlinks.raw_ad_link LIKE '%houston%' THEN 1 ELSE 0 END AS has_houston
+        FROM
+          ads
+        INNER JOIN
+          adlinks ON ads.creative_id = adlinks.id
+        WHERE
+          ads.status = 'ACTIVE'
+      )
+      SELECT
+        traffic_source,
+        COUNT(*) AS total_ads,
+        SUM(has_houston) AS ads_with_houston,
+        SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) AS ads_without_houston,
+        ROUND(100.0 * SUM(has_houston) / COUNT(*), 2) AS percent_with_houston,
+        ROUND(100.0 * SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) / COUNT(*), 2) AS percent_without_houston
+      FROM
+        active_ads
+      GROUP BY
+        traffic_source;
+    `
+
+    const reports = await this.database.raw(query);
+    return reports.rows;
+  }
+
   // AD ACCOUNTS
   async fetchAdAccountsFromDatabase(fields = ['*'], filters = {}, limit, joins = []) {
     const results = await this.adAccountRepository.fetchAdAccounts(fields, filters, limit, joins);
@@ -120,12 +157,6 @@ class TemporaryService {
   }
   // --------------------------------------------
 
-  /*
-    - userId: id in OUR database
-    - businessId: business_id given by facebook
-    - isAdmin: sets wether current user is admin, this gets every account/ad_account
-    - ts: sets traffic source, this gets from fb or tt tables
-  */
   async fetchUsersWithAdAccountsForNewEfflux(userId, businessId=null, isAdmin, ts="fb") {
 
     if(ts == "tt"){
@@ -648,6 +679,16 @@ class TemporaryController {
     this.temporaryService = new TemporaryService();
   }
 
+  async fetchLinkGenerationUsageData(req, res) {
+    try {
+      const data = await this.temporaryService.fetchLinkGenerationUsageData();
+      res.status(200).json(data);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
   // AD ACCOUNTS
   async fetchAdAccountsFromDatabase(req, res) {
     try {
@@ -1011,4 +1052,7 @@ class TemporaryController {
   }
 }
 
-module.exports = TemporaryController;
+module.exports = {
+  TemporaryController,
+  TemporaryService
+};
