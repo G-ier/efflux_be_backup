@@ -36,4 +36,6 @@ route.get('/user/:id', async (req, res) => await temporaryController.fetchUser(r
 route.get('/user/:userId/organization', async (req, res) => await temporaryController.fetchUserOrganization(req, res));
 route.post('/update-single-ad-account', async (req, res) => await temporaryController.updateSingleAdAccount(req, res));
 
+route.post('/fe-critical-analytics', async (req, res) => await temporaryController.logCriticalError(req, res))
+
 module.exports = route;
