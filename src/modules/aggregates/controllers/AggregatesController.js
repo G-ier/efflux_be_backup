@@ -11,6 +11,9 @@ class AggregatesController {
     try {
       const user = req.user;
       let { mediaBuyer, ...otherParams } = req.query;
+      console.log("extracted mediaBuyer");
+      console.log(mediaBuyer);
+      console.log(JSON.stringify(user));
       if (EnvironmentVariablesManager.getEnvVariable('DISABLE_AUTH_DEADLOCK') !== 'true') {
         if (!user) {
           throw new Error('User information not available in the request');
@@ -21,6 +24,8 @@ class AggregatesController {
         // If the user is not an admin, enforce mediaBuyer to be the user's ID
         if (!isAdmin) {
           mediaBuyer = user.id; // Assuming 'id' is the user's identifier
+        } else {
+          mediaBuyer = "admin";
         }
       }
       return { ...otherParams, mediaBuyer, user };
@@ -85,6 +90,8 @@ class AggregatesController {
     try {
       const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, assignment } =
         await this.extractRequestDataWithUser(req);
+        console.log("MediaBuyer:");
+        console.log(mediaBuyer);
       const data =
         await this.aggregatesService.generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
           startDate,

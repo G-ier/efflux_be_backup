@@ -34,9 +34,18 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, ass
   ${
     mediaBuyer !== "admin" && mediaBuyer ? `JOIN network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id` : ''
   }
+  ${
+    mediaBuyer == "admin" && mediaBuyer && assignment == "unassigned" ? `JOIN network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id` : ''
+  }
   WHERE
     ${mediaBuyer !== "admin" && mediaBuyer ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
-    ${mediaBuyer == "admin" && mediaBuyer && assignment == "assigned" ? `ncur.user_id = 3` : (mediaBuyer == "admin" || !mediaBuyer ? "AND TRUE" : "TRUE")}
+    ${mediaBuyer == "admin" && mediaBuyer && assignment == "unassigned" ? `AND ncur.user_id = 3` : (mediaBuyer == "admin" || !mediaBuyer ? "AND TRUE" : "TRUE")}
+    ${mediaBuyer == "admin" && mediaBuyer && assignment == "unassigned" ? `AND NOT EXISTS (
+      SELECT 1
+      FROM network_campaigns_user_relations ncur2
+      WHERE ncur2.network_campaign_id = ra.nw_campaign_id
+      AND ncur2.user_id != 3
+    )`: 'AND TRUE'}
     ${network ? `AND ra.network = '${network}'` : ''}
   `
 

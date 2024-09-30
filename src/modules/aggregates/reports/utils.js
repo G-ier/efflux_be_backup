@@ -28,6 +28,11 @@ function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
 function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
   let adAccountCondition;
 
+  console.log("Assignment:");
+  console.log(assignment);
+
+
+
   if (Array.isArray(adAccountIds)) {
     adAccountCondition = `AND analytics.ad_account_id IN (${adAccountIds.join(",")})`;
   } else if (adAccountIds) {
@@ -38,7 +43,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
 
   // Alter mediaBuyerCondition for new 'unassigned' case here
   let mediaBuyerCondition = "";
-  if(mediaBuyer !== "admin" && assignment !== "unassigned" && mediaBuyer){
+  if(mediaBuyer !== "admin" && mediaBuyer){
     mediaBuyerCondition = `AND ( analytics.ad_account_id IN (
       SELECT
         aa.provider_id
@@ -57,26 +62,45 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
         user_id = ${mediaBuyer}
     ))`;
   } else if(mediaBuyer == "admin" && assignment == "unassigned" && mediaBuyer){
-    mediaBuyerCondition = `AND (
-        analytics.ad_account_id IN (
-          SELECT
-            aa.provider_id
-          FROM
-            u_aa_map map
-          INNER JOIN
-            ad_accounts aa ON aa.id = map.aa_id
-          WHERE
-            map.u_id = 3
-        ) OR analytics.nw_campaign_id IN (
-          SELECT
-            network_campaign_id
-          FROM
-            network_campaigns_user_relations
-          WHERE
-            user_id = 3;
+    console.log("Pass detected.");
+    mediaBuyerCondition = `
+    AND (
+    (
+      analytics.ad_account_id IN (
+        SELECT
+          aa.provider_id
+        FROM
+          u_aa_map map
+        INNER JOIN
+          ad_accounts aa ON aa.id = map.aa_id
+        WHERE
+          map.u_id = 3
+        AND NOT EXISTS (
+          SELECT 1
+          FROM u_aa_map map2
+          WHERE map.aa_id = map2.aa_id
+          AND map2.u_id != 3
         )
       )
-      `;
+    )
+    OR
+    (
+      analytics.nw_campaign_id IN (
+        SELECT
+          network_campaign_id
+        FROM
+          network_campaigns_user_relations
+        WHERE
+          user_id = 3
+        AND NOT EXISTS (
+          SELECT 1
+          FROM network_campaigns_user_relations rel
+          WHERE rel.network_campaign_id = network_campaigns_user_relations.network_campaign_id
+          AND rel.user_id != 3
+        )
+      )
+    )
+    )`;
   }
 
   return {
