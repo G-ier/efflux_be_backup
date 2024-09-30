@@ -1,7 +1,7 @@
 // Local application imports
-const EnvironmentVariablesManager     = require("../../../shared/services/EnvironmentVariablesManager");
+const EnvironmentVariablesManager     = require("../../../src/shared/services/EnvironmentVariablesManager");
 const { MEDIANET_API_URL }            = require("../constants");
-const { MediaNetLogger }              = require("../../../shared/lib/WinstonLogger");
+const { MediaNetLogger }              = require("../../../src/shared/lib/WinstonLogger");
 
 const axios = require("axios");
 

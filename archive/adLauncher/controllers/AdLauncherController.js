@@ -1,4 +1,4 @@
-const S3Service = require('../../../shared/lib/S3Service');
+const S3Service = require('../../../src/shared/lib/S3Service');
 const AdLauncherService = require('../service/AdLauncherService');
 const RedirectUrlsService = require('../service/RedirectUrlsService');
 const tiktok_launch = require('../service/TiktokLauncher');
