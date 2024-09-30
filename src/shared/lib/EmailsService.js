@@ -50,6 +50,7 @@ class EmailsService {
       });
 
       console.debug(response.data);
+      console.debug(response.status);
       return response.data;
     } catch (error) {
       EmailsLogger.error('Error sending invitation email: ', error.response.data);

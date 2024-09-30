@@ -287,6 +287,8 @@ class Auth0Service {
           });
           if(email_response.status == 200){
             return {"process_code": "200"};
+          } else if (email_response.message == "Invitation sent successfully"){
+            return {"process_code": "200"};
           } else {
             return {"process_code": "203", "message": "Invitation not sent."}
           }
