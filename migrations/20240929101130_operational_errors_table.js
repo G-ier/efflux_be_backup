@@ -2,11 +2,18 @@ exports.up = function(knex) {
   return knex.schema.createTable('operational_errors', (table) => {
     table.string('id').notNullable();
     table.string('traffic_source').notNullable();
-    table.string('ad_account_name')
+    table.string('network');
+    table.string('network_campaign_name');
+    table.string('ad_account_name');
     table.string('campaign_name');
     table.string('adset_name');
     table.string('ad_name');
-    table.string('type').notNullable();
+    table.enu('type', [
+      'Adset Not Tracking Conversions',
+      'Query String Error',
+      'Ad Not Using Our Tracker',
+      'Cross Ad Accounts Offers'
+    ]).notNullable();
     table.text('description');
     table.boolean('resolved').defaultTo(false);
     table.timestamps(true, true);
