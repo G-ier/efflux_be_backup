@@ -25,12 +25,8 @@ function buildSelectionColumns(prefix = "", calculateSpendRevenue = false) {
   `;
 }
 
-function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
+function buildConditionsInsights(mediaBuyer, adAccountIds) {
   let adAccountCondition;
-
-  console.log("Assignment:");
-  console.log(assignment);
-
 
 
   if (Array.isArray(adAccountIds)) {
@@ -43,7 +39,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
 
   // Alter mediaBuyerCondition for new 'unassigned' case here
   let mediaBuyerCondition = "";
-  if(mediaBuyer !== "admin" && mediaBuyer){
+  if(mediaBuyer !== "admin" && mediaBuyer !== "unassigned" && mediaBuyer){
     mediaBuyerCondition = `AND ( analytics.ad_account_id IN (
       SELECT
         aa.provider_id
@@ -61,7 +57,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds, assignment) {
       WHERE
         user_id = ${mediaBuyer}
     ))`;
-  } else if(mediaBuyer == "admin" && assignment == "unassigned" && mediaBuyer){
+  } else if(mediaBuyer == "unassigned" && mediaBuyer){
     console.log("Pass detected.");
     mediaBuyerCondition = `
     AND (

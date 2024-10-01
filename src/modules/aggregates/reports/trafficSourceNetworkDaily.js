@@ -1,7 +1,7 @@
 const { buildConditionsInsights, buildSelectionColumns } = require('./utils');
 
-async function trafficSourceNetworkDaily(database, startDate, endDate, mediaBuyer, assignment, adAccountId) {
-  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, adAccountId, assignment);
+async function trafficSourceNetworkDaily(database, startDate, endDate, mediaBuyer, adAccountId) {
+  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, adAccountId);
   const query = `
     WITH daily_data AS (
       SELECT

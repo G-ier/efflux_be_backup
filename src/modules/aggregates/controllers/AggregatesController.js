@@ -24,6 +24,8 @@ class AggregatesController {
         // If the user is not an admin, enforce mediaBuyer to be the user's ID
         if (!isAdmin) {
           mediaBuyer = user.id; // Assuming 'id' is the user's identifier
+        } else if(mediaBuyer == "unassigned") {
+          mediaBuyer = "unassigned";
         } else {
           mediaBuyer = "admin";
         }
@@ -88,7 +90,7 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkCampaignsAdsetsStatsReport(req, res) {
     try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, assignment } =
+      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId } =
         await this.extractRequestDataWithUser(req);
         console.log("MediaBuyer:");
         console.log(mediaBuyer);
@@ -99,8 +101,7 @@ class AggregatesController {
           network,
           trafficSource,
           mediaBuyer,
-          adAccountId,
-          assignment
+          adAccountId
         );
       return res.json(data);
     } catch (e) {
@@ -134,37 +135,13 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkDailyReport(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, assignment, adAccountId } =
+      const { startDate, endDate, mediaBuyer, adAccountId } =
         await this.extractRequestDataWithUser(req);
       const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
         startDate,
         endDate,
         mediaBuyer,
-        assignment,
         adAccountId,
-      );
-      return res.json(data);
-    } catch (e) {
-      console.log(e);
-      return res.status(500).json({ error: e.message });
-    }
-  }
-
-  async tqirracen(req, res) {
-    try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
-        await this.extractRequestDataWithUser(req);
-      const user = req.user;
-      const orgId = user?.org_id || 1; // 1 is for default org
-      const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
-        startDate,
-        endDate,
-        network,
-        trafficSource,
-        mediaBuyer,
-        adAccountId,
-        q,
-        // orgId,
       );
       return res.json(data);
     } catch (e) {
@@ -175,13 +152,12 @@ class AggregatesController {
 
   async generateTrafficSourceNetworkHourlyReport(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, assignment, adAccountId } =
+      const { startDate, endDate, mediaBuyer, adAccountId } =
         await this.extractRequestDataWithUser(req);
       const data = await this.aggregatesService.generateTrafficSourceNetworkHourlyReport(
         startDate,
         endDate,
         mediaBuyer,
-        assignment,
         adAccountId
       );
       return res.json(data);
@@ -210,8 +186,8 @@ class AggregatesController {
 
   async networkCampaigns(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, assignment, network } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyer, assignment, startDate, endDate);
+      const { startDate, endDate, mediaBuyer, network } = await this.extractRequestDataWithUser(req);
+      const data = await this.aggregatesService.getNetworkCampaigns(network, mediaBuyer, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);
@@ -221,8 +197,8 @@ class AggregatesController {
 
   async adAccountsSpend(req, res) {
     try {
-      const { startDate, endDate, mediaBuyer, assignment, trafficSource } = await this.extractRequestDataWithUser(req);
-      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyer, assignment, startDate, endDate);
+      const { startDate, endDate, mediaBuyer, trafficSource } = await this.extractRequestDataWithUser(req);
+      const data = await this.aggregatesService.getAdAccountsSpend(trafficSource, mediaBuyer, startDate, endDate);
       return res.json(data);
     } catch (e) {
       console.log(e);

@@ -66,7 +66,7 @@ class AggregatesRepository {
   }
 
   async trafficSourceNetowrkCampaignsAdsetsStats(params) {
-    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId, assignment } = params;
+    const { startDate, endDate, network, trafficSource, mediaBuyer, adAccountId } = params;
     return await trafficSourceNetowrkCampaignsAdsetsStats(
       this.database,
       startDate,
@@ -74,8 +74,7 @@ class AggregatesRepository {
       network,
       trafficSource,
       mediaBuyer,
-      adAccountId,
-      assignment
+      adAccountId
     );
   }
 
@@ -96,27 +95,25 @@ class AggregatesRepository {
   }
 
   async trafficSourceNetworkDaily(params) {
-    const { startDate, endDate, mediaBuyer, assignment, adAccountId } =
+    const { startDate, endDate, mediaBuyer, adAccountId } =
       params;
     return await trafficSourceNetworkDaily(
       this.database,
       startDate,
       endDate,
       mediaBuyer,
-      assignment,
       adAccountId
     );
   }
 
   async trafficSourceNetworkHourly(params) {
-    const { startDate, endDate, mediaBuyer, assignment, adAccountId } =
+    const { startDate, endDate, mediaBuyer, adAccountId } =
       params;
     return await trafficSourceNetworkHourly(
       this.database,
       startDate,
       endDate,
       mediaBuyer,
-      assignment,
       adAccountId
     );
   }
@@ -223,28 +220,26 @@ class AggregatesRepository {
 
   async networkCampaignGrouping(params){
 
-    const { network, mediaBuyer, assignment, startDate, endDate } = params;
+    const { network, mediaBuyer, startDate, endDate } = params;
 
     return await networkCampaignData(
       this.database,
       startDate,
       endDate,
       mediaBuyer,
-      assignment,
       network
     );
 
   }
 
   async adAccountsGrouping(params){
-    const { trafficSource, mediaBuyer, assignment, startDate, endDate } = params;
+    const { trafficSource, mediaBuyer, startDate, endDate } = params;
 
     return await adAccountData(
       this.database,
       startDate,
       endDate,
       mediaBuyer,
-      assignment,
       trafficSource
     );
 

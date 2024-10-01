@@ -1,7 +1,7 @@
 const { buildConditionsInsights, buildSelectionColumns, castSum } = require("./utils");
 
-async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, endDate, network='crossroads', trafficSource, mediaBuyer, ad_accounts, assignment) {
-  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, ad_accounts, assignment);
+async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, endDate, network='crossroads', trafficSource, mediaBuyer, ad_accounts) {
+  const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, ad_accounts);
 
   const query = `
   WITH adset_data AS (

@@ -1,5 +1,5 @@
 
-async function adAccountData(database, startDate, endDate, mediaBuyer, assignment, trafficSource) {
+async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSource) {
 
 
 
@@ -38,9 +38,9 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, assignmen
       JOIN
         u_aa_map uam ON adc.id = uam.aa_id
       WHERE
-        ${mediaBuyer !== "admin" && mediaBuyer ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
-        ${mediaBuyer == "admin" && mediaBuyer && assignment == "unassigned" ? `AND uam.u_id = 3` : (mediaBuyer == "admin" || !mediaBuyer ? "AND TRUE" : "TRUE")}
-        ${mediaBuyer == "admin" && mediaBuyer && assignment == "unassigned" ? `AND NOT EXISTS (
+        ${mediaBuyer !== "admin" && mediaBuyer !== "unassigned" && mediaBuyer ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
+        ${mediaBuyer == "unassigned" && mediaBuyer ? `AND uam.u_id = 3` : (mediaBuyer !== "admin" && mediaBuyer ? "AND TRUE" : "AND TRUE")}
+        ${mediaBuyer == "unassigned" && mediaBuyer ? `AND NOT EXISTS (
           SELECT 1
           FROM u_aa_map uam2
           WHERE uam.aa_id = uam2.aa_id
