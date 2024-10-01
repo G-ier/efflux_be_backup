@@ -75,8 +75,18 @@ class TemporaryService {
     return errors;
   }
 
+  async fetchEffluxErrors(fields = ['*'], filters = {}, limit) {
+    const errors = await this.UserAccountRepository.database.query("efflux_errors", fields, filters, limit);
+    return errors;
+  }
+
   async changeOperationalErrorStatus(id, type, traffic_source, resolved) {
     await this.UserAccountRepository.database.update("operational_errors", { resolved: resolved },{ id: id, type: type, traffic_source: traffic_source });
+  }
+
+  async changeEffluxErrorStatus(id, resolved) {
+    console.log("changeEffluxErrorStatus", id, resolved);
+    await this.UserAccountRepository.database.update("efflux_errors", { resolved: resolved }, { id: id });
   }
 
   // AD ACCOUNTS
@@ -744,6 +754,32 @@ class TemporaryController {
     try {
       await this.temporaryService.changeOperationalErrorStatus(id, type, traffic_source, resolved);
       res.status(200).json({ message: 'Operational error status changed successfully' });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchEffluxErrors(req, res) {
+
+    let { fields, filters, limit } = req.query;
+    if (fields) fields = Array.isArray(fields) ? fields : JSON.parse(fields);
+    if (filters) filters = Array.isArray(filters) ? filters : JSON.parse(filters);
+
+    try {
+      const errors = await this.temporaryService.fetchEffluxErrors(fields, filters, limit);
+      res.status(200).json(errors);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async changeEffluxErrorStatus(req, res) {
+    const { id, resolved } = req.body;
+    try {
+      await this.temporaryService.changeEffluxErrorStatus(id, resolved);
+      res.status(200).json({ message: 'Efflux error status changed successfully' });
     } catch (error) {
       console.log('ERROR', error);
       res.status(500).json({ message: error.message });
