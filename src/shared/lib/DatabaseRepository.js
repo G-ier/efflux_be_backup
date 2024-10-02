@@ -82,17 +82,20 @@ class DatabaseRepository {
     }
   }
 
-  async query(tableName, fields = ['*'], filters = {}, limit, joins = [], cache = false) {
+  async query(tableName, fields = ['*'], filters = {}, limit, joins = [],  cache = false, orderBy = []) {
     try {
-      // if (cache && this.enableCache) {
-      //   // Check if users are in cache
-      //   console.log(`Fetching from cache: ${tableName}`);
-      //   const cacheKey = `${tableName}:${JSON.stringify({ fields, filters, limit })}`;
-      //   const cachedUsers = await this.cache.getAsync(cacheKey);
-      //   return JSON.parse(cachedUsers);
-      // }
       const connection = this.getConnection();
-      let queryBuilder = connection(tableName).select(fields);
+      let queryBuilder = connection(tableName);
+
+      // Handle fields with raw SQL expressions
+      const processedFields = fields.map(field => {
+        if (field.includes('(')) {
+          return connection.raw(field);
+        }
+        return field;
+      });
+
+      queryBuilder = queryBuilder.select(processedFields);
 
       // Handling joins
       for (const join of joins) {
@@ -128,15 +131,17 @@ class DatabaseRepository {
         }
       }
 
+      // Apply ordering
+      for (const order of orderBy) {
+        if (typeof order === 'string') {
+          queryBuilder = queryBuilder.orderBy(order);
+        } else if (typeof order === 'object' && order.column) {
+          queryBuilder = queryBuilder.orderBy(order.column, order.direction || 'asc');
+        }
+      }
+
       if (limit) queryBuilder = queryBuilder.limit(limit);
-
       const results = await queryBuilder;
-
-      // if (cache && this.enableCache) {
-      //   // Set cache
-      //   console.log(`Setting cache: ${tableName}`);
-      //   await this.cache.setAsync(cacheKey, JSON.stringify(results), 'EX', 3600); // Expires in 1 hour
-      // }
 
       return results;
     } catch (error) {
@@ -203,14 +208,6 @@ class DatabaseRepository {
 
   async queryOne(tableName, fields = ['*'], filters = {}, orderBy = [], cache = false) {
     try {
-      // if (cache && this.enableCache) {
-      //   // Check if users are in cache
-      //   console.log(`Fetching from cache: ${tableName}`);
-      //   const cacheKey = `${tableName}:${JSON.stringify({ fields, filters })}`;
-      //   const cachedUsers = await this.cache.getAsync(cacheKey);
-      //   return JSON.parse(cachedUsers);
-      // }
-
       const connection = this.getConnection();
       let queryBuilder = connection(tableName).select(fields);
 
@@ -228,11 +225,6 @@ class DatabaseRepository {
       }
 
       const result = await queryBuilder.first();
-      // if (cache && this.enableCache) {
-      //   // Set cache
-      //   console.log(`Setting cache: ${tableName}`);
-      //   await this.cache.setAsync(cacheKey, JSON.stringify(result), 'EX', 3600); // Expires in 1 hour
-      // }
       return result;
     } catch (error) {
       console.error(`Error querying table ${tableName}`, error);

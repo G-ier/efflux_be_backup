@@ -75,8 +75,8 @@ class TemporaryService {
     return errors;
   }
 
-  async fetchEffluxErrors(fields = ['*'], filters = {}, limit) {
-    const errors = await this.UserAccountRepository.database.query("efflux_errors", fields, filters, limit);
+  async fetchEffluxErrors(fields = ['*'], filters = {}, limit, joins = [], cache = false, orderBy = []) {
+    const errors = await this.UserAccountRepository.database.query("efflux_errors", fields, filters, limit, joins, cache, orderBy);
     return errors;
   }
 
