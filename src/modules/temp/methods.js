@@ -40,11 +40,17 @@ class TemporaryService {
       WITH spend_data AS (
         SELECT
           ad_id,
+          SUM(CASE
+            WHEN DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') = CURRENT_DATE
+            THEN spend
+            ELSE 0
+          END) AS today_spend,
           SUM(spend) AS total_spend
         FROM
           spend
         WHERE
-          DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') = '${today}'
+          DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')
+          BETWEEN (DATE '${today}' - INTERVAL '1 day') AND '${today}'
         GROUP BY
           ad_id
       ),
@@ -57,6 +63,7 @@ class TemporaryService {
           ads.adset_id,
           adlinks.raw_ad_link,
           CASE WHEN adlinks.raw_ad_link LIKE '%houston%' THEN 1 ELSE 0 END AS has_houston,
+          COALESCE(spend_data.today_spend, 0) AS today_spend,
           COALESCE(spend_data.total_spend, 0) AS total_spend
         FROM
           ads
@@ -77,9 +84,9 @@ class TemporaryService {
           SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) AS ads_without_houston,
           SUM(CASE WHEN total_spend > 0 AND has_houston = 1 THEN 1 ELSE 0 END) AS ads_with_spend_with_houston,
           SUM(CASE WHEN total_spend > 0 AND has_houston = 0 THEN 1 ELSE 0 END) AS ads_with_spend_without_houston,
-          SUM(CASE WHEN has_houston = 1 THEN total_spend ELSE 0 END) AS spend_with_houston,
-          SUM(CASE WHEN has_houston = 0 THEN total_spend ELSE 0 END) AS spend_without_houston,
-          SUM(total_spend) AS total_spend
+          SUM(CASE WHEN has_houston = 1 THEN today_spend ELSE 0 END) AS spend_with_houston,
+          SUM(CASE WHEN has_houston = 0 THEN today_spend ELSE 0 END) AS spend_without_houston,
+          SUM(today_spend) AS today_total_spend
         FROM
           active_ads
         GROUP BY
@@ -96,21 +103,22 @@ class TemporaryService {
         COALESCE(ads_with_spend_without_houston, 0) AS ads_with_spend_without_houston,
         COALESCE(spend_with_houston, 0) AS spend_with_houston,
         COALESCE(spend_without_houston, 0) AS spend_without_houston,
-        COALESCE(total_spend, 0) AS total_spend,
+        COALESCE(today_total_spend, 0) AS total_spend,
         COALESCE(ROUND(100.0 * ads_with_spend / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_with_spend,
         COALESCE(ROUND(100.0 * ads_without_spend / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_without_spend,
         COALESCE(ROUND(100.0 * ads_with_houston / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_with_houston,
         COALESCE(ROUND(100.0 * ads_without_houston / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_without_houston,
         COALESCE(ROUND(100.0 * ads_with_spend_with_houston / NULLIF(ads_with_spend, 0), 2), 0) AS percent_ads_with_spend_with_houston,
         COALESCE(ROUND(100.0 * ads_with_spend_without_houston / NULLIF(ads_with_spend, 0), 2), 0) AS percent_ads_with_spend_without_houston,
-        COALESCE(ROUND(100.0 * spend_with_houston / NULLIF(total_spend, 0), 2), 0) AS percent_spend_with_houston,
-        COALESCE(ROUND(100.0 * spend_without_houston / NULLIF(total_spend, 0), 2), 0) AS percent_spend_without_houston
+        COALESCE(ROUND(100.0 * spend_with_houston / NULLIF(today_total_spend, 0), 2), 0) AS percent_spend_with_houston,
+        COALESCE(ROUND(100.0 * spend_without_houston / NULLIF(today_total_spend, 0), 2), 0) AS percent_spend_without_houston
       FROM
         traffic_source_stats
       WHERE
         traffic_source IN ('tiktok', 'facebook')
       ORDER BY
         traffic_source;
+
     `
 
     const reports = await this.database.raw(query);
