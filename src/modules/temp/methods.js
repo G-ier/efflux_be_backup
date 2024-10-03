@@ -14,6 +14,7 @@ const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
 const PixelsService = require('../facebook/services/PixelsService');
 const {FELogger} = require('../../shared/lib/WinstonLogger');
+const { todayYMD } = require('../../shared/helpers/calendar');
 
 class TemporaryService {
 
@@ -34,35 +35,81 @@ class TemporaryService {
   }
 
   async fetchLinkGenerationUsageData() {
-
+    const today = todayYMD();
     const query = `
-      WITH active_ads AS (
+      WITH spend_data AS (
+        SELECT
+          ad_id,
+          SUM(spend) AS total_spend
+        FROM
+          spend
+        WHERE
+          DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') = '${today}'
+        GROUP BY
+          ad_id
+      ),
+      active_ads AS (
         SELECT
           ads.id AS ad_id,
           ads.traffic_source,
           ads.ad_account_id,
           ads.campaign_id,
           ads.adset_id,
-          ads.status,
           adlinks.raw_ad_link,
-          CASE WHEN adlinks.raw_ad_link LIKE '%houston%' THEN 1 ELSE 0 END AS has_houston
+          CASE WHEN adlinks.raw_ad_link LIKE '%houston%' THEN 1 ELSE 0 END AS has_houston,
+          COALESCE(spend_data.total_spend, 0) AS total_spend
         FROM
           ads
         INNER JOIN
           adlinks ON ads.creative_id = adlinks.id
+        LEFT JOIN
+          spend_data ON ads.id = spend_data.ad_id
         WHERE
           ads.status = 'ACTIVE'
+      ),
+      traffic_source_stats AS (
+        SELECT
+          traffic_source,
+          COUNT(*) AS total_active_ads,
+          SUM(CASE WHEN total_spend > 0 THEN 1 ELSE 0 END) AS ads_with_spend,
+          SUM(CASE WHEN total_spend = 0 THEN 1 ELSE 0 END) AS ads_without_spend,
+          SUM(has_houston) AS ads_with_houston,
+          SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) AS ads_without_houston,
+          SUM(CASE WHEN total_spend > 0 AND has_houston = 1 THEN 1 ELSE 0 END) AS ads_with_spend_with_houston,
+          SUM(CASE WHEN total_spend > 0 AND has_houston = 0 THEN 1 ELSE 0 END) AS ads_with_spend_without_houston,
+          SUM(CASE WHEN has_houston = 1 THEN total_spend ELSE 0 END) AS spend_with_houston,
+          SUM(CASE WHEN has_houston = 0 THEN total_spend ELSE 0 END) AS spend_without_houston,
+          SUM(total_spend) AS total_spend
+        FROM
+          active_ads
+        GROUP BY
+          traffic_source
       )
       SELECT
         traffic_source,
-        COUNT(*) AS total_ads,
-        SUM(has_houston) AS ads_with_houston,
-        SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) AS ads_without_houston,
-        ROUND(100.0 * SUM(has_houston) / COUNT(*), 2) AS percent_with_houston,
-        ROUND(100.0 * SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) / COUNT(*), 2) AS percent_without_houston
+        COALESCE(total_active_ads, 0) AS total_active_ads,
+        COALESCE(ads_with_spend, 0) AS ads_with_spend,
+        COALESCE(ads_without_spend, 0) AS ads_without_spend,
+        COALESCE(ads_with_houston, 0) AS ads_with_houston,
+        COALESCE(ads_without_houston, 0) AS ads_without_houston,
+        COALESCE(ads_with_spend_with_houston, 0) AS ads_with_spend_with_houston,
+        COALESCE(ads_with_spend_without_houston, 0) AS ads_with_spend_without_houston,
+        COALESCE(spend_with_houston, 0) AS spend_with_houston,
+        COALESCE(spend_without_houston, 0) AS spend_without_houston,
+        COALESCE(total_spend, 0) AS total_spend,
+        COALESCE(ROUND(100.0 * ads_with_spend / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_with_spend,
+        COALESCE(ROUND(100.0 * ads_without_spend / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_without_spend,
+        COALESCE(ROUND(100.0 * ads_with_houston / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_with_houston,
+        COALESCE(ROUND(100.0 * ads_without_houston / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_without_houston,
+        COALESCE(ROUND(100.0 * ads_with_spend_with_houston / NULLIF(ads_with_spend, 0), 2), 0) AS percent_ads_with_spend_with_houston,
+        COALESCE(ROUND(100.0 * ads_with_spend_without_houston / NULLIF(ads_with_spend, 0), 2), 0) AS percent_ads_with_spend_without_houston,
+        COALESCE(ROUND(100.0 * spend_with_houston / NULLIF(total_spend, 0), 2), 0) AS percent_spend_with_houston,
+        COALESCE(ROUND(100.0 * spend_without_houston / NULLIF(total_spend, 0), 2), 0) AS percent_spend_without_houston
       FROM
-        active_ads
-      GROUP BY
+        traffic_source_stats
+      WHERE
+        traffic_source IN ('tiktok', 'facebook')
+      ORDER BY
         traffic_source;
     `
 
