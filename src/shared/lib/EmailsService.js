@@ -34,12 +34,13 @@ class EmailsService {
     }
   }
 
-  async sendInvitationEmail(email, firstName, organizationName, tempPassword) {
+  async sendInvitationEmail(email, firstName, organizationName, tempPassword, roleStatus) {
     const data = {
       to: email,
       firstName: firstName,
       organizationName,
       tempPassword: tempPassword,
+      roleStatus
     };
 
     try {

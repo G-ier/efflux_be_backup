@@ -99,7 +99,7 @@ class Auth0Controller {
       const userCreationResponse = await this.auth0Service.createUser(fullName, username, email, password, rights, mediaBuyer);
 
       if(userCreationResponse.process_code == "200"){
-        res.status(200).json({"process_code": "200"});
+        res.status(200).json({"process_code": "200","role_process_code": userCreationResponse.role_process_code});
       } else if(userCreationResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else {
@@ -124,7 +124,7 @@ class Auth0Controller {
       const userCreationResponse = await this.auth0Service.inviteUser(email, rights, mediaBuyer);
 
       if(userCreationResponse.process_code == "200"){
-        res.status(200).json({"process_code": "200"});
+        res.status(200).json({"process_code": "200", "role_process_code": userCreationResponse.role_process_code});
       } else if(userCreationResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else if(userCreationResponse.process_code == "203") {
@@ -216,7 +216,7 @@ class Auth0Controller {
       const editResponse = await this.auth0Service.editUser(selectedUser, null, null, null, null, rights, mediaBuyer);
 
       if(editResponse.process_code == "200"){
-        res.status(200).json({"process_code": "200"});
+        res.status(200).json({"process_code": "200", "role_process_code": editResponse.role_process_code});
       } else if(editResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
       } else if(editResponse.process_code == "203") {
