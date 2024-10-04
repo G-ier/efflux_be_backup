@@ -420,13 +420,13 @@ class Auth0Service {
     try {
 
       // Get auth0 user's id from the database
-      const user_id = await this.userService.fetchUsers(['"providerId"'], {id: selectedUser});
+      const user_id = await this.userService.fetchUsers(['sub'], {id: selectedUser});
 
       console.log("User ID");
       console.log(user_id);
 
       // Delete user from auth0
-      const toBeDeletedUser = await this.deleteAuth0User(user_id[0].providerId);
+      const toBeDeletedUser = await this.deleteAuth0User(user_id[0].sub);
 
       // Delete user from database if previous action is successful
       if(toBeDeletedUser.status == 204){
@@ -475,7 +475,7 @@ class Auth0Service {
     try {
 
       // Get auth0 user's id from the database
-      const user_id = await this.userService.fetchUsers(['"providerId"'], {id: selectedUser});
+      const user_id = await this.userService.fetchUsers(['sub'], {id: selectedUser});
 
 
       // Delete user from auth0
@@ -485,7 +485,7 @@ class Auth0Service {
       };
       if(fullName || email || password){
 
-        const editResponse = await this.editAuth0User(user_id[0].providerId, email, fullName, password);
+        const editResponse = await this.editAuth0User(user_id[0].sub, email, fullName, password);
         editTrueResponse = editResponse;
       }
 
@@ -495,7 +495,7 @@ class Auth0Service {
         let edit_null_event = {edit_result: "UNSTARTED", message: "DB update process did not run."};
 
         try {
-          edit_null_event = await this.userService.editUser(user_id[0].providerId, selectedUser, fullName, username, email, password, rights);
+          edit_null_event = await this.userService.editUser(user_id[0].sub, selectedUser, fullName, username, email, password, rights);
 
           if(edit_null_event.edit_result == "OK"){
 
@@ -520,7 +520,7 @@ class Auth0Service {
         let userRoleAssignment = {status: 300, data: {"message": "Auth process defaults.", "auth0_code": editTrueResponse.status}};
 
         try{
-          userRoleAssignment = await this.assignAuth0Role(user_id[0].providerId, rights);
+          userRoleAssignment = await this.assignAuth0Role(user_id[0].sub, rights);
         } catch(error){
           this.user_logger.error(error);
         }
@@ -538,7 +538,7 @@ class Auth0Service {
 
 
         // Edit user in database if previous action is successful
-        const edit_event = await this.userService.editUser(user_id[0].providerId, selectedUser, fullName, username, email, password, rights);
+        const edit_event = await this.userService.editUser(user_id[0].sub, selectedUser, fullName, username, email, password, rights);
 
         if(edit_event.edit_result == "OK"){
 
@@ -552,7 +552,7 @@ class Auth0Service {
       if(editTrueResponse.status == 200){
 
         // Edit user in database if previous action is successful
-        const edit_event = await this.userService.editUser(user_id[0].providerId, selectedUser, fullName, username, email, password, rights);
+        const edit_event = await this.userService.editUser(user_id[0].sub, selectedUser, fullName, username, email, password, rights);
 
         if(edit_event.edit_result == "OK"){
 

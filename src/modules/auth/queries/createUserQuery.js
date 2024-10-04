@@ -1,6 +1,7 @@
 
 async function createUserQuery(database, userCreationResponseData, rights, password, username) {
 
+  const separatedParts = userCreationResponseData.user_id.split('|');
 
   const query = `
       INSERT INTO users (
@@ -29,7 +30,7 @@ async function createUserQuery(database, userCreationResponseData, rights, passw
         '${password}',
         NULL,
         'auth0',
-        '${userCreationResponseData.user_id}',
+        '${separatedParts[1]}',
         1,
         ${rights == "admin" ? 9 : 10}
       );
