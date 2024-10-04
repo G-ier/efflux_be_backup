@@ -1,4 +1,5 @@
 const moment = require('moment-timezone');
+const crypto = require('crypto');
 
 function isNotNumeric(str) {
   return isNaN(parseFloat(str)) || !isFinite(str);
@@ -69,10 +70,31 @@ function extractDateHourFromUnixTimestamp(timestamp, timezone='America/Los_Angel
 
 }
 
+function generateRandomPassword(length = 12) {
+  const specials = ['.', '-', '!', '?'];
+  const numbers = '0123456789';
+  const letters = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
+  // Generate random base password from letters and numbers
+  let password = crypto.randomBytes(length - 2).toString('base64').replace(/[+/=]/g, '').slice(0, length - 2);
+
+  // Add two special characters and one number
+  password += specials[Math.floor(Math.random() * specials.length)];
+  password += specials[Math.floor(Math.random() * specials.length)];
+  password += numbers[Math.floor(Math.random() * numbers.length)];
+
+  // Shuffle the characters to randomize the placement
+  password = password.split('').sort(() => 0.5 - Math.random()).join('');
+
+  // Ensure the final length matches the requested length (in case shuffling reduces it)
+  return password.slice(0, length);
+}
+
 module.exports = {
   isNotNumeric,
   calculateAccumulated,
   offsetHourByShift,
   getDatesBetween,
-  extractDateHourFromUnixTimestamp
+  extractDateHourFromUnixTimestamp,
+  generateRandomPassword
 }

@@ -20,7 +20,7 @@ class CampaignService extends BaseService {
   async updateCampaignById(campaignId, fieldName, newValue) {
     const criteria = { id: campaignId };
     const data = { [fieldName]: newValue };
-  
+
     try {
       const updatedCampaign = await this.repository.update(data, criteria);
       return updatedCampaign;
@@ -53,34 +53,6 @@ class CampaignService extends BaseService {
 
   async deleteCampaignById(id) {
     return this.repository.delete({ id });
-  }
-
-  async postCampaign(body) {
-    const {
-      key,
-      ...rest
-    } = body;
-    const url = `${CROSSROADS_URL}campaign-wizard/create?api_key=${key}`;
-    const { data } = await axios.post(url, { ...rest });
-    return data;
-  }
-
-  async postDomainLookUp(key, domain, tld) {
-    const url = `${CROSSROADS_URL}campaign-wizard/domain-lookup?api_key=${key}`;
-    const { data } = await axios.post(url, { domain, tld })
-    return data;
-  }
-
-  async postVerifyDomainAvailability(key, domain) {
-    const url = `${CROSSROADS_URL}campaign-wizard/verify-domain-availability?api_key=${key}`;
-    const { data } = await axios.post(url, { domain })
-    return data;
-  }
-
-  async getMetadata(key) {
-    const url = `${CROSSROADS_URL}campaign-wizard?api_key=${key}`;
-    const { data } = await axios.get(url);
-    return data;
   }
 }
 

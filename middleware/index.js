@@ -19,18 +19,10 @@ const postback = require('../src/shared/routes/postback');
 const temp = require('../src/modules/temp/routes');
 const facebook = require('../src/modules/facebook/routes');
 const tiktok = require('../src/modules/tiktok/routes');
-const taboola = require('../src/modules/taboola/routes');
-const scrappedAds = require('../src/modules/scrappedAds/routes');
 const aggregations = require('../src/modules/aggregates/routes');
-const sherlock = require('../src/modules/sherlock/routes');
-const sedo = require('../src/modules/sedo/routes');
 const crossroadsRoutes = require('../src/modules/crossroads/routes');
 const auth = require('../src/modules/auth/routes');
-const funnelFlux = require('../src/modules/funnelFlux/routes');
-const tonic = require('../src/modules/tonic/routes');
-const medianet = require('../src/modules/mediaNet/routes');
 const management = require('../src/shared/routes/management');
-const adLauncher = require('../src/modules/adLauncher/routes');
 
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
@@ -81,17 +73,9 @@ function configureMiddleware(server) {
   server.use('/api/auth', auth);
   server.use('/api/facebook', facebook);
   server.use('/api/tiktok', tiktok);
-  server.use('/api/taboola', taboola);
-  server.use('/api/composite-ad', scrappedAds);
   server.use('/api/aggregations', aggregations);
-  server.use('/api/sherlock', sherlock);
   server.use('/api/crossroads', crossroadRouter);
-  server.use('/api/sedo', sedo);
   server.use('/api/management', management);
-  server.use('/api/ff', funnelFlux);
-  server.use('/api/tonic', tonic);
-  server.use('/api/medianet', medianet);
-  server.use('/api/add-launcher', adLauncher);
   server.use(ErrorHandler);
 }
 

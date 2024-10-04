@@ -13,6 +13,8 @@ const NetworkCampaignsRepository = require('../crossroads/repositories/CampaignR
 const DatabaseConnection = require('../../shared/lib/DatabaseConnection');
 const EnvironmentVariablesManager = require('../../shared/services/EnvironmentVariablesManager');
 const PixelsService = require('../facebook/services/PixelsService');
+const {FELogger} = require('../../shared/lib/WinstonLogger');
+const { todayYMD } = require('../../shared/helpers/calendar');
 
 class TemporaryService {
 
@@ -24,11 +26,130 @@ class TemporaryService {
     this.networkCampaignsRepository = new NetworkCampaignsRepository();
     this.UserAccountRepository = new UserAccountRepository();
     this.pixelService = new PixelsService;
+    this.fe_logger = FELogger;
   }
 
   // Use static method to get the connection where needed
   get database() {
     return DatabaseConnection.getReadWriteConnection();
+  }
+
+  async fetchLinkGenerationUsageData() {
+    const today = todayYMD();
+    const query = `
+      WITH spend_data AS (
+        SELECT
+          ad_id,
+          SUM(CASE
+            WHEN DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') = CURRENT_DATE
+            THEN spend
+            ELSE 0
+          END) AS today_spend,
+          SUM(spend) AS total_spend
+        FROM
+          spend
+        WHERE
+          DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')
+          BETWEEN (DATE '${today}' - INTERVAL '1 day') AND '${today}'
+        GROUP BY
+          ad_id
+      ),
+      active_ads AS (
+        SELECT
+          ads.id AS ad_id,
+          ads.traffic_source,
+          ads.ad_account_id,
+          ads.campaign_id,
+          ads.adset_id,
+          adlinks.raw_ad_link,
+          CASE WHEN adlinks.raw_ad_link LIKE '%houston%' THEN 1 ELSE 0 END AS has_houston,
+          COALESCE(spend_data.today_spend, 0) AS today_spend,
+          COALESCE(spend_data.total_spend, 0) AS total_spend
+        FROM
+          ads
+        INNER JOIN
+          adlinks ON ads.creative_id = adlinks.id
+        LEFT JOIN
+          spend_data ON ads.id = spend_data.ad_id
+        WHERE
+          ads.status = 'ACTIVE'
+      ),
+      traffic_source_stats AS (
+        SELECT
+          traffic_source,
+          COUNT(*) AS total_active_ads,
+          SUM(CASE WHEN total_spend > 0 THEN 1 ELSE 0 END) AS ads_with_spend,
+          SUM(CASE WHEN total_spend = 0 THEN 1 ELSE 0 END) AS ads_without_spend,
+          SUM(has_houston) AS ads_with_houston,
+          SUM(CASE WHEN has_houston = 0 THEN 1 ELSE 0 END) AS ads_without_houston,
+          SUM(CASE WHEN total_spend > 0 AND has_houston = 1 THEN 1 ELSE 0 END) AS ads_with_spend_with_houston,
+          SUM(CASE WHEN total_spend > 0 AND has_houston = 0 THEN 1 ELSE 0 END) AS ads_with_spend_without_houston,
+          SUM(CASE WHEN has_houston = 1 THEN today_spend ELSE 0 END) AS spend_with_houston,
+          SUM(CASE WHEN has_houston = 0 THEN today_spend ELSE 0 END) AS spend_without_houston,
+          SUM(today_spend) AS today_total_spend
+        FROM
+          active_ads
+        GROUP BY
+          traffic_source
+      )
+      SELECT
+        traffic_source,
+        COALESCE(total_active_ads, 0) AS total_active_ads,
+        COALESCE(ads_with_spend, 0) AS ads_with_spend,
+        COALESCE(ads_without_spend, 0) AS ads_without_spend,
+        COALESCE(ads_with_houston, 0) AS ads_with_houston,
+        COALESCE(ads_without_houston, 0) AS ads_without_houston,
+        COALESCE(ads_with_spend_with_houston, 0) AS ads_with_spend_with_houston,
+        COALESCE(ads_with_spend_without_houston, 0) AS ads_with_spend_without_houston,
+        COALESCE(spend_with_houston, 0) AS spend_with_houston,
+        COALESCE(spend_without_houston, 0) AS spend_without_houston,
+        COALESCE(today_total_spend, 0) AS total_spend,
+        COALESCE(ROUND(100.0 * ads_with_spend / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_with_spend,
+        COALESCE(ROUND(100.0 * ads_without_spend / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_without_spend,
+        COALESCE(ROUND(100.0 * ads_with_houston / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_with_houston,
+        COALESCE(ROUND(100.0 * ads_without_houston / NULLIF(total_active_ads, 0), 2), 0) AS percent_ads_without_houston,
+        COALESCE(ROUND(100.0 * ads_with_spend_with_houston / NULLIF(ads_with_spend, 0), 2), 0) AS percent_ads_with_spend_with_houston,
+        COALESCE(ROUND(100.0 * ads_with_spend_without_houston / NULLIF(ads_with_spend, 0), 2), 0) AS percent_ads_with_spend_without_houston,
+        COALESCE(ROUND(100.0 * spend_with_houston / NULLIF(today_total_spend, 0), 2), 0) AS percent_spend_with_houston,
+        COALESCE(ROUND(100.0 * spend_without_houston / NULLIF(today_total_spend, 0), 2), 0) AS percent_spend_without_houston
+      FROM
+        traffic_source_stats
+      WHERE
+        traffic_source IN ('tiktok', 'facebook')
+      ORDER BY
+        traffic_source;
+
+    `
+
+    const reports = await this.database.raw(query);
+    return reports.rows;
+  }
+
+  async fetchOperationalErrors(fields = ['*'], filters = {}, limit) {
+    const errors = await this.UserAccountRepository.database.query("operational_errors", fields, filters, limit);
+    return errors;
+  }
+
+  async fetchEffluxErrors(fields = ['*'], filters = {}, limit, joins = [], cache = false, orderBy = [{column: 'efflux_errors.date', direction: 'desc'}]) {
+    const errors = await this.UserAccountRepository.database.query(
+      "efflux_errors",
+      fields,
+      filters,
+      limit,
+      joins,
+      cache,
+      orderBy
+    );
+    return errors;
+  }
+
+  async changeOperationalErrorStatus(id, type, traffic_source, resolved) {
+    await this.UserAccountRepository.database.update("operational_errors", { resolved: resolved },{ id: id, type: type, traffic_source: traffic_source });
+  }
+
+  async changeEffluxErrorStatus(id, resolved) {
+    console.log("changeEffluxErrorStatus", id, resolved);
+    await this.UserAccountRepository.database.update("efflux_errors", { resolved: resolved }, { id: id });
   }
 
   // AD ACCOUNTS
@@ -91,6 +212,7 @@ class TemporaryService {
                       'id', nwcr.network_campaign_id,
                       'name', network_campaigns.name,
                       'source', nwcr.source
+
                   )
               ) AS network_campaigns
           FROM
@@ -120,12 +242,6 @@ class TemporaryService {
   }
   // --------------------------------------------
 
-  /*
-    - userId: id in OUR database
-    - businessId: business_id given by facebook
-    - isAdmin: sets wether current user is admin, this gets every account/ad_account
-    - ts: sets traffic source, this gets from fb or tt tables
-  */
   async fetchUsersWithAdAccountsForNewEfflux(userId, businessId=null, isAdmin, ts="fb") {
 
     if(ts == "tt"){
@@ -640,12 +756,98 @@ class TemporaryService {
     const organization = await this.userRepository.fetchUserOrganization(userId);
     return organization;
   }
+
+  async logCriticalError(errorData) {
+
+    var error_var = false;
+
+    try{
+      this.fe_logger.info(errorData);
+    } catch(error){
+      console.log(error);
+      error_var = true;
+    }
+
+    if(error_var){
+      return {
+        procedureStatus: 501
+      }
+    }else {
+      return {
+        procedureStatus: 200
+      }
+    }
+
+  }
 }
 
 class TemporaryController {
 
   constructor() {
     this.temporaryService = new TemporaryService();
+  }
+
+  async fetchLinkGenerationUsageData(req, res) {
+    try {
+      const data = await this.temporaryService.fetchLinkGenerationUsageData();
+      res.status(200).json(data);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchOperationalErrors(req, res) {
+
+    let { fields, filters, limit } = req.query;
+    if (fields) fields = Array.isArray(fields) ? fields : JSON.parse(fields);
+    if (filters) filters = Array.isArray(filters) ? filters : JSON.parse(filters);
+
+    try {
+      const errors = await this.temporaryService.fetchOperationalErrors(fields, filters, limit);
+      res.status(200).json(errors);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async changeOperationalErrorStatus(req, res) {
+    const { id, type, traffic_source, resolved } = req.body;
+    console.log(req.body);
+    try {
+      await this.temporaryService.changeOperationalErrorStatus(id, type, traffic_source, resolved);
+      res.status(200).json({ message: 'Operational error status changed successfully' });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async fetchEffluxErrors(req, res) {
+
+    let { fields, filters, limit } = req.query;
+    if (fields) fields = Array.isArray(fields) ? fields : JSON.parse(fields);
+    if (filters) filters = Array.isArray(filters) ? filters : JSON.parse(filters);
+
+    try {
+      const errors = await this.temporaryService.fetchEffluxErrors(fields, filters, limit);
+      res.status(200).json(errors);
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async changeEffluxErrorStatus(req, res) {
+    const { id, resolved } = req.body;
+    try {
+      await this.temporaryService.changeEffluxErrorStatus(id, resolved);
+      res.status(200).json({ message: 'Efflux error status changed successfully' });
+    } catch (error) {
+      console.log('ERROR', error);
+      res.status(500).json({ message: error.message });
+    }
   }
 
   // AD ACCOUNTS
@@ -1009,6 +1211,34 @@ class TemporaryController {
       res.status(500).json({ message: error.message });
     }
   }
+
+  async fetchUserOrganization(req, res) {
+    try {
+      const { userId } = req.params;
+      const organization = await this.temporaryService.fetchUserOrganization(userId);
+      res.status(200).json(organization);
+    } catch (error) {
+      res.status(500).json({ message: error.message });
+    }
+  }
+
+  async logCriticalError(req, res) {
+    try {
+      const { errorData } = req.body;
+      const errorLogEvent = await this.temporaryService.logCriticalError(errorData);
+      if(errorLogEvent.procedureStatus == 200){
+        res.status(200).json({message: "Error successfully logged."});
+      } else {
+        res.status(501).json({message: "Error could not be logged."});
+      }
+
+    } catch (error) {
+      res.status(500).json({ message: "Error could not be logged. Internal fault." });
+    }
+  }
 }
 
-module.exports = TemporaryController;
+module.exports = {
+  TemporaryController,
+  TemporaryService
+};

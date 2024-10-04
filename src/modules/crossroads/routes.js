@@ -31,19 +31,6 @@ route.get("/campaigns", async (req, res) => {
   await campaignController.getAllCampaigns(req, res);
 });
 
-// @route     /api/crossroads/campaign
-// @desc      POST create campaign
-// @Access    Private
-route.post("/campaign", async (req, res) => {
-    try {
-      const campaigns = await campaignController.postCampaign(req, res);
-      res.status(200).json(campaigns);
-    } catch (err) {
-      console.log(err);
-      res.status(500).json(err);
-    }
-  });
-
 // @route     /api/crossroads/campaign/:id
 // @desc      GET get specific campaign by ID
 // @Access    Private
@@ -78,44 +65,6 @@ route.delete("/campaign/:id", async (req, res) => {
   }
 });
 
-// @route     /api/crossroads/domain-look-up
-// @desc      POST look up domain with suggestions
-// @Access    Private
-route.post("/domain-look-up", async (req, res) => {
-  try {
-    const result = await campaignController.postDomainLookUp(req, res);
-    res.status(200).json(result);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: err.message });
-  }
-});
-
-// @route     /api/crossroads/domain-availability
-// @desc      POST check domain availability
-// @Access    Private
-route.post("/domain-availability", async (req, res) => {
-    try {
-      const result = await campaignController.postVerifyDomainAvailability(req, res);
-      res.status(200).json(result);
-    } catch (err) {
-      console.log(err);
-      res.status(500).json({ message: err.message });
-    }
-});
-
-// @route     /api/crossroads/metadata
-// @desc      GET crossroads metadata
-// @Access    Private
-route.get('/metadata', async (req, res) => {
-    try {
-        const metadata = await campaignController.getMetadata(req, res);
-        res.status(200).json(metadata);
-      } catch (err) {
-        console.log("error here", err);
-        res.status(500).json({ message: err.message });
-      }
-})
 // @route     /api/crossroads/insight/:id
 // @desc      GET an insight by ID
 // @Access    Private

@@ -1,6 +1,10 @@
 const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 // const MemcachedConnection = require('../../../shared/lib/MemcachedConnection');
 const User = require('../entities/User');
+const createUserQuery = require('../queries/createUserQuery');
+const getUsersQuery = require('../queries/getUsersQuery');
+const deleteUserQuery = require('../queries/deleteUserQuery');
+const editUserQuery = require('../queries/editUserQuery');
 
 class UserRepository {
   constructor() {
@@ -33,8 +37,9 @@ class UserRepository {
     }
   }
 
-  async delete(criteria) {
-    return await this.database.delete(this.tableName, criteria);
+  async delete(id) {
+    // Run complex raw queries from folder 'queries'
+    const rows = await deleteUserQuery(this.database, id);
   }
 
   async upsert(users, chunkSize = 500) {
@@ -188,6 +193,53 @@ class UserRepository {
       dbObject.provider,
       dbObject.providerId,
     );
+  }
+
+  async createUser(userCreationResponseData, rights, password, username){
+
+    // Run complex raw queries from folder 'queries'
+    const rows = await createUserQuery(this.database, userCreationResponseData, rights, password, username);
+
+    if(rows){
+      return {
+        "insertion_result": "OK"
+      }
+    } else {
+      return {
+        "insertion_result": "FAILED"
+      }
+    }
+
+  }
+
+  async editUser(selectedUser, fullName, username, email, password, rights){
+
+    // Run complex raw queries from folder 'queries'
+    const rows = await editUserQuery(this.database, selectedUser, fullName, username, email, password, rights);
+
+    if(rows){
+      return {
+        "edit_result": "OK"
+      }
+    } else {
+      return {
+        "edit_result": "FAILED"
+      }
+    }
+
+  }
+
+  async getUsers(){
+
+    // Run complex raw queries from folder 'queries'
+    const rows = await getUsersQuery(this.database);
+
+    if(rows){
+      return rows;
+    } else {
+      throw new Error("Retrieval failed.");
+    }
+
   }
 }
 
