@@ -9,7 +9,8 @@ exports.up = function(knex) {
     table.text('description').notNullable();
     table.date('date').notNullable();
     table.text('type').notNullable();
-    table.unique(['source', 'date', 'type']);
+    table.string('entity_id').nullable();
+    table.unique(['source', 'date', 'type', 'entity_id']);
     table.boolean('resolved').defaultTo(false);
     table.timestamps(true, true);
   });
