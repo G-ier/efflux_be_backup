@@ -1,7 +1,4 @@
-
 async function networkCampaignData(database, startDate, endDate, mediaBuyer, network) {
-
-
 
   const query = `
   WITH revenue_aggregated AS (
@@ -31,24 +28,21 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
     ra.revenue
   FROM
     revenue_aggregated ra
-  ${
-    mediaBuyer !== "admin" && mediaBuyer !== "unassigned" && mediaBuyer ? `JOIN network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id` : ''
-  }
-  ${
-    mediaBuyer == "unassigned" && mediaBuyer ? `JOIN network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id` : ''
-  }
+  INNER JOIN
+    network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id
   WHERE
-    ${mediaBuyer !== "admin" && mediaBuyer !== "unassigned" && mediaBuyer ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
-    ${mediaBuyer == "unassigned" && mediaBuyer ? `AND ncur.user_id = 3` : (mediaBuyer !== "admin" && mediaBuyer ? "AND TRUE" : "AND TRUE")}
-    ${mediaBuyer == "unassigned" && mediaBuyer ? `AND NOT EXISTS (
-      SELECT 1
-      FROM network_campaigns_user_relations ncur2
-      WHERE ncur2.network_campaign_id = ra.nw_campaign_id
-      AND ncur2.user_id != 3
-    )`: 'AND TRUE'}
+    ${mediaBuyer && !["admin", "unassigned"].includes(mediaBuyer) ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
+    ${mediaBuyer && mediaBuyer == "unassigned" ? `
+      AND ncur.network_campaign_id NOT IN (
+        SELECT DISTINCT network_campaign_id
+        FROM network_campaigns_user_relations ncur
+        INNER JOIN users u ON u.id = ncur.user_id
+        WHERE u.id != 3
+      )
+    ` : ""}
     ${network ? `AND ra.network = '${network}'` : ''}
   `
-
+  console.log(query)
   const { rows } = await database.raw(query);
   return rows;
 }

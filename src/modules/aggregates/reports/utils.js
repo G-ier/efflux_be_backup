@@ -39,7 +39,7 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
 
   // Alter mediaBuyerCondition for new 'unassigned' case here
   let mediaBuyerCondition = "";
-  if(mediaBuyer !== "admin" && mediaBuyer !== "unassigned" && mediaBuyer){
+  if(mediaBuyer && !["admin", "unassigned"].includes(mediaBuyer)){
     mediaBuyerCondition = `AND ( analytics.ad_account_id IN (
       SELECT
         aa.provider_id
@@ -57,45 +57,27 @@ function buildConditionsInsights(mediaBuyer, adAccountIds) {
       WHERE
         user_id = ${mediaBuyer}
     ))`;
-  } else if(mediaBuyer == "unassigned" && mediaBuyer){
-    console.log("Pass detected.");
+  } else if(mediaBuyer && mediaBuyer == "unassigned"){
     mediaBuyerCondition = `
     AND (
-    (
-      analytics.ad_account_id IN (
-        SELECT
-          aa.provider_id
-        FROM
-          u_aa_map map
-        INNER JOIN
-          ad_accounts aa ON aa.id = map.aa_id
-        WHERE
-          map.u_id = 3
-        AND NOT EXISTS (
-          SELECT 1
-          FROM u_aa_map map2
-          WHERE map.aa_id = map2.aa_id
-          AND map2.u_id != 3
+      (
+        analytics.ad_account_id NOT IN (
+          SELECT DISTINCT aa.provider_id
+          FROM u_aa_map map
+          INNER JOIN ad_accounts aa ON aa.id = map.aa_id
+          INNER JOIN users u ON u.id = map.u_id
+          WHERE u.id != 3
         )
       )
-    )
-    OR
-    (
-      analytics.nw_campaign_id IN (
-        SELECT
-          network_campaign_id
-        FROM
-          network_campaigns_user_relations
-        WHERE
-          user_id = 3
-        AND NOT EXISTS (
-          SELECT 1
-          FROM network_campaigns_user_relations rel
-          WHERE rel.network_campaign_id = network_campaigns_user_relations.network_campaign_id
-          AND rel.user_id != 3
+      OR
+      (
+        analytics.nw_campaign_id NOT IN (
+          SELECT DISTINCT network_campaign_id
+          FROM network_campaigns_user_relations ncur
+          INNER JOIN users u ON u.id = ncur.user_id
+          WHERE u.id != 3
         )
       )
-    )
     )`;
   }
 
