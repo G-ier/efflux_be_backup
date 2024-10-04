@@ -1,11 +1,11 @@
 // imports
 require('dotenv').config();
-const EnvironmentVariablesManager = require('../../../../src/shared/services/EnvironmentVariablesManager');
+const EnvironmentVariablesManager = require('../../../src/shared/services/EnvironmentVariablesManager');
 const axios = require('axios');
 const crypto = require('crypto');
 const FormData = require('form-data');
 const fs = require('fs');
-const s3Service = require("../../../shared/lib/S3Service");
+const s3Service = require("../../../src/shared/lib/S3Service");
 const { method, identity, get } = require('lodash');
 const path = require('path');
 const archiver = require('archiver');

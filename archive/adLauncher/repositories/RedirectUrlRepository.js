@@ -1,4 +1,4 @@
-const DatabaseRepository = require("../../../shared/lib/DatabaseRepository");
+const DatabaseRepository = require("../../../src/shared/lib/DatabaseRepository");
 
 
 class RedirectUrlRepository {
