@@ -4,6 +4,7 @@ const UserRepository = require('../repositories/UserRepository');
 class UserService {
   constructor() {
     this.userRepository = new UserRepository();
+
   }
 
   // Save a single user to the database
@@ -68,7 +69,8 @@ class UserService {
     }
   }
 
-  async editUser(selectedUser, fullName, username, email, password, rights) {
+  async editUser(providerID, selectedUser, fullName, username, email, password, rights) {
+
     const edit_result = await this.userRepository.editUser(selectedUser, fullName, username, email, password, rights);
 
     if(edit_result.edit_result == "OK"){

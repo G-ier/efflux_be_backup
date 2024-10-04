@@ -212,6 +212,7 @@ class TemporaryService {
                       'id', nwcr.network_campaign_id,
                       'name', network_campaigns.name,
                       'source', nwcr.source
+
                   )
               ) AS network_campaigns
           FROM

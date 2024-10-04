@@ -74,7 +74,7 @@ class AggregatesRepository {
       network,
       trafficSource,
       mediaBuyer,
-      adAccountId,
+      adAccountId
     );
   }
 

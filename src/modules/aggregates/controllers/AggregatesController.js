@@ -11,17 +11,43 @@ class AggregatesController {
     try {
       const user = req.user;
       let { mediaBuyer, ...otherParams } = req.query;
+
+      console.log({
+        "log": "extracting request data with user",
+        "mediaBuyer": mediaBuyer
+      })
+
       if (EnvironmentVariablesManager.getEnvVariable('DISABLE_AUTH_DEADLOCK') !== 'true') {
+
         if (!user) {
           throw new Error('User information not available in the request');
         }
 
         // Check if the user has 'admin' permission
-        const isAdmin = user.roles && user.roles.includes('admin');
+        const isAdmin = user.isAdmin;
+
+        console.log({
+          "log": "checking if user is admin",
+          "isAdmin": isAdmin
+        })
+
         // If the user is not an admin, enforce mediaBuyer to be the user's ID
         if (!isAdmin) {
           mediaBuyer = user.id; // Assuming 'id' is the user's identifier
+          if (!mediaBuyer) {
+            throw new Error('User cannot be identified');
+          }
+        } else {
+          if (mediaBuyer && mediaBuyer === 3) {
+            mediaBuyer = undefined;
+          }
         }
+
+        console.log({
+          "log": "defined mediaBuyer",
+          "mediaBuyer": mediaBuyer
+        })
+
       }
       return { ...otherParams, mediaBuyer, user };
     } catch (e) {
@@ -82,9 +108,9 @@ class AggregatesController {
   }
 
   async generateTrafficSourceNetworkCampaignsAdsetsStatsReport(req, res) {
+
     try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId } =
-        await this.extractRequestDataWithUser(req);
+      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId } = await this.extractRequestDataWithUser(req);
       const data =
         await this.aggregatesService.generateTrafficSourceNetworkCampaignsAdsetsStatsReport(
           startDate,
@@ -133,29 +159,6 @@ class AggregatesController {
         endDate,
         mediaBuyer,
         adAccountId,
-      );
-      return res.json(data);
-    } catch (e) {
-      console.log(e);
-      return res.status(500).json({ error: e.message });
-    }
-  }
-
-  async tqirracen(req, res) {
-    try {
-      const { trafficSource, network, startDate, endDate, mediaBuyer, adAccountId, q } =
-        await this.extractRequestDataWithUser(req);
-      const user = req.user;
-      const orgId = user?.org_id || 1; // 1 is for default org
-      const data = await this.aggregatesService.generateTrafficSourceNetworkDailyReport(
-        startDate,
-        endDate,
-        network,
-        trafficSource,
-        mediaBuyer,
-        adAccountId,
-        q,
-        // orgId,
       );
       return res.json(data);
     } catch (e) {
