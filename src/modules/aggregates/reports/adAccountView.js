@@ -48,7 +48,6 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
       ` : ""}
       ${trafficSource ? `AND sa.traffic_source = '${trafficSource}'` : ''}
   `;
-  console.log(query)
   const { rows } = await database.raw(query);
   return rows;
 }
