@@ -33,8 +33,9 @@ async function adAccountData(database, startDate, endDate, mediaBuyer, trafficSo
       spend_aggregated sa
     JOIN
       ad_accounts adc ON sa.ad_account_id::text = adc.provider_id
-    JOIN
-      u_aa_map uam ON adc.id = uam.aa_id
+    ${mediaBuyer && !["admin", "unassigned"].includes(mediaBuyer) ? `
+      JOIN u_aa_map uam ON adc.id = uam.aa_id
+    ` : ""}
     WHERE
       ${mediaBuyer && !["admin", "unassigned"].includes(mediaBuyer) ? `uam.u_id = ${mediaBuyer}` : "TRUE"}
       ${mediaBuyer && mediaBuyer == "unassigned" ? `

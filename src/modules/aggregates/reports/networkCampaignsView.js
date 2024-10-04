@@ -28,8 +28,9 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
     ra.revenue
   FROM
     revenue_aggregated ra
-  INNER JOIN
-    network_campaigns_user_relations ncur ON ra.nw_campaign_id = ncur.network_campaign_id
+  ${mediaBuyer && !["admin", "unassigned"].includes(mediaBuyer) ? `
+    JOIN u_nc_map uam ON ra.nw_campaign_id = uam.network_campaign_id
+  ` : ""}
   WHERE
     ${mediaBuyer && !["admin", "unassigned"].includes(mediaBuyer) ? `ncur.user_id = ${mediaBuyer}` : "TRUE"}
     ${mediaBuyer && mediaBuyer == "unassigned" ? `
