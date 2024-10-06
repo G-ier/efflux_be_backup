@@ -2,6 +2,7 @@ const DatabaseRepository = require('../../../shared/lib/DatabaseRepository');
 // const MemcachedConnection = require('../../../shared/lib/MemcachedConnection');
 const User = require('../entities/User');
 const createUserQuery = require('../queries/createUserQuery');
+const getUserQuery = require('../queries/getUserQuery');
 const getUsersQuery = require('../queries/getUsersQuery');
 const deleteUserQuery = require('../queries/deleteUserQuery');
 const editUserQuery = require('../queries/editUserQuery');
@@ -225,6 +226,36 @@ class UserRepository {
       return {
         "edit_result": "FAILED"
       }
+    }
+
+  }
+
+  async editSpecificUser(fullName, email, username, media_buyer){
+
+    // Run complex raw queries from folder 'queries'
+    const rows = await editUserQuery(this.database, media_buyer, fullName, username, email, null, null);
+
+    if(rows){
+      return {
+        status: 200
+      }
+    } else {
+      return {
+        status: 500
+      }
+    }
+
+  }
+
+  async getUser(mediaBuyerID){
+
+    // Run complex raw queries from folder 'queries'
+    const rows = await getUserQuery(this.database, mediaBuyerID);
+
+    if(rows){
+      return rows;
+    } else {
+      throw new Error("Retrieval failed.");
     }
 
   }

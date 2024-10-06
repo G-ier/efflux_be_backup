@@ -9,7 +9,7 @@ async function editUserQuery(database, selectedUser, fullName, username, email, 
           ${email ? `email = '${email}',`: ''}
           ${password ? `token = '${password}',`: ''}
           ${rights == 'admin' ? `acct_type='admin',`: ''}
-          ${rights == 'mediabuyer' ? `acct_type='mediabuyer',`: ''}
+          ${rights == 'media_buyer' ? `acct_type='media_buyer',`: ''}
           ${rights ? `role_id = ${rights == 'admin' ? 9 : 10},`: ''}
           ${(fullName || username || email || password || rights) ? `updated_at = NOW()`: ''}
       WHERE id = ${selectedUser};
