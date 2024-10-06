@@ -144,6 +144,7 @@ class Auth0Service {
             "connection": "Username-Password-Authentication",
           });
         } else {
+          console.log("Correct pass.");
           data = JSON.stringify({
 
             "name": name,
@@ -668,6 +669,11 @@ class Auth0Service {
   async editSpecificUser(fullName, username, email, mediaBuyer) {
     try {
 
+      const user_id = await this.userService.fetchUsers(['sub'], {id: mediaBuyer});
+
+      console.log("params");
+      console.log(fullName, username, email);
+
       if(!fullName && !email){
 
 
@@ -676,7 +682,7 @@ class Auth0Service {
           return {"process_code": "200", "message": "Nothing to change."}
         } else {
 
-          const userSpecificEdit = await this.userService.editSpecificUser(fullName, email, username, mediaBuyer);
+          const userSpecificEdit = await this.userService.userRepository.editSpecificUser(fullName, email, username, mediaBuyer);
           if(userSpecificEdit.status == 200){
             return {"process_code": "203", "message": "Username changed."}
           } else {
@@ -688,15 +694,16 @@ class Auth0Service {
       } else {
 
         if(!username){
-          const userSpecificEdit = await this.editAuth0User(fullName, email);
-          if(userSpecificEdit.status == 200){
-            return {"process_code": "202", "message": "Full name and email changed."}
+          const userSpecificEdit = await this.editAuth0User(user_id[0].sub, email, fullName, null);
+          const userSpecificEditDB = await this.userService.userRepository.editSpecificUser(fullName, email, username, mediaBuyer);
+          if(userSpecificEdit.status == 200 && userSpecificEditDB.status == 200){
+            return {"process_code": "202", "message": "Full name/email info changed."}
           } else {
             return {"process_code": "501", "message": "Full name or email could not be changed."}
           }
         } else {
-          const userSpecificEditAuth = await this.editAuth0User(fullName, email);
-          const userSpecificEdit = await this.userService.editSpecificUser(fullName, email, username, mediaBuyer);
+          const userSpecificEditAuth = await this.editAuth0User(user_id[0].sub, email, fullName, null);
+          const userSpecificEdit = await this.userService.userRepository.editSpecificUser(fullName, email, username, mediaBuyer);
 
           if(userSpecificEditAuth.status == 200 && userSpecificEdit.status == 200){
             return {"process_code": "201", "message": "All fields changed."}
@@ -711,7 +718,7 @@ class Auth0Service {
 
 
     } catch (error) {
-      console.log(error);
+      // console.log(error);
       if (error?.response?.data) {
         const fail_data_catch = this.handleFailCases(error.response.data);
         return fail_data_catch;
