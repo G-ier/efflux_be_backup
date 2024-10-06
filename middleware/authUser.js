@@ -3,7 +3,9 @@ const _ = require('lodash');
 const printDebug = false;
 
 module.exports = async (req, res, next) => {
+
   req.auth.isAdmin = req.auth.permissions.includes('admin');
+
   if (printDebug) console.debug('req.auth.isAdmin: ', req.auth.isAdmin);
   req.auth.providerId = req.auth.sub.split('|')[1];
 
@@ -15,7 +17,7 @@ module.exports = async (req, res, next) => {
       user.roles = [];
     }
     user.permissions = _.compact(user.permissions);
-    // Then, check if user.roles is empty
+    // Then, check if user.permissions is empty
     if (_.isEmpty(user.permissions)) {
       user.permissions = [];
     }

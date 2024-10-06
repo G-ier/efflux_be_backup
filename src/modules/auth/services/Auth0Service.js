@@ -32,6 +32,7 @@ class Auth0Service {
         client_secret: EnvironmentVariablesManager.getEnvVariable('AUTH0_CLIENT_SECRET'),
         audience: EnvironmentVariablesManager.getEnvVariable('AUTH0_API'),
         grant_type: 'client_credentials',
+        scope: "delete:role_members read:users update:users delete:users create:users"
       })
 
       if (result.status === 200 && result.data.access_token !== null) {
@@ -199,7 +200,7 @@ class Auth0Service {
   */
   async assignAuth0Role(id, role) {
     const Authorization = await this.getAuth0AccessToken();
-    return await axios.post(
+    const response = await axios.post(
       `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${id}/roles`,
       {
         "roles": [
@@ -211,9 +212,90 @@ class Auth0Service {
           Authorization,
         },
       },
-    );
+    ).catch(error => {
+      console.log(error);
+    });
+
+    return response;
   }
 
+  /*
+    Auth0 codes
+
+    204 - Users roles successfully removed.
+    401 - Invalid token.
+    401 - Client is not global.
+    401 - Invalid signature received for JSON Web Token validation.
+    403 - Insufficient scope; expected any of: update:users.
+    429 - Too many requests. Check the X-RateLimit-Limit, X-RateLimit-Remaining and X-RateLimit-Reset headers.
+  */
+  async removeAuth0Role(id, acct_type) {
+    const Authorization = await this.getAuth0AccessToken();
+
+    console.log("Authorization");
+    console.log(Authorization);
+
+    let roleUpdate = "rol_tuNQ0khtYkGW6ZJt";
+    if(acct_type === undefined){
+      throw new Error("Undefined account type. Fault in Database call or DB itself.");
+    }
+    if(acct_type == "admin"){
+      roleUpdate = "rol_d1uGNi0kkVrNJBrH";
+    }
+    if(acct_type == "creative"){
+      roleUpdate = "rol_8WHPjUoJjr5iMkEK";
+    }
+
+     let data = JSON.stringify({
+      "roles": [
+        roleUpdate
+      ]
+    });
+
+    /*
+    let config = {
+      method: 'delete',
+      maxBodyLength: Infinity,
+      url: `${EnvironmentVariablesManager.getEnvVariable('AUTH0_DOMAIN')}users/${id}/roles`,
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': Authorization
+      },
+      data : data
+    };
+
+    const response = await axios.request(config).catch(error => {
+      console.log(error);
+    });
+    */
+
+
+
+    const response = await axios.delete(
+      `${EnvironmentVariablesManager.getEnvVariable('AUTH0_API')}users/${id}/roles`,
+
+      {
+        data: {
+          "roles": [
+            roleUpdate
+          ]
+        },
+        headers: {
+          'Authorization': Authorization,
+          'Content-Type': 'application/json'
+        },
+      },
+    ).catch(error => {
+      console.log(error);
+    });
+
+
+
+    console.log("Removal Response:");
+    console.log(response);
+
+    return response;
+  }
 
   getUserIdentity(userFromAuth0) {
     const oauthProviders = ['facebook', 'google'];
@@ -373,10 +455,12 @@ class Auth0Service {
 
       if(userCreationResponse.status == 201){
         // Insert user to database
-        const insert_event = await this.userService.createUser(userCreationResponse.data, rights, password);
+        const insert_event = await this.userService.createUser(userCreationResponse.data, rights, password, fullName);
 
         if(insert_event.insertion_result == "OK"){
           // Send email invitation
+          console.log("userRoleAssignment.status");
+          console.log(userRoleAssignment.status);
           const email_response = await this.emailService.sendInvitationEmail(email, fullName, "Efflux", password, userRoleAssignment.status).catch(error => {
             return {"process_code": "203", "message": "Invitation not sent."}
           });
@@ -475,7 +559,7 @@ class Auth0Service {
     try {
 
       // Get auth0 user's id from the database
-      const user_id = await this.userService.fetchUsers(['sub'], {id: selectedUser});
+      const user_id = await this.userService.fetchUsers(['sub, acct_type'], {id: selectedUser});
 
 
       // Delete user from auth0
@@ -520,6 +604,7 @@ class Auth0Service {
         let userRoleAssignment = {status: 300, data: {"message": "Auth process defaults.", "auth0_code": editTrueResponse.status}};
 
         try{
+          const userRoleRemoval = await this.removeAuth0Role(user_id[0].sub, user_id[0].acct_type);
           userRoleAssignment = await this.assignAuth0Role(user_id[0].sub, rights);
         } catch(error){
           this.user_logger.error(error);
@@ -579,6 +664,66 @@ class Auth0Service {
       }
     }
   }
+
+  async editSpecificUser(fullName, username, email, mediaBuyer) {
+    try {
+
+      if(!fullName && !email){
+
+
+        if(!username){
+
+          return {"process_code": "200", "message": "Nothing to change."}
+        } else {
+
+          const userSpecificEdit = await this.userService.editSpecificUser(fullName, email, username, mediaBuyer);
+          if(userSpecificEdit.status == 200){
+            return {"process_code": "203", "message": "Username changed."}
+          } else {
+            return {"process_code": "501", "message": "Username could not be changed."}
+          }
+        }
+
+
+      } else {
+
+        if(!username){
+          const userSpecificEdit = await this.editAuth0User(fullName, email);
+          if(userSpecificEdit.status == 200){
+            return {"process_code": "202", "message": "Full name and email changed."}
+          } else {
+            return {"process_code": "501", "message": "Full name or email could not be changed."}
+          }
+        } else {
+          const userSpecificEditAuth = await this.editAuth0User(fullName, email);
+          const userSpecificEdit = await this.userService.editSpecificUser(fullName, email, username, mediaBuyer);
+
+          if(userSpecificEditAuth.status == 200 && userSpecificEdit.status == 200){
+            return {"process_code": "201", "message": "All fields changed."}
+          } else {
+            return {"process_code": "501", "message": "Username could not be changed."}
+          }
+        }
+
+
+      }
+
+
+
+    } catch (error) {
+      console.log(error);
+      if (error?.response?.data) {
+        const fail_data_catch = this.handleFailCases(error.response.data);
+        return fail_data_catch;
+      }
+      this.user_logger.info(error);
+      return {
+        "message": "Internal error in server."
+      }
+    }
+  }
+
+
   async log_error(error) {
     this.user_logger.error(error);
   }
