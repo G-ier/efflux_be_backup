@@ -54,7 +54,35 @@ class Auth0Controller {
     }
   }
 
-  // Method to handle user creation
+  // Method to handle user retrieval
+  async getUser(req, res) {
+    try {
+      const { mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+
+      // Get check
+      var get_error = false;
+
+      const userGetResponse = await this.userService.getUser(mediaBuyer).catch(error => {
+        get_error = true;
+        console.log("Retrieval error.");
+        console.log(error);
+      });
+
+      if(!get_error){
+        res.status(200).json({"process_code": "200", "user": userGetResponse});
+      } else {
+        res.status(500).json({"process_code": "500", "user": userGetResponse});
+        console.log("Retrieval failed.");
+      }
+
+
+    } catch (error) {
+      this.auth0Service.log_error(error);
+      res.status(500).send('Failed to gets user, INTERNAL ERROR.');
+    }
+  }
+
+  // Method to handle user retrieval
   async getUsers(req, res) {
     try {
       const { mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
@@ -204,6 +232,9 @@ class Auth0Controller {
   }
 
   // Method to handle user edit rights
+  /*
+    Get rights to assign
+  */
   async editUserRights(req, res) {
     try {
 
@@ -248,6 +279,33 @@ class Auth0Controller {
         res.status(200).json({"process_code": "200"});
       } else if(editResponse.process_code == "201") {
         res.status(201).json({"process_code": "201"});
+      } else {
+        res.status(501).json(editResponse);
+      }
+
+
+    } catch (error) {
+      console.log(error);
+      res.status(500).json(error);
+    }
+  }
+
+  // Method to handle user specific info change
+  async editUserPersonalInfo(req, res) {
+    try {
+
+      const { fullName, username, email, mediaBuyer, ...otherParams } = await this.extractRequestDataWithUser(req);
+
+      const editResponse = await this.auth0Service.editSpecificUser(fullName, username, email, mediaBuyer);
+
+      if(editResponse.process_code == "200"){
+        res.status(200).json({"process_code": "200"});
+      } else if(editResponse.process_code == "201") {
+        res.status(201).json({"process_code": "201"});
+      } else if(editResponse.process_code == "202") {
+        res.status(202).json({"process_code": "202"});
+      } else if(editResponse.process_code == "203") {
+        res.status(203).json({"process_code": "203"});
       } else {
         res.status(501).json(editResponse);
       }

@@ -42,8 +42,13 @@ class UserService {
     return await this.userRepository.fetchUsers(fields, filters, limit);
   }
 
-   // Get Users from database
-   async getUsers() {
+  // Get Users from database
+  async getUser(mediaBuyerID) {
+    return await this.userRepository.getUser(mediaBuyerID);
+  }
+
+  // Get Users from database
+  async getUsers() {
     return await this.userRepository.getUsers();
   }
 
