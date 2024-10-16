@@ -1,0 +1,115 @@
+WITH adset_data AS (
+  SELECT
+    analytics.campaign_id,
+    analytics.adset_id,
+    MAX(campaign_name) AS campaign_name,
+    analytics.nw_campaign_id AS nw_campaign_id,
+    MAX(analytics.nw_campaign_name) AS nw_campaign_name,
+    MAX(adsets.status) AS status,
+    CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) AS daily_budget,
+    MAX(analytics.adset_name) AS adset_name,
+    0 AS nw_uniq_conversions,
+    CAST(SUM(spend) AS FLOAT) AS spend,
+    CAST(SUM(spend_plus_fee) AS FLOAT) AS spend_plus_fee,
+    CAST(SUM(revenue) AS FLOAT) AS revenue,
+    CAST(SUM(analytics.nw_tracked_visitors) AS INTEGER) AS nw_tracked_visitors,
+    CAST(SUM(analytics.nw_kw_clicks) AS INTEGER) AS nw_kw_clicks,
+    CAST(SUM(analytics.nw_conversions) AS INTEGER) AS nw_conversions,
+    CAST(SUM(analytics.ts_impressions) AS INTEGER) AS ts_impressions,
+    CAST(SUM(analytics.ts_link_clicks) AS INTEGER) AS ts_link_clicks,
+    CAST(SUM(analytics.ts_conversions) AS INTEGER) AS ts_conversions,
+    0 AS pb_conversions,
+    MAX(analytics.ad_account_name) AS ad_account_name,
+    MAX(analytics.domain_name) AS domain_name
+  FROM
+    analytics
+    JOIN adsets ON analytics.adset_id = adsets.provider_id
+  WHERE
+    DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '2024-10-14'
+    AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '2024-10-15'
+    AND analytics.traffic_source = 'facebook'
+    AND analytics.network = 'crossroads'
+  GROUP BY
+    analytics.campaign_id, analytics.adset_id, analytics.nw_campaign_id
+),
+
+offer_data AS (
+  SELECT
+    nw_campaign_id,
+    SUM(CASE WHEN traffic_source = 'unknown' THEN revenue ELSE 0 END) AS unknown_revenue,
+    SUM(CASE WHEN traffic_source != 'unknown' THEN revenue ELSE 0 END) AS known_revenue,
+    SUM(revenue) AS total_revenue
+  FROM
+    analytics
+  WHERE
+    DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '2024-10-14'
+    AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '2024-10-15'
+    AND network = 'crossroads'
+  GROUP BY
+    nw_campaign_id
+),
+
+adset_coefficients AS (
+  SELECT
+    ad.nw_campaign_id,
+    ad.adset_id,
+    CASE
+      WHEN od.known_revenue > 0 THEN ad.revenue / od.known_revenue
+      ELSE 1.0 / COUNT(*) OVER (PARTITION BY ad.nw_campaign_id)
+    END AS revenue_coefficient
+  FROM
+    adset_data ad
+    JOIN offer_data od ON ad.nw_campaign_id = od.nw_campaign_id
+)
+
+SELECT
+  ad.campaign_id,
+  CAST(SUM(ad.spend) AS FLOAT) AS spend,
+  CAST(SUM(ad.spend_plus_fee) AS FLOAT) AS spend_plus_fee,
+  CAST(SUM(ad.nw_tracked_visitors) AS INTEGER) AS nw_tracked_visitors,
+  CAST(SUM(ad.nw_kw_clicks) AS INTEGER) AS nw_kw_clicks,
+  CAST(SUM(ad.nw_conversions) AS INTEGER) AS nw_conversions,
+  CAST(SUM(ad.ts_impressions) AS INTEGER) AS ts_impressions,
+  CAST(SUM(ad.ts_link_clicks) AS INTEGER) AS ts_link_clicks,
+  CAST(SUM(ad.ts_conversions) AS INTEGER) AS ts_conversions,
+  0 AS pb_conversions,
+  CAST(SUM(ad.revenue) AS FLOAT) AS revenue,
+  CAST(SUM(od.unknown_revenue * ac.revenue_coefficient) AS FLOAT) AS extra_revenue,
+  CAST(SUM(ad.revenue) + SUM(od.unknown_revenue * ac.revenue_coefficient) AS FLOAT) AS estimated_revenue,
+  CAST(MAX(od.total_revenue) AS FLOAT) AS total_offer_revenue,
+  COALESCE(MAX(ad.campaign_name), MAX(c.name)) AS campaign_name,
+  MAX(c.status) AS status,
+  MAX(c.created_at) AS created_at,
+  CASE
+    WHEN SUM(ad.daily_budget) > 0 THEN 'adset'
+    ELSE 'campaign'
+  END AS budget_level,
+  CASE
+    WHEN SUM(ad.daily_budget) > 0 THEN SUM(
+      CASE WHEN ad.status = 'ACTIVE' THEN ad.daily_budget ELSE 0 END
+    )
+    ELSE CAST(MAX(c.daily_budget) AS FLOAT)
+  END AS daily_budget,
+  MAX(ad.ad_account_name) AS ad_account_name,
+  json_agg(ad.*) AS adsets,
+  MAX(ad.domain_name) AS domain_name
+FROM
+  adset_data ad
+  JOIN offer_data od ON ad.nw_campaign_id = od.nw_campaign_id
+  JOIN adset_coefficients ac ON ad.nw_campaign_id = ac.nw_campaign_id AND ad.adset_id = ac.adset_id
+  JOIN campaigns c ON ad.campaign_id = c.id
+GROUP BY
+  ad.campaign_id, ad.campaign_name, ad.nw_campaign_id;
+
+SELECT 
+  adset_id,
+  SUM(revenue) 
+FROM 
+  revenue 
+WHERE 
+  domain_name = 'globalconstructionservices.today' 
+  AND DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '2024-10-14'
+  AND DATE(occurred_at AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '2024-10-15'
+GROUP BY
+  adset_id;
+
