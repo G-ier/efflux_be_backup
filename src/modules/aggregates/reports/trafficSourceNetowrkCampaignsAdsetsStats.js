@@ -54,6 +54,35 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       ${adAccountCondition}
     GROUP BY
       analytics.campaign_id, analytics.adset_id, analytics.nw_campaign_id
+  ),
+  offer_data AS (
+    SELECT
+      nw_campaign_id,
+      SUM(CASE WHEN traffic_source = 'unknown' THEN revenue ELSE 0 END) AS unknown_revenue,
+      SUM(CASE WHEN traffic_source != 'unknown' THEN revenue ELSE 0 END) AS known_revenue,
+      SUM(revenue) AS total_revenue
+    FROM
+      analytics
+    WHERE
+      DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
+      AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
+      AND network = '${network}'
+      ${mediaBuyerCondition}
+      ${adAccountCondition}
+    GROUP BY
+      nw_campaign_id
+  ),
+  adset_coefficients AS (
+    SELECT
+      ad.nw_campaign_id,
+      ad.adset_id,
+      CASE
+        WHEN od.known_revenue > 0 THEN ad.revenue / od.known_revenue
+        ELSE 1.0 / COUNT(*) OVER (PARTITION BY ad.nw_campaign_id)
+      END AS revenue_coefficient
+    FROM
+      adset_data ad
+      JOIN offer_data od ON ad.nw_campaign_id = od.nw_campaign_id
   )
   SELECT
     ad.campaign_id,
@@ -61,10 +90,11 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     ${castSum("ad.spend_plus_fee", "FLOAT")} as spend_plus_fee,
     ${castSum("ad.revenue", "FLOAT")} as revenue,
     ${buildSelectionColumns("ad.", calculateSpendRevenue=false)},
-
     ${
       trafficSource !== 'unknown' ?
       `
+        CAST(SUM(ad.revenue) + SUM(od.unknown_revenue * ac.revenue_coefficient) AS FLOAT) AS estimated_revenue,
+        CAST(MAX(od.total_revenue) AS FLOAT) AS total_offer_revenue,
         COALESCE(MAX(ad.campaign_name), MAX(c.name)) as campaign_name,
         MAX(c.status) as status,
         MAX(c.created_at) as created_at,
@@ -86,19 +116,19 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as adsets,
 
     MAX(ad.domain_name) as domain_name
-
-    FROM
-      adset_data ad
+  FROM
+    adset_data ad
+    JOIN offer_data od ON ad.nw_campaign_id = od.nw_campaign_id
+    JOIN adset_coefficients ac ON ad.nw_campaign_id = ac.nw_campaign_id AND ad.adset_id = ac.adset_id
     ${
       trafficSource !== 'unknown' ?
-      `
-      JOIN campaigns c ON ad.campaign_id = c.id
-      ` :
+      `JOIN campaigns c ON ad.campaign_id = c.id` :
       ``
     }
-    GROUP BY
-      ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
+  GROUP BY
+    ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
   `;
+
   const { rows } = await database.raw(query);
   return rows;
 }
