@@ -18,13 +18,6 @@ module.exports = {
       max: 7,
       acquireTimeoutMillis: 120000,
     },
-    migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
-    },
-    seeds: {
-      directory: './seeds',
-    },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
@@ -36,13 +29,6 @@ module.exports = {
       max: 7,
       acquireTimeoutMillis: 120000,
     },
-    migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
-    },
-    seeds: {
-      directory: './seeds',
-    },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
@@ -52,13 +38,6 @@ module.exports = {
     pool: {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 4,
-    },
-    migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
-    },
-    seeds: {
-      directory: './seeds',
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
@@ -70,13 +49,6 @@ module.exports = {
       min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
       max: 7,
       acquireTimeoutMillis: 120000,
-    },
-    migrations: {
-      tableName: 'knex_migrations',
-      directory: './migrations',
-    },
-    seeds: {
-      directory: './seeds',
     },
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
