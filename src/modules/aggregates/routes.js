@@ -3,9 +3,7 @@ const route = require('express').Router();
 
 // Local imports
 const AggregatesController = require('./controllers/AggregatesController');
-const RevealBotSheetController = require('./controllers/RevealBotSheetController');
 const aggregatesController = new AggregatesController();
-const revealBotSheetController = new RevealBotSheetController();
 
 route.get('/campaign/adsets', async (req, res) =>
   await aggregatesController.generateCampaignAdsetsReport(req, res)
@@ -34,14 +32,6 @@ route.get('/daily-report', async (req, res) =>
 route.get('/hourly-report', async (req, res) =>
   await aggregatesController.generateTrafficSourceNetworkHourlyReport(req, res)
 );
-
-route.get('/sync-data', async (req, res) =>
-  await aggregatesController.syncData(req, res)
-);
-
-route.get('/refresh-sheet', async (req, res) =>  {
-  await revealBotSheetController.refreshSheet(req, res)
-});
 
 route.get('/network-campaigns-revenue-view', async (req, res) =>  {
   await aggregatesController.networkCampaigns(req, res);

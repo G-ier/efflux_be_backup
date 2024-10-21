@@ -1,6 +1,5 @@
 const AggregatesRepository = require('../repositories/AggregatesRepository');
 const { AVAILABLE_NETWORKS, AVAILABLE_TRAFFIC_SOURCES } = require('../constants');
-const { AggregatesLogger } = require('../../../shared/lib/WinstonLogger');
 
 const { yesterdayYMD, dayYMD } = require('../../../shared/helpers/calendar');
 
@@ -131,45 +130,6 @@ class AggregatesService {
       (...args) => this.aggregatesRepository.trafficSourceNetworkHourly(...args),
       { startDate, endDate, mediaBuyer, adAccountId },
     );
-  }
-
-  async updateAggregates(
-    network,
-    trafficSource,
-    startDate,
-    endDate,
-    campaignIdsRestriction = null,
-  ) {
-    AggregatesLogger.info(
-      `Updating aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`,
-    );
-    const compiledAggregatedData = await this.aggregatesRepository.compileAggregates(
-      network,
-      trafficSource,
-      startDate,
-      endDate,
-      campaignIdsRestriction,
-    );
-    AggregatesLogger.info(`Compiled aggregates successfully`);
-    AggregatesLogger.info(
-      `Upserting ${compiledAggregatedData.length} aggregates for ${trafficSource} and ${network} with range ${startDate} - ${endDate}`,
-    );
-
-    await this.aggregatesRepository.upsert(compiledAggregatedData, trafficSource, network);
-    AggregatesLogger.info(`Done upserting aggregates`);
-    return true;
-  }
-
-  async updateFacebookUserAccountAggregates(startDate, endDate, campaignIdsRestriction) {
-    for (const network of AVAILABLE_NETWORKS) {
-      await this.updateAggregates(network, 'facebook', startDate, endDate, campaignIdsRestriction);
-    }
-  }
-
-  async updateTikTokUserAccountAggregates(startDate, endDate, campaignIdsRestriction) {
-    for (const network of AVAILABLE_NETWORKS) {
-      await this.updateAggregates(network, 'tiktok', startDate, endDate, campaignIdsRestriction);
-    }
   }
 
   async getNetworkCampaigns(network, mediaBuyerId, startDate, endDate) {
