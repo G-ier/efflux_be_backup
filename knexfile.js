@@ -21,17 +21,6 @@ module.exports = {
     useNullAsDefault: true,
     ssl: { rejectUnauthorized: false },
   },
-  production_read_only: {
-    client: 'pg',
-    connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL'),
-    pool: {
-      min: 0, // It is recommended to set min: 0 so all idle connections can be terminated.
-      max: 7,
-      acquireTimeoutMillis: 120000,
-    },
-    useNullAsDefault: true,
-    ssl: { rejectUnauthorized: false },
-  },
   staging: {
     client: 'pg',
     connection: EnvironmentVariablesManager.getEnvVariable('DATABASE_URL_STAGING'),
