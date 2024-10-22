@@ -24,7 +24,7 @@ async function trafficSourceNetworkHourly(database, startDate, endDate, mediaBuy
   SELECT
       hour_link AS adset_name,
       ${buildSelectionColumns(prefix="hd.", calculateSpendRevenue=true)},
-      json_agg(hd.*) AS adsets
+      json_agg(hd.*) AS subrows
   FROM
       hourly_data hd
   GROUP BY

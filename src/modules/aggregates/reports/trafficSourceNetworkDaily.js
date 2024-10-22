@@ -23,7 +23,7 @@ async function trafficSourceNetworkDaily(database, startDate, endDate, mediaBuye
     SELECT
         TO_CHAR(DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), 'YYYY-MM-DD') AS adset_name,
         ${buildSelectionColumns(prefix="dd.", calculateSpendRevenue=true)},
-        json_agg(dd.*) AS adsets
+        json_agg(dd.*) AS subrows
     FROM
         daily_data dd
     GROUP BY
