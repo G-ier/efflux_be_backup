@@ -4,45 +4,32 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
   const { mediaBuyerCondition, adAccountCondition } = buildConditionsInsights(mediaBuyer, ad_accounts);
 
   const query = `
-  WITH adset_data AS (
+  WITH ads_data AS (
     SELECT
       analytics.campaign_id,
+      MAX(campaign_name) AS campaign_name,
       analytics.adset_id,
-      MAX(campaign_name) as campaign_name,
-      analytics.nw_campaign_id AS nw_campaign_id,
-      MAX(analytics.nw_campaign_name) as nw_campaign_name,
+      MAX(analytics.adset_name) AS adset_name,
+      'ad' AS row_type,
+      analytics.ad_id,
       ${
         trafficSource !== 'unknown' ?
-        `
-        ${
-          trafficSource !== 'taboola' ?
-            `MAX(adsets.status) as status,
-            CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,`
-          :
-            `MAX(c.status) as status,
-            CAST(COALESCE(MAX(c.daily_budget), '0') AS FLOAT) * 100 as daily_budget,`
-        }
-        ` :
+        `MAX(ads.name) AS ad_name,` :
         ``
       }
-
-      MAX(analytics.adset_name) as adset_name,
+      analytics.nw_campaign_id AS nw_campaign_id,
+      MAX(analytics.nw_campaign_name) AS nw_campaign_name,
       0 as nw_uniq_conversions,
       ${buildSelectionColumns("analytics.", calculateSpendRevenue=true)},
-      MAX(analytics.ad_account_name) as ad_account_name,
-      MAX(analytics.domain_name) as domain_name
+      MAX(analytics.ad_account_name) AS ad_account_name,
+      MAX(analytics.domain_name) AS domain_name
     FROM
       analytics
     ${
       trafficSource !== 'unknown' ?
       `
-      JOIN ${
-        trafficSource !== 'taboola' ?
-          `adsets ON analytics.adset_id = adsets.provider_id`
-        :
-          `campaigns c ON c.id = analytics.campaign_id`
-        }
-      ` :
+      INNER JOIN
+        ads ON analytics.ad_id = ads.id` :
       ``
     }
     WHERE
@@ -53,7 +40,60 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       ${mediaBuyerCondition}
       ${adAccountCondition}
     GROUP BY
-      analytics.campaign_id, analytics.adset_id, analytics.nw_campaign_id
+      analytics.campaign_id,
+      analytics.adset_id,
+      analytics.ad_id,
+      analytics.nw_campaign_id
+  ),
+  adset_data AS (
+    SELECT
+      ads_data.campaign_id,
+      ads_data.adset_id,
+      'adset' AS row_type,
+      MAX(campaign_name) as campaign_name,
+      ads_data.nw_campaign_id AS nw_campaign_id,
+      MAX(ads_data.nw_campaign_name) as nw_campaign_name,
+      ${
+        trafficSource !== 'unknown' ?
+        `
+        ${
+          trafficSource !== 'taboola' ?
+            `
+            MAX(adsets.status) as status,
+            CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) as daily_budget,
+            CASE WHEN CAST(COALESCE(MAX(adsets.daily_budget), '0') AS FLOAT) > 0 THEN TRUE ELSE FALSE END as editable_budget,
+            `
+          :
+            `MAX(c.status) as status,
+            CAST(COALESCE(MAX(c.daily_budget), '0') AS FLOAT) * 100 as daily_budget,
+            'campaign' as budget_level,`
+        }
+        ` :
+        ``
+      }
+
+      MAX(ads_data.adset_name) as adset_name,
+      0 as nw_uniq_conversions,
+      ${buildSelectionColumns("ads_data.", calculateSpendRevenue=true)},
+      MAX(ads_data.ad_account_name) as ad_account_name,
+      MAX(ads_data.domain_name) as domain_name,
+      JSON_AGG(ads_data.*) as subrows
+    FROM
+      ads_data
+    ${
+      trafficSource !== 'unknown' ?
+      `
+      JOIN ${
+        trafficSource !== 'taboola' ?
+          `adsets ON ads_data.adset_id = adsets.provider_id`
+        :
+          `campaigns c ON c.id = ads_data.campaign_id`
+        }
+      ` :
+      ``
+    }
+    GROUP BY
+      ads_data.campaign_id, ads_data.adset_id, ads_data.nw_campaign_id
   ),
   offer_data AS (
     SELECT
@@ -86,6 +126,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
   )
   SELECT
     ad.campaign_id,
+    'campaign' AS row_type,
     ${castSum("ad.spend", "FLOAT")} as spend,
     ${castSum("ad.spend_plus_fee", "FLOAT")} as spend_plus_fee,
     ${castSum("ad.revenue", "FLOAT")} as revenue,
@@ -99,9 +140,9 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
         MAX(c.status) as status,
         MAX(c.created_at) as created_at,
         CASE
-          WHEN SUM(ad.daily_budget) > 0 THEN 'adset'
-          ELSE 'campaign'
-        END AS budget_level,
+          WHEN SUM(ad.daily_budget) > 0 THEN FALSE
+          ELSE TRUE
+        END AS editable_budget,
         CASE
           WHEN SUM(ad.daily_budget) > 0 THEN SUM(
           CASE WHEN ad.status = 'ACTIVE' THEN ad.daily_budget ELSE 0 END
@@ -113,7 +154,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     }
     MAX(ad.ad_account_name) as ad_account_name,
 
-    ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as adsets,
+    ${trafficSource === 'taboola' ? 'NULL' : `json_agg(ad.*)` } as subrows,
 
     MAX(ad.domain_name) as domain_name
   FROM
@@ -128,7 +169,6 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
   GROUP BY
     ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
   `;
-
   const { rows } = await database.raw(query);
   return rows;
 }
