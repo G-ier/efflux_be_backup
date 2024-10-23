@@ -10,6 +10,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       MAX(campaign_name) AS campaign_name,
       analytics.adset_id,
       MAX(analytics.adset_name) AS adset_name,
+      'ad' AS row_type,
       analytics.ad_id,
       ${
         trafficSource !== 'unknown' ?
@@ -48,6 +49,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
     SELECT
       ads_data.campaign_id,
       ads_data.adset_id,
+      'adset' AS row_type,
       MAX(campaign_name) as campaign_name,
       ads_data.nw_campaign_id AS nw_campaign_id,
       MAX(ads_data.nw_campaign_name) as nw_campaign_name,
@@ -124,6 +126,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
   )
   SELECT
     ad.campaign_id,
+    'campaign' AS row_type,
     ${castSum("ad.spend", "FLOAT")} as spend,
     ${castSum("ad.spend_plus_fee", "FLOAT")} as spend_plus_fee,
     ${castSum("ad.revenue", "FLOAT")} as revenue,
