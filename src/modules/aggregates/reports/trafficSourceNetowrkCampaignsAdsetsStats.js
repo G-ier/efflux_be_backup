@@ -38,7 +38,7 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
         trafficSource !== 'unknown' ?
         `
         INNER JOIN ads ON analytics.ad_id = ads.id
-        JOIN adlinks ON analytics.ad_id = adlinks.id` : ``
+        JOIN adlinks ON ads.creative_id = adlinks.id` : ``
       }
       WHERE
         DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
