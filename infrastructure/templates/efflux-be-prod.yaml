@@ -8,7 +8,7 @@ Parameters:
   OperatorEmail:
     Description: The email address to notify when there are any scaling activities
     Type: String
-    Default: ilyas@roi.ad
+    Default: deni@roi.ad
   RDSPostgresClusterPassword:
     Description: The password for the database
     NoEcho: "true"
@@ -420,7 +420,7 @@ Resources:
     Properties:
       AllocatedStorage: 70
       DeletionProtection: false
-      DBInstanceClass: db.t4g.micro
+      DBInstanceClass: db.t4g.small
       Engine: postgres
       EngineVersion: 16.1
       DBInstanceIdentifier: efflux-be
