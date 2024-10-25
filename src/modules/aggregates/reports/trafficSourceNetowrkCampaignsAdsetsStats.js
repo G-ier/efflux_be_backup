@@ -25,6 +25,7 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
           trafficSource !== 'unknown' ?
           `MAX(ads.name) AS ad_name,
            MAX(adlinks.version) AS version,
+           MAX(adlinks.unique_id) AS ad_unique_uri,
            adlinks.synced AS synced,` : ``
         }
         analytics.nw_campaign_id AS nw_campaign_id,
@@ -170,7 +171,6 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
   `;
 
   const { rows } = await database.raw(query);
-  console.log(rows);
   return rows;
 }
 
