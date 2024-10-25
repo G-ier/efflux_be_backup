@@ -167,7 +167,8 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
       trafficSource !== 'unknown' ?
       `JOIN campaigns c ON ad.campaign_id = c.id` : ``
     }
-    GROUP BY ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
+  GROUP BY
+    ad.campaign_id, ad.campaign_name
   `;
 
   const { rows } = await database.raw(query);
