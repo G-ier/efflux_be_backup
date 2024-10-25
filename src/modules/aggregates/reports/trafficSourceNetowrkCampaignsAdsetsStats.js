@@ -25,7 +25,7 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
           trafficSource !== 'unknown' ?
           `MAX(ads.name) AS ad_name,
            MAX(adlinks.version) AS version,
-           MAX(adlinks.synced) AS synced,` : ``
+           adlinks.synced AS synced,` : ``
         }
         analytics.nw_campaign_id AS nw_campaign_id,
         MAX(analytics.nw_campaign_name) AS nw_campaign_name,
@@ -51,7 +51,8 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
         analytics.campaign_id,
         analytics.adset_id,
         analytics.ad_id,
-        analytics.nw_campaign_id
+        analytics.nw_campaign_id,
+        ${ trafficSource !== 'unknown' ? `adlinks.synced` : `` }
     ),
     adset_data AS (
       SELECT
