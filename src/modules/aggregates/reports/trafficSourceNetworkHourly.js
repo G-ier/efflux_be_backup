@@ -7,7 +7,7 @@ async function trafficSourceNetworkHourly(database, startDate, endDate, mediaBuy
   WITH hourly_data AS (
     SELECT
       TO_CHAR(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles', 'YYYY-MM-DD') || ' ' || LPAD(DATE_PART('hour', timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')::text, 2, '0') || ':00:00' AS hour_link,
-      'TS: ' || traffic_source || ' - ' || 'NW: ' || network AS adset_name,
+      'TS: ' || traffic_source || ' - ' || 'NW: ' || network AS hour,
       ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
     FROM
       analytics
@@ -22,15 +22,15 @@ async function trafficSourceNetworkHourly(database, startDate, endDate, mediaBuy
       hour_link
   )
   SELECT
-      hour_link AS adset_name,
+      hour_link AS hour,
       ${buildSelectionColumns(prefix="hd.", calculateSpendRevenue=true)},
-      json_agg(hd.*) AS adsets
+      json_agg(hd.*) AS subrows
   FROM
       hourly_data hd
   GROUP BY
       hd.hour_link
   ORDER BY
-      adset_name;
+      hour;
   `;
   const { rows } = await database.raw(query);
   return rows;

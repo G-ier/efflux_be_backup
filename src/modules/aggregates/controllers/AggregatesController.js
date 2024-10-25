@@ -184,23 +184,6 @@ class AggregatesController {
     }
   }
 
-  async syncData(req, res) {
-    try {
-      const { startDate, endDate, trafficSource, network, campaignIdsRestriction } = req.query;
-      const data = await this.aggregatesService.updateAggregates(
-        network,
-        trafficSource,
-        startDate,
-        endDate,
-        campaignIdsRestriction,
-      );
-      return res.json(data);
-    } catch (e) {
-      console.log(e);
-      return res.status(500).json({ error: e.message });
-    }
-  }
-
   async networkCampaigns(req, res) {
     try {
       const { startDate, endDate, mediaBuyer, network } = await this.extractRequestDataWithUser(req);
