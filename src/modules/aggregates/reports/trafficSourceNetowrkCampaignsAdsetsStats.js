@@ -167,7 +167,7 @@ async function trafficSourceNetowrkCampaignsAdsetsStats(database, startDate, end
       ``
     }
   GROUP BY
-    ad.campaign_id, ad.campaign_name, ad.nw_campaign_id
+    ad.campaign_id, ad.campaign_name
   `;
   const { rows } = await database.raw(query);
   return rows;
