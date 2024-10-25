@@ -46,8 +46,8 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
         AND DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
         AND analytics.traffic_source = '${trafficSource}'
         AND analytics.network = '${network}'
-        ${mediaBuyerCondition}
-        ${adAccountCondition}
+        ${mediaBuyerCondition ? mediaBuyerCondition : ''}
+        ${adAccountCondition ? adAccountCondition : ''}
       GROUP BY
         analytics.campaign_id,
         analytics.adset_id,
@@ -114,8 +114,8 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
         DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
         AND DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
         AND analytics.network = '${network}'
-        ${mediaBuyerCondition}
-        ${adAccountCondition}
+        ${mediaBuyerCondition ? mediaBuyerCondition : ''}
+        ${adAccountCondition ? adAccountCondition : ''}
       GROUP BY
         nw_campaign_id
     ),
