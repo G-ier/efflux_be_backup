@@ -36,13 +36,13 @@ class AdAccountManagementController {
   async includeExcludedAdAccount(req, res) {
     const { id, adAccountId, mediaBuyer } = req.body;
     console.log("Params");
-    console.log(adAccountId, adAccountProviderId, trafficSource,);
+    console.log(adAccountId);
     if(mediaBuyer != 'admin'){
       res.status(403).json({ message: `Restricted access.` });
     }
     try {
       const inclusionProcess = await this.adAccountManagementService.includeExcludedAdAccount(id, adAccountId, mediaBuyer);
-      if(exclusionProcess.status == 200){
+      if(inclusionProcess.status == 200){
         res.status(200).json({ message: `Campaign with ID to ${adAccountId} was hidden form users.` });
       } else {
         res.status(500).json({ message: `Failed to hide campaign with ID${adAccountId}` });
