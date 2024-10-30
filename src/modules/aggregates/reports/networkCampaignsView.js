@@ -12,6 +12,7 @@ async function networkCampaignData(database, startDate, endDate, mediaBuyer, net
       CAST(SUM(a.revenue) AS FLOAT) AS revenue
     FROM
       analytics a
+    LEFT JOIN excluded_ad_accounts ON a.ad_account_id = excluded_ad_accounts.ad_account_provider_id
     WHERE
       DATE(a.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
       AND DATE(a.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'

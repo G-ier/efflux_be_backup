@@ -2,6 +2,7 @@ const DatabaseConnection = require('./DatabaseConnection');
 const printDebug = false;
 
 class DatabaseRepository {
+
   constructor() {
     // We can include cache capabilities in the methods here, and they will get distributed to all the repositories
     // through inheritance. We can parametrize the function to conditionally use cache or not.

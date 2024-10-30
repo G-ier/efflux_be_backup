@@ -5,20 +5,21 @@ async function trafficSourceNetworkDaily(database, startDate, endDate, mediaBuye
   const query = `
     WITH daily_data AS (
       SELECT
-        DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') AS timeframe,
-        'TS: ' || traffic_source || ' - ' || 'NW: ' || network AS date,
-        ${buildSelectionColumns(prefix="", calculateSpendRevenue=true)}
+        DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') AS timeframe,
+        'TS: ' || analytics.traffic_source || ' - ' || 'NW: ' || analytics.network AS date,
+        ${buildSelectionColumns(prefix="analytics.", calculateSpendRevenue=true)}
       FROM
         analytics
+      LEFT JOIN excluded_ad_accounts ON analytics.ad_account_id = excluded_ad_accounts.ad_account_provider_id
       WHERE
-        DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
-        AND DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
+        DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'
+        AND DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') <= '${endDate}'
         ${mediaBuyerCondition}
         ${adAccountCondition}
       GROUP BY
-        DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), traffic_source, network
+        DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), analytics.traffic_source, analytics.network
       ORDER BY
-        DATE(timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')
+        DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles')
     )
     SELECT
         TO_CHAR(DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles'), 'YYYY-MM-DD') AS date,
@@ -29,6 +30,7 @@ async function trafficSourceNetworkDaily(database, startDate, endDate, mediaBuye
     GROUP BY
         DATE(dd.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles');
   `;
+
   const { rows } = await database.raw(query);
   return rows;
 }
