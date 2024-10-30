@@ -40,7 +40,7 @@ async function trafficSourceNetworkCampaignsAdsetsStats(
         `
         INNER JOIN ads ON analytics.ad_id = ads.id
         JOIN adlinks ON ads.creative_id = adlinks.id
-        LEFT JOIN excluded_ad_accounts ON ads.ad_account_id = excluded_ad_accounts.provider_id` : ``
+        LEFT JOIN excluded_ad_accounts ON ads.ad_account_id = excluded_ad_accounts.ad_account_provider_id` : ``
       }
       WHERE
         DATE(analytics.timeframe AT TIME ZONE 'UTC' AT TIME ZONE 'America/Los_Angeles') > '${startDate}'

@@ -27,7 +27,7 @@ class AdAccountManagementService {
   }
 
   async includeExcludedAdAccount(id, adAccountId, mediaBuyer) {
-    const inclusion_event = await this.managementRepository.includeExcludedAdAccount(id, adAccountId, mediaBuyer);
+    const inclusion_event = await this.managementRepository.includeExcludedAdAccount(id, adAccountId);
     if(inclusion_event.status == 200){
       return {status: 200, results: inclusion_event.queryResult};
     } else {

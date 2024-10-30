@@ -18,9 +18,9 @@ class AdAccountManagementRepository {
     }
   }
 
-  async includeExcludedAdAccount(id){
+  async includeExcludedAdAccount(id, adAccountId){
     try {
-      const queryResult = await this.database.delete("excluded_ad_accounts", {id});
+      const queryResult = await this.database.delete("excluded_ad_accounts", {ad_account_id: adAccountId});
       return {status: 200, queryResult};
     } catch (error) {
       return {status: 500};
