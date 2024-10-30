@@ -2,6 +2,8 @@ const route = require('express').Router();
 const { TemporaryController } = require('./methods');
 const temporaryController = new TemporaryController();
 
+// Admin exclude offers
+route.post('/exclude-ad-account', async (req, res) => await temporaryController.excludeAdAccount(req, res));
 
 // Media Buyers Page
 route.get('/adAccounts', async (req, res) => await temporaryController.fetchAdAccountsFromDatabase(req, res));

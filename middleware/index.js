@@ -23,6 +23,7 @@ const aggregations = require('../src/modules/aggregates/routes');
 const crossroadsRoutes = require('../src/modules/crossroads/routes');
 const auth = require('../src/modules/auth/routes');
 const management = require('../src/shared/routes/management');
+const tsManagementRoutes = require('../src/modules/ts_management/routes');
 
 const crossroadRouter = express.Router();
 crossroadRouter.use(crossroadsRoutes);
@@ -76,6 +77,8 @@ function configureMiddleware(server) {
   server.use('/api/aggregations', aggregations);
   server.use('/api/crossroads', crossroadRouter);
   server.use('/api/management', management);
+  server.use('/api/ts', tsManagementRoutes);
+
   server.use(ErrorHandler);
 }
 

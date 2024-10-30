@@ -184,6 +184,7 @@ class TemporaryService {
     const results = await this.networkCampaignsRepository.upsertUserAssociation(network, networkCampaignId, userId);
     return results;
   }
+
   //  --------------------------------------------
 
   // USER RELATIONS
@@ -987,6 +988,7 @@ class TemporaryController {
       res.status(500).json({ message: `Failed to remove ${networkCampaignName} access from ${userName}` });
     }
   }
+
   //  --------------------------------------------
 
   // This fetches users with their ad accounts and network campaigns relations
