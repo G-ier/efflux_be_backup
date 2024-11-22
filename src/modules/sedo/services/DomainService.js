@@ -39,7 +39,6 @@ class DomainService extends BaseService {
           valueProcessors: [xml2js.processors.parseNumbers]
         }
       const parsedXMLBody = await xml2js.parseStringPromise(response, parserOptions);
-      this.logger.info(`Domain inserted into Sedo`);
 
       if (parsedXMLBody.SEDOLIST.item.status != "ok") {
           this.logger.error(
@@ -48,7 +47,9 @@ class DomainService extends BaseService {
           throw new Error(
             `Error : ${parsedXMLBody.SEDOLIST.item.message}`
           );
-        }
+      }else{
+        this.logger.info(`Domain inserted into Sedo`);
+      }
 
     }
 
